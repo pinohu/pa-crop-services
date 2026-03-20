@@ -1,0 +1,547 @@
+{
+  "name": "Dynasty - Pack 3: Renewal Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Cron 6AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='system_active'\") }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Check Emergency Stop",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.records[0].fields.value}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "System Active?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate date 90 days from now\nconst targetDate = new Date();\ntargetDate.setDate(targetDate.getDate() + 90);\nconst dateStr = targetDate.toISOString().split('T')[0];\nreturn [{json: {renewal_window_date: dateStr}}];"
+      },
+      "name": "Calculate Renewal Window",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_CLIENTS_TABLE + '/records?pageSize=200&filterByFormula=' + encodeURIComponent(\"AND({lifecycle_stage}='active',{renewal_date}<='\" + $json.renewal_window_date + \"')\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET Clients Approaching Renewal",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const clients = $input.first().json.data?.records || [];\nconst results = [];\n\nfor (const client of clients) {\n  const f = client.fields;\n  const renewalDate = new Date(f.renewal_date);\n  const now = new Date();\n  const daysUntilRenewal = Math.ceil((renewalDate - now) / (1000 * 60 * 60 * 24));\n  \n  let sequenceStep = 'none';\n  if (daysUntilRenewal <= 90 && daysUntilRenewal > 60) sequenceStep = 'day90_value_recap';\n  else if (daysUntilRenewal <= 60 && daysUntilRenewal > 30) sequenceStep = 'day60_usage_report';\n  else if (daysUntilRenewal <= 30 && daysUntilRenewal > 14) sequenceStep = 'day30_renewal_reminder';\n  else if (daysUntilRenewal <= 14 && daysUntilRenewal > 7) sequenceStep = 'day14_early_bird';\n  else if (daysUntilRenewal <= 7 && daysUntilRenewal > 0) sequenceStep = 'day7_urgent_renewal';\n  else if (daysUntilRenewal <= 0) sequenceStep = 'expired_grace_period';\n  \n  if (sequenceStep !== 'none') {\n    results.push({\n      json: {\n        client_id: f.client_id,\n        email: f.email,\n        name: f.name,\n        niche: f.niche,\n        membership_tier: f.membership_tier,\n        engagement_score: f.engagement_score || 0,\n        renewal_date: f.renewal_date,\n        days_until_renewal: daysUntilRenewal,\n        sequence_step: sequenceStep,\n        ltv: f.ltv || 0\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{json: {no_renewals: true}}];"
+      },
+      "name": "Classify Renewal Stage",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.no_renewals}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Any Renewals?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "output": 0,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "day90_value_recap",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 1,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "day60_usage_report",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 2,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "day30_renewal_reminder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 3,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "day14_early_bird",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 4,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "day7_urgent_renewal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 5,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.sequence_step}}",
+                    "rightValue": "expired_grace_period",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "Switch: Renewal Stage",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Your {{$json.niche}} directory membership — a quick look at your results",
+        "text": "Hi {{$json.name}},\n\nYour membership renews in about 90 days. Here's a recap of the value you've received:\n\n- Your engagement score: {{$json.engagement_score}}\n- Your membership tier: {{$json.membership_tier}}\n- Lifetime value generated: ${{$json.ltv}}\n\nWant to maximize your remaining time? Make sure your profile is fully optimized.\n\nLog in: {{$env.SUITEDASH_PORTAL_URL}}\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: 90-Day Value Recap",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        50
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Your {{$json.niche}} directory usage report",
+        "text": "Hi {{$json.name}},\n\nYour membership renews in about 60 days. Here's your activity summary:\n\n- Engagement score: {{$json.engagement_score}}\n- Current tier: {{$json.membership_tier}}\n\nMembers who stay active see 3x more inquiries. Keep your listing fresh!\n\nLog in: {{$env.SUITEDASH_PORTAL_URL}}\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: 60-Day Usage Report",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Renewal reminder — Your {{$json.niche}} directory membership",
+        "text": "Hi {{$json.name}},\n\nJust a heads-up: your {{$json.membership_tier}} membership renews on {{$json.renewal_date}}.\n\nNo action needed if you'd like to continue. If you have questions or want to upgrade, just reply to this email.\n\nLog in: {{$env.SUITEDASH_PORTAL_URL}}\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: 30-Day Renewal Reminder",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Renew early and save — {{$json.niche}} directory",
+        "text": "Hi {{$json.name}},\n\nYour membership renews in 14 days. Renew early and lock in your current rate.\n\nAs a valued {{$json.membership_tier}} member, we want to make sure you're getting the most from your listing.\n\nRenew now: {{$env.SUITEDASH_PORTAL_URL}}\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: 14-Day Early Bird",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "URGENT: Your {{$json.niche}} listing expires in {{$json.days_until_renewal}} days",
+        "text": "Hi {{$json.name}},\n\nYour {{$json.membership_tier}} membership expires in just {{$json.days_until_renewal}} days.\n\nIf your listing goes inactive, you'll lose visibility to potential clients searching for {{$json.niche}} services.\n\nRenew now to keep your listing active: {{$env.SUITEDASH_PORTAL_URL}}\n\nNeed help? Reply to this email.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: 7-Day Urgent",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Your {{$json.niche}} listing has expired — grace period active",
+        "text": "Hi {{$json.name}},\n\nYour {{$json.membership_tier}} membership has expired, but we've kept your listing in a 7-day grace period.\n\nRenew now to avoid losing your listing and all the engagement you've built.\n\nRenew: {{$env.SUITEDASH_PORTAL_URL}}\n\nAfter the grace period, your listing will be deactivated.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: Expired Grace Period",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        2000,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_COMMS_LOG_TABLE}}/records",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({client_id: $json.client_id, message_type: $json.sequence_step, channel: 'email', subject: 'Renewal sequence', sent_at: new Date().toISOString(), agent_generated: true, sequence_name: 'renewal_90day'})}}"
+            }
+          ]
+        },
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log to Communication Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Cron 6AM": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Emergency Stop": {
+      "main": [
+        [
+          {
+            "node": "System Active?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Active?": {
+      "main": [
+        [
+          {
+            "node": "Calculate Renewal Window",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Calculate Renewal Window": {
+      "main": [
+        [
+          {
+            "node": "GET Clients Approaching Renewal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Clients Approaching Renewal": {
+      "main": [
+        [
+          {
+            "node": "Classify Renewal Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Renewal Stage": {
+      "main": [
+        [
+          {
+            "node": "Any Renewals?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Renewals?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Switch: Renewal Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Renewal Stage": {
+      "main": [
+        [
+          {
+            "node": "Email: 90-Day Value Recap",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: 60-Day Usage Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: 30-Day Renewal Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: 14-Day Early Bird",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: 7-Day Urgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: Expired Grace Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: 90-Day Value Recap": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: 60-Day Usage Report": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: 30-Day Renewal Reminder": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: 14-Day Early Bird": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: 7-Day Urgent": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Expired Grace Period": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "dynasty-failure-handler"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "renewal"
+    },
+    {
+      "name": "pack-3"
+    }
+  ]
+}

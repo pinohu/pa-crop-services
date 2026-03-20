@@ -1,0 +1,170 @@
+{
+  "niche_id": "pa_crop",
+  "display_name": "PA CROP Services",
+  "description": "Pennsylvania Commercial Registered Office Provider — compliance automation for PA business entities",
+  "offer_structure": {
+    "starter_annual": 79,
+    "professional_annual": 179,
+    "premium_annual": 299,
+    "partner_per_client_annual": 99,
+    "addons": [
+      {"name": "Annual Report Filing", "price": 50, "billing": "per filing"},
+      {"name": "Change of Registered Office", "price": 120, "billing": "one-time"},
+      {"name": "LLC Formation Package", "price": 650, "billing": "one-time"},
+      {"name": "Notarization", "price": 25, "billing": "per document"},
+      {"name": "Virtual Mailbox", "price": 15, "billing": "monthly"},
+      {"name": "Compliance Monitoring", "price": 10, "billing": "monthly"}
+    ]
+  },
+  "custom_fields": [
+    {"name": "Entity Name", "type": "text", "required": true, "scope": "company"},
+    {"name": "Entity Number", "type": "text", "required": true, "scope": "company"},
+    {"name": "Entity Type", "type": "dropdown", "options": ["Domestic Business Corporation", "Foreign Business Corporation", "Domestic Nonprofit Corporation", "Foreign Nonprofit Corporation", "Domestic LLC", "Foreign LLC", "Domestic LP", "Foreign LP", "Domestic LLP", "Business Trust", "Professional Association", "Other"], "scope": "company"},
+    {"name": "Jurisdiction of Formation", "type": "dropdown", "options": ["Pennsylvania", "Delaware", "Wyoming", "New York", "New Jersey", "Ohio", "Other"], "scope": "company"},
+    {"name": "Annual Report Deadline", "type": "date", "scope": "company", "notes": "Auto-calculated: Corps=June 30, LLCs=Sept 30, Others=Dec 31"},
+    {"name": "Service Tier", "type": "dropdown", "options": ["Starter", "Professional", "Premium", "Partner"], "scope": "company"},
+    {"name": "Partner Firm", "type": "text", "scope": "company", "notes": "Blank for direct clients"},
+    {"name": "DOS Filing Status", "type": "dropdown", "options": ["Current", "Needs Update", "Pending", "Change Filed"], "scope": "company"},
+    {"name": "Last Annual Report Filed", "type": "date", "scope": "company"},
+    {"name": "Annual Report Year", "type": "text", "scope": "company"},
+    {"name": "Formation Date", "type": "date", "scope": "company"},
+    {"name": "Principal Office Address", "type": "text", "scope": "company"},
+    {"name": "Engagement Score", "type": "number", "scope": "company", "notes": "Updated by n8n automation"},
+    {"name": "Lifecycle Stage", "type": "dropdown", "options": ["Onboarding", "Active", "At-Risk", "Churned"], "scope": "company"},
+    {"name": "Onboarding Complete", "type": "checkbox", "scope": "company"},
+    {"name": "Days Since Last Login", "type": "number", "scope": "company"},
+    {"name": "LTV", "type": "number", "scope": "company", "notes": "Currency"},
+    {"name": "Acquisition Channel", "type": "dropdown", "options": ["Organic/SEO", "Google Ads", "Partner Referral", "Direct Outreach", "Word of Mouth", "Social Media"], "scope": "company"},
+    {"name": "Churn Risk", "type": "dropdown", "options": ["Low", "Medium", "High"], "scope": "company"},
+    {"name": "Mail Pieces Received", "type": "number", "scope": "company", "notes": "Cumulative count"},
+    {"name": "Service of Process Count", "type": "number", "scope": "company", "notes": "Cumulative"}
+  ],
+  "sales_pipeline": {
+    "name": "CROP Client Acquisition",
+    "stages": [
+      {"name": "Website Lead", "probability": 10},
+      {"name": "Contacted", "probability": 25},
+      {"name": "Pricing Reviewed", "probability": 50},
+      {"name": "Agreement Sent", "probability": 70},
+      {"name": "Agreement Signed", "probability": 90},
+      {"name": "Active Client", "probability": 100},
+      {"name": "Lost", "probability": 0}
+    ]
+  },
+  "service_pipeline": {
+    "name": "CROP Service Delivery",
+    "stages": [
+      {"name": "Onboarding"},
+      {"name": "DOS Filing Update"},
+      {"name": "Active - Good Standing"},
+      {"name": "Annual Report Due"},
+      {"name": "Annual Report Filed"},
+      {"name": "Renewal Approaching"}
+    ]
+  },
+  "circles": [
+    "CROP-Starter",
+    "CROP-Professional",
+    "CROP-Premium",
+    "CROP-Partner",
+    "CROP-Churned",
+    "CROP-Onboarding",
+    "CROP-AR-Due-30Days",
+    "CROP-At-Risk"
+  ],
+  "kickoff_form": {
+    "name": "PA CROP Services — New Client Registration",
+    "role_assignment": "Lead",
+    "fields": [
+      {"name": "Contact Name", "type": "text", "required": true},
+      {"name": "Email", "type": "email", "required": true},
+      {"name": "Phone", "type": "phone", "required": true},
+      {"name": "Entity Name", "type": "text", "required": true},
+      {"name": "Entity Number", "type": "text", "required": true, "help_text": "Found on your PA DOS filing or at file.dos.pa.gov"},
+      {"name": "Entity Type", "type": "dropdown", "required": true},
+      {"name": "Jurisdiction of Formation", "type": "dropdown", "required": true},
+      {"name": "Service Tier", "type": "dropdown", "options": ["Starter ($79/yr)", "Professional ($179/yr)", "Premium ($299/yr)"], "required": true},
+      {"name": "Mailing Address", "type": "text", "required": true, "help_text": "Where we forward physical mail"},
+      {"name": "How did you hear about us?", "type": "dropdown", "options": ["Google Search", "CPA/Attorney Referral", "LinkedIn", "Social Media", "Word of Mouth", "Other"]}
+    ],
+    "automations": [
+      "Add to CROP-Onboarding Circle",
+      "Apply CROP Folder Generator",
+      "Assign Onboarding FLOW",
+      "Fire n8n crop-onboarding webhook",
+      "Create Stripe subscription",
+      "Send welcome email sequence"
+    ]
+  },
+  "onboarding_flow": {
+    "name": "PA CROP Onboarding FLOW",
+    "steps": [
+      {"order": 1, "type": "form", "name": "Verify Entity Information", "description": "Confirm entity name, number, type, and contact details"},
+      {"order": 2, "type": "esigning", "name": "Sign Service Agreement", "description": "CROP service agreement with selected tier and fee schedule"},
+      {"order": 3, "type": "file_download", "name": "Download Filing Instructions", "description": "How to update your PA DOS filing to list us as your CROP"},
+      {"order": 4, "type": "checklist", "name": "Post-Signup Checklist", "description": "Update DOS filing, verify portal access, set notification preferences"},
+      {"order": 5, "type": "appointment", "name": "Welcome Call (Premium Only)", "description": "15-minute walkthrough of portal and compliance services"}
+    ],
+    "triggers_on_complete": [
+      "Move to CROP-[Tier] Circle",
+      "Start engagement scoring",
+      "Fire n8n onboarding-complete webhook",
+      "Set Annual Report Deadline based on Entity Type"
+    ]
+  },
+  "project_template": {
+    "name": "CROP Client Onboarding",
+    "tasks": [
+      {"name": "Verify entity in PA DOS database", "assigned_to": "Staff", "duration_days": 1},
+      {"name": "Process service agreement e-signature", "assigned_to": "System", "duration_days": 1},
+      {"name": "Configure compliance calendar reminders", "assigned_to": "Staff", "duration_days": 1},
+      {"name": "Confirm DOS filing update (CROP listing)", "assigned_to": "Staff", "duration_days": 7},
+      {"name": "Welcome call (Premium tier only)", "assigned_to": "Staff", "duration_days": 3}
+    ]
+  },
+  "folder_structure": {
+    "template": [
+      "Legal Documents",
+      "Correspondence",
+      "Annual Reports",
+      "Contracts",
+      "Formation Documents",
+      "Mail Archive"
+    ]
+  },
+  "email_angles": [
+    "Day 0: Welcome to PA CROP Services — your registered office is set up",
+    "Day 1: How to update your PA DOS filing to list us as your CROP",
+    "Day 3: Your compliance calendar is active — here are your upcoming deadlines",
+    "Day 7: Never miss a PA deadline — how our reminder system works",
+    "Day 14: The 2027 dissolution deadline — what it means for your business",
+    "Day 21: How [Entity Type] businesses use PA CROP Services",
+    "Day 28: Quick feedback — how's your experience so far?",
+    "Day 30: Your first month recap + referral program"
+  ],
+  "annual_report_deadlines": {
+    "Domestic Business Corporation": "June 30",
+    "Foreign Business Corporation": "June 30",
+    "Domestic Nonprofit Corporation": "June 30",
+    "Foreign Nonprofit Corporation": "June 30",
+    "Domestic LLC": "September 30",
+    "Foreign LLC": "September 30",
+    "Domestic LP": "December 31",
+    "Foreign LP": "December 31",
+    "Domestic LLP": "December 31",
+    "Business Trust": "December 31",
+    "Professional Association": "December 31",
+    "Other": "December 31"
+  },
+  "state_filing_fees": {
+    "annual_report": 7,
+    "annual_report_nonprofit": 0,
+    "change_of_registered_office_online": 5,
+    "change_of_registered_office_mail": 70,
+    "llc_formation": 125,
+    "corporation_formation": 125,
+    "foreign_registration": 250,
+    "name_reservation": 70,
+    "certificate_of_amendment": 70
+  }
+}

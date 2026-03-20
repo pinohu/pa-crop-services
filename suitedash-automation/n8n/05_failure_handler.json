@@ -1,0 +1,166 @@
+{
+  "name": "Dynasty - Pack 5: Failure Handler (DLQ)",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = $input.first().json;\nconst retryCount = error.retry_count || 0;\nconst maxRetries = 3;\nconst backoffMinutes = [1, 5, 30];\n\nreturn [{\n  json: {\n    workflow_name: error.workflow?.name || 'unknown',\n    node_name: error.execution?.lastNodeExecuted || 'unknown',\n    error_type: error.execution?.error?.name || 'unknown',\n    error_message: error.execution?.error?.message || 'No message',\n    contact_id: error.execution?.data?.contact_id || '',\n    retry_count: retryCount,\n    max_retries: maxRetries,\n    should_retry: retryCount < maxRetries,\n    backoff_minutes: backoffMinutes[retryCount] || 30,\n    timestamp: new Date().toISOString(),\n    status: retryCount >= maxRetries ? 'needs_manual_review' : 'retrying'\n  }\n}];"
+      },
+      "name": "Parse Error Context",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_DLQ_TABLE}}/records",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({workflow_name: $json.workflow_name, node_name: $json.node_name, error_type: $json.error_type, error_message: $json.error_message, contact_id: $json.contact_id, retry_count: $json.retry_count, status: $json.status, timestamp: $json.timestamp})}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log to AiTable DLQ",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        710,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.should_retry}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Should Retry?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{$json.backoff_minutes}}",
+        "unit": "minutes"
+      },
+      "name": "Backoff Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1170,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$env.SMTP_FROM_EMAIL}}",
+        "subject": "CRITICAL: Workflow {{$json.workflow_name}} failed after 3 retries",
+        "text": "Workflow: {{$json.workflow_name}}\nNode: {{$json.node_name}}\nError: {{$json.error_message}}\nContact: {{$json.contact_id}}\nRetries exhausted: {{$json.retry_count}}/{{$json.max_retries}}\n\nManual review required. Check AiTable DLQ table."
+      },
+      "name": "Send Critical Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1170,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Error Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Error Context": {
+      "main": [
+        [
+          {
+            "node": "Log to AiTable DLQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to AiTable DLQ": {
+      "main": [
+        [
+          {
+            "node": "Should Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Retry?": {
+      "main": [
+        [
+          {
+            "node": "Backoff Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Critical Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "dlq"
+    },
+    {
+      "name": "pack-5"
+    }
+  ]
+}

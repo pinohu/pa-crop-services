@@ -1,0 +1,527 @@
+{
+  "name": "Dynasty - QA/Audit Agent: Daily System Integrity",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 4 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Cron 4AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qa-audit-manual",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='system_active'\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Check Emergency Stop",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        500,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.records[0].fields.value}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "System Active?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        700,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUITEDASH_BASE_URL}}/contacts",
+        "authentication": "none",
+        "options": {
+          "timeout": 60000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Public-ID",
+              "value": "={{$env.SUITEDASH_API_ID}}"
+            },
+            {
+              "name": "X-Secret-Key",
+              "value": "={{$env.SUITEDASH_API_SECRET}}"
+            }
+          ]
+        }
+      },
+      "name": "GET SuiteDash Contact Count",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_TABLE}}/records",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET AiTable Client Count",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_ENGAGEMENT_TABLE + '/records?pageSize=100&filterByFormula=' + encodeURIComponent(\"AND({calculated_score}='',{risk_level}='active')\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET Null Engagement Scores",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_DLQ_TABLE + '/records?pageSize=100&filterByFormula=' + encodeURIComponent(\"AND({status}!='resolved',DATETIME_DIFF(NOW(),{first_failure},'hours')>72)\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET Stale DLQ Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        650
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_WORKFLOW_STATE_TABLE + '/records?pageSize=100&filterByFormula=' + encodeURIComponent(\"AND({status}='active',DATETIME_DIFF(NOW(),{last_step_at},'days')>14)\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET Stale Onboarding FLOWs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='api_calls_this_month'\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET API Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        920,
+        950
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const startTime = Date.now();\n\nconst sdContacts = $('GET SuiteDash Contact Count').first().json;\nconst atClients = $('GET AiTable Client Count').first().json;\nconst nullScores = $('GET Null Engagement Scores').first().json;\nconst staleDlq = $('GET Stale DLQ Items').first().json;\nconst staleFlows = $('GET Stale Onboarding FLOWs').first().json;\nconst apiUsage = $('GET API Usage').first().json;\n\nconst sdCount = sdContacts.data?.length || 0;\nconst atCount = atClients.data?.records?.length || 0;\nconst nullScoreCount = nullScores.data?.records?.length || 0;\nconst staleDlqCount = staleDlq.data?.records?.length || 0;\nconst staleFlowCount = staleFlows.data?.records?.length || 0;\nconst apiCallsUsed = parseInt(apiUsage.data?.records?.[0]?.fields?.value || '0');\nconst apiLimit = parseInt(process.env.SUITEDASH_MONTHLY_API_LIMIT || '2000');\nconst apiUsagePct = (apiCallsUsed / apiLimit) * 100;\n\nconst checks = [];\nlet passed = 0;\nlet failed = 0;\nlet autoFixable = 0;\n\n// Check 1: Contact count match\nconst countMatch = Math.abs(sdCount - atCount) <= 2; // Allow 2 variance\nchecks.push({\n  name: 'contact_count_match',\n  status: countMatch ? 'pass' : 'fail',\n  severity: countMatch ? 'none' : 'high',\n  auto_fixable: false,\n  details: `SuiteDash: ${sdCount}, AiTable: ${atCount}, Diff: ${Math.abs(sdCount - atCount)}`\n});\nif (countMatch) passed++; else failed++;\n\n// Check 2: Null engagement scores\nconst scoresOk = nullScoreCount === 0;\nchecks.push({\n  name: 'engagement_scores_populated',\n  status: scoresOk ? 'pass' : 'warn',\n  severity: scoresOk ? 'none' : 'medium',\n  auto_fixable: true,\n  details: `${nullScoreCount} active clients missing engagement scores`\n});\nif (scoresOk) passed++; else { failed++; autoFixable++; }\n\n// Check 3: Stale DLQ items\nconst dlqOk = staleDlqCount === 0;\nchecks.push({\n  name: 'dlq_not_stale',\n  status: dlqOk ? 'pass' : 'fail',\n  severity: dlqOk ? 'none' : 'high',\n  auto_fixable: true,\n  details: `${staleDlqCount} DLQ items unresolved >72 hours`\n});\nif (dlqOk) passed++; else { failed++; autoFixable++; }\n\n// Check 4: Stale onboarding FLOWs\nconst flowsOk = staleFlowCount === 0;\nchecks.push({\n  name: 'onboarding_flows_progressing',\n  status: flowsOk ? 'pass' : 'warn',\n  severity: flowsOk ? 'none' : 'medium',\n  auto_fixable: true,\n  details: `${staleFlowCount} onboarding FLOWs stalled >14 days`\n});\nif (flowsOk) passed++; else { failed++; autoFixable++; }\n\n// Check 5: API usage within safe limits\nconst apiOk = apiUsagePct < 80;\nchecks.push({\n  name: 'api_usage_safe',\n  status: apiOk ? 'pass' : (apiUsagePct >= 95 ? 'fail' : 'warn'),\n  severity: apiOk ? 'none' : (apiUsagePct >= 95 ? 'critical' : 'high'),\n  auto_fixable: true,\n  details: `${apiCallsUsed}/${apiLimit} (${apiUsagePct.toFixed(1)}%) API calls used this month`\n});\nif (apiOk) passed++; else { failed++; autoFixable++; }\n\nconst totalChecks = checks.length;\nconst integrityScore = Math.round((passed / totalChecks) * 100);\nconst hasCritical = checks.some(c => c.severity === 'critical');\nconst hasHigh = checks.some(c => c.severity === 'high');\nconst duration = Math.round((Date.now() - startTime) / 1000);\n\nreturn [{\n  json: {\n    date: new Date().toISOString().split('T')[0],\n    checks_run: totalChecks,\n    checks_passed: passed,\n    checks_failed: failed,\n    anomalies_found: failed,\n    auto_fixable_count: autoFixable,\n    system_integrity_score: integrityScore,\n    run_duration_seconds: duration,\n    has_critical: hasCritical,\n    has_high: hasHigh,\n    needs_alert: hasCritical || hasHigh,\n    checks: checks,\n    null_score_count: nullScoreCount,\n    stale_dlq_count: staleDlqCount,\n    stale_flow_count: staleFlowCount,\n    api_usage_pct: apiUsagePct\n  }\n}];"
+      },
+      "name": "Run All Checks",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.auto_fixable_count}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Any Auto-Fixable?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst fixes = [];\n\n// Auto-fix 1: Trigger engagement scoring run for null scores\nif (data.null_score_count > 0) {\n  fixes.push({action: 'trigger_engagement_scoring', reason: `${data.null_score_count} clients missing scores`});\n}\n\n// Auto-fix 2: Escalate stale DLQ items\nif (data.stale_dlq_count > 0) {\n  fixes.push({action: 'escalate_stale_dlq', reason: `${data.stale_dlq_count} DLQ items >72h`});\n}\n\n// Auto-fix 3: Send reminders for stale flows\nif (data.stale_flow_count > 0) {\n  fixes.push({action: 'send_flow_reminders', reason: `${data.stale_flow_count} FLOWs stalled >14d`});\n}\n\n// Auto-fix 4: Throttle API if near limit\nif (data.api_usage_pct >= 80) {\n  fixes.push({action: 'throttle_api_workflows', reason: `API at ${data.api_usage_pct.toFixed(1)}% of limit`});\n}\n\nreturn [{json: {...data, auto_fixes_applied: fixes}}];"
+      },
+      "name": "Apply Auto-Fixes",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.needs_alert}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Needs Alert?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1450,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$env.SMTP_FROM_EMAIL}}",
+        "subject": "QA AUDIT ALERT — System Integrity: {{$json.system_integrity_score}}%",
+        "text": "Dynasty QA/Audit Report\n========================\nDate: {{$json.date}}\nSystem Integrity: {{$json.system_integrity_score}}%\n\nChecks Run: {{$json.checks_run}}\nPassed: {{$json.checks_passed}}\nFailed: {{$json.checks_failed}}\nAuto-Fixed: {{$json.auto_fixable_count}}\n\nCritical Issues: {{$json.has_critical}}\nHigh Issues: {{$json.has_high}}\n\nAPI Usage: {{$json.api_usage_pct}}%\n\nReview the audit_log table in AiTable for full details."
+      },
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1700,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_AUDIT_LOG_TABLE}}/records",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({date: $json.date, checks_run: $json.checks_run, checks_passed: $json.checks_passed, checks_failed: $json.checks_failed, anomalies_found: $json.anomalies_found, auto_fixed_count: $json.auto_fixable_count, escalated_count: $json.needs_alert ? 1 : 0, system_integrity_score: $json.system_integrity_score, run_duration_seconds: $json.run_duration_seconds})}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log to Audit Table",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1950,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Cron 4AM": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Emergency Stop": {
+      "main": [
+        [
+          {
+            "node": "System Active?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Active?": {
+      "main": [
+        [
+          {
+            "node": "GET SuiteDash Contact Count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET AiTable Client Count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET Null Engagement Scores",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET Stale DLQ Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET Stale Onboarding FLOWs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET API Usage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "GET SuiteDash Contact Count": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET AiTable Client Count": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Null Engagement Scores": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Stale DLQ Items": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Stale Onboarding FLOWs": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET API Usage": {
+      "main": [
+        [
+          {
+            "node": "Run All Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run All Checks": {
+      "main": [
+        [
+          {
+            "node": "Any Auto-Fixable?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Needs Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Auto-Fixable?": {
+      "main": [
+        [
+          {
+            "node": "Apply Auto-Fixes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Needs Alert?": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Apply Auto-Fixes": {
+      "main": [
+        [
+          {
+            "node": "Log to Audit Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Alert Email": {
+      "main": [
+        [
+          {
+            "node": "Log to Audit Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "dynasty-failure-handler"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "qa-audit"
+    },
+    {
+      "name": "agent-7"
+    }
+  ]
+}

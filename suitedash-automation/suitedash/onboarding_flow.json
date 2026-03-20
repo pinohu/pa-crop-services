@@ -1,0 +1,12 @@
+{
+  "name": "Standard Onboarding FLOW",
+  "steps": [
+    {"order": 1, "type": "form", "name": "Kickoff Form", "description": "Niche-specific registration form"},
+    {"order": 2, "type": "file_upload", "name": "Upload Business Documents", "description": "License, insurance, certifications"},
+    {"order": 3, "type": "file_download", "name": "Download Welcome Package", "description": "Guides, templates, brand assets"},
+    {"order": 4, "type": "esigning", "name": "Sign Service Agreement", "description": "Terms of service and membership agreement"},
+    {"order": 5, "type": "appointment", "name": "Schedule Portal Training", "description": "30-minute walkthrough of the portal"},
+    {"order": 6, "type": "checklist", "name": "Go-Live Checklist", "description": "Profile complete, photos uploaded, listing active"}
+  ],
+  "triggers_on_complete": ["Move to Active circle", "Start engagement scoring", "Fire n8n onboarding webhook"]
+}

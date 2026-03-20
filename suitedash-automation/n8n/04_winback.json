@@ -1,0 +1,476 @@
+{
+  "name": "Dynasty - Pack 4: Win-Back (Churned Member Recovery)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Weekly Cron Monday 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='system_active'\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Check Emergency Stop",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.records[0].fields.value}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "System Active?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_CLIENTS_TABLE + '/records?pageSize=200&filterByFormula=' + encodeURIComponent(\"{lifecycle_stage}='churned'\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET Churned Members",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const churned = $input.first().json.data?.records || [];\nconst results = [];\n\nfor (const record of churned) {\n  const f = record.fields;\n  const churnDate = new Date(f.churned_date || f.renewal_date);\n  const now = new Date();\n  const daysSinceChurn = Math.ceil((now - churnDate) / (1000 * 60 * 60 * 24));\n  \n  let winbackStep = 'none';\n  let offer = '';\n  \n  if (daysSinceChurn <= 7) {\n    winbackStep = 'day3_we_miss_you';\n    offer = 'none';\n  } else if (daysSinceChurn <= 14) {\n    winbackStep = 'day7_whats_wrong';\n    offer = 'free_consultation';\n  } else if (daysSinceChurn <= 30) {\n    winbackStep = 'day14_special_offer';\n    offer = '25_percent_off_3months';\n  } else if (daysSinceChurn <= 60) {\n    winbackStep = 'day30_last_chance';\n    offer = '50_percent_off_first_month';\n  } else if (daysSinceChurn <= 90) {\n    winbackStep = 'day60_final_farewell';\n    offer = 'free_month_trial';\n  }\n  // After 90 days, stop contacting\n  \n  if (winbackStep !== 'none') {\n    results.push({\n      json: {\n        client_id: f.client_id,\n        email: f.email,\n        name: f.name,\n        niche: f.niche,\n        previous_tier: f.membership_tier,\n        ltv: f.ltv || 0,\n        engagement_score_at_churn: f.engagement_score || 0,\n        days_since_churn: daysSinceChurn,\n        winback_step: winbackStep,\n        offer: offer\n      }\n    });\n  }\n}\n\nreturn results.length > 0 ? results : [{json: {no_winbacks: true}}];"
+      },
+      "name": "Classify Win-Back Stage",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.no_winbacks}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Any Win-Backs?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "output": 0,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.winback_step}}",
+                    "rightValue": "day3_we_miss_you",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 1,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.winback_step}}",
+                    "rightValue": "day7_whats_wrong",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 2,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.winback_step}}",
+                    "rightValue": "day14_special_offer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 3,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.winback_step}}",
+                    "rightValue": "day30_last_chance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 4,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.winback_step}}",
+                    "rightValue": "day60_final_farewell",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "Switch: Win-Back Stage",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "We miss you, {{$json.name}} — your {{$json.niche}} listing is waiting",
+        "text": "Hi {{$json.name}},\n\nWe noticed you're no longer active in the {{$json.niche}} directory.\n\nYour listing was helping potential clients find your business. Without it, those leads are going to your competitors.\n\nWant to come back? Just reply to this email and we'll get you set up again.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: We Miss You",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1800,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Quick question about your {{$json.niche}} experience",
+        "text": "Hi {{$json.name}},\n\nWe'd love to understand what happened. Was there something we could have done better?\n\nAs a gesture, we'd like to offer you a free consultation on optimizing your listing — no strings attached.\n\nJust reply 'Yes' and we'll schedule a quick call.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: What Went Wrong",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1800,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Special offer: 25% off for 3 months — {{$json.niche}} directory",
+        "text": "Hi {{$json.name}},\n\nWe want you back. For a limited time, rejoin the {{$json.niche}} directory and get 25% off for your first 3 months.\n\nThat means your {{$json.previous_tier}} tier is just $73/mo instead of $97/mo (or $223/mo instead of $297/mo for Premium).\n\nClaim your offer: {{$env.SUITEDASH_PORTAL_URL}}\n\nOffer expires in 7 days.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: Special Offer",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1800,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "Last chance: 50% off your first month back — {{$json.niche}} directory",
+        "text": "Hi {{$json.name}},\n\nThis is our best offer yet. Come back to the {{$json.niche}} directory and get 50% off your first month.\n\nYour competitors are getting the leads you used to get. Don't let them win.\n\nRejoin now: {{$env.SUITEDASH_PORTAL_URL}}\n\nThis offer expires in 48 hours.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: Last Chance",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1800,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$json.email}}",
+        "subject": "A free month on us — {{$json.niche}} directory",
+        "text": "Hi {{$json.name}},\n\nIt's been a while. We'd love to give you one more chance to see the value of the {{$json.niche}} directory.\n\nHere's a completely free month — no credit card needed. If you don't see results, no hard feelings.\n\nClaim your free month: {{$env.SUITEDASH_PORTAL_URL}}\n\nThis is our final outreach. We respect your time.\n\n— The {{$json.niche}} Directory Team"
+      },
+      "name": "Email: Final Farewell",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1800,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_COMMS_LOG_TABLE}}/records",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({client_id: $json.client_id, message_type: $json.winback_step, channel: 'email', subject: 'Win-back sequence', sent_at: new Date().toISOString(), agent_generated: true, sequence_name: 'winback_90day'})}}"
+            }
+          ]
+        },
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log to Communication Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2050,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly Cron Monday 8AM": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Emergency Stop": {
+      "main": [
+        [
+          {
+            "node": "System Active?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Active?": {
+      "main": [
+        [
+          {
+            "node": "GET Churned Members",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "GET Churned Members": {
+      "main": [
+        [
+          {
+            "node": "Classify Win-Back Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Win-Back Stage": {
+      "main": [
+        [
+          {
+            "node": "Any Win-Backs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Win-Backs?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Switch: Win-Back Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Win-Back Stage": {
+      "main": [
+        [
+          {
+            "node": "Email: We Miss You",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: What Went Wrong",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: Special Offer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: Last Chance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email: Final Farewell",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: We Miss You": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: What Went Wrong": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Special Offer": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Last Chance": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: Final Farewell": {
+      "main": [
+        [
+          {
+            "node": "Log to Communication Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "dynasty-failure-handler"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "winback"
+    },
+    {
+      "name": "pack-4"
+    }
+  ]
+}

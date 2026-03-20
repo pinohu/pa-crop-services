@@ -1,0 +1,354 @@
+{
+  "name": "Dynasty - Pack 6: SuiteDash <> AiTable Data Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */4 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Every 4 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='system_active'\") }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Check Emergency Stop",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.records[0].fields.value}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "System Active?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUITEDASH_BASE_URL}}/contacts",
+        "authentication": "none",
+        "options": {
+          "timeout": 60000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Public-ID",
+              "value": "={{$env.SUITEDASH_API_ID}}"
+            },
+            {
+              "name": "X-Secret-Key",
+              "value": "={{$env.SUITEDASH_API_SECRET}}"
+            }
+          ]
+        }
+      },
+      "name": "GET SuiteDash Contacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_TABLE}}/records",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "GET AiTable Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        850,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sdContacts = $('GET SuiteDash Contacts').first().json.data || [];\nconst atRecords = $('GET AiTable Clients').first().json.data?.records || [];\n\n// Build lookup maps\nconst sdMap = new Map();\nfor (const c of sdContacts) {\n  sdMap.set(c.email?.toLowerCase(), c);\n}\n\nconst atMap = new Map();\nfor (const r of atRecords) {\n  atMap.set(r.fields.email?.toLowerCase(), r);\n}\n\nconst toCreate = []; // In AiTable but not SuiteDash (shouldn't happen, but log it)\nconst toUpdate = []; // In both, but fields differ\nconst orphaned = []; // In AiTable but not in SuiteDash\n\n// Check AiTable records against SuiteDash\nfor (const [email, atRecord] of atMap) {\n  if (!sdMap.has(email)) {\n    orphaned.push({email, aitable_id: atRecord.recordId, reason: 'in_aitable_not_suitedash'});\n  } else {\n    const sd = sdMap.get(email);\n    const at = atRecord.fields;\n    // Check for field drift\n    const drifts = [];\n    if (sd.custom_membership_tier && at.membership_tier && sd.custom_membership_tier !== at.membership_tier) {\n      drifts.push({field: 'membership_tier', suitedash: sd.custom_membership_tier, aitable: at.membership_tier});\n    }\n    if (sd.custom_lifecycle_stage && at.lifecycle_stage && sd.custom_lifecycle_stage !== at.lifecycle_stage) {\n      drifts.push({field: 'lifecycle_stage', suitedash: sd.custom_lifecycle_stage, aitable: at.lifecycle_stage});\n    }\n    if (drifts.length > 0) {\n      toUpdate.push({email, suitedash_id: sd.id, aitable_id: atRecord.recordId, drifts});\n    }\n  }\n}\n\n// Check SuiteDash contacts not in AiTable\nfor (const [email, sdContact] of sdMap) {\n  if (!atMap.has(email)) {\n    toCreate.push({\n      email,\n      suitedash_id: sdContact.id,\n      name: `${sdContact.first_name || ''} ${sdContact.last_name || ''}`.trim(),\n      reason: 'in_suitedash_not_aitable'\n    });\n  }\n}\n\nconst summary = {\n  suitedash_count: sdContacts.length,\n  aitable_count: atRecords.length,\n  to_create_in_aitable: toCreate.length,\n  to_update: toUpdate.length,\n  orphaned: orphaned.length,\n  sync_time: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    summary,\n    to_create: toCreate,\n    to_update: toUpdate,\n    orphaned,\n    has_issues: toCreate.length > 0 || toUpdate.length > 0 || orphaned.length > 0\n  }\n}];"
+      },
+      "name": "Compare & Detect Drift",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.has_issues}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Any Sync Issues?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst toCreate = data.to_create || [];\nconst results = [];\n\nfor (const item of toCreate) {\n  results.push({\n    json: {\n      fields: {\n        client_id: item.suitedash_id,\n        suitedash_id: item.suitedash_id,\n        email: item.email,\n        name: item.name,\n        lifecycle_stage: 'active',\n        engagement_score: 0,\n        signup_date: new Date().toISOString()\n      }\n    }\n  });\n}\n\nreturn results.length > 0 ? results : [{json: {skip: true}}];"
+      },
+      "name": "Prepare New Records",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_TABLE}}/records",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify($json.fields)}}"
+            }
+          ]
+        },
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Create Missing AiTable Records",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "={{$env.SMTP_FROM_EMAIL}}",
+        "subject": "Data Sync Report — {{$json.summary.sync_time}}",
+        "text": "Dynasty Data Sync Report\n========================\nSuiteDash contacts: {{$json.summary.suitedash_count}}\nAiTable records: {{$json.summary.aitable_count}}\n\nIssues Found:\n- Missing from AiTable (auto-created): {{$json.summary.to_create_in_aitable}}\n- Field drift detected: {{$json.summary.to_update}}\n- Orphaned AiTable records: {{$json.summary.orphaned}}\n\nAction: Review drift and orphaned records in AiTable.\nDashboard: Check daily_analytics for trends."
+      },
+      "name": "Send Sync Report",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1600,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_ANALYTICS_TABLE}}/records",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({date: new Date().toISOString().split('T')[0], total_active: $json.summary.suitedash_count, api_calls_used: $json.summary.suitedash_count + $json.summary.aitable_count, api_calls_limit: 2000})}}"
+            }
+          ]
+        },
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Update Analytics",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Every 4 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Emergency Stop": {
+      "main": [
+        [
+          {
+            "node": "System Active?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Active?": {
+      "main": [
+        [
+          {
+            "node": "GET SuiteDash Contacts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET AiTable Clients",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "GET SuiteDash Contacts": {
+      "main": [
+        [
+          {
+            "node": "Compare & Detect Drift",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET AiTable Clients": {
+      "main": [
+        [
+          {
+            "node": "Compare & Detect Drift",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare & Detect Drift": {
+      "main": [
+        [
+          {
+            "node": "Any Sync Issues?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Sync Issues?": {
+      "main": [
+        [
+          {
+            "node": "Prepare New Records",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Sync Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare New Records": {
+      "main": [
+        [
+          {
+            "node": "Create Missing AiTable Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Sync Report": {
+      "main": [
+        [
+          {
+            "node": "Update Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "dynasty-failure-handler"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "sync"
+    },
+    {
+      "name": "pack-6"
+    }
+  ]
+}

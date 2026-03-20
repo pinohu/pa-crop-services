@@ -1,0 +1,648 @@
+{
+  "name": "Dynasty - Master Event Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dynasty-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook: All Events",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        400
+      ],
+      "webhookId": "dynasty-master-router"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://aitable.ai/fusion/v1/datasheets/' + $env.AITABLE_SYSTEM_CONFIG_TABLE + '/records?pageSize=50&filterByFormula=' + encodeURIComponent(\"{config_key}='system_active'\") }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 5000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Check Emergency Stop",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        480,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.records[0].fields.value}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "System Active?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        710,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst eventType = event.event_type || 'unknown';\n\nconst routing = {\n  'kickoff_form_submitted': 'onboarding',\n  'contact_created': 'onboarding',\n  'flow_completed': 'engagement',\n  'login': 'engagement',\n  'profile_updated': 'engagement',\n  'feature_used': 'engagement',\n  'community_post': 'engagement',\n  'support_ticket_created': 'engagement',\n  'subscription_approaching_renewal': 'renewal',\n  'invoice_overdue': 'renewal',\n  'invoice_paid': 'renewal',\n  'subscription_cancelled': 'winback',\n  'contact_churned': 'winback',\n  'lead_form_submitted': 'agent_qualification',\n  'engagement_score_dropped': 'agent_communication',\n  'milestone_reached': 'agent_communication',\n  'workflow_failed': 'failure_handler',\n  'payment_failed': 'failure_handler',\n  'api_error': 'failure_handler'\n};\n\nconst destination = routing[eventType] || 'unknown';\n\nreturn [{\n  json: {\n    ...event,\n    routed_to: destination,\n    routed_at: new Date().toISOString(),\n    router_version: '1.0'\n  }\n}];"
+      },
+      "name": "Route Event",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_EVENT_LOG_TABLE}}/records",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({event_type: $json.event_type || 'unknown', routed_to: $json.routed_to, contact_id: $json.contact_id || '', timestamp: $json.routed_at, status: 'routed', source: $json.source || 'suitedash_webhook'})}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log Event to AiTable",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        940,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "output": 0,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "onboarding",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 1,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "engagement",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 2,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "renewal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 3,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "winback",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 4,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "agent_qualification",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 5,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "agent_communication",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 6,
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.routed_to}}",
+                    "rightValue": "failure_handler",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "output": 7
+            }
+          ]
+        }
+      },
+      "name": "Switch: Destination",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/suitedash-onboarding",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Onboarding Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        50
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/engagement-event",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Engagement Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/renewal-event",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Renewal Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/winback-event",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Winback Pack",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/lead-qualification",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Lead Qualification Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/agent-communication",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Communication Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.N8N_WEBHOOK_BASE}}/failure-event",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "payload",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger: Failure Handler",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        650
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"routed\", \"destination\": \"{{$json.routed_to}}\", \"event_type\": \"{{$json.event_type}}\"}"
+      },
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        1500,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://aitable.ai/fusion/v1/datasheets/{{$env.AITABLE_EVENT_LOG_TABLE}}/records",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{JSON.stringify({event_type: $json.event_type || 'unknown', contact_id: $json.contact_id || '', timestamp: new Date().toISOString(), status: 'paused', routed_to: 'none_system_paused', source: $json.source || 'suitedash_webhook'})}}"
+            }
+          ]
+        },
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.AITABLE_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Log Paused Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        940,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"paused\", \"message\": \"System is in emergency stop mode. Event logged but not processed.\", \"event_type\": \"{{$json.event_type}}\"}"
+      },
+      "name": "Paused Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        1200,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: All Events": {
+      "main": [
+        [
+          {
+            "node": "Check Emergency Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Emergency Stop": {
+      "main": [
+        [
+          {
+            "node": "System Active?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Active?": {
+      "main": [
+        [
+          {
+            "node": "Route Event",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Event to AiTable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Paused Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Paused Event": {
+      "main": [
+        [
+          {
+            "node": "Paused Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Event": {
+      "main": [
+        [
+          {
+            "node": "Switch: Destination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Destination": {
+      "main": [
+        [
+          {
+            "node": "Trigger: Onboarding Pack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Engagement Pack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Renewal Pack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Winback Pack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Lead Qualification Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Communication Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger: Failure Handler",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Onboarding Pack": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Engagement Pack": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Renewal Pack": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Winback Pack": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Lead Qualification Agent": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Communication Agent": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Failure Handler": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "dynasty"
+    },
+    {
+      "name": "router"
+    },
+    {
+      "name": "core"
+    }
+  ]
+}
