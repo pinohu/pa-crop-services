@@ -17,6 +17,7 @@ A Dynasty Empire venture targeting $600K+ ARR through compliance automation.
 | `partner-deck/` | Partner Pitch Deck (.pptx) + generator | 9-slide deck for CPA/Attorney white-label partner program |
 | `marketing/website/` | Landing Page (index.html) | Complete marketing website with pricing, FAQ, Schema.org markup |
 | `marketing/seo-articles/` | SEO Article Pack (.md) | 5 foundational articles targeting high-intent PA compliance keywords |
+| `suitedash-automation/` | Full automation layer | 6 n8n workflows, 5 AI agents, CROP niche config, scripts — adopted from [SuiteDash repo](https://github.com/pinohu/SuiteDash) |
 
 ## The Opportunity
 
