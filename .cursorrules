@@ -1,0 +1,67 @@
+# .cursorrules — PA CROP Services
+
+You are working on PA CROP Services, a Pennsylvania Commercial Registered Office Provider (CROP) business.
+
+## Business Context
+- Legal entity: PA Registered Office Services, LLC
+- Domain: pacropservices.com
+- Brand: PA CROP Services
+- Location: Erie, Pennsylvania
+- Parent: Dynasty Empire Holdings
+- Status: Pre-launch (building toward first clients)
+
+## Technology Stack
+- Hosting: Vercel (static site, auto-deploys from GitHub main branch)
+- Payments: Stripe (Payment Links for checkout, webhooks for automation)
+- CRM/Portal: SuiteDash (client portal, CRM, billing, e-signatures, tickets)
+- Automation: n8n (self-hosted at n8n.audreysplace.place — webhooks, crons, email sequences)
+- Data: AiTable (event logging, lead scores, engagement tracking)
+- AI Agents: OpenClaw (orchestration), Flint (VM agent on Debian at 172.20.192.46)
+
+## Repository Structure
+```
+/public                    — Deployed website (Vercel serves this directory)
+/business-plan             — 360-degree business plan (.docx + generator .js)
+/financial-model           — 24-month P&L model (.xlsx + generator .py)
+/legal                     — Service agreement, CROP registration docs
+/marketing/website         — Landing page source (index.html)
+/marketing/seo-articles    — 5 foundational SEO articles (.md)
+/operations                — Operations bible, risk analysis, unconsidered risks
+/partner-deck              — CPA/Attorney partner pitch deck (.pptx + generator .js)
+/suitedash-automation      — n8n workflows, AI agents, SuiteDash niche config
+  /n8n                     — Importable workflow JSON files
+  /agents                  — Node.js agent modules
+  /suitedash/niche_configs — pa_crop.json (complete SuiteDash configuration)
+  /scripts                 — Emergency stop, connection verification
+  /env                     — .env.example with all required credentials
+```
+
+## Coding Conventions
+- Marketing site: Vanilla HTML/CSS/JS (NO frameworks — it's a static Vercel site)
+- n8n workflows: JSON files importable via n8n UI
+- Agent modules: Node.js (CommonJS require, not ES modules)
+- Financial model generator: Python (openpyxl)
+- Document generators: Node.js (docx library for .docx, pptxgenjs for .pptx)
+- All email templates: Copy from operations/PA-CROP-Operations-Bible.md
+- SuiteDash API: Headers are X-Public-ID + X-Secret-Key (NOT Authorization: Bearer)
+- Stripe: Use Payment Links (not custom Checkout Sessions) for simplicity
+- Git: Commit to main branch, push to origin — Vercel auto-deploys
+
+## Key Files to Read First
+1. PA-CROP-Execution-Plan.md — The master 11-phase build plan
+2. PA-CROP-AI-Agent-Orchestration-Guide.md — Which tool does what
+3. operations/PA-CROP-Operations-Bible.md — Every SOP, email, script
+4. suitedash-automation/suitedash/niche_configs/pa_crop.json — SuiteDash configuration
+
+## When I Ask You To "Deploy"
+1. git add -A
+2. git commit -m "[descriptive message]"
+3. git push origin main
+4. Vercel auto-deploys. No manual deployment step needed.
+
+## PA CROP Business Rules
+- Annual report deadlines: Corporations June 30, LLCs September 30, All others December 31
+- CROP filing fee: $7 for for-profit entities, $0 for nonprofits
+- Service tiers: Starter $79/yr, Professional $179/yr, Premium $299/yr
+- Partner rate: $99/client/year (white-label)
+- The 2027 dissolution deadline is the core urgency driver in all marketing content
