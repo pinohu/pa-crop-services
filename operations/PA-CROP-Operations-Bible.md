@@ -225,7 +225,7 @@ What happens now:
 
 Your entity: [Entity Name]
 Entity number: [Entity Number]
-Your CROP: PA CROP Services (Dynasty Compliance Services, LLC)
+Your CROP: PA CROP Services (PA Registered Office Services, LLC)
 
 Best,
 The PA CROP Services Team
@@ -247,7 +247,7 @@ OPTION A — Online (Recommended, fastest):
 2. Log in or search for your entity: [Entity Name]
 3. Select "File a Change of Registered Office"
 4. Choose "Commercial Registered Office Provider"
-5. Enter our name: Dynasty Compliance Services, LLC
+5. Enter our name: PA Registered Office Services, LLC
 6. Submit. Fee: $5 online.
 
 OPTION B — By Mail:

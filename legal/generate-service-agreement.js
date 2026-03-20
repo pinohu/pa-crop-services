@@ -74,7 +74,7 @@ const doc = new Document({
 
       // PREAMBLE
       p([bold("This Commercial Registered Office Provider Service Agreement"), normal(" (\u201CAgreement\u201D) is entered into as of _________________ (\u201CEffective Date\u201D) by and between:")]),
-      p([bold("Provider: "), normal("Dynasty Compliance Services, LLC, a Pennsylvania limited liability company, with its principal office located at [ADDRESS], Erie, Pennsylvania 16501 (\u201CProvider\u201D or \u201CCROP\u201D)")]),
+      p([bold("Provider: "), normal("PA Registered Office Services, LLC, a Pennsylvania limited liability company, with its principal office located at [ADDRESS], Erie, Pennsylvania 16501 (\u201CProvider\u201D or \u201CCROP\u201D)")]),
       p([bold("Client: "), normal("__________________________________________, a _________________________ (entity type) organized under the laws of _________________________ (state/jurisdiction), with entity number _________________ (\u201CClient\u201D)")]),
       p("Provider and Client are collectively referred to as the \u201CParties\u201D and individually as a \u201CParty.\u201D"),
 
@@ -151,7 +151,7 @@ const doc = new Document({
       h("Signatures"),
       p("IN WITNESS WHEREOF, the Parties have executed this Agreement as of the Effective Date."),
       new Paragraph({ spacing: { before: 400 } }),
-      p([bold("PROVIDER:"), normal(" Dynasty Compliance Services, LLC")]),
+      p([bold("PROVIDER:"), normal(" PA Registered Office Services, LLC")]),
       new Paragraph({ spacing: { before: 300 } }),
       p("By: ________________________________________"),
       p("Name: ________________________________________"),

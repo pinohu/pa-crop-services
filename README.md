@@ -82,7 +82,7 @@ node partner-deck/generate-partner-deck.js
 ```
 Dynasty Empire Holdings (SD Dynasty Trust)
   └── Wyoming Holding Company
-       └── Dynasty Compliance Services, LLC (PA)
+       └── PA Registered Office Services, LLC (PA)
             └── DBA: PA CROP Services
 ```
 

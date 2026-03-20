@@ -176,7 +176,7 @@ const doc = new Document({
 
         h2("3.2 Entity Structure"),
         p("The CROP business will operate under an existing or new Pennsylvania LLC within the Dynasty Empire structure:"),
-        pb("Operating entity", "New PA LLC (e.g., \u201CDynasty Compliance Services, LLC\u201D)"),
+        pb("Operating entity", "New PA LLC (e.g., \u201CPA Registered Office Services, LLC\u201D)"),
         pb("Holding structure", "Wyoming holding company \u2192 PA operating LLC"),
         pb("Tax election", "S-Corp election once revenue exceeds $80K (self-employment tax savings)"),
         pb("Physical address", "Erie, PA (existing address)"),
@@ -476,7 +476,7 @@ const doc = new Document({
         new Paragraph({ children: [new PageBreak()] }),
         h1("Appendix A: CROP Service Agreement Template"),
         p("The following is an outline of the key terms for the CROP service agreement. This should be reviewed and finalized by a Pennsylvania business attorney before use."),
-        bulletItem("Parties: Dynasty Compliance Services, LLC (\u201CProvider\u201D) and the Client Entity", "bullets3"),
+        bulletItem("Parties: PA Registered Office Services, LLC (\u201CProvider\u201D) and the Client Entity", "bullets3"),
         bulletItem("Services: Provider agrees to serve as Commercial Registered Office Provider under 15 Pa.C.S. \u00A7 109", "bullets3"),
         bulletItem("Address: Provider\u2019s registered office address in Erie, Pennsylvania", "bullets3"),
         bulletItem("Term: One (1) year from the effective date, auto-renewing unless cancelled 30 days prior to renewal", "bullets3"),
