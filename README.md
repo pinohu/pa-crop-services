@@ -12,7 +12,7 @@ Domain: pacropservices.com | Entity: PA Registered Office Services, LLC | Locati
 # Deploy: connect this repo to Vercel, output directory = public
 # Replace placeholders in public/*.html:
 #   STRIPE_STARTER_LINK / STRIPE_PROFESSIONAL_LINK / STRIPE_PREMIUM_LINK
-#   GA_MEASUREMENT_ID / BUSINESS_PHONE / STRIPE_PORTAL_ID
+#   BUSINESS_PHONE / STRIPE_PORTAL_ID
 ```
 
 ## What's In This Repo

@@ -12,7 +12,7 @@
       {
         "id": "crop-ceo",
         "name": "CROP CEO",
-        "workspace": "/root/.openclaw/workspaces/crop-ceo",
+        "workspace": "~/.openclaw/workspaces/crop-ceo",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6"
         }
@@ -20,7 +20,7 @@
       {
         "id": "crop-developer",
         "name": "CROP Developer",
-        "workspace": "/root/.openclaw/workspaces/crop-developer",
+        "workspace": "~/.openclaw/workspaces/crop-developer",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6"
         }
@@ -28,7 +28,7 @@
       {
         "id": "crop-marketer",
         "name": "CROP Marketer",
-        "workspace": "/root/.openclaw/workspaces/crop-marketer",
+        "workspace": "~/.openclaw/workspaces/crop-marketer",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6"
         }
@@ -36,7 +36,7 @@
       {
         "id": "crop-ops",
         "name": "CROP Operations",
-        "workspace": "/root/.openclaw/workspaces/crop-ops",
+        "workspace": "~/.openclaw/workspaces/crop-ops",
         "model": {
           "primary": "anthropic/claude-sonnet-4-6"
         }

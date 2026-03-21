@@ -329,7 +329,7 @@ TASK 1: Update the landing page
   - Professional button: [PASTE PROFESSIONAL STRIPE LINK]  
   - Premium button: [PASTE PREMIUM STRIPE LINK]
 - Replace (XXX) XXX-XXXX with [YOUR PHONE NUMBER]
-- Add Google Analytics tracking code to the <head>: [PASTE YOUR GA CODE]
+- Plausible Analytics is already embedded — no action needed
 
 TASK 2: Create the deployment structure
 - Create a /public directory in the repo root
@@ -346,7 +346,7 @@ TASK 3: Convert SEO articles to HTML pages
   - Include Schema.org Article markup
   - Have internal links to other articles and back to the pricing page
   - Have a CTA at the bottom: "Need a PA registered office? Plans from $79/year"
-  - Include the Google Analytics tracking code
+  - Plausible Analytics script is already included
 - Name them:
   - public/what-is-a-pennsylvania-crop.html
   - public/pa-annual-report-requirement-guide.html

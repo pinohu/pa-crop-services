@@ -720,16 +720,12 @@ Sitemap: https://pacropservices.com/sitemap.xml
 ```
 - **Commit and push**
 
-## 8.4 Set Up Google Analytics [DEVELOPER CAN DO]
-- **Go to:** https://analytics.google.com
-- **Create account** → Property name: "PA CROP Services" → Web → pacropservices.com
-- **Copy the tracking code** (starts with `G-`)
-- **Add to the `<head>` of every HTML page:**
-```html
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXX"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXX');</script>
-```
-- **Commit and push**
+## 8.4 Analytics (Already Configured) [NO ACTION NEEDED]
+- **Plausible Analytics** is already embedded in all HTML pages
+- Privacy-first, no cookies, GDPR compliant — better for a compliance business
+- To view stats: sign up at https://plausible.io and add pacropservices.com
+- Or self-host: see docker-compose.yml in the POWER-TOOLS.md guide
+- **No placeholder to replace** — the script tag is already live
 
 ---
 
@@ -909,7 +905,7 @@ Sitemap: https://pacropservices.com/sitemap.xml
 | Build n8n workflows | ❌ | ✅ Best | ✅ Can |
 | Configure SuiteDash | ❌ | ✅ Can | ✅ Best |
 | Convert articles to HTML | ❌ | ✅ Best | ✅ Can |
-| Set up Google Analytics | ❌ | ✅ Can | ✅ Best |
+| Analytics (Plausible) | — | Already configured | — |
 | CPA partner outreach | ✅ Must | ❌ | ❌ |
 | Test end-to-end flow | ✅ Must | ❌ | ❌ |
 

@@ -168,7 +168,7 @@ This is the folder that becomes your website. When Vercel deploys, it serves eve
 ### `public/index.html`
 **What:** Your main landing page. Has: navigation bar, hero section, trust statistics, urgency section (2027 deadline), 6 feature cards, 3-tier pricing table (Starter/Professional/Premium), partner section, 7-question FAQ, final CTA, footer with real article links.
 **Why:** This is the page people see when they visit pacropservices.com. It's designed to explain the service and get them to click a pricing button.
-**Contains placeholders:** `STRIPE_STARTER_LINK`, `STRIPE_PROFESSIONAL_LINK`, `STRIPE_PREMIUM_LINK`, `GA_MEASUREMENT_ID`, `BUSINESS_PHONE` — you replace these with your real values.
+**Contains placeholders:** `STRIPE_STARTER_LINK`, `STRIPE_PROFESSIONAL_LINK`, `STRIPE_PREMIUM_LINK`, `BUSINESS_PHONE` — you replace these with your real values. Analytics is already set to Plausible (no placeholder needed).
 
 ### `public/welcome.html`
 **What:** The page a customer sees immediately after paying on Stripe. Shows a green checkmark, "Welcome to PA CROP Services!", and a 4-step onboarding timeline.
