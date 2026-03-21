@@ -74,13 +74,13 @@
 
 ## LOW (expected placeholders — need real values at deploy time)
 
-### 12. ℹ️ BUSINESS_PHONE — in 3 HTML pages and 3 n8n workflows
+### 12. ✅ BUSINESS_PHONE — RESOLVED (814-480-0989 in all HTML and workflows)
 - Replace with real phone number before launch. Expected.
 
 ### 13. ℹ️ STRIPE_*_LINK — in public/index.html (3 buttons)
 - Replace with real Stripe Payment Links before launch. Expected.
 
-### 14. ℹ️ STRIPE_PORTAL_ID — in dunning workflow
+### 14. ℹ️ STRIPE_PORTAL_ID — RESOLVED (bpc_1TDFLjLeZEBBH8L7WCL51yet)
 - Replace after creating Stripe customer portal. Expected.
 
 ### 15. ℹ️ SMTP_CREDENTIAL_ID — in 5 n8n workflows
