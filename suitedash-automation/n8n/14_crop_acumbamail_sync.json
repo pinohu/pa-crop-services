@@ -1,0 +1,62 @@
+{
+  "name": "CROP — Sync Client to Acumbamail",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Sync New Clients to Acumbamail\n\nTrigger: Called by the onboarding workflow after SuiteDash contact is created.\nAdds the new client to the 'PA CROP Services - All Clients' list in Acumbamail.\n\nAcumbamail List ID: 1267324 (All Clients)\nAcumbamail List ID: 1267325 (CPA Partners)\n\nCredential ID: 2mITH7BGZDpaPLeu",
+        "width": 450,
+        "height": 200,
+        "color": 5
+      },
+      "id": "note-acumba",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-acumbamail-sync",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-acumba",
+      "name": "Sync Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "crop-acumbamail-sync"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://acumbamail.com/api/1/addSubscriber/",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "auth_token", "value": "0cdbad074aa140a5bf7274027a53f780" },
+            { "name": "list_id", "value": "1267324" },
+            { "name": "response_type", "value": "json" },
+            { "name": "merge_fields[email]", "value": "={{$json.body.email || $json.email}}" },
+            { "name": "merge_fields[name]", "value": "={{$json.body.name || $json.body.fullName || $json.name || ''}}" },
+            { "name": "merge_fields[tier]", "value": "={{$json.body.tier || $json.tier || 'Starter'}}" },
+            { "name": "merge_fields[entity]", "value": "={{$json.body.entityName || $json.entityName || ''}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "add-subscriber",
+      "name": "Add to Acumbamail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [350, 300]
+    }
+  ],
+  "connections": {
+    "Sync Webhook": {
+      "main": [[{ "node": "Add to Acumbamail", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

@@ -82,8 +82,8 @@
       "position": [600, 400],
       "credentials": {
         "smtp": {
-          "id": "SMTP_CREDENTIAL_ID",
-          "name": "CROP SMTP"
+          "id": "qwwVH3KJASNbk93F",
+          "name": "Emailit CROP SMTP"
         }
       }
     },

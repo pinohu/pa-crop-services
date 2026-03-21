@@ -100,7 +100,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
       "position": [1350, 200],
-      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+      "credentials": { "smtp": { "id": "qwwVH3KJASNbk93F", "name": "Emailit CROP SMTP" } }
     },
     {
       "parameters": {
@@ -116,7 +116,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
       "position": [1350, 400],
-      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+      "credentials": { "smtp": { "id": "qwwVH3KJASNbk93F", "name": "Emailit CROP SMTP" } }
     }
   ],
   "connections": {

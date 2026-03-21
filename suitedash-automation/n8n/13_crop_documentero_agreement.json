@@ -1,0 +1,91 @@
+{
+  "name": "CROP — Auto-Generate Service Agreement (Documentero)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Auto-Generate Service Agreement via Documentero\n\nTrigger: Called by the onboarding workflow after a new client pays.\nFlow: Receive client data → call Documentero API with template + merge fields → get PDF → upload to SuiteDash client folder.\n\n**SETUP:**\n1. Upload the PA-CROP-Service-Agreement.docx to Documentero as a template\n2. Note the template ID\n3. Replace DOCUMENTERO_TEMPLATE_ID below with the real ID\n4. Documentero API key is already configured in n8n credential: 1iwHVJxga79OqoMk",
+        "width": 520,
+        "height": 250,
+        "color": 4
+      },
+      "id": "note-doc",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-generate-agreement",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-doc",
+      "name": "Generate Agreement Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "crop-generate-agreement"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.documentero.com/api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"document\": \"DOCUMENTERO_TEMPLATE_ID\",\n  \"format\": \"pdf\",\n  \"data\": [\n    {\n      \"client_name\": \"{{$json.body.fullName || $json.body.name || 'Client'}}\",\n      \"entity_name\": \"{{$json.body.entityName || 'Entity Name'}}\",\n      \"entity_number\": \"{{$json.body.entityNumber || ''}}\",\n      \"entity_type\": \"{{$json.body.entityType || 'Domestic LLC'}}\",\n      \"client_address\": \"{{$json.body.address || ''}}\",\n      \"client_email\": \"{{$json.body.email || ''}}\",\n      \"service_tier\": \"{{$json.body.tier || 'Starter'}}\",\n      \"annual_fee\": \"{{$json.body.tier === 'Premium' ? '$299.00' : $json.body.tier === 'Professional' ? '$179.00' : '$79.00'}}\",\n      \"effective_date\": \"{{new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}}\",\n      \"provider_name\": \"PA Registered Office Services, LLC\",\n      \"provider_address\": \"Erie, PA\",\n      \"provider_phone\": \"BUSINESS_PHONE\",\n      \"provider_email\": \"hello@pacropservices.com\"\n    }\n  ]\n}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "call-documentero",
+      "name": "Generate PDF via Documentero",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst clientData = $('Generate Agreement Webhook').first().json.body || {};\n\n// Documentero returns a URL to the generated PDF\nconst pdfUrl = response.data || response.url || response.document_url || '';\n\nreturn [{\n  json: {\n    pdfUrl,\n    clientEmail: clientData.email || '',\n    clientName: clientData.fullName || clientData.name || '',\n    entityName: clientData.entityName || '',\n    tier: clientData.tier || 'Starter',\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "extract-pdf",
+      "name": "Extract PDF URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.clientEmail}}",
+        "subject": "Your PA CROP Services Agreement — please review and sign",
+        "emailType": "html",
+        "html": "=<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#1B4F8A'>Your Service Agreement</h2><p>Hi {{$json.clientName}},</p><p>Your personalized service agreement for <strong>{{$json.entityName}}</strong> is ready for review.</p><p>Please download, review, and sign the attached agreement. Once signed, you can upload it through your client portal or reply to this email with the signed copy.</p><p><a href='{{$json.pdfUrl}}' style='display:inline-block;background:#534AB7;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600'>Download Agreement (PDF)</a></p><p style='margin-top:24px;color:#6B7280;font-size:13px'>— PA CROP Services<br>hello@pacropservices.com</p></div>",
+        "options": {}
+      },
+      "id": "email-agreement",
+      "name": "Email Agreement to Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "credentials": { "smtp": { "id": "qwwVH3KJASNbk93F", "name": "Emailit CROP SMTP" } }
+    }
+  ],
+  "connections": {
+    "Generate Agreement Webhook": {
+      "main": [[{ "node": "Generate PDF via Documentero", "type": "main", "index": 0 }]]
+    },
+    "Generate PDF via Documentero": {
+      "main": [[{ "node": "Extract PDF URL", "type": "main", "index": 0 }]]
+    },
+    "Extract PDF URL": {
+      "main": [[{ "node": "Email Agreement to Client", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
