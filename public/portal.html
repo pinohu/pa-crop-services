@@ -284,9 +284,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
           </div>
           <div class="stat-card">
             <div class="label">Plan</div>
-            <div class="val" id="plan-display">Professional</div>
+            <div class="val" id="plan-display">Business Pro</div>
             <div class="sub">Renews Jan 2027</div>
-            <span class="pill pill-gold">$179/yr</span>
+            <span class="pill pill-gold" id="plan-price">$349/yr</span>
           </div>
           <div class="stat-card">
             <div class="label">Entities Covered</div>
@@ -484,6 +484,7 @@ function mountClient(c) {
   document.getElementById('client-email-show').textContent = c.email;
   document.getElementById('tier-badge').textContent = c.tier + ' Plan';
   document.getElementById('plan-display').textContent = c.tier;
+  document.getElementById('plan-price').textContent = c.price;
   document.getElementById('ref-code').textContent = c.refCode;
   document.getElementById('days-left').textContent = Math.ceil((new Date('2027-12-31') - new Date()) / 86400000);
   buildTemplates();
@@ -603,7 +604,7 @@ function shareEmail() {
 
 // AI CHAT
 const chatHistory = [];
-const SYS = `You are the PA compliance AI assistant for PA CROP Services, a Pennsylvania Commercial Registered Office Provider (CROP) at 924 W 23rd St, Erie, PA 16502. You are embedded in the client compliance portal. Be warm, direct, and specific. Under 120 words per response. Key facts: PA annual reports due Sept 30 each year, $7 fee. 2027 deadline: all PA entities must file by Dec 31 2027 or face dissolution. CROP satisfies PA registered office requirement. Phone: 814-480-0989. Email: hello@pacropservices.com. Starter plan $79/yr, Professional $179/yr, Premium $299/yr (includes filing assistance).`;
+const SYS = `You are the PA compliance AI assistant for PA CROP Services, a Pennsylvania Commercial Registered Office Provider (CROP) at 924 W 23rd St, Erie, PA 16502. You are embedded in the client compliance portal. Be warm, direct, and specific. Under 120 words per response. Key facts: PA annual reports due Sept 30 each year, $7 fee. 2027 deadline: all PA entities must file by Dec 31 2027 or face dissolution. CROP satisfies PA registered office requirement. Phone: 814-480-0989. Email: hello@pacropservices.com. Plans: Compliance Only $99/yr, Business Starter $199/yr (includes domain + hosting + email), Business Pro $349/yr (includes annual report filing), Business Empire $699/yr (VPS + multi-entity).`;
 
 async function sendMsg() {
   const inp = document.getElementById('chat-input');
