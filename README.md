@@ -11,7 +11,7 @@ Domain: pacropservices.com | Entity: PA Registered Office Services, LLC | Locati
 ```bash
 # Deploy: connect this repo to Vercel, output directory = public
 # Replace placeholders in public/*.html:
-#   STRIPE_STARTER_LINK / STRIPE_PROFESSIONAL_LINK / STRIPE_PREMIUM_LINK
+#   All Stripe Payment Links: RESOLVED ✓ (live on buy.stripe.com)
 #   All placeholders replaced — site is LIVE-READY
 ```
 
