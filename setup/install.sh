@@ -248,6 +248,51 @@ else
 fi
 
 # ============================================================
+header "PHASE 9: Deploy Power Tools (Docker Stack)"
+# ============================================================
+
+if command -v docker &> /dev/null; then
+    cd "$CROP_HOME"
+    
+    # Create consume directory for Paperless-ngx
+    mkdir -p paperless/consume
+    
+    log "Starting Docker power tool stack..."
+    log "  → Paperless-ngx (document management + OCR)"
+    log "  → Uptime Kuma (monitoring)"
+    log "  → Stirling PDF (PDF toolkit)"
+    
+    docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || {
+        warn "Docker Compose failed. Try manually: cd $CROP_HOME && docker compose up -d"
+    }
+    
+    # Wait for services to start
+    sleep 5
+    
+    # Check which services are running
+    if docker ps --filter "name=crop-paperless" --format "{{.Names}}" | grep -q "crop-paperless"; then
+        log "Paperless-ngx running at http://localhost:8000 ✓"
+    else
+        warn "Paperless-ngx may still be starting. Check: docker logs crop-paperless"
+    fi
+    
+    if docker ps --filter "name=crop-uptime-kuma" --format "{{.Names}}" | grep -q "crop-uptime-kuma"; then
+        log "Uptime Kuma running at http://localhost:3001 ✓"
+    else
+        warn "Uptime Kuma may still be starting. Check: docker logs crop-uptime-kuma"
+    fi
+    
+    if docker ps --filter "name=crop-stirling-pdf" --format "{{.Names}}" | grep -q "crop-stirling-pdf"; then
+        log "Stirling PDF running at http://localhost:8080 ✓"
+    else
+        warn "Stirling PDF may still be starting. Check: docker logs crop-stirling-pdf"
+    fi
+else
+    warn "Docker not available. Power tools not installed."
+    warn "Install Docker first, then run: cd $CROP_HOME && docker compose up -d"
+fi
+
+# ============================================================
 header "SETUP COMPLETE"
 # ============================================================
 
@@ -257,6 +302,11 @@ echo ""
 log "PA CROP Services is installed at: $CROP_HOME"
 log "OpenClaw config at: $OPENCLAW_HOME/openclaw.json"
 log "Mission Control at: $MC_HOME"
+echo ""
+log "Power Tools:"
+log "  Paperless-ngx  → http://localhost:8000"
+log "  Uptime Kuma    → http://localhost:3001"
+log "  Stirling PDF   → http://localhost:8080"
 echo ""
 echo -e "${GREEN}┌─────────────────────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}│              NEXT STEPS (do these manually)             │${NC}"
@@ -270,20 +320,29 @@ echo -e "${GREEN}│  2. Start Mission Control:                             │$
 echo -e "${GREEN}│     cd ~/openclaw-mission-control && npm run dev       │${NC}"
 echo -e "${GREEN}│     → Open http://localhost:4000                       │${NC}"
 echo -e "${GREEN}│                                                         │${NC}"
-echo -e "${GREEN}│  3. Deploy the website:                                │${NC}"
+echo -e "${GREEN}│  3. Set up Paperless-ngx admin:                        │${NC}"
+echo -e "${GREEN}│     Open http://localhost:8000                         │${NC}"
+echo -e "${GREEN}│     → Create admin account on first login              │${NC}"
+echo -e "${GREEN}│     → Settings → Webhooks → Add n8n URL               │${NC}"
+echo -e "${GREEN}│                                                         │${NC}"
+echo -e "${GREEN}│  4. Set up Uptime Kuma monitors:                       │${NC}"
+echo -e "${GREEN}│     Open http://localhost:3001                         │${NC}"
+echo -e "${GREEN}│     → Add: pacropservices.com, n8n, SuiteDash portal  │${NC}"
+echo -e "${GREEN}│                                                         │${NC}"
+echo -e "${GREEN}│  5. Deploy the website:                                │${NC}"
 echo -e "${GREEN}│     cd ~/pa-crop-services && vercel --prod             │${NC}"
 echo -e "${GREEN}│     → Connect pacropservices.com domain in Vercel      │${NC}"
 echo -e "${GREEN}│                                                         │${NC}"
-echo -e "${GREEN}│  4. Replace placeholders in public/*.html:             │${NC}"
-echo -e "${GREEN}│     STRIPE_STARTER_LINK                                │${NC}"
-echo -e "${GREEN}│     STRIPE_PROFESSIONAL_LINK                           │${NC}"
-echo -e "${GREEN}│     STRIPE_PREMIUM_LINK                                │${NC}"
-echo -e "${GREEN}│     GA_MEASUREMENT_ID                                  │${NC}"
+echo -e "${GREEN}│  6. Replace placeholders in public/*.html:             │${NC}"
+echo -e "${GREEN}│     STRIPE_STARTER_LINK / PROFESSIONAL / PREMIUM      │${NC}"
 echo -e "${GREEN}│     BUSINESS_PHONE                                     │${NC}"
+echo -e "${GREEN}│     (Analytics already set to Plausible — no GA)       │${NC}"
 echo -e "${GREEN}│                                                         │${NC}"
-echo -e "${GREEN}│  5. Activate n8n workflows:                            │${NC}"
+echo -e "${GREEN}│  7. Activate n8n workflows:                            │${NC}"
 echo -e "${GREEN}│     Open https://n8n.audreysplace.place                │${NC}"
-echo -e "${GREEN}│     → Add SMTP creds → Activate CROP workflows        │${NC}"
+echo -e "${GREEN}│     → Add SMTP creds → Activate all CROP workflows    │${NC}"
+echo -e "${GREEN}│     → Includes: onboarding, reminders, dunning,       │${NC}"
+echo -e "${GREEN}│       Paperless doc router, DOS entity checker         │${NC}"
 echo -e "${GREEN}│                                                         │${NC}"
 echo -e "${GREEN}└─────────────────────────────────────────────────────────┘${NC}"
 echo ""

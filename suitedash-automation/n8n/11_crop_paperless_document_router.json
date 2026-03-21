@@ -1,0 +1,143 @@
+{
+  "name": "CROP — Paperless Document Router",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Paperless-ngx → SuiteDash Document Router\n\nTrigger: Paperless-ngx webhook fires when a new document is consumed/tagged.\nFlow: Get document metadata → match to client by entity name/number → upload to SuiteDash → notify client.\n\n**SETUP:**\n1. In Paperless-ngx admin → Settings → Webhooks → Add:\n   URL: https://n8n.audreysplace.place/webhook/crop-paperless-doc\n   Trigger: Document Added\n2. Set PAPERLESS_URL and PAPERLESS_API_TOKEN in n8n credentials\n3. Set SuiteDash credentials",
+        "width": 520,
+        "height": 280,
+        "color": 6
+      },
+      "id": "note-paperless",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-paperless-doc",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-paperless",
+      "name": "Paperless Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "crop-paperless-doc"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract document info from Paperless-ngx webhook payload\nconst body = $input.first().json.body || $input.first().json;\n\nconst docId = body.document_id || body.id || '';\nconst title = body.title || body.document_title || '';\nconst correspondent = body.correspondent_name || body.correspondent || '';\nconst tags = body.tags || body.tag_names || [];\nconst tagNames = Array.isArray(tags) ? tags.map(t => typeof t === 'string' ? t : t.name || '') : [];\nconst createdDate = body.created || body.created_date || new Date().toISOString();\nconst content = body.content || '';\n\n// Try to extract entity number from document content (pattern: 7-digit number)\nconst entityNumberMatch = content.match(/\\b(\\d{7})\\b/);\nconst entityNumber = entityNumberMatch ? entityNumberMatch[1] : '';\n\n// Classify document type from tags or content\nlet docType = 'general';\nconst contentLower = content.toLowerCase();\nif (tagNames.some(t => t.toLowerCase().includes('service of process')) || contentLower.includes('summons') || contentLower.includes('complaint') || contentLower.includes('subpoena')) {\n  docType = 'service_of_process';\n} else if (contentLower.includes('annual report') || contentLower.includes('annual filing')) {\n  docType = 'annual_report_notice';\n} else if (tagNames.some(t => t.toLowerCase().includes('government')) || contentLower.includes('department of state') || contentLower.includes('bureau of corporations')) {\n  docType = 'government_correspondence';\n} else if (contentLower.includes('tax') || contentLower.includes('revenue')) {\n  docType = 'tax_notice';\n}\n\n// Determine urgency\nlet urgency = 'normal';\nif (docType === 'service_of_process') urgency = 'critical';\nelse if (docType === 'annual_report_notice') urgency = 'high';\n\nreturn [{\n  json: {\n    paperlessDocId: docId,\n    title,\n    correspondent,\n    tags: tagNames,\n    docType,\n    urgency,\n    entityNumber,\n    createdDate,\n    contentPreview: content.substring(0, 500),\n    paperlessUrl: `${process.env.PAPERLESS_URL || 'http://localhost:8000'}/documents/${docId}/preview/`\n  }\n}];"
+      },
+      "id": "extract-doc",
+      "name": "Extract Document Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.AITABLE_BASE_URL || 'https://api.aitable.ai'}}/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_SHEET}}/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.AITABLE_API_KEY}}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "filterByFormula", "value": "OR({Entity Number}='{{$json.entityNumber}}', FIND('{{$json.correspondent}}', {Entity Name})>0)" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "find-client",
+      "name": "Find Client in AiTable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const docInfo = $('Extract Document Info').first().json;\nconst clientResult = $input.first().json;\nconst records = clientResult.data?.records || [];\n\nlet clientFound = false;\nlet clientEmail = '';\nlet clientName = '';\nlet suitedashContactId = '';\n\nif (records.length > 0) {\n  const client = records[0].fields;\n  clientEmail = client.Email || '';\n  clientName = client.Name || '';\n  suitedashContactId = client['SuiteDash ID'] || '';\n  clientFound = true;\n}\n\n// Build notification email based on doc type\nlet subject = '';\nlet body = '';\n\nswitch (docInfo.docType) {\n  case 'service_of_process':\n    subject = `🚨 URGENT: Legal document received for ${docInfo.correspondent || 'your entity'}`;\n    body = `<p>Hi ${clientName || 'there'},</p><p><strong>We received a legal document (service of process) for your entity today.</strong> This requires your immediate attention.</p><p>The document has been scanned and is available in your client portal. Please log in to review it or contact your attorney.</p><p><strong>Document type:</strong> Service of Process<br><strong>Date received:</strong> ${new Date(docInfo.createdDate).toLocaleDateString()}</p><p>If you need assistance, contact us immediately at hello@pacropservices.com or call BUSINESS_PHONE.</p>`;\n    break;\n  case 'annual_report_notice':\n    subject = `Annual report notice received for ${docInfo.correspondent || 'your entity'}`;\n    body = `<p>Hi ${clientName || 'there'},</p><p>We received an annual report notice from the PA Department of State for your entity. The notice has been scanned and uploaded to your portal.</p><p>Remember: filing on time avoids the dissolution penalties starting in 2027. If you'd like us to handle the filing for you, just reply to this email.</p>`;\n    break;\n  default:\n    subject = `New document received for ${docInfo.correspondent || 'your entity'}`;\n    body = `<p>Hi ${clientName || 'there'},</p><p>We received a document for your entity and have scanned and uploaded it to your client portal.</p><p><strong>Document:</strong> ${docInfo.title}<br><strong>Date received:</strong> ${new Date(docInfo.createdDate).toLocaleDateString()}</p><p>Log in to your portal to view it.</p>`;\n}\n\nbody += `<p style=\"margin-top:24px;color:#6B7280;font-size:13px\">— PA CROP Services<br>hello@pacropservices.com</p>`;\n\nreturn [{\n  json: {\n    ...docInfo,\n    clientFound,\n    clientEmail,\n    clientName,\n    suitedashContactId,\n    emailSubject: subject,\n    emailBody: body\n  }\n}];"
+      },
+      "id": "build-notification",
+      "name": "Build Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.clientFound}}", "value2": true }
+          ]
+        }
+      },
+      "id": "client-found",
+      "name": "Client Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.clientEmail}}",
+        "subject": "={{$json.emailSubject}}",
+        "emailType": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "id": "send-notification",
+      "name": "Notify Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1350, 200],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "hello@pacropservices.com",
+        "subject": "⚠️ Unmatched document received — manual review needed",
+        "emailType": "html",
+        "html": "=<p>A document was scanned but could not be matched to a client:</p><p><strong>Title:</strong> {{$json.title}}<br><strong>Correspondent:</strong> {{$json.correspondent}}<br><strong>Entity Number:</strong> {{$json.entityNumber}}<br><strong>Type:</strong> {{$json.docType}}<br><strong>Urgency:</strong> {{$json.urgency}}</p><p><a href=\"{{$json.paperlessUrl}}\">View in Paperless</a></p>",
+        "options": {}
+      },
+      "id": "alert-unmatched",
+      "name": "Alert: Unmatched Doc",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1350, 400],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    }
+  ],
+  "connections": {
+    "Paperless Webhook": {
+      "main": [[{ "node": "Extract Document Info", "type": "main", "index": 0 }]]
+    },
+    "Extract Document Info": {
+      "main": [[{ "node": "Find Client in AiTable", "type": "main", "index": 0 }]]
+    },
+    "Find Client in AiTable": {
+      "main": [[{ "node": "Build Notification", "type": "main", "index": 0 }]]
+    },
+    "Build Notification": {
+      "main": [[{ "node": "Client Found?", "type": "main", "index": 0 }]]
+    },
+    "Client Found?": {
+      "main": [
+        [{ "node": "Notify Client", "type": "main", "index": 0 }],
+        [{ "node": "Alert: Unmatched Doc", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

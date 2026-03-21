@@ -1,0 +1,205 @@
+{
+  "name": "CROP — PA DOS Entity Status Checker",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PA DOS Entity Status Checker\n\nRuns daily at 7 AM. For each active client, queries the PA DOS business entity search and verifies current status.\nAlerts if status changed (dissolved, forfeited, merged, etc.)\n\n**HOW IT WORKS:**\nPA DOS has a public search at https://file.dos.pa.gov/search/business\nThis workflow sends HTTP requests to the search endpoint, parses the response,\nand compares against the last known status in AiTable.\n\n**SETUP:**\n1. AiTable must have 'Entity Number', 'Entity Name', 'DOS Status' fields\n2. Configure SMTP credentials for alerts\n3. Activate after first 10+ clients",
+        "width": 520,
+        "height": 300,
+        "color": 2
+      },
+      "id": "note-dos",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * *" }]
+        }
+      },
+      "id": "cron-dos",
+      "name": "Daily 7AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.AITABLE_BASE_URL || 'https://api.aitable.ai'}}/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_SHEET}}/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.AITABLE_API_KEY}}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "filterByFormula", "value": "{Status}='Active'" },
+            { "name": "fields", "value": "Entity Number,Entity Name,Email,Name,DOS Status" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-clients-dos",
+      "name": "Get Active Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// For each client, query PA DOS search and check status\nconst records = $input.first().json.data?.records || [];\nconst results = [];\n\nfor (const record of records) {\n  const fields = record.fields || {};\n  const entityNumber = fields['Entity Number'] || '';\n  const entityName = fields['Entity Name'] || '';\n  const email = fields['Email'] || '';\n  const name = fields['Name'] || '';\n  const lastKnownStatus = fields['DOS Status'] || 'unknown';\n\n  if (!entityNumber) continue;\n\n  results.push({\n    json: {\n      recordId: record.recordId,\n      entityNumber,\n      entityName,\n      email,\n      name,\n      lastKnownStatus\n    }\n  });\n}\n\nif (results.length === 0) {\n  results.push({ json: { noClients: true } });\n}\n\nreturn results;"
+      },
+      "id": "split-clients",
+      "name": "Split Clients",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.noClients}}", "value2": true }
+          ]
+        }
+      },
+      "id": "has-clients",
+      "name": "Any Clients?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://file.dos.pa.gov/search/business?searchValue={{$json.entityNumber}}&searchType=entityNumber",
+        "options": {
+          "timeout": 30000,
+          "redirect": { "redirect": { "followRedirects": true } }
+        }
+      },
+      "id": "query-dos",
+      "name": "Query PA DOS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data || $input.first().json.body || '';\nconst clientData = $('Split Clients').first().json;\n\n// Parse status from DOS response HTML\n// DOS returns entity status in the search results table\nlet currentStatus = 'unknown';\nconst htmlStr = typeof html === 'string' ? html : JSON.stringify(html);\n\n// Look for status indicators in the HTML\nconst statusPatterns = [\n  { pattern: /Active/i, status: 'Active' },\n  { pattern: /Good Standing/i, status: 'Active' },\n  { pattern: /Admin.*Dissolved/i, status: 'Administratively Dissolved' },\n  { pattern: /Dissolved/i, status: 'Dissolved' },\n  { pattern: /Cancelled/i, status: 'Cancelled' },\n  { pattern: /Forfeited/i, status: 'Forfeited' },\n  { pattern: /Merged/i, status: 'Merged' },\n  { pattern: /Withdrawn/i, status: 'Withdrawn' },\n  { pattern: /Terminated/i, status: 'Terminated' },\n];\n\nfor (const { pattern, status } of statusPatterns) {\n  if (pattern.test(htmlStr)) {\n    currentStatus = status;\n    break;\n  }\n}\n\nconst statusChanged = currentStatus !== 'unknown' && currentStatus !== clientData.lastKnownStatus;\nconst isProblematic = ['Dissolved', 'Administratively Dissolved', 'Cancelled', 'Forfeited', 'Terminated'].includes(currentStatus);\n\nreturn [{\n  json: {\n    ...clientData,\n    currentStatus,\n    statusChanged,\n    isProblematic,\n    checkedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "parse-status",
+      "name": "Parse DOS Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1350, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.statusChanged}}", "value2": true }
+          ]
+        }
+      },
+      "id": "status-changed",
+      "name": "Status Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1600, 200]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{$env.AITABLE_BASE_URL || 'https://api.aitable.ai'}}/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_SHEET}}/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.AITABLE_API_KEY}}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"records\":[{\"recordId\":\"{{$json.recordId}}\",\"fields\":{\"DOS Status\":\"{{$json.currentStatus}}\",\"Last DOS Check\":\"{{$json.checkedAt}}\"}}]}",
+        "options": {}
+      },
+      "id": "update-aitable",
+      "name": "Update AiTable Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1850, 100]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "=⚠️ Entity status change detected: {{$json.entityName}}",
+        "emailType": "html",
+        "html": "=<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#DC2626'>Entity Status Change Detected</h2><p>Hi {{$json.name}},</p><p>Our daily compliance check detected a status change for your entity:</p><p><strong>Entity:</strong> {{$json.entityName}}<br><strong>Entity Number:</strong> {{$json.entityNumber}}<br><strong>Previous Status:</strong> {{$json.lastKnownStatus}}<br><strong>Current Status:</strong> <span style='color:#DC2626;font-weight:bold'>{{$json.currentStatus}}</span></p><p>If this is unexpected, please contact us immediately so we can help you understand the implications and next steps.</p><p>— PA CROP Services<br>hello@pacropservices.com</p></div>",
+        "options": {}
+      },
+      "id": "notify-status-change",
+      "name": "Notify Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1850, 300],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "hello@pacropservices.com",
+        "subject": "=🚨 Client entity status change: {{$json.entityName}} → {{$json.currentStatus}}",
+        "emailType": "html",
+        "html": "=<p><strong>{{$json.entityName}}</strong> ({{$json.entityNumber}}) status changed from <strong>{{$json.lastKnownStatus}}</strong> to <strong style='color:#DC2626'>{{$json.currentStatus}}</strong>.</p><p>Client: {{$json.name}} ({{$json.email}})</p><p>Action required: review and contact client if status is problematic.</p>",
+        "options": {}
+      },
+      "id": "alert-internal",
+      "name": "Alert: Internal",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2100, 200],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    }
+  ],
+  "connections": {
+    "Daily 7AM": {
+      "main": [[{ "node": "Get Active Clients", "type": "main", "index": 0 }]]
+    },
+    "Get Active Clients": {
+      "main": [[{ "node": "Split Clients", "type": "main", "index": 0 }]]
+    },
+    "Split Clients": {
+      "main": [[{ "node": "Any Clients?", "type": "main", "index": 0 }]]
+    },
+    "Any Clients?": {
+      "main": [
+        [],
+        [{ "node": "Query PA DOS", "type": "main", "index": 0 }]
+      ]
+    },
+    "Query PA DOS": {
+      "main": [[{ "node": "Parse DOS Status", "type": "main", "index": 0 }]]
+    },
+    "Parse DOS Status": {
+      "main": [[{ "node": "Status Changed?", "type": "main", "index": 0 }]]
+    },
+    "Status Changed?": {
+      "main": [
+        [
+          { "node": "Update AiTable Status", "type": "main", "index": 0 },
+          { "node": "Notify Client", "type": "main", "index": 0 },
+          { "node": "Alert: Internal", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
