@@ -1,0 +1,130 @@
+{
+  "name": "CROP — Annual Report Reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Annual Report Reminder Engine\n\nRuns daily at 9 AM ET. Checks all active clients against their entity-type deadline.\nSends reminders at 90, 60, 30, 14, and 7 days before deadline.\n\n**SETUP:**\n1. Configure AiTable or SuiteDash API credentials for client list\n2. Configure SMTP credentials for sending emails\n3. Update email templates in the Switch node branches",
+        "width": 500,
+        "height": 250,
+        "color": 4
+      },
+      "id": "note-ar",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * *" }]
+        }
+      },
+      "id": "cron-daily",
+      "name": "Daily 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.AITABLE_BASE_URL || 'https://api.aitable.ai'}}/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_SHEET}}/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.AITABLE_API_KEY}}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "filterByFormula", "value": "{Status}='Active'" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-clients",
+      "name": "Get Active Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst year = today.getFullYear();\n\nconst deadlines = {\n  'Domestic Business Corporation': `${year}-06-30`,\n  'Foreign Business Corporation': `${year}-06-30`,\n  'Domestic Nonprofit Corporation': `${year}-06-30`,\n  'Foreign Nonprofit Corporation': `${year}-06-30`,\n  'Domestic LLC': `${year}-09-30`,\n  'Foreign LLC': `${year}-09-30`,\n  'Domestic LP': `${year}-12-31`,\n  'Foreign LP': `${year}-12-31`,\n  'Domestic LLP': `${year}-12-31`,\n  'Business Trust': `${year}-12-31`,\n  'Professional Association': `${year}-12-31`,\n};\n\nconst records = $input.first().json.data?.records || [];\nconst results = [];\n\nfor (const record of records) {\n  const fields = record.fields || {};\n  const entityType = fields['Entity Type'] || 'Domestic LLC';\n  const email = fields['Email'] || '';\n  const name = fields['Name'] || '';\n  const entityName = fields['Entity Name'] || '';\n\n  if (!email) continue;\n\n  const deadlineStr = deadlines[entityType] || `${year}-12-31`;\n  const deadline = new Date(deadlineStr + 'T23:59:59');\n  const daysUntil = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));\n\n  if ([90, 60, 30, 14, 7].includes(daysUntil)) {\n    results.push({\n      json: {\n        email,\n        name,\n        entityName,\n        entityType,\n        daysUntil,\n        deadlineDate: deadlineStr,\n        reminderType: `ar-${daysUntil}-day`,\n        urgency: daysUntil <= 14 ? 'urgent' : daysUntil <= 30 ? 'warning' : 'info'\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  results.push({ json: { noReminders: true } });\n}\n\nreturn results;"
+      },
+      "id": "calc-deadlines",
+      "name": "Calculate Deadlines",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.noReminders}}", "value2": true }
+          ]
+        }
+      },
+      "id": "check-empty",
+      "name": "Any Reminders?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst daysUntil = d.daysUntil;\nconst name = d.name || 'there';\nconst entity = d.entityName || 'your entity';\nconst deadline = d.deadlineDate;\n\nlet subject, body;\n\nif (daysUntil === 90) {\n  subject = `Reminder: ${entity} annual report due in 90 days`;\n  body = `<p>Hi ${name},</p><p>This is a friendly reminder that the Pennsylvania annual report for <strong>${entity}</strong> is due on <strong>${deadline}</strong> — 90 days from now.</p><p>No action is needed yet, but we wanted to make sure it's on your radar.</p>`;\n} else if (daysUntil === 60) {\n  subject = `60 days until ${entity} annual report deadline`;\n  body = `<p>Hi ${name},</p><p>Your PA annual report for <strong>${entity}</strong> is due on <strong>${deadline}</strong> — 60 days from now.</p><p>If you're on our Professional or Premium plan, we can file this for you. Just reply to this email with \"file it\" and we'll handle everything.</p>`;\n} else if (daysUntil === 30) {\n  subject = `⚠️ ${entity} annual report due in 30 days`;\n  body = `<p>Hi ${name},</p><p>Important: Your PA annual report for <strong>${entity}</strong> is due on <strong>${deadline}</strong> — just 30 days away.</p><p>Filing takes about 5 minutes online at file.dos.pa.gov. The fee is $7 for for-profit entities. If you'd like us to handle it, reply to this email.</p>`;\n} else if (daysUntil === 14) {\n  subject = `🔴 URGENT: ${entity} annual report due in 14 days`;\n  body = `<p>Hi ${name},</p><p><strong>Your PA annual report for ${entity} is due on ${deadline} — just 14 days away.</strong></p><p>Starting in 2027, entities that miss this deadline face administrative dissolution. Please file as soon as possible at file.dos.pa.gov.</p><p>Need help? Reply to this email or call us.</p>`;\n} else if (daysUntil === 7) {\n  subject = `🚨 FINAL WARNING: ${entity} annual report due in 7 DAYS`;\n  body = `<p>Hi ${name},</p><p><strong>This is your final reminder.</strong> The annual report for <strong>${entity}</strong> is due on <strong>${deadline}</strong> — one week from today.</p><p>Please file immediately at <a href=\"https://file.dos.pa.gov\">file.dos.pa.gov</a>. If you need emergency filing assistance, reply now or call us.</p>`;\n}\n\nbody += `<p style=\"margin-top:24px;color:#6B7280;font-size:13px\">— PA CROP Services<br>hello@pacropservices.com</p>`;\n\nreturn [{ json: { ...d, emailSubject: subject, emailBody: body } }];"
+      },
+      "id": "build-email",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 400]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "={{$json.emailSubject}}",
+        "emailType": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "id": "send-reminder",
+      "name": "Send Reminder",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1350, 400],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "CROP SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 9AM": {
+      "main": [[{ "node": "Get Active Clients", "type": "main", "index": 0 }]]
+    },
+    "Get Active Clients": {
+      "main": [[{ "node": "Calculate Deadlines", "type": "main", "index": 0 }]]
+    },
+    "Calculate Deadlines": {
+      "main": [[{ "node": "Any Reminders?", "type": "main", "index": 0 }]]
+    },
+    "Any Reminders?": {
+      "main": [
+        [],
+        [{ "node": "Build Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Email": {
+      "main": [[{ "node": "Send Reminder", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

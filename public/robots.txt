@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://pacropservices.com/sitemap.xml

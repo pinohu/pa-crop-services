@@ -1,0 +1,156 @@
+{
+  "name": "CROP — Payment Failed Dunning",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Payment Failed Recovery\n\nTrigger: Stripe invoice.payment_failed webhook\nSequence: Day 1 → Day 3 → Day 7 → Day 14 → Day 21 (escalation)\n\n**SETUP:** Configure Stripe webhook for invoice.payment_failed event pointing to this webhook URL",
+        "width": 450,
+        "height": 200,
+        "color": 3
+      },
+      "id": "note-dunning",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-payment-failed",
+        "options": {}
+      },
+      "id": "wh-failed",
+      "name": "Payment Failed Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "crop-payment-failed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst invoice = body.data?.object || body;\nconst email = invoice.customer_email || '';\nconst name = invoice.customer_name || '';\nconst amount = ((invoice.amount_due || 0) / 100).toFixed(2);\nconst nextAttempt = invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString() : 'soon';\nconst customerId = invoice.customer || '';\n\nreturn [{ json: { email, name: name || 'there', amount, nextAttempt, customerId, attempt: 1 } }];"
+      },
+      "id": "extract-failed",
+      "name": "Extract Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Action needed: payment issue with your PA CROP Services account",
+        "emailType": "html",
+        "html": "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#1B4F8A'>Payment Issue</h2><p>Hi {{$json.name}},</p><p>We weren't able to process your payment of <strong>${{$json.amount}}</strong> for PA CROP Services. This is usually caused by an expired card or insufficient funds.</p><p>We'll automatically retry the payment on {{$json.nextAttempt}}. To avoid any interruption to your registered office services, please update your payment method:</p><p style='text-align:center;margin:24px 0'><a href='https://billing.stripe.com/p/login/STRIPE_PORTAL_ID' style='background:#534AB7;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600'>Update Payment Method</a></p><p>Questions? Reply to this email or call BUSINESS_PHONE.</p><p>— PA CROP Services Team</p></div>",
+        "options": {}
+      },
+      "id": "email-day1",
+      "name": "Day 1 Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [600, 300],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    },
+    {
+      "parameters": { "amount": 2, "unit": "days" },
+      "id": "wait-3",
+      "name": "Wait 2 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Reminder: please update your payment method — PA CROP Services",
+        "emailType": "html",
+        "html": "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#1B4F8A'>Quick Reminder</h2><p>Hi {{$json.name}},</p><p>We still haven't been able to process your payment of <strong>${{$json.amount}}</strong>. To keep your registered office services active, please update your payment method at your earliest convenience.</p><p style='text-align:center;margin:24px 0'><a href='https://billing.stripe.com/p/login/STRIPE_PORTAL_ID' style='background:#534AB7;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600'>Update Payment Method</a></p><p>— PA CROP Services Team</p></div>",
+        "options": {}
+      },
+      "id": "email-day3",
+      "name": "Day 3 Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1100, 300],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    },
+    {
+      "parameters": { "amount": 4, "unit": "days" },
+      "id": "wait-7",
+      "name": "Wait 4 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1350, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "⚠️ Your PA CROP Services account may be interrupted",
+        "emailType": "html",
+        "html": "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#DC2626'>Service Interruption Warning</h2><p>Hi {{$json.name}},</p><p>We've been unable to process your payment of <strong>${{$json.amount}}</strong> for 7 days now. Without a valid payment method, we may need to suspend your registered office services.</p><p><strong>If your services are suspended, you would need to designate a new registered office with the PA Department of State.</strong></p><p style='text-align:center;margin:24px 0'><a href='https://billing.stripe.com/p/login/STRIPE_PORTAL_ID' style='background:#DC2626;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600'>Update Payment Now</a></p><p>If you're having trouble, just reply to this email. We're here to help.</p><p>— PA CROP Services Team</p></div>",
+        "options": {}
+      },
+      "id": "email-day7",
+      "name": "Day 7 Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1600, 300],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    },
+    {
+      "parameters": { "amount": 7, "unit": "days" },
+      "id": "wait-14",
+      "name": "Wait 7 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "🚨 Final notice: PA CROP Services account suspension in 7 days",
+        "emailType": "html",
+        "html": "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#DC2626'>Final Notice</h2><p>Hi {{$json.name}},</p><p>This is your final notice. Your payment of <strong>${{$json.amount}}</strong> has been outstanding for 14 days. Your account will be suspended in 7 days if we don't receive payment.</p><p><strong>After suspension, you will need to file a Change of Registered Office with the PA Department of State ($70 fee) to designate a new registered office.</strong></p><p style='text-align:center;margin:24px 0'><a href='https://billing.stripe.com/p/login/STRIPE_PORTAL_ID' style='background:#DC2626;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px'>Pay Now to Keep Your Account</a></p><p>— PA CROP Services Team</p></div>",
+        "options": {}
+      },
+      "id": "email-day14",
+      "name": "Day 14 Final Notice",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2100, 300],
+      "credentials": { "smtp": { "id": "SMTP_CREDENTIAL_ID", "name": "CROP SMTP" } }
+    }
+  ],
+  "connections": {
+    "Payment Failed Webhook": {
+      "main": [[{ "node": "Extract Details", "type": "main", "index": 0 }]]
+    },
+    "Extract Details": {
+      "main": [[{ "node": "Day 1 Email", "type": "main", "index": 0 }]]
+    },
+    "Day 1 Email": {
+      "main": [[{ "node": "Wait 2 Days", "type": "main", "index": 0 }]]
+    },
+    "Wait 2 Days": {
+      "main": [[{ "node": "Day 3 Email", "type": "main", "index": 0 }]]
+    },
+    "Day 3 Email": {
+      "main": [[{ "node": "Wait 4 Days", "type": "main", "index": 0 }]]
+    },
+    "Wait 4 Days": {
+      "main": [[{ "node": "Day 7 Email", "type": "main", "index": 0 }]]
+    },
+    "Day 7 Email": {
+      "main": [[{ "node": "Wait 7 Days", "type": "main", "index": 0 }]]
+    },
+    "Wait 7 Days": {
+      "main": [[{ "node": "Day 14 Final Notice", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

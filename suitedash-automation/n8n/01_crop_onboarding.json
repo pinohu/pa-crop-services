@@ -1,0 +1,127 @@
+{
+  "name": "CROP — New Client Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## CROP New Client Onboarding\n\nTrigger: Stripe checkout.session.completed webhook\nFlow: Extract customer → Create SuiteDash contact → Send welcome email → Log to AiTable → Notify team\n\n**SETUP REQUIRED:**\n1. Update Stripe webhook URL in Stripe dashboard → Developers → Webhooks\n2. Replace SuiteDash credentials in the HTTP Request nodes\n3. Replace SMTP credentials in the email node\n4. Replace AiTable API key and datasheet ID",
+        "width": 500,
+        "height": 300,
+        "color": 5
+      },
+      "id": "note-onboard",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-stripe-checkout",
+        "options": {}
+      },
+      "id": "wh-stripe",
+      "name": "Stripe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "crop-stripe-checkout"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract customer data from Stripe checkout.session.completed event\nconst body = $input.first().json.body || $input.first().json;\nconst session = body.data?.object || body;\n\nconst customerEmail = session.customer_details?.email || session.customer_email || '';\nconst customerName = session.customer_details?.name || '';\nconst nameParts = customerName.split(' ');\nconst firstName = nameParts[0] || '';\nconst lastName = nameParts.slice(1).join(' ') || '';\nconst amountPaid = (session.amount_total || 0) / 100;\nconst stripeCustomerId = session.customer || '';\nconst subscriptionId = session.subscription || '';\n\n// Determine tier from amount\nlet tier = 'Starter';\nif (amountPaid >= 250) tier = 'Premium';\nelse if (amountPaid >= 150) tier = 'Professional';\n\nreturn [{\n  json: {\n    email: customerEmail,\n    firstName,\n    lastName,\n    fullName: customerName,\n    tier,\n    amountPaid,\n    stripeCustomerId,\n    subscriptionId,\n    signupDate: new Date().toISOString().split('T')[0]\n  }\n}];"
+      },
+      "id": "extract-customer",
+      "name": "Extract Customer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUITEDASH_BASE_URL || 'https://app.suitedash.com/secure-api/v1'}}/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Public-ID", "value": "={{$env.SUITEDASH_PUBLIC_ID}}" },
+            { "name": "X-Secret-Key", "value": "={{$env.SUITEDASH_SECRET_KEY}}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "first_name", "value": "={{$json.firstName}}" },
+            { "name": "last_name", "value": "={{$json.lastName}}" },
+            { "name": "email", "value": "={{$json.email}}" },
+            { "name": "role", "value": "lead" },
+            { "name": "tags", "value": "={{['crop-' + $json.tier.toLowerCase(), 'crop-onboarding']}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-suitedash",
+      "name": "Create SuiteDash Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@pacropservices.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Welcome to PA CROP Services — your account is ready",
+        "emailType": "html",
+        "html": "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#1B4F8A'>Welcome to PA CROP Services!</h2><p>Hi {{$json.firstName}},</p><p>Thank you for choosing PA CROP Services as your Pennsylvania Commercial Registered Office Provider. Your <strong>{{$json.tier}}</strong> plan is now active.</p><h3>What happens next:</h3><ol><li><strong>Within 1 business day:</strong> We'll verify your entity information with the PA Department of State</li><li><strong>Within 2 business days:</strong> You'll receive your service agreement for e-signature</li><li><strong>Once signed:</strong> You can list PA CROP Services on any state filing</li></ol><p>In the meantime, your client portal is being set up. You'll receive login credentials in a separate email shortly.</p><p>Questions? Just reply to this email or call us at BUSINESS_PHONE.</p><p>Best regards,<br>PA CROP Services Team</p></div>",
+        "options": {}
+      },
+      "id": "send-welcome",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [600, 400],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "CROP SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.AITABLE_BASE_URL || 'https://api.aitable.ai'}}/fusion/v1/datasheets/{{$env.AITABLE_CLIENTS_SHEET}}/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.AITABLE_API_KEY}}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"records\":[{\"fields\":{\"Name\":\"{{$json.fullName}}\",\"Email\":\"{{$json.email}}\",\"Tier\":\"{{$json.tier}}\",\"Amount\":{{$json.amountPaid}},\"Stripe ID\":\"{{$json.stripeCustomerId}}\",\"Signup Date\":\"{{$json.signupDate}}\",\"Status\":\"Onboarding\"}}]}",
+        "options": {}
+      },
+      "id": "log-aitable",
+      "name": "Log to AiTable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Stripe Webhook": {
+      "main": [[{ "node": "Extract Customer", "type": "main", "index": 0 }]]
+    },
+    "Extract Customer": {
+      "main": [[
+        { "node": "Create SuiteDash Contact", "type": "main", "index": 0 },
+        { "node": "Send Welcome Email", "type": "main", "index": 0 }
+      ]]
+    },
+    "Create SuiteDash Contact": {
+      "main": [[{ "node": "Log to AiTable", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

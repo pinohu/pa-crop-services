@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA CROP Services — Pennsylvania Commercial Registered Office Provider</title>
+<meta name="description" content="Licensed Pennsylvania CROP provider. Registered office address, same-day document scanning, compliance calendar, annual report filing. Plans from $79/year.">
+<meta name="keywords" content="Pennsylvania CROP, PA registered agent, commercial registered office provider, PA annual report, Pennsylvania registered office">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#1B4F8A;--accent:#534AB7;--dark:#1E2333;--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--red:#DC2626;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,0.06)}
+body{font-family:'DM Sans',sans-serif;color:var(--dark);background:var(--white);line-height:1.7}
+.container{max-width:1140px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:'DM Serif Display',serif;line-height:1.2}
+a{text-decoration:none;color:var(--accent)}
+
+/* NAV */
+nav{padding:16px 0;border-bottom:1px solid #eee;position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);z-index:100}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--dark)}
+.logo span{color:var(--accent)}
+nav ul{display:flex;gap:32px;list-style:none}
+nav ul a{color:var(--gray);font-size:14px;font-weight:500;transition:color .2s}
+nav ul a:hover{color:var(--dark)}
+.nav-cta{background:var(--accent);color:var(--white) !important;padding:8px 20px;border-radius:8px;font-weight:600;transition:background .2s}
+.nav-cta:hover{background:var(--primary)}
+
+/* HERO */
+.hero{padding:80px 0 60px;text-align:center}
+.hero-badge{display:inline-block;background:#EDE9FE;color:var(--accent);font-size:13px;font-weight:600;padding:6px 16px;border-radius:20px;margin-bottom:24px}
+.hero h1{font-size:clamp(36px,5vw,56px);margin-bottom:20px;max-width:800px;margin-left:auto;margin-right:auto}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero p{font-size:18px;color:var(--gray);max-width:600px;margin:0 auto 32px}
+.hero-ctas{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--white);padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;transition:all .2s;display:inline-block}
+.btn-primary:hover{background:var(--primary);transform:translateY(-1px);box-shadow:0 8px 24px rgba(83,74,183,0.3)}
+.btn-secondary{background:var(--light);color:var(--dark);padding:14px 32px;border-radius:8px;font-size:16px;font-weight:500;transition:all .2s;display:inline-block}
+.btn-secondary:hover{background:#eee}
+
+/* TRUST BAR */
+.trust-bar{padding:32px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;text-align:center}
+.trust-bar p{font-size:13px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;font-weight:500}
+.trust-stats{display:flex;justify-content:center;gap:48px;margin-top:16px;flex-wrap:wrap}
+.trust-stat{text-align:center}
+.trust-stat .num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--dark)}
+.trust-stat .label{font-size:12px;color:var(--gray);margin-top:2px}
+
+/* URGENCY */
+.urgency{background:var(--dark);padding:48px 0;text-align:center}
+.urgency h2{color:var(--white);font-size:28px;margin-bottom:12px}
+.urgency p{color:#9CA3AF;font-size:16px;max-width:700px;margin:0 auto}
+.urgency em{color:var(--red);font-style:normal;font-weight:600}
+
+/* FEATURES */
+.features{padding:80px 0}
+.section-label{font-size:13px;color:var(--accent);text-transform:uppercase;font-weight:600;letter-spacing:1px;margin-bottom:8px}
+.features h2{font-size:36px;margin-bottom:48px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px}
+.feature-card{background:var(--light);padding:32px;border-radius:var(--radius);transition:all .2s}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.feature-icon{width:48px;height:48px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;margin-bottom:16px;font-weight:700}
+.feature-card h3{font-size:18px;margin-bottom:8px;font-family:'DM Sans',sans-serif;font-weight:600}
+.feature-card p{font-size:14px;color:var(--gray);line-height:1.6}
+
+/* PRICING */
+.pricing{padding:80px 0;background:var(--light)}
+.pricing h2{font-size:36px;margin-bottom:8px;text-align:center}
+.pricing>p,.pricing .container>p{text-align:center;color:var(--gray);margin-bottom:48px;font-size:16px}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;max-width:960px;margin:0 auto}
+.price-card{background:var(--white);border-radius:var(--radius);padding:32px;border:1px solid #E5E7EB;position:relative;transition:all .2s}
+.price-card:hover{box-shadow:var(--shadow)}
+.price-card.featured{border:2px solid var(--accent)}
+.price-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--white);font-size:12px;font-weight:600;padding:4px 16px;border-radius:12px;white-space:nowrap}
+.price-name{font-size:16px;font-weight:600;margin-bottom:4px}
+.price-amount{font-family:'DM Serif Display',serif;font-size:40px;margin-bottom:4px}
+.price-amount span{font-size:16px;color:var(--gray);font-family:'DM Sans',sans-serif}
+.price-desc{font-size:13px;color:var(--gray);margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #E5E7EB}
+.price-features{list-style:none;margin-bottom:24px}
+.price-features li{font-size:13px;padding:4px 0;padding-left:20px;position:relative;color:#374151}
+.price-features li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.price-cta{display:block;text-align:center;padding:12px;border-radius:8px;font-size:14px;font-weight:600;transition:all .2s}
+.price-cta.primary{background:var(--accent);color:var(--white)}
+.price-cta.primary:hover{background:var(--primary)}
+.price-cta.outline{border:1px solid var(--accent);color:var(--accent)}
+.price-cta.outline:hover{background:var(--accent);color:var(--white)}
+
+/* PARTNER */
+.partner{padding:80px 0}
+.partner-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.partner h2{font-size:32px;margin-bottom:16px}
+.partner p{color:var(--gray);margin-bottom:24px;font-size:15px;line-height:1.7}
+.partner-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.partner-stat{background:var(--light);padding:20px;border-radius:var(--radius)}
+.partner-stat .num{font-family:'DM Serif Display',serif;font-size:24px;color:var(--accent)}
+.partner-stat .label{font-size:12px;color:var(--gray);margin-top:2px}
+
+/* FAQ */
+.faq{padding:80px 0;background:var(--light)}
+.faq h2{font-size:36px;text-align:center;margin-bottom:48px}
+.faq-grid{max-width:720px;margin:0 auto}
+.faq-item{background:var(--white);border-radius:var(--radius);padding:24px;margin-bottom:12px;cursor:pointer;border:1px solid #E5E7EB}
+.faq-q{font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.faq-a{display:none;margin-top:12px;font-size:14px;color:var(--gray);line-height:1.7}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-arrow{transform:rotate(180deg)}
+.faq-arrow{transition:transform .2s;color:var(--gray)}
+
+/* CTA */
+.final-cta{padding:80px 0;text-align:center;background:var(--dark)}
+.final-cta h2{color:var(--white);font-size:36px;margin-bottom:16px}
+.final-cta p{color:#9CA3AF;font-size:16px;margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* FOOTER */
+footer{padding:48px 0;border-top:1px solid #eee;background:var(--dark)}
+footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.footer-col{color:#9CA3AF;font-size:13px}
+.footer-col h4{color:var(--white);font-size:14px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-weight:600}
+.footer-col a{color:#9CA3AF;display:block;margin-bottom:6px;transition:color .2s}
+.footer-col a:hover{color:var(--white)}
+.footer-bottom{text-align:center;padding-top:32px;margin-top:32px;border-top:1px solid #333;color:#6B7280;font-size:12px}
+
+@media(max-width:768px){
+  nav ul{display:none}
+  .partner-grid{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr}
+  .trust-stats{gap:24px}
+}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"LocalBusiness","name":"PA CROP Services","description":"Licensed Pennsylvania Commercial Registered Office Provider. Registered office address, document scanning, compliance monitoring, and annual report filing.","url":"https://pacropservices.com","telephone":"BUSINESS_PHONE","address":{"@type":"PostalAddress","addressLocality":"Erie","addressRegion":"PA","addressCountry":"US"},"priceRange":"$79-$299/year","openingHours":"Mo-Fr 09:00-17:00"}
+</script>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","GA_MEASUREMENT_ID");</script>
+</head>
+<body>
+
+<nav>
+<div class="container">
+<div class="logo">PA <span>CROP</span> Services</div>
+<ul>
+<li><a href="#features">Features</a></li>
+<li><a href="#pricing">Pricing</a></li>
+<li><a href="#partners">Partners</a></li>
+<li><a href="#faq">FAQ</a></li>
+<li><a href="#pricing" class="nav-cta">Get started</a></li>
+</ul>
+</div>
+</nav>
+
+<section class="hero">
+<div class="container">
+<div class="hero-badge">Licensed Pennsylvania CROP Provider</div>
+<h1>Your Pennsylvania registered office, <em>handled</em></h1>
+<p>Keep your home address private. Never miss a deadline. We receive your legal documents and keep your business in good standing — for $79 a year.</p>
+<div class="hero-ctas">
+<a href="#pricing" class="btn-primary">View plans →</a>
+<a href="#features" class="btn-secondary">How it works</a>
+</div>
+</div>
+</section>
+
+<section class="trust-bar">
+<div class="container">
+<p>Trusted by Pennsylvania businesses</p>
+<div class="trust-stats">
+<div class="trust-stat"><div class="num">3.8M+</div><div class="label">PA business entities</div></div>
+<div class="trust-stat"><div class="num">~65</div><div class="label">Total CROPs statewide</div></div>
+<div class="trust-stat"><div class="num">5 min</div><div class="label">Setup time</div></div>
+<div class="trust-stat"><div class="num">$79</div><div class="label">Starting price/year</div></div>
+</div>
+</div>
+</section>
+
+<section class="urgency">
+<div class="container">
+<h2>The 2027 deadline is real</h2>
+<p>Starting in 2027, PA businesses that fail to file their annual report face <em>administrative dissolution</em>. Foreign entities cannot reinstate — they must re-register under a new name. Don't let compliance slip through the cracks.</p>
+</div>
+</section>
+
+<section class="features" id="features">
+<div class="container">
+<div class="section-label">What you get</div>
+<h2>Everything your PA business needs</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">📬</div>
+<h3>Registered office address</h3>
+<p>A professional Erie, PA address listed on your state filing. Your home address stays off public records.</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📄</div>
+<h3>Same-day document scanning</h3>
+<p>Legal documents and service of process scanned and uploaded to your portal the day they arrive.</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📅</div>
+<h3>Compliance calendar</h3>
+<p>Automated reminders at 90, 60, 30, 14, and 7 days before your annual report deadline. Never miss a filing.</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">💻</div>
+<h3>Secure client portal</h3>
+<p>24/7 access to every document we receive. Encrypted storage, mobile-friendly, always available.</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📝</div>
+<h3>Annual report filing</h3>
+<p>We assist with or file your PA annual report for you. The $7 state fee is all you pay on top of our service.</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔏</div>
+<h3>Notarization services</h3>
+<p>Licensed PA Notary Public available for your business documents. Premium tier includes 2 free notarizations per year.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section class="pricing" id="pricing">
+<div class="container">
+<div class="section-label" style="text-align:center">Simple pricing</div>
+<h2>Plans for every PA business</h2>
+<p>No hidden fees. No auto-renewal surprises. Cancel anytime.</p>
+<div class="pricing-grid">
+<div class="price-card">
+<div class="price-name">Starter</div>
+<div class="price-amount">$79<span>/year</span></div>
+<div class="price-desc">Essential CROP service for privacy and compliance</div>
+<ul class="price-features">
+<li>PA registered office address</li>
+<li>Mail forwarding via USPS</li>
+<li>Annual report email reminders</li>
+<li>Online client portal</li>
+<li>Email support</li>
+</ul>
+<a href="STRIPE_STARTER_LINK" class="price-cta outline" target="_blank">Get started →</a>
+</div>
+<div class="price-card featured">
+<div class="price-badge">Most popular</div>
+<div class="price-name">Professional</div>
+<div class="price-amount">$179<span>/year</span></div>
+<div class="price-desc">Full-service compliance with same-day scanning</div>
+<ul class="price-features">
+<li>Everything in Starter</li>
+<li>Same-day document scanning</li>
+<li>Compliance calendar + alerts</li>
+<li>Annual report filing assist ($50)</li>
+<li>Business mailing address</li>
+<li>Priority email support</li>
+</ul>
+<a href="STRIPE_PROFESSIONAL_LINK" class="price-cta primary" target="_blank">Get started →</a>
+</div>
+<div class="price-card">
+<div class="price-name">Premium</div>
+<div class="price-amount">$299<span>/year</span></div>
+<div class="price-desc">White-glove service — we handle everything</div>
+<ul class="price-features">
+<li>Everything in Professional</li>
+<li>Annual report filed for you</li>
+<li>Unlimited mail forwarding</li>
+<li>Notarization (2/year free)</li>
+<li>Business identity package</li>
+<li>Phone support + dedicated rep</li>
+</ul>
+<a href="STRIPE_STARTER_LINK" class="price-cta outline" target="_blank">Get started →</a>
+</div>
+</div>
+</div>
+</section>
+
+<section class="partner" id="partners">
+<div class="container">
+<div class="partner-grid">
+<div>
+<div class="section-label">For CPAs and attorneys</div>
+<h2>Add CROP services to your practice</h2>
+<p>Our white-label partner program lets you offer registered office services under your own brand. We handle all operations — you earn recurring revenue from your existing client relationships.</p>
+<p>$99 per client per year. Your branding. Your pricing. Zero operational burden.</p>
+<a href="mailto:partners@pacropservices.com" class="btn-primary">Become a partner →</a>
+</div>
+<div class="partner-stats">
+<div class="partner-stat"><div class="num">$99</div><div class="label">Per client, per year</div></div>
+<div class="partner-stat"><div class="num">0 min</div><div class="label">Your time per client</div></div>
+<div class="partner-stat"><div class="num">100%</div><div class="label">White-label branding</div></div>
+<div class="partner-stat"><div class="num">3 days</div><div class="label">Onboarding time</div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="faq" id="faq">
+<div class="container">
+<h2>Common questions</h2>
+<div class="faq-grid">
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">What is a CROP?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf, receiving legal and government documents so you don't have to use your home or personal address.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">Is a CROP the same as a registered agent?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">Functionally, yes. Most states use the term "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same: a reliable address where the state and courts can deliver official documents to your business.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">What happens if I don't have a CROP or registered office?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">Every PA business entity must have either its own physical registered office address or a CROP. Without one, you risk missing service of process (which can lead to default judgments), government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">What is the PA annual report requirement?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">Starting in 2025, all PA business entities must file an annual report with the Department of State (replacing the old decennial report). The fee is $7 for for-profit entities. Starting in 2027, failure to file will result in administrative dissolution, termination, or cancellation of your business registration.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">How quickly do you forward documents?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">For Professional and Premium tiers, we scan documents the same day they're received and upload them to your secure portal. You get an immediate email notification. Starter tier clients receive documents via USPS mail forwarding within 1-2 business days.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">Can I switch from another CROP to you?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">Absolutely. You file a Change of Registered Office form with the PA Department of State (online at file.dos.pa.gov, $5 fee). We provide pre-populated forms and step-by-step instructions to make the switch seamless.</div>
+</div>
+<div class="faq-item" onclick="this.classList.toggle('open')">
+<div class="faq-q">Do you file my annual report for me?<span class="faq-arrow">▾</span></div>
+<div class="faq-a">Premium tier clients get annual report filing included at no extra cost. Professional tier clients can add filing assistance for $50. All tiers receive automated deadline reminders at 90, 60, 30, 14, and 7 days before your due date.</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="final-cta" id="signup">
+<div class="container">
+<h2>Protect your PA business today</h2>
+<p>Professional registered office. Compliance monitoring. Annual report reminders. From $79 a year.</p>
+<a href="mailto:hello@pacropservices.com" class="btn-primary" style="font-size:18px;padding:16px 40px;">Get started →</a>
+</div>
+</section>
+
+<footer>
+<div class="container">
+<div class="footer-col">
+<h4>PA CROP Services</h4>
+<p>Licensed Commercial Registered Office<br>Provider in the Commonwealth of Pennsylvania.</p>
+<p style="margin-top:12px">A Dynasty Empire company.<br>Erie, Pennsylvania</p>
+</div>
+<div class="footer-col">
+<h4>Services</h4>
+<a href="#pricing">CROP service tiers</a>
+<a href="#">Annual report filing</a>
+<a href="#">LLC formation</a>
+<a href="#">Notarization</a>
+<a href="#">Change of registered office</a>
+</div>
+<div class="footer-col">
+<h4>Resources</h4>
+<a href="#">What is a CROP?</a>
+<a href="#">PA annual report guide</a>
+<a href="#">2027 dissolution deadline</a>
+<a href="#">CROP vs. registered agent</a>
+<a href="#">PA DOS filing guide</a>
+</div>
+<div class="footer-col">
+<h4>Contact</h4>
+<a href="mailto:hello@pacropservices.com">hello@pacropservices.com</a>
+<a href="mailto:partners@pacropservices.com">partners@pacropservices.com</a>
+<a href="tel:+1XXXXXXXXXX">(XXX) XXX-XXXX</a>
+</div>
+<div class="footer-bottom" style="width:100%">
+<p>&copy; 2026 PA CROP Services (PA Registered Office Services, LLC). All rights reserved. Licensed CROP provider registered with the Pennsylvania Department of State.</p>
+</div>
+</div>
+</footer>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "PA CROP Services",
+  "description": "Licensed Pennsylvania Commercial Registered Office Provider. Registered office address, compliance monitoring, and annual report filing services.",
+  "url": "https://pacropservices.com",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Erie",
+    "addressRegion": "PA",
+    "postalCode": "16501",
+    "addressCountry": "US"
+  },
+  "priceRange": "$79-$299/year",
+  "areaServed": {
+    "@type": "State",
+    "name": "Pennsylvania"
+  }
+}
+</script>
+</body>
+</html>
