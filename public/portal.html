@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA CROP Services | Client Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0f1e3d;--navy2:#162952;--navy3:#1e3a6e;
+  --gold:#c9a227;--gold2:#e8b93a;--gold3:#f5d87a;
+  --cream:#faf8f3;--cream2:#f0ede4;--text:#0f1e3d;
+  --muted:#5a6a84;--border:#d4cfc0;--success:#1a7a4a;
+  --warn:#b55a00;--red:#c0392b;--card:#ffffff;
+  --shadow:0 2px 16px rgba(15,30,61,.08);--radius:10px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 60%,#0d2b52 100%);position:relative;overflow:hidden;}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(201,162,39,.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(201,162,39,.08) 0%,transparent 50%);}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:420px;box-shadow:0 32px 80px rgba(0,0,0,.35);position:relative;z-index:1;}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo .seal{width:72px;height:72px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:3px solid var(--gold);}
+.login-logo .seal svg{width:38px;height:38px;fill:var(--gold)}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:700}
+.login-logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.form-group input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);transition:all .2s;outline:none;}
+.form-group input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(201,162,39,.1)}
+.btn-primary{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary:hover{background:var(--navy3);transform:translateY(-1px)}
+.error-msg{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);color:var(--red);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.demo-hint{text-align:center;margin-top:20px;font-size:12px;color:var(--muted)}
+.demo-hint a{color:var(--gold);cursor:pointer;font-weight:500}
+#portal{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--navy);color:#fff;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:100;}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.topbar-seal{width:36px;height:36px;border-radius:50%;background:rgba(201,162,39,.15);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;}
+.topbar-seal svg{width:18px;height:18px;fill:var(--gold)}
+.topbar-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.client-badge{background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.3);color:var(--gold2);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.client-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold2)}
+.btn-logout{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;}
+.btn-logout:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.portal-body{display:flex;flex:1;min-height:calc(100vh - 60px)}
+.sidebar{width:220px;background:#fff;border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
+.sidebar-section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 20px;margin:16px 0 8px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:.15s;border-left:3px solid transparent;font-size:13.5px;font-weight:500;color:var(--muted);}
+.sidebar-item:hover{background:var(--cream);color:var(--navy)}
+.sidebar-item.active{background:rgba(201,162,39,.08);color:var(--navy);border-left-color:var(--gold);font-weight:600;}
+.sidebar-item .icon{width:18px;height:18px;flex-shrink:0}
+.badge-count{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;}
+.main{flex:1;padding:28px 32px;max-width:calc(100vw - 220px)}
+.welcome-strip{background:var(--navy);color:#fff;border-radius:var(--radius);padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+.welcome-strip::before{content:'';position:absolute;right:-20px;top:-20px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.15),transparent 70%);}
+.welcome-strip h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.welcome-strip p{font-size:13px;color:rgba(255,255,255,.7)}
+.deadline-pill{background:rgba(201,162,39,.15);border:1px solid rgba(201,162,39,.3);border-radius:8px;padding:12px 20px;text-align:right;flex-shrink:0;}
+.deadline-pill .label{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.deadline-pill .val{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold2)}
+.deadline-pill .sub{font-size:11px;color:rgba(255,255,255,.5)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-card .val{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1}
+.stat-card .sub{font-size:12px;color:var(--muted);margin-top:6px}
+.pill{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;}
+.pill-green{background:rgba(26,122,74,.1);color:var(--success)}
+.pill-warn{background:rgba(181,90,0,.1);color:var(--warn)}
+.pill-gold{background:rgba(201,162,39,.12);color:#8a6800}
+.section{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px}
+.section-header{padding:20px 24px;border-bottom:1px solid var(--border)}
+.section-header h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--navy)}
+.section-header p{font-size:13px;color:var(--muted);margin-top:2px}
+.section-body{padding:24px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.info-card{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:18px;transition:.15s;cursor:pointer;}
+.info-card:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(201,162,39,.1)}
+.info-card h4{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.info-card p{font-size:13px;color:var(--muted);line-height:1.5}
+.tag{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;}
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-24px;top:4px;width:16px;height:16px;border-radius:50%;border:2px solid;}
+.tl-dot.done{background:var(--success);border-color:var(--success)}
+.tl-dot.active{background:var(--gold);border-color:var(--gold)}
+.tl-dot.pending{background:#fff;border-color:var(--border)}
+.tl-date{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.tl-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.tl-desc{font-size:12px;color:var(--muted)}
+.checklist{display:flex;flex-direction:column;gap:10px}
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:.15s;}
+.check-item:hover{background:var(--cream);border-color:var(--gold)}
+.check-item.done{background:rgba(26,122,74,.04);border-color:rgba(26,122,74,.2)}
+.check-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;}
+.check-item.done .check-box{background:var(--success);border-color:var(--success)}
+.check-title{font-size:14px;font-weight:600;color:var(--navy)}
+.check-item.done .check-title{color:var(--muted);text-decoration:line-through}
+.check-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.alert{padding:14px 18px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+.alert-gold{background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);color:#6b4f00}
+.alert-green{background:rgba(26,122,74,.08);border:1px solid rgba(26,122,74,.2);color:#0d4a28}
+.btn-sm{padding:8px 16px;border:1.5px solid var(--navy);color:var(--navy);background:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.btn-sm:hover{background:var(--navy);color:#fff}
+.btn-gold{padding:10px 22px;background:var(--gold);color:var(--navy);border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-gold:hover{background:var(--gold2)}
+.progress-bar{background:var(--cream2);border-radius:4px;height:8px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:.4s}
+.notify-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--cream2);align-items:flex-start;}
+.notify-item:last-child{border-bottom:none}
+.notify-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.notify-text{font-size:13.5px;color:var(--text);line-height:1.4}
+.notify-date{font-size:11.5px;color:var(--muted);margin-top:3px}
+.notify-unread .notify-text{font-weight:600;color:var(--navy)}
+.ref-code{background:var(--navy);color:var(--gold2);padding:18px 24px;border-radius:8px;font-family:'DM Mono',monospace;font-size:22px;font-weight:500;text-align:center;letter-spacing:2px;margin:16px 0;cursor:pointer;transition:.2s;}
+.ref-code:hover{background:var(--navy3)}
+.chat-wrap{display:flex;flex-direction:column;height:420px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--cream);border-radius:8px;margin-bottom:12px}
+.msg{display:flex;gap:10px;align-items:flex-start;max-width:90%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.msg.ai .msg-avatar{background:var(--navy);color:var(--gold)}
+.msg.user .msg-avatar{background:var(--gold);color:var(--navy)}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;}
+.msg.ai .msg-bubble{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:4px 12px 12px 12px}
+.msg.user .msg-bubble{background:var(--navy);color:#fff;border-radius:12px 4px 12px 12px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input{flex:1;padding:11px 16px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.2s;}
+.chat-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1)}
+.btn-send{padding:11px 20px;background:var(--navy);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;}
+.btn-send:hover{background:var(--navy3)}
+.btn-send:disabled{opacity:.5;cursor:not-allowed}
+.quick-qs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.quick-q{background:rgba(15,30,61,.05);border:1px solid rgba(15,30,61,.1);color:var(--navy);padding:5px 11px;border-radius:16px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.quick-q:hover{background:rgba(201,162,39,.1);border-color:rgba(201,162,39,.3)}
+.typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce .9s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.hidden{display:none!important}
+@media(max-width:768px){.stats{grid-template-columns:1fr 1fr}.grid2,.grid3{grid-template-columns:1fr}.sidebar{display:none}.main{max-width:100%;padding:16px}}
+</style>
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="seal"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.25C17.25 21.15 21 16.25 21 11V5L12 1zm0 4.5l6 2.5v4c0 3.75-2.7 7.25-6 8.4-3.3-1.15-6-4.65-6-8.4V8l6-2.5z"/></svg></div>
+      <h1>PA CROP Services</h1>
+      <p>Client Compliance Portal</p>
+    </div>
+    <div id="login-error" class="error-msg">Invalid email or access code. Contact hello@pacropservices.com</div>
+    <div class="form-group"><label>Email Address</label><input type="email" id="login-email" placeholder="you@yourbusiness.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-group"><label>Access Code</label><input type="password" id="login-code" placeholder="Your portal access code" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-primary" onclick="doLogin()">Access My Portal &rarr;</button>
+    <div class="demo-hint">Demo access: <a onclick="demoLogin()">click here to enter</a></div>
+  </div>
+</div>
+
+<div id="portal">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-seal"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.25C17.25 21.15 21 16.25 21 11V5L12 1zm0 4.5l6 2.5v4c0 3.75-2.7 7.25-6 8.4-3.3-1.15-6-4.65-6-8.4V8l6-2.5z"/></svg></div>
+      <span style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700">PA CROP Services</span>
+    </div>
+    <div class="topbar-right">
+      <div class="client-badge"><div class="dot"></div><span id="tier-badge">Professional Plan</span></div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="portal-body">
+    <div class="sidebar">
+      <div class="sidebar-section-label">Main</div>
+      <div class="sidebar-item active" onclick="setTab('dashboard',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+      <div class="sidebar-item" onclick="setTab('onboarding',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Onboarding<span class="badge-count" id="onboard-badge">4</span></div>
+      <div class="sidebar-section-label">Services</div>
+      <div class="sidebar-item" onclick="setTab('credit',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Business Credit</div>
+      <div class="sidebar-item" onclick="setTab('templates',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Legal Templates</div>
+      <div class="sidebar-item" onclick="setTab('entity',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>New Entity</div>
+      <div class="sidebar-item" onclick="setTab('insurance',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Insurance</div>
+      <div class="sidebar-section-label">Account</div>
+      <div class="sidebar-item" onclick="setTab('notifications',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>Notifications<span class="badge-count" id="notif-badge">2</span></div>
+      <div class="sidebar-item" onclick="setTab('referral',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Referral Program</div>
+      <div class="sidebar-item" onclick="setTab('ai',this)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>AI Assistant</div>
+    </div>
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard">
+        <div class="welcome-strip">
+          <div><h2 id="welcome-name">Welcome back</h2><p>Registered Office: 924 W 23rd St, Erie, PA 16502 &nbsp;&middot;&nbsp; <span id="client-email-show"></span></p></div>
+          <div class="deadline-pill"><div class="label">2027 Deadline</div><div class="val" id="days-left">636</div><div class="sub">days remaining</div></div>
+        </div>
+        <div class="stats">
+          <div class="stat-card"><div class="label">Annual Report</div><div class="val">Sept 30</div><div class="sub">2026 deadline</div><span class="pill pill-warn">193 days away</span></div>
+          <div class="stat-card"><div class="label">CROP Status</div><div class="val">Active</div><div class="sub">Since Jan 2026</div><span class="pill pill-green">&#10003; Current</span></div>
+          <div class="stat-card"><div class="label">Plan</div><div class="val" id="plan-display">Professional</div><div class="sub">Renews Jan 2027</div><span class="pill pill-gold">$179/yr</span></div>
+          <div class="stat-card"><div class="label">Entities Covered</div><div class="val">1</div><div class="sub">Add more anytime</div><button class="btn-sm" style="margin-top:8px;font-size:12px;padding:5px 12px" onclick="setTab('entity',null)">+ Add Entity</button></div>
+        </div>
+        <div class="grid2">
+          <div class="section">
+            <div class="section-header"><h3>Compliance Timeline</h3><p>Your 2026 compliance milestones</p></div>
+            <div class="section-body">
+              <div class="timeline">
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">Jan 2026</div><div class="tl-title">CROP Service Activated</div><div class="tl-desc">Registered office established at 924 W 23rd St</div></div>
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">Mar 2026</div><div class="tl-title">Portal Access Granted</div><div class="tl-desc">Client onboarding completed</div></div>
+                <div class="tl-item"><div class="tl-dot active"></div><div class="tl-date">Jul 2026</div><div class="tl-title">Annual Report Reminder</div><div class="tl-desc">60-day advance notice sent automatically</div></div>
+                <div class="tl-item"><div class="tl-dot pending"></div><div class="tl-date">Sept 30, 2026</div><div class="tl-title">Annual Report Due</div><div class="tl-desc">$7 filing fee &mdash; we'll remind you 5 times</div></div>
+                <div class="tl-item"><div class="tl-dot pending"></div><div class="tl-date">Dec 31, 2027</div><div class="tl-title">2027 PA DOS Deadline</div><div class="tl-desc">All PA entities must file or face dissolution</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-header"><h3>Quick Actions</h3><p>Most requested services</p></div>
+            <div class="section-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="info-card" onclick="setTab('entity',null)"><h4>&#127962; Form a New Entity</h4><p>PA LLC, WY LLC, or S-Corp &mdash; we guide you through formation and add compliance coverage.</p></div>
+                <div class="info-card" onclick="setTab('templates',null)"><h4>&#128196; Download Legal Templates</h4><p>Operating agreements, resolutions &mdash; pre-drafted for PA businesses.</p></div>
+                <div class="info-card" onclick="setTab('ai',null)"><h4>&#129302; Ask AI Compliance Assistant</h4><p>Instant answers about annual reports, the 2027 deadline, and PA requirements.</p></div>
+                <div class="info-card" onclick="setTab('referral',null)"><h4>&#127881; Refer a Business &mdash; Earn $25</h4><p>Earn $25 credit for each PA business you refer that signs up.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONBOARDING -->
+      <div id="tab-onboarding" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Onboarding Checklist</h3><p>Complete these steps to get fully set up</p></div>
+          <div class="section-body">
+            <div class="alert alert-gold">&#9889; <strong>Steps remaining.</strong> Complete your onboarding to unlock all compliance protections.</div>
+            <div class="checklist" id="checklist">
+              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">CROP service activated</div><div class="check-desc">Registered office live at 924 W 23rd St, Erie, PA 16502</div></div></div>
+              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">Portal account created</div><div class="check-desc">Bookmark this portal for easy access</div></div></div>
+              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">PA DOS CROP filing confirmed</div><div class="check-desc">Statement of Commercial Registered Office filed with PA DOS</div></div></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Download &amp; review your Service Agreement</div><div class="check-desc">Review and sign the CROP service agreement &mdash; required for legal coverage</div></div></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Set annual report calendar reminder</div><div class="check-desc">Due Sept 30 each year &mdash; we send 5 reminders, but set your own too</div></div></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Add emergency contact for legal documents</div><div class="check-desc">Who should we call if you receive legal process at your registered office?</div></div></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Upgrade to Premium for annual report filing</div><div class="check-desc">We handle the $7 PA DOS annual report filing automatically each year</div></div></div>
+            </div>
+            <div style="margin-top:20px">
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px"><span>Onboarding progress</span><span id="progress-pct">3 / 7 complete</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:43%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUSINESS CREDIT -->
+      <div id="tab-credit" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Business Credit Building</h3><p>Build your business credit profile &mdash; separate from personal credit</p></div>
+          <div class="section-body">
+            <div class="alert alert-gold">&#128161; Your CROP address (924 W 23rd St, Erie, PA) is a legitimate commercial address &mdash; ideal for building business credit.</div>
+            <div class="grid3" style="margin-top:20px">
+              <div class="info-card"><h4>Step 1: EIN &amp; D-U-N-S Number</h4><p>Get a D-U-N-S number (free). This creates your Dun &amp; Bradstreet profile &mdash; the foundation of business credit.</p><span class="tag pill-gold">Free &middot; 30 days</span></div>
+              <div class="info-card"><h4>Step 2: Net-30 Vendor Accounts</h4><p>Open accounts with Uline, Quill, and Grainger. They report to bureaus. Pay on time, every time.</p><span class="tag pill-gold">~$0 to start</span></div>
+              <div class="info-card"><h4>Step 3: Business Credit Cards</h4><p>After 6 months of vendor history, apply for a no-PG business card (Brex, Ramp, or BILL Divvy).</p><span class="tag pill-gold">Month 6+</span></div>
+              <div class="info-card"><h4>Paydex Score Target: 80+</h4><p>Pay vendors 10 days early to hit 80+ Paydex score. This unlocks the best credit terms and limits.</p><span class="tag pill-green">Goal: 80+</span></div>
+              <div class="info-card"><h4>Business Bank Account &amp; LOC</h4><p>Open a business bank account using your EIN + CROP address. After 12 months, apply for a line of credit.</p><span class="tag pill-green">Month 12+</span></div>
+              <div class="info-card"><h4>&#9888;&#65039; Common Mistakes to Avoid</h4><p>Never use a PO Box or home address. Never mix personal and business finances. Keep your address consistent across all filings.</p><span class="tag" style="background:rgba(192,57,43,.08);color:var(--red)">Avoid These</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGAL TEMPLATES -->
+      <div id="tab-templates" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Legal Templates Library</h3><p>Pre-drafted PA compliance documents &mdash; download and customize</p></div>
+          <div class="section-body"><div style="display:flex;flex-direction:column;gap:12px" id="templates-list"></div></div>
+        </div>
+      </div>
+
+      <!-- NEW ENTITY -->
+      <div id="tab-entity" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Form a New Entity</h3><p>Add a new LLC or corporation to your compliance coverage</p></div>
+          <div class="section-body">
+            <div class="alert alert-gold">&#127959;&#65039; Dynasty tip: Stack entities &mdash; WY holding company &rarr; PA operating LLC &rarr; CROP coverage on each.</div>
+            <div class="grid3" style="margin-top:20px">
+              <div class="info-card" style="border:2px solid var(--gold);position:relative"><div style="position:absolute;top:-10px;left:16px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px">MOST POPULAR</div><h4>&#127962; Pennsylvania LLC</h4><p>$125 PA DOS filing fee. 7-10 business days standard. We handle the CROP registration simultaneously.</p><div style="margin-top:12px"><button class="btn-gold" style="font-size:12px;padding:7px 16px" onclick="alert('Email hello@pacropservices.com or call 814-480-0989 to begin your PA LLC filing.')">Start Filing</button></div></div>
+              <div class="info-card"><h4>&#127797; Wyoming LLC</h4><p>$102 filing fee. No state income tax, strong asset protection. Ideal for Dynasty holding companies.</p><div style="margin-top:12px"><button class="btn-sm" style="font-size:12px" onclick="alert('Email hello@pacropservices.com or call 814-480-0989 to begin your WY LLC filing.')">Start Filing</button></div></div>
+              <div class="info-card"><h4>&#127963; PA S-Corporation</h4><p>Elect S-Corp status after forming your LLC. Ideal for businesses clearing $80K+ profit annually.</p><div style="margin-top:12px"><button class="btn-sm" style="font-size:12px" onclick="alert('Email hello@pacropservices.com or call 814-480-0989 to discuss S-Corp election.')">Consult First</button></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSURANCE -->
+      <div id="tab-insurance" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Business Insurance</h3><p>Coverage recommendations for your entity type</p></div>
+          <div class="section-body">
+            <div class="grid2">
+              <div class="info-card"><h4>&#128737;&#65039; General Liability (GL)</h4><p>Required by most leases and clients. Covers third-party bodily injury and property damage. Starting at $500&ndash;$1,200/year.</p><span class="tag pill-warn">Recommended First</span></div>
+              <div class="info-card"><h4>&#128188; Professional Liability (E&amp;O)</h4><p>Essential for service businesses. Covers errors and omissions. CROP Services carries this coverage.</p><span class="tag pill-warn">Service Businesses</span></div>
+              <div class="info-card"><h4>&#127968; Business Owner's Policy (BOP)</h4><p>Bundles GL + commercial property at a discount. Best value for most PA LLCs.</p><span class="tag pill-gold">Best Value</span></div>
+              <div class="info-card"><h4>&#128274; Cyber Liability</h4><p>Covers data breaches and ransomware. Increasingly required by clients. From ~$600/year.</p><span class="tag pill-gold">Growing Requirement</span></div>
+              <div class="info-card"><h4>&#9888;&#65039; Workers' Comp (PA Required)</h4><p>Required by PA law if you have employees. Single-member LLC owners may qualify for an exemption.</p><span class="tag" style="background:rgba(192,57,43,.08);color:var(--red)">Required w/ Employees</span></div>
+              <div class="info-card"><h4>&#9748;&#65039; Commercial Umbrella</h4><p>Extends your GL or BOP limits. $1M additional coverage typically $200&ndash;$400/year.</p><span class="tag pill-green">Asset Protection</span></div>
+            </div>
+            <div style="margin-top:20px;padding:16px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--muted)">&#128161; We partner with licensed insurance brokers in Erie, PA. Email <strong>partners@pacropservices.com</strong> for a referral.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div id="tab-notifications" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Notifications</h3><p>Your compliance alerts and service updates</p></div>
+          <div class="section-body">
+            <div class="notify-item notify-unread"><div class="notify-dot" style="background:var(--gold)"></div><div><div class="notify-text">&#9889; Annual Report Reminder: Your PA annual report is due September 30, 2026. You have 193 days &mdash; you're on track.</div><div class="notify-date">March 21, 2026</div></div></div>
+            <div class="notify-item notify-unread"><div class="notify-dot" style="background:var(--warn)"></div><div><div class="notify-text">&#9888;&#65039; 2027 PA Deadline: All PA entities must file annual reports by Dec 31, 2027 or face administrative dissolution. You have 636 days.</div><div class="notify-date">March 15, 2026</div></div></div>
+            <div class="notify-item"><div class="notify-dot" style="background:var(--success)"></div><div><div class="notify-text">&#10003; CROP Service Activated: Your commercial registered office is now live at 924 W 23rd St, Erie, PA 16502.</div><div class="notify-date">January 10, 2026</div></div></div>
+            <div class="notify-item"><div class="notify-dot" style="background:var(--success)"></div><div><div class="notify-text">&#10003; Welcome to PA CROP Services! Complete your onboarding checklist to get fully protected.</div><div class="notify-date">January 10, 2026</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFERRAL -->
+      <div id="tab-referral" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>Referral Program</h3><p>Earn $25 credit for every PA business you refer</p></div>
+          <div class="section-body">
+            <div class="alert alert-green">&#127881; Refer 4 businesses and your renewal is free!</div>
+            <div style="margin:20px 0"><div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-align:center">Your unique referral code</div><div class="ref-code" id="ref-code" onclick="copyRef()">CROP-DEMO2026</div><div style="font-size:11px;color:var(--muted);text-align:center">Click to copy &middot; Share with PA business owners</div></div>
+            <div class="grid3">
+              <div class="info-card" style="text-align:center"><div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--navy)">0</div><div style="font-size:13px;font-weight:600;margin-top:4px">Referrals</div><div style="font-size:12px;color:var(--muted)">All time</div></div>
+              <div class="info-card" style="text-align:center"><div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold)">$0</div><div style="font-size:13px;font-weight:600;margin-top:4px">Credits Earned</div><div style="font-size:12px;color:var(--muted)">Applied to renewal</div></div>
+              <div class="info-card" style="text-align:center"><div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--success)">$25</div><div style="font-size:13px;font-weight:600;margin-top:4px">Per Referral</div><div style="font-size:12px;color:var(--muted)">Unlimited</div></div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px"><button class="btn-sm" onclick="shareEmail()">&#128231; Email a Colleague</button><button class="btn-sm" onclick="copyRef()">&#128279; Copy Referral Link</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI CHAT -->
+      <div id="tab-ai" class="hidden">
+        <div class="section">
+          <div class="section-header"><h3>AI Compliance Assistant</h3><p>Instant answers about your PA compliance requirements</p></div>
+          <div class="section-body">
+            <div class="quick-qs">
+              <button class="quick-q" onclick="sendQuick(this)">When is my annual report due?</button>
+              <button class="quick-q" onclick="sendQuick(this)">What does the 2027 deadline mean?</button>
+              <button class="quick-q" onclick="sendQuick(this)">How do I build business credit?</button>
+              <button class="quick-q" onclick="sendQuick(this)">Do I need business insurance?</button>
+              <button class="quick-q" onclick="sendQuick(this)">How do I form a second LLC?</button>
+              <button class="quick-q" onclick="sendQuick(this)">What's my registered office address?</button>
+            </div>
+            <div class="chat-wrap">
+              <div class="chat-messages" id="chat-messages">
+                <div class="msg ai"><div class="msg-avatar">&#10022;</div><div class="msg-bubble">Hello! I'm your PA compliance assistant. Ask me about annual reports, the 2027 dissolution deadline, entity formation, or any PA compliance question.</div></div>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="chat-input" type="text" placeholder="Ask about your PA compliance..." onkeydown="if(event.key==='Enter')sendMsg()">
+                <button class="btn-send" id="chat-send" onclick="sendMsg()">Send</button>
+              </div>
+            </div>
+            <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">AI responses are informational only and do not constitute legal advice.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENTS={
+  'demo@pacropservices.com':{code:'DEMO2026',name:'Acme LLC',tier:'Professional',price:'$179/yr',refCode:'CROP-DEMO2026'},
+  'test@business.com':{code:'TEST1234',name:'Test Business LLC',tier:'Starter',price:'$79/yr',refCode:'CROP-TEST1234'}
+};
+let CLIENT=null;
+
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const code=document.getElementById('login-code').value.trim().toUpperCase();
+  const err=document.getElementById('login-error');
+  const c=CLIENTS[email];
+  if(!c||c.code!==code){err.style.display='block';return;}
+  err.style.display='none';
+  CLIENT={...c,email};
+  document.getElementById('login-screen').style.display='none';
+  const p=document.getElementById('portal');p.style.display='flex';p.style.flexDirection='column';
+  document.getElementById('welcome-name').textContent='Welcome back, '+CLIENT.name;
+  document.getElementById('client-email-show').textContent=CLIENT.email;
+  document.getElementById('tier-badge').textContent=CLIENT.tier+' Plan';
+  document.getElementById('plan-display').textContent=CLIENT.tier;
+  document.getElementById('ref-code').textContent=CLIENT.refCode;
+  const d=Math.ceil((new Date('2027-12-31')-new Date())/86400000);
+  document.getElementById('days-left').textContent=d;
+  buildTemplates();
+}
+function demoLogin(){
+  document.getElementById('login-email').value='demo@pacropservices.com';
+  document.getElementById('login-code').value='DEMO2026';
+  setTimeout(doLogin,200);
+}
+function doLogout(){
+  CLIENT=null;
+  document.getElementById('portal').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function setTab(id,el){
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.classList.add('hidden'));
+  const tab=document.getElementById('tab-'+id);
+  if(tab)tab.classList.remove('hidden');
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  else{document.querySelectorAll('.sidebar-item').forEach(i=>{if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes("'"+id+"'"))i.classList.add('active');});}
+  if(id==='notifications')document.getElementById('notif-badge').style.display='none';
+  if(id==='onboarding')updateProgress();
+}
+
+function toggleCheck(el){
+  el.classList.toggle('done');
+  const box=el.querySelector('.check-box');
+  box.innerHTML=el.classList.contains('done')?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'';
+  updateProgress();
+}
+function updateProgress(){
+  const items=document.querySelectorAll('.check-item');
+  const done=[...items].filter(i=>i.classList.contains('done')).length;
+  const pct=Math.round(done/items.length*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=done+' / '+items.length+' complete';
+  const rem=items.length-done;
+  const badge=document.getElementById('onboard-badge');
+  badge.textContent=rem;badge.style.display=rem===0?'none':'';
+}
+
+function buildTemplates(){
+  const isPro=CLIENT&&(CLIENT.tier==='Professional'||CLIENT.tier==='Premium');
+  const templates=[
+    ['Single-Member LLC Operating Agreement','Standard PA operating agreement for single-member LLCs.','Core Template',true],
+    ['Multi-Member LLC Operating Agreement','PA-compliant agreement for 2-5 member LLCs.','Core Template',true],
+    ['Annual Meeting Resolution','Corporate resolution confirming officers and compliance status.','Compliance',true],
+    ['Change of Registered Office Form','PA DOS form pre-filled with your CROP address.','CROP Specific',true],
+    ['Independent Contractor Agreement','PA-specific ICA with IP assignment and non-solicitation.','Business Ops',isPro],
+    ['Non-Disclosure Agreement (NDA)','Mutual NDA with PA governing law, 3-year term.','Business Ops',isPro],
+    ['CROP Service Agreement','Your executed CROP service agreement.','CROP Specific',true],
+  ];
+  document.getElementById('templates-list').innerHTML=templates.map(([name,desc,cat,avail])=>`
+    <div class="info-card" style="display:flex;align-items:center;gap:16px;cursor:default">
+      <div style="flex:1"><h4>${name}</h4><p style="font-size:12px">${desc}</p><span class="tag pill-gold">${cat}</span></div>
+      <div style="flex-shrink:0;text-align:right">
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">${avail?'Included':'Professional+'}</div>
+        <button class="btn-sm" style="font-size:12px;padding:6px 14px" onclick="fakeDownload(this,${avail})">${avail?'&#8595; Download':'&#128274; Upgrade'}</button>
+      </div>
+    </div>`).join('');
+}
+
+function fakeDownload(btn,avail){
+  if(!avail){alert('Upgrade to Professional or Premium to unlock this template.\nEmail hello@pacropservices.com or call 814-480-0989.');return;}
+  btn.textContent='&#10003; Downloaded';setTimeout(()=>{btn.innerHTML='&#8595; Download';},2000);
+}
+function copyRef(){
+  const code=document.getElementById('ref-code').textContent;
+  navigator.clipboard.writeText(code).catch(()=>{});
+  const el=document.getElementById('ref-code');el.textContent='Copied!';setTimeout(()=>{el.textContent=code;},1500);
+}
+function shareEmail(){
+  const c=CLIENT||{refCode:'CROP-DEMO2026'};
+  window.location.href='mailto:?subject=Use my code for PA CROP Services&body=Hey! I use PA CROP Services for my registered office address in Pennsylvania.%0A%0AUse my referral code '+c.refCode+' at https://pacropservices.com';
+}
+
+const chatHistory=[];
+const SYS=`You are the PA compliance AI assistant for PA CROP Services, a Pennsylvania Commercial Registered Office Provider (CROP) at 924 W 23rd St, Erie, PA 16502. You are embedded in the client compliance portal. Be warm, direct, and specific. Under 120 words per response. Key facts: PA annual reports due Sept 30 each year, $7 fee. 2027 deadline: all PA entities must file by Dec 31 2027 or face dissolution. CROP satisfies PA registered office requirement. Phone: 814-480-0989. Email: hello@pacropservices.com. Starter plan $79/yr, Professional $179/yr, Premium $299/yr (includes filing assistance).`;
+
+async function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const msg=inp.value.trim();if(!msg)return;
+  addMsg('user',msg);inp.value='';
+  document.getElementById('chat-send').disabled=true;
+  const typing=addTyping();
+  chatHistory.push({role:'user',content:msg});
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,messages:chatHistory})
+    });
+    const data=await res.json();
+    typing.remove();
+    const reply=data.content?.[0]?.text||'Connection issue. Please call 814-480-0989.';
+    chatHistory.push({role:'assistant',content:reply});
+    addMsg('ai',reply);
+  }catch(e){typing.remove();addMsg('ai','Connection error. Please call us at 814-480-0989.');}
+  document.getElementById('chat-send').disabled=false;
+}
+function sendQuick(btn){document.getElementById('chat-input').value=btn.textContent;sendMsg();}
+function addMsg(role,text){
+  const el=document.createElement('div');el.className='msg '+(role==='ai'?'ai':'user');
+  const init=role==='ai'?'&#10022;':(CLIENT&&CLIENT.name?CLIENT.name[0].toUpperCase():'C');
+  el.innerHTML=`<div class="msg-avatar">${init}</div><div class="msg-bubble">${text}</div>`;
+  const msgs=document.getElementById('chat-messages');msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;return el;
+}
+function addTyping(){
+  const el=document.createElement('div');el.className='msg ai';
+  el.innerHTML='<div class="msg-avatar">&#10022;</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  const msgs=document.getElementById('chat-messages');msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;return el;
+}
+</script>
+</body>
+</html>
