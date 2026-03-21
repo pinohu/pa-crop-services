@@ -215,31 +215,33 @@
 - **Cost:** ~$12/year
 
 ## 3.2 Set Up Business Email [HUMAN REQUIRED]
-- **Option A — Google Workspace ($6/month):**
-  - Go to: https://workspace.google.com
-  - Click "Get started"
-  - Business name: PA CROP Services
-  - Number of employees: "Just you"
-  - Enter your domain: pacropservices.com
-  - Create first user: hello@pacropservices.com
-  - Pay: $6/month (monthly billing)
-  - Follow DNS verification instructions (add MX, TXT records to your domain)
-- **Option B — Zoho Mail (free for up to 5 users):**
-  - Go to: https://www.zoho.com/mail/zohomail-pricing.html
-  - Select "Forever Free Plan"
-  - Enter domain: pacropservices.com
-  - Create admin user: hello@pacropservices.com
-  - Follow DNS verification instructions
-- **After setup, create these email addresses:**
-  - hello@pacropservices.com (main contact)
-  - partners@pacropservices.com (partner program inquiries)
-  - support@pacropservices.com (client support — can forward to hello@)
+- **SENDING — Emailit (you already own this via AppSumo):**
+  - Go to: https://app.emailit.com
+  - Log in to your existing account
+  - Click "Sending Domains" → "Add Domain" → enter pacropservices.com
+  - Add the SPF and DKIM DNS records Emailit provides to your domain
+  - Click "Verify" once DNS records propagate
+  - Go to "Credentials" → "Create Credential" → select SMTP type
+  - **Save the SMTP host, port, username, and password** — you need these for n8n
+  - Typical values: Host: smtp.emailit.com, Port: 25 or 587
+- **RECEIVING — Cloudflare Email Routing (free):**
+  - If your domain is on Cloudflare: Go to Cloudflare dashboard → Email → Email Routing
+  - Add route: hello@pacropservices.com → forward to your personal email
+  - Add route: partners@pacropservices.com → forward to your personal email
+  - Add route: support@pacropservices.com → forward to your personal email
+  - Cloudflare auto-configures the MX records
+- **SEQUENCES — SuiteDash (you already own this):**
+  - SuiteDash handles onboarding drip sequences, client communications, and nurture emails
+  - Configure sending domain in SuiteDash → Integrations → Email Settings
+- **MARKETING — Acumbamail or tinyMail (you already own these):**
+  - Use for bulk newsletters and campaign blasts
+  - Add pacropservices.com as sending domain in whichever you prefer
 - **Configure email security (do ALL three — critical for deliverability):**
-  - SPF record: Add TXT record to DNS as instructed by your email provider
-  - DKIM record: Add TXT record to DNS as instructed by your email provider
+  - SPF record: As provided by Emailit during domain setup
+  - DKIM record: As provided by Emailit during domain setup
   - DMARC record: Add TXT record: `v=DMARC1; p=quarantine; rua=mailto:hello@pacropservices.com`
-- **Time:** 20 minutes
-- **Cost:** $0-6/month
+- **Time:** 15 minutes
+- **Cost:** $0 (all tools already owned)
 
 ## 3.3 Get a Business Phone Number [HUMAN REQUIRED]
 - **Option A — Google Voice (free):**
@@ -410,10 +412,10 @@ Before building workflows, collect all credentials in one secure place:
 - □ Portal URL: (your SuiteDash portal URL)
 
 **Email (SMTP):**
-- □ SMTP host (e.g., smtp.gmail.com or smtp.zoho.com)
+- □ SMTP host (from Emailit: typically smtp.emailit.com)
 - □ SMTP port (typically 587)
-- □ SMTP username (hello@pacropservices.com)
-- □ SMTP password (app-specific password)
+- □ SMTP username (from Emailit credentials dashboard)
+- □ SMTP password (from Emailit credentials dashboard)
 
 **AiTable (if using for data layer):**
 - □ API key

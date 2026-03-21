@@ -231,18 +231,20 @@ Help me purchase pacropservices.com. Walk me through checkout. I'll enter paymen
 **Time:** 15 minutes
 
 ```
-Navigate to https://workspace.google.com/signup
+Navigate to https://app.emailit.com
 
-Help me set up Google Workspace for pacropservices.com:
-- Business name: PA CROP Services
-- Admin email: hello@pacropservices.com
-- Plan: Business Starter ($6/month)
+Help me set up email sending for pacropservices.com:
+1. Go to Sending Domains → Add Domain → pacropservices.com
+2. Copy the SPF and DKIM DNS records shown
+3. Add those records to my domain DNS
+4. Verify the domain
+5. Go to Credentials → Create SMTP Credential
+6. Copy the SMTP host, port, username, and password
 
-Walk me through the setup and DNS verification. I'll need to add DNS records — tell me exactly what to add and where.
-
-After setup, also create these aliases:
-- partners@pacropservices.com
-- support@pacropservices.com
+Then help me set up email RECEIVING:
+- If domain is on Cloudflare: go to Cloudflare → Email → Email Routing
+- Add forwarding rules: hello@, partners@, support@ → my personal email
+- This is free and instant
 ```
 
 ---
@@ -419,7 +421,7 @@ I have the following credentials ready:
 - SuiteDash API Public ID: ...
 - SuiteDash API Secret: ...
 - SuiteDash Base URL: ...
-- SMTP Host: smtp.gmail.com (or your provider)
+- SMTP Host: smtp.emailit.com (from Emailit credentials)
 - SMTP User: hello@pacropservices.com
 - SMTP Pass: ...
 - AiTable API Key: ...
@@ -778,7 +780,7 @@ HOUR 1 (You + Claude in Chrome):
 └── 0:55-1:00  Set up Google Voice number
 
 HOUR 2 (Cursor does the coding while you do admin):
-├── YOU: Set up Google Workspace email (15 min)
+├── YOU: Set up Emailit sending domain + Cloudflare forwarding (15 min)
 ├── YOU: Create Google Business Profile (10 min)
 ├── YOU: Start E&O insurance application (15 min)
 ├── CURSOR: Update landing page with Stripe links (auto)

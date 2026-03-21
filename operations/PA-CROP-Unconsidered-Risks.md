@@ -96,7 +96,7 @@ Start tier = 400 calls/month. At 500 clients with daily automation, you'll burn 
 ### 15. Domain email
 You need hello@pacropservices.com working before any outreach. Nobody trusts a CROP emailing from gmail.
 
-**Fix:** Register domain → Google Workspace ($6/month) or Zoho (free for 5). Configure SPF, DKIM, DMARC. Takes 30 minutes.
+**Fix:** Register domain → Set up Emailit as sending domain (you already own it). Use Cloudflare Email Routing for free inbox forwarding. Configure SPF, DKIM, DMARC via Emailit dashboard. Takes 15 minutes. Cost: $0.
 
 ### 16. Google Business Profile
 When someone searches "PA registered agent near me," Google shows Maps first. You need a listing.
