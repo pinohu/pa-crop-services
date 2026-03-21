@@ -1,0 +1,79 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "crop-ceo",
+        "name": "CROP CEO",
+        "workspace": "/root/.openclaw/workspaces/crop-ceo",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        }
+      },
+      {
+        "id": "crop-developer",
+        "name": "CROP Developer",
+        "workspace": "/root/.openclaw/workspaces/crop-developer",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        }
+      },
+      {
+        "id": "crop-marketer",
+        "name": "CROP Marketer",
+        "workspace": "/root/.openclaw/workspaces/crop-marketer",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        }
+      },
+      {
+        "id": "crop-ops",
+        "name": "CROP Operations",
+        "workspace": "/root/.openclaw/workspaces/crop-ops",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        }
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "crop-ceo",
+      "match": {
+        "channel": "webchat"
+      }
+    },
+    {
+      "agentId": "crop-developer",
+      "match": {
+        "channel": "cli"
+      }
+    }
+  ],
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "4d5ff31e033888d1135c3f3ddbdde52d629fa2bfdc9460d3"
+    }
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-03-21T00:27:11.669Z"
+  }
+}
