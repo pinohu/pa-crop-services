@@ -1,73 +1,66 @@
-// PA CROP Services — AI Compliance Chatbot v2
-// POST /api/chat { message, clientContext?, history? }
-// Context-aware: knows client's entity, plan, filing dates, documents
+// PA CROP Services — AI Compliance Chatbot (Streaming)
+// POST /api/chat { message, clientContext?, stream? }
+// Returns streaming text/event-stream when stream=true
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+export const config = { runtime: 'edge' };
 
-  const { message, clientContext, clientTier, entityName, history = [] } = req.body || {};
-  if (!message) return res.status(400).json({ error: 'message required' });
+export default async function handler(req) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
+  }
+  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 });
+
+  const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
+  if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });
 
   const GROQ_KEY = process.env.GROQ_API_KEY || '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';
 
-  // Build context-aware system prompt
   const ctx = clientContext || {};
   const eName = ctx.entityName || entityName || '';
   const tier = ctx.plan || clientTier || '';
   const tierLabel = ctx.planLabel || '';
-  
+
   let clientSection = '';
   if (eName || tier) {
-    clientSection = `\n\nCLIENT CONTEXT (use this to personalize your response):`;
-    if (eName) clientSection += `\n- Entity name: ${eName}`;
-    if (ctx.entityType) clientSection += `\n- Entity type: ${ctx.entityType}`;
-    if (ctx.entityNumber) clientSection += ` (PA DOS File #${ctx.entityNumber})`;
-    if (ctx.entityStatus) clientSection += `\n- Current entity status: ${ctx.entityStatus}`;
-    if (tierLabel || tier) clientSection += `\n- Current plan: ${tierLabel || tier} (${ctx.price || ''})`;
-    if (ctx.includesFiling !== undefined) clientSection += `\n- Annual report filing included: ${ctx.includesFiling ? 'YES' : 'No (available in Pro/Empire)'}`;
-    if (ctx.includesHosting !== undefined) clientSection += `\n- Web hosting included: ${ctx.includesHosting ? 'YES' : 'No (available in Starter+)'}`;
-    if (ctx.daysUntilDeadline) clientSection += `\n- Days until annual report deadline (Sept 30): ${ctx.daysUntilDeadline}`;
-    if (ctx.annualReportStatus) clientSection += `\n- Annual report status: ${ctx.annualReportStatus}`;
-    if (ctx.documentsReceived !== undefined) clientSection += `\n- Documents received this year: ${ctx.documentsReceived}`;
-    if (ctx.lastDocumentDate) clientSection += `\n- Last document received: ${ctx.lastDocumentDate} (type: ${ctx.lastDocumentType || 'unknown'})`;
+    clientSection = `\n\nCLIENT CONTEXT (personalize every response using this):`;
+    if (eName) clientSection += `\n- Entity: ${eName}`;
+    if (ctx.entityType) clientSection += ` (${ctx.entityType})`;
+    if (ctx.entityNumber) clientSection += `, PA DOS #${ctx.entityNumber}`;
+    if (ctx.entityStatus) clientSection += `\n- Status: ${ctx.entityStatus}`;
+    if (tierLabel || tier) clientSection += `\n- Plan: ${tierLabel || tier} (${ctx.price || ''})`;
+    if (ctx.includesFiling !== undefined) clientSection += `\n- Filing included: ${ctx.includesFiling ? 'YES' : 'No'}`;
+    if (ctx.daysUntilDeadline) clientSection += `\n- Days to deadline: ${ctx.daysUntilDeadline}`;
+    if (ctx.documentsReceived !== undefined) clientSection += `\n- Documents received: ${ctx.documentsReceived}`;
+    if (ctx.lastDocumentDate) clientSection += `\n- Last document: ${ctx.lastDocumentDate} (${ctx.lastDocumentType || ''})`;
     if (ctx.clientSince) clientSection += `\n- Client since: ${ctx.clientSince}`;
-    if (ctx.referralCode) clientSection += `\n- Referral code: ${ctx.referralCode}`;
-    if (ctx.referralCount) clientSection += `\n- Referrals made: ${ctx.referralCount}`;
-    
-    clientSection += `\n\nWhen this client asks about their account, USE the context above to give specific answers. For example:`;
-    clientSection += `\n- "When is my annual report due?" → "Your annual report for ${eName} is due September 30, ${ctx.daysUntilDeadline} days from now. ${ctx.includesFiling ? 'Since you\'re on the ' + tierLabel + ' plan, we\'ll file it for you.' : 'You can file at file.dos.pa.gov ($7 fee), or upgrade to Business Pro to have us handle it.'}"`;
-    clientSection += `\n- "What plan am I on?" → "You're on the ${tierLabel} plan at ${ctx.price}." Then describe what's included.`;
-    clientSection += `\n- "How many documents have you received?" → "We've received ${ctx.documentsReceived || 0} documents for ${eName} this year."`;
   }
 
-  const systemPrompt = `You are the PA CROP Services AI Compliance Assistant. You help Pennsylvania business owners understand their registered office obligations, annual report requirements, and entity compliance.
+  const systemPrompt = `You are the PA CROP Services compliance concierge. You speak like a trusted advisor — warm, knowledgeable, direct. Never robotic. Never say "I'm an AI" or "As an AI." You ARE the compliance team.
 
-CRITICAL KNOWLEDGE BASE:
-- Every PA LLC, corporation, and LP must maintain a registered office address under 15 Pa. C.S. § 108
-- A Commercial Registered Office Provider (CROP) is licensed under 15 Pa. C.S. § 109
-- PA annual reports are due September 30 each year (decennial reports for LPs/LLPs)
-- Filing fee: $7 online at file.dos.pa.gov, $70 on paper
-- Late/missed annual reports → administrative dissolution after Dec 31, 2027
-- Foreign entities dissolved in PA CANNOT reinstate — must re-register as new entity
-- To change registered office: file DSCB:15-108 ($5 fee)
-- PA CROP Services address: 924 W 23rd St, Erie, PA 16502
-- Plans: Compliance Only ($99/yr), Business Starter ($199/yr), Business Pro ($349/yr), Business Empire ($699/yr)
-- Business Pro and Empire include annual report filing
-- Business Starter+ includes web hosting, email, and domain
-- Business Empire includes multi-entity management, VPS hosting
-- All plans include same-day document scanning, portal access, annual report reminders (90/60/30/14/7 days)
+VOICE & TONE:
+- Speak like a trusted professional who genuinely cares about this person's business
+- Use their entity name naturally: "For ${eName || 'your entity'}..." not "For the entity..."
+- Be specific, never generic. If you know their deadline is ${ctx.daysUntilDeadline || '?'} days away, SAY that number
+- Keep responses to 2-3 short paragraphs. Concise but warm
+- End with a specific next step or offer, never a generic "let me know if you have questions"
+- Use contractions naturally: "you'll" not "you will", "we'll" not "we will"
 
-RESPONSE RULES:
-- Be concise and direct — 2-3 paragraphs max
-- Cite specific PA statutes when relevant (15 Pa. C.S. §)
-- When the client has context, give SPECIFIC answers using their data — never generic
-- If the question is outside PA compliance (tax, legal advice, litigation), say you can't advise on that and suggest consulting a CPA or attorney
-- Naturally mention relevant PA CROP Services features when appropriate
-- Suggest upgrading only when the question relates to a service in a higher tier AND it would genuinely help them${clientSection}`;
+KNOWLEDGE BASE:
+- PA LLC/corp/LP must maintain registered office (15 Pa. C.S. § 108)
+- CROP licensed under 15 Pa. C.S. § 109
+- Annual reports due September 30, $7 online at file.dos.pa.gov
+- Late reports → dissolution after Dec 31, 2027
+- Foreign entities dissolved in PA cannot reinstate
+- Change RO: file DSCB:15-108 ($5)
+- Our address: 924 W 23rd St, Erie, PA 16502
+- Plans: Compliance Only $99/yr, Starter $199/yr (hosting), Pro $349/yr (hosting + filing), Empire $699/yr (multi-entity)
+- Pro/Empire include annual report filing
+- All plans: same-day document scanning, portal, AI assistant, reminders at 90/60/30/14/7 days
+
+RULES:
+- Never give legal or tax advice. Say "that's a question for your attorney/CPA" and offer to connect them with a partner
+- When their question relates to a higher tier, mention it naturally: "Since you're on ${tierLabel || 'your current plan'}, you'd need to..." not "UPGRADE NOW"
+- If you don't know something specific to their entity, say so honestly${clientSection}`;
 
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -75,31 +68,93 @@ RESPONSE RULES:
     { role: 'user', content: message }
   ];
 
+  // Streaming response
+  if (stream) {
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages,
+          temperature: 0.4,
+          max_tokens: 600,
+          stream: true
+        })
+      });
+
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          const reader = groqRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6).trim();
+                  if (data === '[DONE]') {
+                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                    continue;
+                  }
+                  try {
+                    const parsed = JSON.parse(data);
+                    const delta = parsed.choices?.[0]?.delta?.content;
+                    if (delta) {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: delta })}\n\n`));
+                    }
+                  } catch(e) {}
+                }
+              }
+            }
+          } catch(e) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: e.message })}\n\n`));
+          }
+          controller.close();
+        }
+      });
+
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    } catch(err) {
+      return new Response(JSON.stringify({ error: 'Stream failed' }), {
+        status: 502,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Non-streaming fallback
   try {
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        temperature: 0.3,
-        max_tokens: 800,
-        stream: false
-      })
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, temperature: 0.4, max_tokens: 600, stream: false })
     });
-
-    if (!groqRes.ok) {
-      const errText = await groqRes.text();
-      console.error('Groq error:', groqRes.status, errText);
-      return res.status(502).json({ error: 'AI service temporarily unavailable' });
-    }
-
     const data = await groqRes.json();
-    const reply = data.choices?.[0]?.message?.content || 'I apologize, I was unable to process that question. Please try again.';
-
-    return res.status(200).json({ success: true, reply, model: data.model, usage: data.usage });
-  } catch (err) {
-    console.error('Chat error:', err);
-    return res.status(500).json({ error: 'Internal error' });
+    const reply = data.choices?.[0]?.message?.content || 'I apologize — please try again.';
+    return new Response(JSON.stringify({ success: true, reply }), {
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+    });
+  } catch(err) {
+    return new Response(JSON.stringify({ error: 'Service unavailable' }), {
+      status: 502,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+    });
   }
 }
