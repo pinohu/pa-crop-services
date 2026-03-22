@@ -12,7 +12,9 @@ export default async function handler(req, res) {
   const { email, suitedashId } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
 
-  const BEARER = process.env.TWENTY_I_TOKEN;
+  const BEARER = process.env.TWENTY_I_TOKEN || 
+    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
+      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` : null);
   if (!BEARER) return res.status(200).json({ package: null, message: '20i not configured' });
 
   try {
