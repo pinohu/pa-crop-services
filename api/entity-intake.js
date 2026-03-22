@@ -1,6 +1,5 @@
 // PA CROP Services — Post-Purchase Entity Intake
 // POST /api/entity-intake { email, entityName, entityType, dosFileNumber, foreignState? }
-// Called from welcome page or portal to collect entity details after purchase
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
   // Update SuiteDash contact with entity details
   if (SD_PUBLIC && SD_SECRET) {
     try {
-      // Find the contact
       const findRes = await fetch(
         `https://app.suitedash.com/secure-api/contacts?email=${encodeURIComponent(email)}&limit=1`,
         { headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Accept': 'application/json' } }
@@ -27,34 +25,39 @@ export default async function handler(req, res) {
         const findData = await findRes.json();
         const contacts = findData?.data || findData || [];
         const client = Array.isArray(contacts) ? contacts[0] : contacts;
-        
         if (client?.id) {
-          // Update with entity details
           await fetch(`https://app.suitedash.com/secure-api/contacts/${client.id}`, {
             method: 'PUT',
             headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
               company: entityName,
-              custom_fields: {
-                entity_type: entityType || 'LLC',
-                dos_file_number: dosFileNumber || '',
-                foreign_state: foreignState || '',
-              }
+              custom_fields: { entity_type: entityType || 'LLC', dos_file_number: dosFileNumber || '', foreign_state: foreignState || '' }
             })
           });
         }
       }
-    } catch (e) {
-      console.error('SuiteDash update failed:', e.message);
-    }
+    } catch (e) { console.error('SuiteDash update failed:', e.message); }
   }
 
-  // Trigger n8n entity verification workflow if needed
+  // Email notification to Ike (using Emailit API directly as fallback)
   try {
-    await fetch('https://n8n.audreysplace.place/webhook/crop-entity-intake', {
+    await fetch('https://api.emailit.com/v1/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, entityName, entityType, dosFileNumber, foreignState, timestamp: new Date().toISOString() })
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (process.env.EMAILIT_API_KEY || '') },
+      body: JSON.stringify({
+        from: 'hello@pacropservices.com',
+        to: 'polycarpohu@gmail.com',
+        subject: `New Entity Intake: ${entityName}`,
+        text: `New entity submitted:\n\nEntity: ${entityName}\nType: ${entityType || 'LLC'}\nDOS File: ${dosFileNumber || 'Not provided'}\nEmail: ${email}\nForeign State: ${foreignState || 'N/A'}\n\nAction: Verify at PA DOS and update SuiteDash.`
+      })
+    });
+  } catch(e) {}
+
+  // Also try n8n hot lead alert for visibility
+  try {
+    await fetch('https://n8n.audreysplace.place/webhook/crop-hot-lead-alert', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name: entityName, source: 'entity-intake', score: 100, reason: 'New entity intake submitted' })
     });
   } catch(e) {}
 
