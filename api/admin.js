@@ -24,16 +24,39 @@ async function sdFetch(path, opts = {}) {
 }
 
 async function twentyiFetch(path, opts = {}) {
-  const BEARER = process.env.TWENTY_I_TOKEN;
-  const res = await fetch(`${TWENTY_I_BASE}${path}`, {
-    ...opts,
-    headers: {
-      'Authorization': `Bearer ${BEARER}`,
-      'Content-Type': 'application/json',
-      ...(opts.headers || {})
-    }
-  });
-  return res.json();
+  // Try combined key first, then individual formats
+  const BEARER = process.env.TWENTY_I_TOKEN || 
+    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
+      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` 
+      : null);
+  
+  if (!BEARER) return { error: '20i token not configured', packages: {} };
+  
+  const makeRequest = async (authHeader) => {
+    const res = await fetch(`${TWENTY_I_BASE}${path}`, {
+      ...opts,
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...(opts.headers || {})
+      }
+    });
+    return res;
+  };
+  
+  // Try Bearer prefix
+  let res = await makeRequest(`Bearer ${BEARER}`);
+  if (res.status === 401) {
+    // Try without Bearer prefix (some 20i endpoints)
+    res = await makeRequest(BEARER);
+  }
+  if (res.status === 401) {
+    // Try just the general key
+    const generalKey = process.env.TWENTY_I_GENERAL || BEARER.split('+')[0];
+    res = await makeRequest(`Bearer ${generalKey}`);
+  }
+  return res.json().catch(() => ({ error: 'Invalid JSON from 20i', status: res.status }));
 }
 
 async function stripeFetch(path) {
