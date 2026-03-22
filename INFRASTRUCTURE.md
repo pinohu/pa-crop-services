@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — all 8 automations tested, 20 workflows active, 18 serverless functions, 8/8 API tests PASS (AI chatbot, entity monitor, email triage, lead qualifier, doc router, health scoring, SEO pipeline, partner commissions)
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — COMPLETE: 34 pages, 18 APIs, 20 active workflows, portal redesign (NNG/Mercury aesthetic), 8 AI automations live-tested
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -29,9 +29,11 @@
 
 ```
 pa-crop-services/
-├── public/                          # Static HTML site (Vercel outputDirectory)
+├── public/                          # Static HTML site (Vercel outputDirectory) — 34 pages
 │   ├── index.html                   # Homepage — 4-tier pricing, A/B test, FAQ schema
-│   ├── portal.html                  # Client portal — 9 tabs, SuiteDash auth, hosting tab
+│   ├── portal.html                  # Client portal — redesigned (Plus Jakarta Sans + Fraunces)
+│   │                                #   NNG heuristic compliance, AI assistant inline,
+│   │                                #   entity status hero, health score KPI, keyboard shortcuts
 │   ├── admin.html                   # Admin dashboard — full ops (noindex)
 │   ├── compliance-check.html        # Free compliance assessment tool (lead gen)
 │   ├── welcome.html                 # Post-purchase welcome page
@@ -41,7 +43,7 @@ pa-crop-services/
 │   ├── pennsylvania-business-glossary.html
 │   ├── 404.html
 │   │
-│   ├── pa-annual-report-requirement-guide.html
+│   ├── pa-annual-report-requirement-guide.html    # SEO articles (9)
 │   ├── what-is-a-pennsylvania-crop.html
 │   ├── pa-2027-dissolution-deadline.html
 │   ├── crop-vs-registered-agent-pennsylvania.html
@@ -50,6 +52,11 @@ pa-crop-services/
 │   ├── how-to-file-pa-annual-report-2026.html
 │   ├── reinstate-dissolved-pennsylvania-llc.html
 │   ├── pennsylvania-foreign-entity-annual-report.html
+│   │
+│   ├── pa-crop-services-vs-northwest-registered-agent.html  # Comparison pages (4)
+│   ├── pa-crop-services-vs-ct-corporation.html
+│   ├── pa-crop-services-vs-zenbusiness.html
+│   ├── pa-crop-services-vs-incfile.html
 │   │
 │   ├── registered-office-philadelphia-pa.html   # City pages (10)
 │   ├── registered-office-pittsburgh-pa.html
@@ -62,32 +69,29 @@ pa-crop-services/
 │   ├── registered-office-lancaster-pa.html
 │   ├── registered-office-wilkes-barre-pa.html
 │   │
-│   ├── pa-crop-services-vs-northwest-registered-agent.html  # Comparison pages (4)
-│   ├── pa-crop-services-vs-ct-corporation.html
-│   ├── pa-crop-services-vs-zenbusiness.html
-│   ├── pa-crop-services-vs-incfile.html
-│   │
 │   ├── embed/
-│   │   └── crop-widget.js           # Partner embeddable compliance widget
+│   │   ├── crop-widget.js           # Partner embeddable compliance widget
+│   │   └── chatbot.js               # Standalone AI chatbot embed (any page)
 │   ├── sitemap.xml
 │   └── robots.txt
 │
-├── api/                             # Vercel serverless functions
-│   ├── admin.js                     # Admin API — 12 actions (SuiteDash/20i/Stripe/Documentero)
-│   ├── auth.js                      # Portal login — validates email+code via SuiteDash
-│   ├── provision.js                 # Full 20i stack provisioning
-│   ├── client-hosting.js            # 20i package lookup per client email
+├── api/                             # Vercel serverless functions (18 endpoints)
+│   ├── admin.js                     # Admin API — 12 actions (native PDF gen)
+│   ├── auth.js                      # Portal login — SuiteDash lookup, 4-tier mapping
+│   ├── provision.js                 # Full client provisioning (20i+SuiteDash+email)
+│   ├── client-hosting.js            # 20i package lookup per client
 │   ├── intake.js                    # Lead capture + 5-dimension scoring
-│   ├── subscribe.js                 # Newsletter/lead magnet email capture
+│   ├── subscribe.js                 # Newsletter capture → Acumbamail + n8n
 │   ├── reset-code.js                # Portal access code recovery
-│   ├── partner-intake.js            # CPA/attorney partner application
-│   ├── entity-request.js            # Entity formation lead flow
-│   ├── chat.js                      # AI compliance chatbot (Groq-powered)
-│   ├── entity-monitor.js            # PA DOS entity status checker (n8n daily)
+│   ├── partner-intake.js            # CPA/attorney partner applications
+│   ├── entity-request.js            # Entity formation leads
+│   ├── generate-agreement.js        # Native PDF service agreement (pdf-lib)
+│   ├── chat.js                      # AI compliance chatbot (Groq llama-3.3-70b)
+│   ├── entity-monitor.js            # PA DOS entity status checker
 │   ├── email-triage.js              # AI email classifier + draft responder
 │   ├── qualify-lead.js              # AI 5-dimension lead scorer
 │   ├── classify-document.js         # AI document OCR classifier + summarizer
-│   ├── client-health.js             # 5-dimension client health + churn score
+│   ├── client-health.js             # 5-dimension client health + churn predictor
 │   ├── generate-article.js          # AI SEO article generator (brand voice)
 │   └── partner-commission.js        # Referral tracking + commission calculator
 │
@@ -97,16 +101,18 @@ pa-crop-services/
 │   ├── internal-links-map.md
 │   └── style-guide.md
 │
-├── docs/                            # Setup guides (for humans)
+├── docs/                            # Setup guides + email sequences
 │   ├── SUITEDASH_CUSTOM_FIELDS.md
 │   ├── GOOGLE_SEARCH_CONSOLE.md
 │   ├── GOOGLE_BUSINESS_PROFILE.md
-│   ├── RENEWAL_EMAIL_SEQUENCE.md    # 4-email renewal copy for n8n wRLXTGXW60MDLUnI
-│   └── WINBACK_EMAIL_SEQUENCE.md    # 4-email win-back copy for n8n UGGH8LOU4AR3eXk
+│   ├── RENEWAL_EMAIL_SEQUENCE.md
+│   ├── WINBACK_EMAIL_SEQUENCE.md
+│   └── CROP_Service_Agreement_Template.docx
 │
+├── package.json                     # Dependencies: pdf-lib
 ├── vercel.json                      # outputDirectory: public, cleanUrls: true
-├── INFRASTRUCTURE.md                # This file — auto-updated on every commit
-└── MASTER_BUILD_PLAN_V2.md          # Original 15-gap build plan
+├── INFRASTRUCTURE.md                # This file
+└── MASTER_BUILD_PLAN_V2.md          # Original build plan
 ```
 
 ---
@@ -207,28 +213,31 @@ def push_file(remote_path, content_str, message):
 **API key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NzAyYjQzYS1lNjAyLTQ1NzgtOTgyYy1kNTI4YWVhMDY0ZDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiMmEzMDU4Y2UtNTNmYS00MzRjLTg3NjEtNjU2ZGE3MmRiMzE4IiwiaWF0IjoxNzc0MDUwMTA1fQ.QZnjcP25xNNhJwABdyYhADGxmDGaQkb8OLoCLCvukHs`  
 **Webhook base:** `https://n8n.audreysplace.place/webhook/`  
 
-### Active Workflows
+### Active Workflows (20 active, 2 inactive)
 
-| ID | Name | Webhook Path | Status |
-|----|------|-------------|--------|
-| `OkjdJx2bRqlgl1s7` | CROP — New Client Onboarding | `crop-onboarding` | ✅ Active |
-| `il9DOXSAK9hUo2Ru` | CROP — Annual Report Reminders | (scheduled) | ✅ Active |
-| `xiOMdfSNEmWfqauo` | CROP — Payment Failed Dunning | (stripe webhook) | ✅ Active |
-| `8iz9Mjhkhpy0ArBv` | CROP — Auto-Generate Service Agreement | `crop-gen-agreement` | ✅ Active |
-| `DpeDi1zt88ySTSOF` | CROP — Paperless Document Router | (webhook) | ✅ Active |
-| `pDcxjzAkdtyfpHU2` | CROP — PA DOS Entity Status Checker | `crop-dos-entity-checker` | ✅ Active |
-| `Ov3nTuiJKarlRvhS` | CROP — 20i Infrastructure Provisioning | (stripe webhook) | ✅ Active |
-| `gE6dROHiqT2XAUiq` | CROP — Sync Client to Acumbamail | `crop-acumbamail-sync` | ✅ Active |
-| `ndDWaSmPO4290CgK` | CROP — Lead Nurture Start | `crop-lead-nurture-start` | ✅ Active |
-| `RSibNfwSM9aw3vUW` | CROP — Hot Lead Alert | `crop-hot-lead-alert` | ✅ Active |
-| `l2495RxXLxkYzqcU` | CROP — Portal Access Code Reset | `crop-portal-reset` | ✅ Active |
-| `9j4pW3PmmYufMG8T` | CROP — Partner Onboarding | `crop-partner-onboarding` | ✅ Active |
-| `WzLsTyevzy2HdY26` | CROP — Renewal Sequence | (scheduled) | ✅ Content loaded |
-| `VroBVEpWgOgCTAF3` | CROP — Win-Back Sequence | (weekly Mon 8AM) | ✅ Active |
-| `cEC0aLvV4CMEUYHn` | CROP — Daily Entity Status Monitor | (daily 6AM) | ✅ Created |
-| `4RV1ZzWSkR4KkUjS` | CROP — AI Email Triage | (IMAP trigger) | ✅ Created |
-| `EfsC4jvIcS9j4RK0` | CROP — Weekly Client Health Score | (weekly Mon 7AM) | ✅ Created |
-| `9MNIDxWss0ew6Ngx` | CROP — SEO Content Pipeline | `crop-generate-article` | ✅ Created |
+| ID | Name | Trigger | Status |
+|----|------|---------|--------|
+| `OkjdJx2bRqlgl1s7` | CROP — New Client Onboarding | Stripe webhook | ✅ Active |
+| `WzLsTyevzy2HdY26` | CROP — Renewal Sequence | Daily 7AM cron | ✅ Active |
+| `VroBVEpWgOgCTAF3` | CROP — Win-Back Sequence | Weekly Mon 8AM | ✅ Active |
+| `cEC0aLvV4CMEUYHn` | CROP — Daily Entity Status Monitor | Daily 6AM cron | ✅ Active |
+| `EfsC4jvIcS9j4RK0` | CROP — Weekly Client Health Score | Weekly Mon 7AM | ✅ Active |
+| `4RV1ZzWSkR4KkUjS` | CROP — AI Email Triage | Webhook `crop-email-triage` | ✅ Active |
+| `9MNIDxWss0ew6Ngx` | CROP — SEO Content Pipeline | Webhook `crop-generate-article` | ✅ Active |
+| `8iz9Mjhkhpy0ArBv` | CROP — Auto-Generate Service Agreement | Webhook `crop-gen-agreement` | ✅ Active |
+| `il9DOXSAK9hUo2Ru` | CROP — Annual Report Reminders | Scheduled | ✅ Active |
+| `xiOMdfSNEmWfqauo` | CROP — Payment Failed Dunning | Stripe webhook | ✅ Active |
+| `Ov3nTuiJKarlRvhS` | PA CROP — 20i Infrastructure Provisioning | Stripe webhook | ✅ Active |
+| `DpeDi1zt88ySTSOF` | CROP — Paperless Document Router | Webhook | ✅ Active |
+| `pDcxjzAkdtyfpHU2` | CROP — PA DOS Entity Status Checker | Webhook `crop-dos-entity-checker` | ✅ Active |
+| `gE6dROHiqT2XAUiq` | CROP — Sync Client to Acumbamail | Webhook `crop-acumbamail-sync` | ✅ Active |
+| `ndDWaSmPO4290CgK` | CROP — Lead Nurture Start | Webhook `crop-lead-nurture-start` | ✅ Active |
+| `RSibNfwSM9aw3vUW` | CROP — Hot Lead Alert | Webhook `crop-hot-lead-alert` | ✅ Active |
+| `l2495RxXLxkYzqcU` | CROP — Portal Access Code Reset | Webhook `crop-portal-reset` | ✅ Active |
+| `9j4pW3PmmYufMG8T` | CROP — Partner Onboarding | Webhook `crop-partner-onboarding` | ✅ Active |
+| `4wpcDFG7XkUNoI4Z` | CROP — Portal Auth Lookup | Internal | ✅ Active |
+| `UvjE2Z9kqUoYsnzV` | CROP — Portal Auth | Internal | ✅ Active |
+
 
 ### n8n Credential IDs (referenced in workflows)
 
@@ -440,6 +449,32 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
 ---
 
 ## Outstanding Items
+
+### Completed (this session — 2026-03-22)
+- [x] SuiteDash custom fields (10 fields created)
+- [x] 20i env vars: TWENTY_I_RESELLER_ID + TWENTY_I_DEFAULT_TYPE_REF added to Vercel
+- [x] Onboarding workflow fixed: correct tier mapping ($99/$199/$349/$699), access code generation
+- [x] Portal auth API: correct 4-tier mapping, returns tierLabel/includesHosting
+- [x] Documentero replaced with native PDF generation (pdf-lib, zero external deps)
+- [x] Renewal email sequence: 6 stages, CROP-specific content, Emailit SMTP
+- [x] Win-Back email sequence: 5 stages, CROP-specific content, Emailit SMTP
+- [x] 5 new city pages: Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre
+- [x] 4 competitor comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile
+- [x] Sitemap updated (28 URLs)
+- [x] Cross-links updated across all 10 city pages
+- [x] 8 AI automation systems built and tested (all 8/8 pass):
+    1. AI Compliance Chatbot (/api/chat) — Groq llama-3.3-70b, embedded in portal
+    2. PA DOS Entity Status Monitor (/api/entity-monitor) — daily n8n cron
+    3. AI Email Triage (/api/email-triage) — classify + draft + route
+    4. Smart Lead Qualifier (/api/qualify-lead) — 5-dimension AI scoring
+    5. Document Auto-Router (/api/classify-document) — OCR → type + summary
+    6. Client Health Score (/api/client-health) — churn prediction, weekly cron
+    7. SEO Content Pipeline (/api/generate-article) — AI articles in brand voice
+    8. Partner Commission Engine (/api/partner-commission) — 20% referral tracking
+- [x] Portal redesigned: NNG heuristics, Mercury/Linear aesthetic, Plus Jakarta Sans + Fraunces,
+      AI assistant inline on dashboard, entity status hero, health score KPI, keyboard shortcuts
+- [x] All n8n workflows activated (20 active)
+- [x] Renewal + Win-Back workflows rebuilt from scratch (clean n8n v2 format)
 
 ### Needs Ike action
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
