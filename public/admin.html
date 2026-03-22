@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA CROP Admin Dashboard</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vzhtq2nted");</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0f1e3d;--gold:#c9a227;--accent:#534AB7;--dark:#1E2333;--light:#f8f7f4;--white:#fff;--gray:#6B7280;--green:#059669;--red:#dc2626;--yellow:#d97706;--radius:10px;--sidebar:240px}
+body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
+
+/* Login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--navy)}
+.login-card{background:#fff;border-radius:16px;padding:48px;width:380px;text-align:center}
+.login-card h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy);margin-bottom:4px}
+.login-card p{color:var(--gray);margin-bottom:32px;font-size:14px}
+.login-card input{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px;outline:none}
+.login-card input:focus{border-color:var(--accent)}
+.login-card button{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.login-card button:hover{background:#1e3a6e}
+
+/* Main layout */
+#admin-app{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar);background:var(--navy);color:#fff;display:flex;flex-direction:column;z-index:10}
+.sidebar-logo{padding:20px 20px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo .brand{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
+.sidebar-logo .brand span{color:var(--gold)}
+.sidebar-logo .sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-group{margin-bottom:24px}
+.nav-group-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);padding:0 8px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.7);transition:all .15s;margin-bottom:2px;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(201,162,39,.2);color:var(--gold)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.4)}
+
+/* Main content */
+.main{margin-left:var(--sidebar);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:5}
+.topbar-title{font-size:18px;font-weight:700;color:var(--navy)}
+.topbar-actions{display:flex;gap:12px;align-items:center}
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:#1e3a6e}
+.btn-gold{background:var(--gold);color:var(--dark)}.btn-gold:hover{opacity:.9}
+.btn-outline{background:none;border:1.5px solid #d4d5d8;color:var(--dark)}.btn-outline:hover{border-color:var(--accent)}
+.btn-danger{background:var(--red);color:#fff}.btn-sm{padding:5px 12px;font-size:12px}
+.content{padding:24px 28px;flex:1}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid #e9eaec}
+.stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:8px}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.stat-card .sub{font-size:12px;color:var(--gray);margin-top:4px}
+.stat-card.green .value{color:var(--green)}
+.stat-card.gold .value{color:var(--gold)}
+
+/* Panels */
+.panel{background:#fff;border-radius:var(--radius);border:1px solid #e9eaec;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:15px;font-weight:700;color:var(--navy)}
+.panel-body{padding:20px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:10px 14px;text-align:left;font-weight:600;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e9eaec}
+td{padding:10px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#ecfdf5;color:#065f46}
+.badge-blue{background:#eff6ff;color:#1e40af}
+.badge-yellow{background:#fffbeb;color:#92400e}
+.badge-red{background:#fef2f2;color:#991b1b}
+.badge-gray{background:#f3f4f6;color:#374151}
+.badge-gold{background:#fef3c7;color:#92400e}
+
+/* Score bar */
+.score-bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width .3s}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:14px;font-family:inherit;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Tabs */
+.tab-bar{display:flex;gap:2px;margin-bottom:20px;background:#f0f2f5;padding:4px;border-radius:8px;width:fit-content}
+.tab{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray);border:none;background:none;font-family:inherit;transition:all .15s}
+.tab.active{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);gap:8px;font-size:14px}
+.spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;min-width:240px;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:slideIn .2s ease}
+.toast.success{background:#065f46}
+.toast.error{background:#991b1b}
+.toast.info{background:#1e40af}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;padding:32px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:20px;color:var(--navy)}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+
+/* Section pages */
+.page{display:none}.page.active{display:block}
+
+/* Hosting card */
+.hosting-card{background:#f8f9fa;border:1px solid #e9eaec;border-radius:8px;padding:16px;margin-bottom:12px}
+.hosting-card .domain{font-weight:700;color:var(--navy);font-size:15px}
+.hosting-card .meta{font-size:12px;color:var(--gray);margin-top:4px}
+.disk-bar{height:4px;background:#e5e7eb;border-radius:2px;margin-top:8px;overflow:hidden}
+.disk-fill{height:100%;background:var(--accent);border-radius:2px}
+
+/* Pipeline kanban */
+.kanban{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.kanban-col{background:#f8f9fa;border-radius:8px;padding:12px}
+.kanban-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid}
+.kanban-col.hot h4{color:var(--red);border-color:var(--red)}
+.kanban-col.warm h4{color:var(--yellow);border-color:var(--yellow)}
+.kanban-col.cold h4{color:var(--gray);border-color:#d1d5db}
+.lead-card{background:#fff;border-radius:6px;padding:12px;margin-bottom:8px;border:1px solid #e9eaec;cursor:pointer}
+.lead-card:hover{border-color:var(--accent)}
+.lead-card .name{font-size:13px;font-weight:600;color:var(--navy)}
+.lead-card .email{font-size:11px;color:var(--gray)}
+.lead-card .score{font-size:11px;font-weight:700;margin-top:4px}
+
+/* Provision wizard */
+.wizard-step{display:none}.wizard-step.active{display:block}
+.step-indicator{display:flex;gap:0;margin-bottom:24px}
+.step-dot{flex:1;text-align:center;position:relative;font-size:12px;color:var(--gray)}
+.step-dot::before{content:'';display:block;width:28px;height:28px;border-radius:50%;background:#e5e7eb;margin:0 auto 6px;line-height:28px;font-weight:700;font-size:13px}
+.step-dot.done::before{background:var(--green);color:#fff;content:attr(data-num)}
+.step-dot.active::before{background:var(--navy);color:#fff;content:attr(data-num)}
+.step-dot:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#e5e7eb}
+.step-dot.done:not(:last-child)::after{background:var(--green)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px">🏛️</div>
+    <h1>PA CROP Admin</h1>
+    <p>Operations Dashboard — Dynasty Empire</p>
+    <input type="password" id="admin-key-input" placeholder="Admin key" autocomplete="off">
+    <button onclick="doAdminLogin()">Sign In →</button>
+    <p style="font-size:11px;color:var(--gray);margin-top:16px">Secured · Dynasty Empire LLC</p>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">PA <span>CROP</span> Admin</div>
+      <div class="sub">Dynasty Empire Operations</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Overview</div>
+        <button class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>Dashboard</button>
+        <button class="nav-item" onclick="showPage('revenue')"><span class="icon">💰</span>Revenue</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Clients</div>
+        <button class="nav-item" onclick="showPage('clients')"><span class="icon">👥</span>All Clients</button>
+        <button class="nav-item" onclick="showPage('leads')"><span class="icon">🎯</span>Lead Pipeline</button>
+        <button class="nav-item" onclick="showPage('compliance')"><span class="icon">📋</span>Compliance Tracker</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Hosting</div>
+        <button class="nav-item" onclick="showPage('hosting')"><span class="icon">🖥️</span>20i Packages</button>
+        <button class="nav-item" onclick="showPage('provision')"><span class="icon">⚡</span>Provision Client</button>
+        <button class="nav-item" onclick="showPage('domains')"><span class="icon">🌐</span>Domain Check</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Marketing</div>
+        <button class="nav-item" onclick="showPage('email_stats')"><span class="icon">📧</span>Email Lists</button>
+        <button class="nav-item" onclick="showPage('agreements')"><span class="icon">📄</span>Agreements</button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div>Ike Ohu, PhD · PA CROP Services</div>
+      <div style="margin-top:2px">924 W 23rd St, Erie PA</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <span style="font-size:12px;color:var(--gray)" id="last-refresh"></span>
+        <button class="btn btn-outline btn-sm" onclick="refreshCurrent()">⟳ Refresh</button>
+        <button class="btn btn-gold btn-sm" onclick="showPage('provision')">⚡ New Client</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <div id="stats-grid" class="stats-grid">
+          <div class="stat-card"><div class="label">Total Clients</div><div class="value" id="stat-clients">—</div><div class="sub">Active accounts</div></div>
+          <div class="stat-card green"><div class="label">MRR</div><div class="value" id="stat-mrr">—</div><div class="sub">Monthly recurring</div></div>
+          <div class="stat-card gold"><div class="label">ARR</div><div class="value" id="stat-arr">—</div><div class="sub">Annual run rate</div></div>
+          <div class="stat-card"><div class="label">Subscriptions</div><div class="value" id="stat-subs">—</div><div class="sub">Active Stripe subs</div></div>
+          <div class="stat-card"><div class="label">Hosting Pkgs</div><div class="value" id="stat-hosting">—</div><div class="sub">20i packages</div></div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Recent Clients</div></div>
+            <div class="panel-body" id="recent-clients-body"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Plan Breakdown</div></div>
+            <div class="panel-body" id="plan-breakdown-body"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENTS PAGE -->
+      <div class="page" id="page-clients">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">All Clients</div>
+            <div style="display:flex;gap:10px">
+              <input type="text" id="client-search" placeholder="Search by name or email..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;width:240px;font-family:inherit" oninput="loadClients()">
+              <select id="plan-filter" onchange="loadClients()" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+                <option value="">All plans</option>
+                <option value="compliance_only">Compliance Only</option>
+                <option value="business_starter">Business Starter</option>
+                <option value="business_pro">Business Pro</option>
+                <option value="business_empire">Business Empire</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div id="clients-table"><div class="loading"><div class="spinner"></div>Loading clients...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADS PAGE -->
+      <div class="page" id="page-leads">
+        <div class="panel" style="margin-bottom:20px">
+          <div class="panel-header">
+            <div class="panel-title">Lead Pipeline</div>
+            <div id="lead-counts" style="font-size:13px;color:var(--gray)"></div>
+          </div>
+        </div>
+        <div class="kanban" id="leads-kanban"><div class="loading"><div class="spinner"></div>Loading pipeline...</div></div>
+      </div>
+
+      <!-- COMPLIANCE PAGE -->
+      <div class="page" id="page-compliance">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📋 Annual Report Compliance Tracker</div>
+            <div style="font-size:13px;color:var(--gray)">September 30, 2026 deadline · 2027 enforcement deadline: Dec 31</div>
+          </div>
+          <div class="panel-body">
+            <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px">
+              <strong>⚠️ 2027 Deadline:</strong> Clients who have not filed any PA annual report by Dec 31, 2027 face administrative dissolution. Foreign entities cannot reinstate.
+            </div>
+            <div id="compliance-table"><div class="loading"><div class="spinner"></div>Loading compliance data...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOSTING PAGE -->
+      <div class="page" id="page-hosting">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🖥️ 20i Hosting Packages</div>
+            <button class="btn btn-primary btn-sm" onclick="loadHosting()">Refresh from 20i</button>
+          </div>
+          <div class="panel-body">
+            <div id="hosting-list"><div class="loading"><div class="spinner"></div>Loading from 20i API...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROVISION PAGE -->
+      <div class="page" id="page-provision">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">⚡ Provision New Client</div></div>
+          <div class="panel-body">
+            <div class="step-indicator" id="wizard-steps">
+              <div class="step-dot active" data-num="1">Client Info</div>
+              <div class="step-dot" data-num="2">Plan & Hosting</div>
+              <div class="step-dot" data-num="3">Review</div>
+              <div class="step-dot" data-num="4">Done</div>
+            </div>
+
+            <div class="wizard-step active" id="step-1">
+              <div class="form-row">
+                <div class="form-group"><label>First Name</label><input type="text" id="prov-first" placeholder="Jane"></div>
+                <div class="form-group"><label>Last Name</label><input type="text" id="prov-last" placeholder="Smith"></div>
+              </div>
+              <div class="form-group"><label>Email Address</label><input type="email" id="prov-email" placeholder="jane@example.com"></div>
+              <div class="form-group"><label>Phone</label><input type="tel" id="prov-phone" placeholder="814-555-0100"></div>
+              <div class="form-group"><label>Entity Name (PA)</label><input type="text" id="prov-entity" placeholder="Smith Holdings LLC"></div>
+              <div class="form-group"><label>Entity Type</label>
+                <select id="prov-entity-type">
+                  <option value="llc">Domestic LLC</option>
+                  <option value="corp">Corporation</option>
+                  <option value="foreign">Foreign Entity</option>
+                  <option value="lp">Limited Partnership</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="wizardNext(2)">Next: Plan & Hosting →</button>
+            </div>
+
+            <div class="wizard-step" id="step-2">
+              <div class="form-group"><label>Service Plan</label>
+                <select id="prov-plan" onchange="updateProvisionUI()">
+                  <option value="compliance_only">Compliance Only — $99/yr</option>
+                  <option value="business_starter">Business Starter — $199/yr (+ hosting, domain, 5 email)</option>
+                  <option value="business_pro">Business Pro — $349/yr (+ annual report filing, 20 email)</option>
+                  <option value="business_empire">Business Empire — $699/yr (+ custom site, unlimited)</option>
+                </select>
+              </div>
+              <div id="hosting-section" style="display:none;background:#f8f9fa;border-radius:8px;padding:20px;margin-bottom:16px">
+                <h4 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--navy)">20i Hosting Configuration</h4>
+                <div class="form-group"><label>Preferred Domain</label><input type="text" id="prov-domain" placeholder="businessname.com"></div>
+                <div class="form-group"><label>Account Slug (auto-generated)</label><input type="text" id="prov-slug" readonly style="background:#f0f0f0"></div>
+              </div>
+              <div class="form-group"><label>Payment Status</label>
+                <select id="prov-payment">
+                  <option value="paid">Paid via Stripe</option>
+                  <option value="manual">Manual / Cash</option>
+                  <option value="trial">Trial</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Notes</label><textarea id="prov-notes" rows="3" placeholder="Any special requirements..." style="width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:7px;font-family:inherit"></textarea></div>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-outline" onclick="wizardNext(1)">← Back</button>
+                <button class="btn btn-primary" onclick="wizardNext(3)">Next: Review →</button>
+              </div>
+            </div>
+
+            <div class="wizard-step" id="step-3">
+              <div id="provision-review" style="background:#f8f9fa;border-radius:8px;padding:20px;margin-bottom:20px;font-size:14px"></div>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-outline" onclick="wizardNext(2)">← Back</button>
+                <button class="btn btn-gold" onclick="executeProvision()">🚀 Provision Client Now</button>
+              </div>
+            </div>
+
+            <div class="wizard-step" id="step-4">
+              <div id="provision-result" style="text-align:center;padding:40px 20px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOMAINS PAGE -->
+      <div class="page" id="page-domains">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">🌐 Domain Availability Check (20i)</div></div>
+          <div class="panel-body">
+            <div style="display:flex;gap:12px;margin-bottom:20px">
+              <input type="text" id="domain-input" placeholder="businessname.com" style="flex:1;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:15px;font-family:inherit">
+              <button class="btn btn-primary" onclick="checkDomain()">Check Domain</button>
+            </div>
+            <div id="domain-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVENUE PAGE -->
+      <div class="page" id="page-revenue">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card green"><div class="label">Monthly Recurring Revenue</div><div class="value" id="rev-mrr">—</div></div>
+          <div class="stat-card gold"><div class="label">Annual Run Rate</div><div class="value" id="rev-arr">—</div></div>
+          <div class="stat-card"><div class="label">Active Subscriptions</div><div class="value" id="rev-subs">—</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Recent Invoices</div></div>
+          <div class="panel-body" style="padding:0"><div id="invoices-table"><div class="loading"><div class="spinner"></div>Loading Stripe data...</div></div></div>
+        </div>
+      </div>
+
+      <!-- EMAIL STATS PAGE -->
+      <div class="page" id="page-email_stats">
+        <div class="three-col" id="email-stats-grid">
+          <div class="loading"><div class="spinner"></div>Loading Acumbamail data...</div>
+        </div>
+      </div>
+
+      <!-- AGREEMENTS PAGE -->
+      <div class="page" id="page-agreements">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">📄 Generate Service Agreement (Documentero)</div></div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group"><label>Client Full Name</label><input type="text" id="ag-name" placeholder="Jane Smith"></div>
+              <div class="form-group"><label>Client Email</label><input type="email" id="ag-email" placeholder="jane@example.com"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Entity Name</label><input type="text" id="ag-entity" placeholder="Smith Holdings LLC"></div>
+              <div class="form-group"><label>PA DOS File Number</label><input type="text" id="ag-dos" placeholder="0012345678"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Entity Type</label>
+                <select id="ag-type"><option value="Domestic LLC">Domestic LLC</option><option value="Foreign LLC">Foreign LLC</option><option value="Corporation">Corporation</option><option value="LP">Limited Partnership</option></select>
+              </div>
+              <div class="form-group"><label>Service Plan</label>
+                <select id="ag-plan"><option value="compliance_only">Compliance Only — $99/yr</option><option value="business_starter">Business Starter — $199/yr</option><option value="business_pro">Business Pro — $349/yr</option><option value="business_empire">Business Empire — $699/yr</option></select>
+              </div>
+            </div>
+            <div class="form-group"><label>Client Address</label><input type="text" id="ag-address" placeholder="123 Main St, Philadelphia, PA 19103"></div>
+            <button class="btn btn-gold" onclick="generateAgreement()">📄 Generate PDF Agreement</button>
+            <div id="agreement-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /admin-app -->
+
+<div id="toast"></div>
+
+<!-- CLIENT DETAIL MODAL -->
+<div id="client-modal" style="display:none" class="modal-overlay" onclick="if(event.target===this)closeClientModal()">
+  <div class="modal">
+    <h3 id="client-modal-title">Client Details</h3>
+    <div id="client-modal-body"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeClientModal()">Close</button>
+      <button class="btn btn-gold" id="gen-agreement-btn" onclick="prefillAgreement()">Generate Agreement</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/admin';
+let ADMIN_KEY = '';
+let currentPage = 'dashboard';
+let clientData = {};
+
+function doAdminLogin() {
+  const key = document.getElementById('admin-key-input').value.trim();
+  if (!key) return;
+  ADMIN_KEY = key;
+  // Test with a quick dashboard call
+  callAPI('dashboard', {}).then(d => {
+    if (d.error === 'Unauthorized') { toast('Invalid admin key', 'error'); return; }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'block';
+    loadDashboard();
+  }).catch(() => {
+    // If API not reachable, still let in for demo
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'block';
+    loadDashboard();
+  });
+}
+
+async function callAPI(action, payload = {}) {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+    body: JSON.stringify({ action, payload, adminKey: ADMIN_KEY })
+  });
+  return res.json();
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(name.replace('_',' '))) n.classList.add('active');
+  });
+  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  currentPage = name;
+  document.getElementById('last-refresh').textContent = '';
+  
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'clients') loadClients();
+  else if (name === 'leads') loadLeads();
+  else if (name === 'hosting') loadHosting();
+  else if (name === 'revenue') loadRevenue();
+  else if (name === 'email_stats') loadEmailStats();
+  else if (name === 'compliance') loadCompliance();
+}
+
+function refreshCurrent() { showPage(currentPage); }
+
+// ── Dashboard ──────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const data = await callAPI('dashboard');
+    if (data.stats) {
+      document.getElementById('stat-clients').textContent = data.stats.totalClients;
+      document.getElementById('stat-mrr').textContent = `$${data.stats.mrr.toLocaleString()}`;
+      document.getElementById('stat-arr').textContent = `$${data.stats.arr.toLocaleString()}`;
+      document.getElementById('stat-subs').textContent = data.stats.activeSubscriptions;
+      document.getElementById('stat-hosting').textContent = data.stats.hostingPackages;
+    }
+
+    // Recent clients
+    const rcEl = document.getElementById('recent-clients-body');
+    if (data.recentClients?.length) {
+      rcEl.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Plan</th><th>Score</th><th>Since</th></tr></thead>
+        <tbody>${data.recentClients.map(c => `
+          <tr style="cursor:pointer" onclick="openClientModal(${c.id})">
+            <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div></td>
+            <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
+            <td><div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c.score}%;background:${scoreColor(c.score)}"></div></div><div style="font-size:11px;color:var(--gray);margin-top:2px">${c.score}/100</div></td>
+            <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+          </tr>`).join('')}
+        </tbody></table></div>`;
+    } else {
+      rcEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:14px">No clients yet · Provision your first client above</div>';
+    }
+
+    // Plan breakdown
+    const pbEl = document.getElementById('plan-breakdown-body');
+    if (data.planBreakdown) {
+      const plans = Object.entries(data.planBreakdown);
+      const total = plans.reduce((s,[,v]) => s+v, 0);
+      pbEl.innerHTML = plans.map(([plan, count]) => `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="font-weight:600">${planLabel(plan)}</span>
+            <span style="color:var(--gray)">${count} client${count!==1?'s':''}</span>
+          </div>
+          <div class="score-bar"><div class="score-fill" style="width:${Math.round(count/total*100)}%;background:var(--accent)"></div></div>
+        </div>`).join('') || '<div style="color:var(--gray);font-size:13px">No plan data</div>';
+    }
+    
+    document.getElementById('last-refresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    toast('Failed to load dashboard: ' + e.message, 'error');
+  }
+}
+
+// ── Clients ────────────────────────────────────────────────────────────
+async function loadClients() {
+  const search = document.getElementById('client-search')?.value || '';
+  const plan = document.getElementById('plan-filter')?.value || '';
+  const el = document.getElementById('clients-table');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  try {
+    const data = await callAPI('clients', { search, plan });
+    const clients = data.clients || [];
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Client</th><th>Plan</th><th>Entity Type</th><th>Lead Score</th><th>Access Code</th><th>Since</th><th>Actions</th></tr></thead>
+      <tbody>${clients.length ? clients.map(c => `
+        <tr>
+          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div><div style="font-size:11px;color:var(--gray)">${c.phone || ''}</div></td>
+          <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
+          <td style="font-size:12px">${c.entityType || '—'}</td>
+          <td><div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c.leadScore}%;background:${scoreColor(c.leadScore)}"></div></div><span style="font-size:11px;color:var(--gray)">${c.leadScore}</span></td>
+          <td><code style="font-size:11px;background:#f0f4ff;padding:2px 8px;border-radius:4px">${c.accessCode || '—'}</code></td>
+          <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openClientModal(${c.id})">View</button></td>
+        </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray)">No clients found</td></tr>'}
+      </tbody></table></div>`;
+  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${e.message}</div>`; }
+}
+
+// ── Leads Pipeline ─────────────────────────────────────────────────────
+async function loadLeads() {
+  const el = document.getElementById('leads-kanban');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading pipeline...</div>';
+  try {
+    const data = await callAPI('leads');
+    const leads = data.leads || [];
+    document.getElementById('lead-counts').textContent = `🔥 ${data.hot} hot · 🌡️ ${data.warm} warm · ❄️ ${data.cold} cold`;
+    
+    const hot = leads.filter(l => l.tier === 'hot');
+    const warm = leads.filter(l => l.tier === 'warm');
+    const cold = leads.filter(l => l.tier === 'cold');
+
+    const renderCards = arr => arr.map(l => `
+      <div class="lead-card" onclick="openClientModal(${l.id})">
+        <div class="name">${l.name || '(no name)'}</div>
+        <div class="email">${l.email}</div>
+        <div class="score" style="color:${scoreColor(l.score)}">Score: ${l.score}/100 · ${l.source}</div>
+        ${l.entityType ? `<div style="font-size:10px;color:var(--gray);margin-top:2px">${l.entityType}</div>` : ''}
+      </div>`).join('') || '<div style="font-size:12px;color:var(--gray);text-align:center;padding:12px">None</div>';
+
+    el.innerHTML = `
+      <div class="kanban-col hot"><h4>🔥 Hot (${hot.length})</h4>${renderCards(hot)}</div>
+      <div class="kanban-col warm"><h4>🌡️ Warm (${warm.length})</h4>${renderCards(warm)}</div>
+      <div class="kanban-col cold"><h4>❄️ Cold (${cold.length})</h4>${renderCards(cold)}</div>`;
+  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${e.message}</div>`; }
+}
+
+// ── Hosting ────────────────────────────────────────────────────────────
+async function loadHosting() {
+  const el = document.getElementById('hosting-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading from 20i...</div>';
+  try {
+    const data = await callAPI('hosting');
+    const packages = data.packages || [];
+    if (!packages.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:14px">No 20i hosting packages found · Provision a Business Starter+ client to create packages</div>'; return; }
+    el.innerHTML = packages.map(p => `
+      <div class="hosting-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="domain">${p.domain || p.name || p.id}</div>
+            <div class="meta">Package ID: ${p.id} · ${p.emails} mailboxes ${p.turbo ? '· ⚡ Turbo' : ''} ${p.ssl ? '· 🔒 SSL' : ''}</div>
+          </div>
+          <span class="badge ${p.status === 'active' ? 'badge-green' : 'badge-red'}">${p.status}</span>
+        </div>
+        ${p.diskLimit > 0 ? `<div class="disk-bar" style="margin-top:10px"><div class="disk-fill" style="width:${Math.min(100,Math.round(p.diskUsed/p.diskLimit*100))}%"></div></div>
+        <div style="font-size:11px;color:var(--gray);margin-top:4px">${Math.round(p.diskUsed/1024)}MB / ${Math.round(p.diskLimit/1024)}MB disk</div>` : ''}
+      </div>`).join('');
+  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error loading 20i: ${e.message}</div>`; }
+}
+
+// ── Revenue ────────────────────────────────────────────────────────────
+async function loadRevenue() {
+  try {
+    const data = await callAPI('revenue');
+    document.getElementById('rev-mrr').textContent = `$${(data.mrr || 0).toLocaleString()}`;
+    document.getElementById('rev-arr').textContent = `$${(data.arr || 0).toLocaleString()}`;
+    document.getElementById('rev-subs').textContent = data.activeSubscriptions || 0;
+    
+    const invs = data.recentInvoices || [];
+    document.getElementById('invoices-table').innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>${invs.length ? invs.map(inv => `
+        <tr><td style="font-size:12px">${inv.date}</td><td style="font-size:13px">${inv.customer}</td>
+        <td style="font-weight:600">$${inv.amount.toFixed(2)}</td>
+        <td><span class="badge badge-green">${inv.status}</span></td></tr>`).join('') : 
+        '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray)">No invoices yet</td></tr>'}
+      </tbody></table></div>`;
+  } catch(e) { toast('Revenue load error: ' + e.message, 'error'); }
+}
+
+// ── Email Stats ────────────────────────────────────────────────────────
+async function loadEmailStats() {
+  try {
+    const data = await callAPI('email_stats');
+    const el = document.getElementById('email-stats-grid');
+    el.innerHTML = `
+      <div class="panel"><div class="panel-header"><div class="panel-title">📧 All Clients List</div></div>
+        <div class="panel-body">
+          <div class="stat-card" style="border:none;padding:0;margin-bottom:12px"><div class="label">Subscribers</div><div class="value">${data.allClients?.total || '—'}</div></div>
+          <div style="font-size:12px;color:var(--gray)">List ID: 1267324</div>
+        </div></div>
+      <div class="panel"><div class="panel-header"><div class="panel-title">🤝 CPA Partners List</div></div>
+        <div class="panel-body">
+          <div class="stat-card" style="border:none;padding:0;margin-bottom:12px"><div class="label">Subscribers</div><div class="value">${data.partners?.total || '—'}</div></div>
+          <div style="font-size:12px;color:var(--gray)">List ID: 1267325</div>
+        </div></div>
+      <div class="panel"><div class="panel-header"><div class="panel-title">⚙️ Acumbamail</div></div>
+        <div class="panel-body"><div style="font-size:13px;color:var(--gray)">
+          <div>Auth token: <code style="font-size:11px">0cdbad...f780</code></div>
+          <div style="margin-top:8px"><a href="https://dashboard.acumbamail.com" target="_blank" class="btn btn-outline btn-sm">Open Dashboard →</a></div>
+        </div></div></div>`;
+  } catch(e) { toast('Email stats error: ' + e.message, 'error'); }
+}
+
+// ── Compliance tracker ─────────────────────────────────────────────────
+async function loadCompliance() {
+  const el = document.getElementById('compliance-table');
+  try {
+    const data = await callAPI('clients', {});
+    const clients = data.clients || [];
+    const today = new Date();
+    const deadline2027 = new Date('2027-12-31');
+    const daysTo2027 = Math.floor((deadline2027 - today) / (1000*60*60*24));
+
+    el.innerHTML = `
+      <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px">
+        <strong>2027 Deadline:</strong> ${daysTo2027} days away (December 31, 2027)
+      </div>
+      <div class="table-wrap"><table>
+      <thead><tr><th>Client</th><th>Plan</th><th>Entity Type</th><th>CROP Since</th><th>Annual Report Status</th><th>2027 Risk</th></tr></thead>
+      <tbody>${clients.length ? clients.map(c => {
+        const risk = c.entityType === 'foreign' ? 'HIGH' : 'LOW';
+        const riskBadge = risk === 'HIGH' ? 'badge-red' : 'badge-green';
+        return `<tr>
+          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div></td>
+          <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
+          <td style="font-size:12px">${c.entityType || 'LLC'}</td>
+          <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+          <td><span class="badge badge-yellow">Monitoring</span></td>
+          <td><span class="badge ${riskBadge}">${risk}</span></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray)">No clients to track yet</td></tr>'}
+      </tbody></table></div>`;
+  } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:16px">Error: ${e.message}</div>`; }
+}
+
+// ── Domain Check ───────────────────────────────────────────────────────
+async function checkDomain() {
+  const domain = document.getElementById('domain-input').value.trim();
+  if (!domain) return;
+  const el = document.getElementById('domain-result');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Checking with 20i...</div>';
+  try {
+    const data = await callAPI('check_domain', { domain });
+    if (data.available !== undefined) {
+      el.innerHTML = `<div style="background:${data.available ? '#ecfdf5' : '#fef2f2'};border:1px solid ${data.available ? '#86efac' : '#fca5a5'};border-radius:8px;padding:16px;font-size:14px">
+        <strong>${domain}</strong> is ${data.available ? '✅ Available' : '❌ Taken'}
+        ${data.price ? ` — Price: $${data.price}/year` : ''}
+        ${data.available ? `<div style="margin-top:12px"><button class="btn btn-gold btn-sm" onclick="document.getElementById('prov-domain').value='${domain}';showPage('provision')">Use this domain →</button></div>` : ''}
+      </div>`;
+    } else {
+      el.innerHTML = `<pre style="font-size:11px;background:#f8f9fa;padding:12px;border-radius:6px;overflow:auto">${JSON.stringify(data,null,2)}</pre>`;
+    }
+  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
+}
+
+// ── Generate Agreement ─────────────────────────────────────────────────
+async function generateAgreement() {
+  const payload = {
+    clientName: document.getElementById('ag-name').value,
+    entityName: document.getElementById('ag-entity').value,
+    entityNumber: document.getElementById('ag-dos').value,
+    entityType: document.getElementById('ag-type').value,
+    clientAddress: document.getElementById('ag-address').value,
+    clientEmail: document.getElementById('ag-email').value,
+    tier: document.getElementById('ag-plan').value,
+  };
+  if (!payload.clientName || !payload.clientEmail) { toast('Name and email required', 'error'); return; }
+  const el = document.getElementById('agreement-result');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Generating PDF via Documentero...</div>';
+  try {
+    const data = await callAPI('generate_agreement', payload);
+    if (data.success && data.document) {
+      const url = data.document?.url || data.document?.downloadUrl || '';
+      el.innerHTML = url ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:8px;padding:16px">
+        <strong>✅ Agreement generated!</strong>
+        <div style="margin-top:10px"><a href="${url}" target="_blank" class="btn btn-gold btn-sm">Download PDF →</a></div>
+      </div>` : `<pre style="font-size:11px;background:#f8f9fa;padding:12px;border-radius:6px">${JSON.stringify(data.document,null,2)}</pre>`;
+    } else {
+      el.innerHTML = `<div style="color:var(--red);font-size:13px">Generation failed: ${JSON.stringify(data.document || data)}</div>`;
+    }
+  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
+}
+
+// ── Provision Wizard ───────────────────────────────────────────────────
+let currentWizardStep = 1;
+function wizardNext(step) {
+  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(`step-${step}`).classList.add('active');
+  document.querySelectorAll('.step-dot').forEach((d, i) => {
+    d.classList.remove('active','done');
+    if (i+1 < step) d.classList.add('done');
+    if (i+1 === step) d.classList.add('active');
+  });
+  currentWizardStep = step;
+  if (step === 3) buildReview();
+}
+
+function updateProvisionUI() {
+  const plan = document.getElementById('prov-plan').value;
+  const hasHosting = ['business_starter','business_pro','business_empire'].includes(plan);
+  document.getElementById('hosting-section').style.display = hasHosting ? 'block' : 'none';
+  if (hasHosting) {
+    const email = document.getElementById('prov-email').value;
+    const slug = email.split('@')[0].replace(/[^a-z0-9]/gi,'').toLowerCase().slice(0,15) + '-' + Date.now().toString(36).slice(-4);
+    document.getElementById('prov-slug').value = slug;
+  }
+}
+
+function buildReview() {
+  const plan = document.getElementById('prov-plan').value;
+  const hasHosting = ['business_starter','business_pro','business_empire'].includes(plan);
+  document.getElementById('provision-review').innerHTML = `
+    <h4 style="margin-bottom:12px;color:var(--navy)">Provisioning Summary</h4>
+    <table style="width:100%;font-size:13px">
+      <tr><td style="padding:4px 0;color:var(--gray);width:140px">Client</td><td style="font-weight:600">${document.getElementById('prov-first').value} ${document.getElementById('prov-last').value}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--gray)">Email</td><td>${document.getElementById('prov-email').value}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--gray)">Entity</td><td>${document.getElementById('prov-entity').value} (${document.getElementById('prov-entity-type').value})</td></tr>
+      <tr><td style="padding:4px 0;color:var(--gray)">Plan</td><td><strong>${planLabel(plan)}</strong></td></tr>
+      ${hasHosting ? `<tr><td style="padding:4px 0;color:var(--gray)">Domain</td><td>${document.getElementById('prov-domain').value || '(to be assigned)'}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--gray)">20i Slug</td><td><code style="font-size:11px">${document.getElementById('prov-slug').value}</code></td></tr>` : ''}
+      <tr><td style="padding:4px 0;color:var(--gray)">Payment</td><td>${document.getElementById('prov-payment').value}</td></tr>
+    </table>
+    <div style="margin-top:12px;padding:12px;background:#f0f4ff;border-radius:6px;font-size:12px;color:var(--gray)">
+      Will execute: ① Generate portal access code ② Create SuiteDash contact ③ ${hasHosting ? '20i hosting provisioning ④' : ''} Send portal welcome email ⑤ Add to Acumbamail
+    </div>`;
+}
+
+async function executeProvision() {
+  const plan = document.getElementById('prov-plan').value;
+  const hasHosting = ['business_starter','business_pro','business_empire'].includes(plan);
+  const hasTurbo = ['business_pro','business_empire'].includes(plan);
+  const hasBackups = ['business_pro','business_empire'].includes(plan);
+  
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  let pwd = ''; for(let i=0;i<16;i++) pwd += chars.charAt(Math.floor(Math.random()*chars.length));
+
+  const payload = {
+    email: document.getElementById('prov-email').value,
+    name: `${document.getElementById('prov-first').value} ${document.getElementById('prov-last').value}`.trim(),
+    tier: plan,
+    includesHosting: hasHosting,
+    includesTurbo: hasTurbo,
+    includesBackups: hasBackups,
+    suggestedDomain: document.getElementById('prov-domain')?.value || '',
+    accountSlug: document.getElementById('prov-slug')?.value || '',
+    hostingPassword: pwd,
+  };
+
+  wizardNext(4);
+  document.getElementById('provision-result').innerHTML = '<div class="loading"><div class="spinner"></div>Provisioning... this may take 10-15 seconds</div>';
+
+  try {
+    const data = await fetch('/api/provision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+
+    if (data.success) {
+      document.getElementById('provision-result').innerHTML = `
+        <div style="font-size:40px;margin-bottom:16px">✅</div>
+        <h3 style="font-family:'DM Serif Display',serif;color:var(--navy);margin-bottom:16px">Client Provisioned!</h3>
+        <div style="background:#f8f9fa;border-radius:8px;padding:20px;text-align:left;max-width:400px;margin:0 auto;font-size:13px">
+          <div style="margin-bottom:8px"><strong>Portal Access Code:</strong> <code style="background:#f0f4ff;padding:3px 10px;border-radius:4px;font-size:16px;color:var(--accent)">${data.accessCode}</code></div>
+          <div style="margin-bottom:8px"><strong>Referral Code:</strong> ${data.refCode}</div>
+          ${data.packageId ? `<div style="margin-bottom:8px"><strong>20i Package ID:</strong> ${data.packageId}</div>` : ''}
+          ${data.suitedashId ? `<div style="margin-bottom:8px"><strong>SuiteDash ID:</strong> ${data.suitedashId}</div>` : ''}
+          <div style="margin-top:12px;font-size:11px;color:var(--gray)">Steps: ${(data.steps||[]).map(s => `${s.step}: ${s.status}`).join(' · ')}</div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:20px" onclick="wizardNext(1);showPage('clients')">← Back to Clients</button>`;
+      toast('Client provisioned successfully!', 'success');
+    } else {
+      document.getElementById('provision-result').innerHTML = `<div style="color:var(--red)"><div style="font-size:32px;margin-bottom:12px">⚠️</div><p>Partial completion: ${data.error || JSON.stringify(data)}</p><div style="margin-top:12px;font-size:12px;color:var(--gray)">${(data.steps||[]).map(s => `${s.step}: ${s.status}`).join(' · ')}</div></div>`;
+    }
+  } catch(e) {
+    document.getElementById('provision-result').innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`;
+  }
+}
+
+// ── Client Modal ───────────────────────────────────────────────────────
+let currentClientId = null;
+async function openClientModal(clientId) {
+  currentClientId = clientId;
+  document.getElementById('client-modal').style.display = 'flex';
+  document.getElementById('client-modal-body').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  
+  const data = await callAPI('client_detail', { clientId }).catch(() => null);
+  if (!data?.contact) { document.getElementById('client-modal-body').innerHTML = '<p style="color:var(--gray)">Client not found</p>'; return; }
+  
+  const c = data.contact?.data || data.contact;
+  document.getElementById('client-modal-title').textContent = `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Client Details';
+  
+  const cf = c.custom_fields || {};
+  document.getElementById('client-modal-body').innerHTML = `
+    <div class="two-col" style="gap:16px;margin-bottom:16px">
+      <div>
+        <div class="form-group"><label>Email</label><div style="font-size:14px">${c.email || '—'}</div></div>
+        <div class="form-group"><label>Phone</label><div style="font-size:14px">${c.phone || '—'}</div></div>
+        <div class="form-group"><label>Plan</label><span class="badge ${planBadge(cf.crop_plan)}">${planLabel(cf.crop_plan)}</span></div>
+        <div class="form-group"><label>Portal Access Code</label><code style="background:#f0f4ff;padding:4px 12px;border-radius:4px;font-size:16px;color:var(--accent)">${cf.portal_access_code || '—'}</code></div>
+      </div>
+      <div>
+        <div class="form-group"><label>CROP Since</label><div style="font-size:14px">${cf.crop_since || '—'}</div></div>
+        <div class="form-group"><label>Entity Type</label><div style="font-size:14px">${cf.entity_type || '—'}</div></div>
+        <div class="form-group"><label>Lead Score</label>
+          <div class="score-bar" style="width:120px;margin-bottom:4px"><div class="score-fill" style="width:${cf.lead_score||0}%;background:${scoreColor(cf.lead_score||0)}"></div></div>
+          <span style="font-size:12px;color:var(--gray)">${cf.lead_score||0}/100</span>
+        </div>
+        <div class="form-group"><label>Referral Code</label><div style="font-size:13px">${cf.referral_code || '—'}</div></div>
+      </div>
+    </div>
+    ${(data.projects||[]).length ? `<div class="form-group"><label>Active Projects</label>
+      ${data.projects.map(p => `<div style="font-size:13px;padding:6px 10px;background:#f8f9fa;border-radius:6px;margin-bottom:6px">${p.name || p.title}</div>`).join('')}
+    </div>` : ''}`;
+  
+  clientData[clientId] = c;
+}
+
+function closeClientModal() {
+  document.getElementById('client-modal').style.display = 'none';
+}
+
+function prefillAgreement() {
+  const c = clientData[currentClientId];
+  if (!c) return;
+  closeClientModal();
+  showPage('agreements');
+  document.getElementById('ag-name').value = `${c.first_name||''} ${c.last_name||''}`.trim();
+  document.getElementById('ag-email').value = c.email || '';
+  document.getElementById('ag-entity').value = c.company || '';
+  document.getElementById('ag-plan').value = c.custom_fields?.crop_plan || 'compliance_only';
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function planLabel(p) {
+  const m = { compliance_only:'Compliance Only', business_starter:'Business Starter', business_pro:'Business Pro', business_empire:'Business Empire', compliance_core:'Compliance Core', business_essentials:'Business Essentials', business_professional:'Business Professional', business_command:'Business Command' };
+  return m[p] || p || 'Unknown';
+}
+function planBadge(p) {
+  const m = { compliance_only:'badge-gray', business_starter:'badge-blue', business_pro:'badge-gold', business_empire:'badge-red' };
+  return m[p] || 'badge-gray';
+}
+function scoreColor(s) {
+  if (s >= 70) return '#dc2626';
+  if (s >= 40) return '#d97706';
+  return '#6b7280';
+}
+
+// Auto-select text in access code fields on click
+document.addEventListener('click', e => {
+  if (e.target.tagName === 'CODE') {
+    const range = document.createRange();
+    range.selectNodeContents(e.target);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  }
+});
+
+// Enter key on login
+document.getElementById('admin-key-input').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+</script>
+</body>
+</html>
