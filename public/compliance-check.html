@@ -310,6 +310,52 @@ async function submitLead() {
 var quizAnswers = [];
 var origNext = window.nextQuestion;
 
+
+async function captureLead() {
+  const email = document.getElementById('lead-email').value;
+  if (!email || !email.includes('@')) { document.getElementById('lead-msg').textContent = 'Please enter a valid email'; document.getElementById('lead-msg').style.display = 'block'; return; }
+  
+  const btn = document.querySelector('#lead-capture button');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  
+  try {
+    // Score the lead with AI
+    const answers = {};
+    document.querySelectorAll('.question').forEach((q, i) => {
+      const selected = q.querySelector('.selected');
+      if (selected) answers['q' + i] = selected.textContent;
+    });
+    
+    await fetch('/api/qualify-lead', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, name: '', answers: { ...answers, riskScore: totalRisk, entity_type: answers.q0 || 'LLC', state: 'PA', timeline: totalRisk > 15 ? 'urgent' : 'normal' } })
+    });
+    
+    // Also send to intake for n8n nurture
+    await fetch('/api/intake', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, source: 'compliance-check', riskScore: totalRisk, answers })
+    });
+    
+    document.getElementById('lead-msg').textContent = 'Check your email! We sent your personalized compliance report.';
+    document.getElementById('lead-msg').style.display = 'block';
+    document.getElementById('lead-msg').style.color = 'var(--green)';
+    btn.textContent = 'Sent!';
+  } catch(e) {
+    btn.textContent = 'Send report'; btn.disabled = false;
+    document.getElementById('lead-msg').textContent = 'Something went wrong. Please try again.';
+    document.getElementById('lead-msg').style.display = 'block';
+    document.getElementById('lead-msg').style.color = '#dc2626';
+  }
+}
+
+// Show lead capture when result is displayed
+const origShowResult = showResult;
+showResult = function() {
+  origShowResult();
+  document.getElementById('lead-capture').style.display = 'block';
+};
+
 </script>
 </body>
 </html>
