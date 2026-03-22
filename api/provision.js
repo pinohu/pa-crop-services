@@ -26,9 +26,10 @@ export default async function handler(req, res) {
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const BEARER = process.env.TWENTY_I_TOKEN || 
-    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
-      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` : null);
+  // 20i requires base64-encoded general API key as bearer token
+  const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN?.split('+')[0];
+  const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
+  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID || '10455';
   const SMTP_HOST = process.env.SMTP_HOST || 'smtp.emailit.com';
   const N8N = 'https://n8n.audreysplace.place/webhook';
 
@@ -75,9 +76,9 @@ export default async function handler(req, res) {
   if (includesHosting && BEARER && accountSlug) {
     try {
       // Create hosting package
-      const pkgRes = await fetch('https://api.20i.com/reseller/web', {
+      const pkgRes = await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addWeb`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           'extra-names': [accountSlug],
           type: includesTurbo ? 'turbo' : 'standard',
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
         // Enable SSL
         await fetch(`https://api.20i.com/package/${packageId}/ssl`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
           body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
         }).catch(() => {});
         results.steps.push({ step: '20i_ssl', status: 'done' });
@@ -107,7 +108,7 @@ export default async function handler(req, res) {
         if (includesBackups) {
           await fetch(`https://api.20i.com/package/${packageId}/backup`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: true, retention: 30 })
           }).catch(() => {});
           results.steps.push({ step: '20i_backups', status: 'done' });
@@ -117,7 +118,7 @@ export default async function handler(req, res) {
         if (includesTurbo) {
           await fetch(`https://api.20i.com/package/${packageId}/turbo`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: true })
           }).catch(() => {});
           results.steps.push({ step: '20i_turbo', status: 'done' });
@@ -126,7 +127,7 @@ export default async function handler(req, res) {
         // Create StackCP user
         await fetch('https://api.20i.com/reseller/user', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: email, password: hostingPassword, email, name })
         }).catch(() => {});
         results.steps.push({ step: '20i_stackcp_user', status: 'done' });
@@ -134,7 +135,7 @@ export default async function handler(req, res) {
         // Create email mailbox
         await fetch(`https://api.20i.com/package/${packageId}/email/mailbox`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             username: email.split('@')[0],
             domain: suggestedDomain,
