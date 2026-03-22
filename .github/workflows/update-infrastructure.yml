@@ -1,0 +1,32 @@
+name: Update INFRASTRUCTURE.md timestamp
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'INFRASTRUCTURE.md'  # avoid infinite loop
+
+jobs:
+  update-infra:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update last-updated timestamp and latest commit
+        run: |
+          TIMESTAMP=$(date -u "+%Y-%m-%d %H:%M UTC")
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
+          COMMIT_SHA=$(git log -1 --pretty=format:"%h" HEAD)
+          
+          # Update the "Last updated" line in INFRASTRUCTURE.md
+          sed -i "s/> **Auto-updated on every commit.** Last updated: .*/> **Auto-updated on every commit.** Last updated: ${TIMESTAMP} — \`${COMMIT_SHA}\` ${COMMIT_MSG}/" INFRASTRUCTURE.md
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add INFRASTRUCTURE.md
+          git diff --staged --quiet || git commit -m "chore: update INFRASTRUCTURE.md timestamp [skip ci]"
+          git push
