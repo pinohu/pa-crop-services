@@ -94,7 +94,9 @@ pa-crop-services/
 │   ├── client-health.js             # 5-dimension client health + churn predictor
 │   ├── generate-article.js          # AI SEO article generator (brand voice)
 │   ├── partner-commission.js        # Referral tracking + commission calculator
-│   └── portal-health.js             # Session-auth health score (no admin key)
+│   ├── portal-health.js             # Session-auth health score (no admin key)
+│   ├── client-context.js            # Client data aggregator (SuiteDash → AI context)
+│   └── chat.js                      # AI chatbot v2 (deep client context, personalized answers)
 │
 ├── context/                         # dynasty-seomachine brand voice
 │   ├── brand-voice.md
@@ -501,6 +503,41 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
   - Key: `GROQ_API_KEY`
   - Value: `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`
   - Environments: Production + Preview + Development
+
+
+### Seamless Experience Layer (2026-03-22)
+
+The following upgrades close every gap between the documented user journeys and the actual system:
+
+**Client-Context AI (/api/client-context + /api/chat v2):**
+- Portal loads full client profile on login: entity name/type/number, plan details, filing status,
+  documents received, days to deadline, onboarding progress, referral count
+- AI chatbot receives this context and gives SPECIFIC answers:
+  "Your annual report for Acme LLC is due September 30, 192 days from now.
+   Since you're on the Business Pro plan, we'll file it for you."
+- Not generic: "Annual reports are due September 30" — but personalized with their entity and plan
+
+**Onboarding Progress Tracker:**
+- Shows for new clients (onboardingComplete=false), hidden once all steps done
+- 6-step checklist: Account created, Portal accessed, Agreement signed, Entity verified,
+  First document received, Reminders active
+- Visual progress bar with percentage
+- Auto-marks "Portal accessed" on first login
+
+**Tier-Aware Quick Actions:**
+- Compliance Only/Starter: shows "Upgrade options" quick action button
+- Starter/Pro/Empire (hosting tiers): shows "My hosting" quick action button
+- All tiers: Annual report, Documents, Plan details, 2027 deadline
+
+**Dynamic Activity Feed:**
+- Pulls from CLIENT_CONTEXT to show real events, not static placeholders
+- Shows: last document received (with type), entity status, deadline countdown,
+  filing status (whether included or self-file), referral count
+
+**Referral Tracking:**
+- Split into code card + how-it-works card + referral list
+- Copy code AND copy full referral link buttons
+- Referral list placeholder ready for /api/partner-commission data
 
 ### Needs Ike action
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
