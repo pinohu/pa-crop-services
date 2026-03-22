@@ -319,6 +319,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1
 .error-state .retry-btn:hover{opacity:.8}
 
 @keyframes cropBounce{to{transform:translateY(-4px);opacity:.7}}
+/* ─── TYPING DOTS ─── */
+.typing-dots{display:flex;gap:5px;align-items:center;padding:4px 0}
+.typing-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);animation:tdBounce .6s infinite alternate}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes tdBounce{to{transform:translateY(-5px);opacity:.8}}
+
 </style>
 
 <script type="text/javascript">
@@ -838,50 +845,102 @@ document.addEventListener('keydown', e => {
 
 // ─── AI ASSISTANT ───
 async function askAI(question) {
-  const input = document.getElementById('ai-dash-input');
-  const msg = question || input.value.trim();
+  var input = document.getElementById('ai-dash-input');
+  var msg = question || input.value.trim();
   if (!msg) return;
   input.value = '';
-  const resp = document.getElementById('ai-dash-response');
+  var resp = document.getElementById('ai-dash-response');
   resp.classList.add('show');
-  resp.innerHTML = '<div style="animation:pulse 1s infinite;color:rgba(255,255,255,.5)">Thinking...</div>';
+  resp.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
   
+  chatHistory.push({role:'user',content:msg});
   try {
-    const res = await fetch('/api/chat', {
+    var res = await fetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4)})
+      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4), stream:true})
     });
-    const data = await res.json();
-    chatHistory.push({role:'user',content:msg},{role:'assistant',content:data.reply||''});
-    resp.innerHTML = (data.reply||'Sorry, please try again.')
-      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-      .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+    resp.innerHTML = '';
+    if (res.headers.get('content-type')?.includes('text/event-stream')) {
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var fullText = '';
+      var buffer = '';
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, {stream:true});
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (var line of lines) {
+          if (line.startsWith('data: ')) {
+            var d = line.slice(6).trim();
+            if (d === '[DONE]') continue;
+            try { var p = JSON.parse(d); if (p.text) { fullText += p.text; resp.innerHTML = fullText.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'); resp.scrollTop = resp.scrollHeight; } } catch(e){}
+          }
+        }
+      }
+      chatHistory.push({role:'assistant',content:fullText});
+    } else {
+      var data = await res.json();
+      chatHistory.push({role:'assistant',content:data.reply||''});
+      resp.innerHTML = (data.reply||'Sorry, please try again.').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    }
   } catch(e) {
-    resp.innerHTML = 'Connection error. Please try again.';
+    resp.innerHTML = "I'm having trouble connecting. <a href='mailto:hello@pacropservices.com' style='color:#60a5fa'>Email us</a> or call <a href='tel:8144800989' style='color:#60a5fa'>814-480-0989</a>.";
   }
 }
 
 async function askAIFull() {
-  const input = document.getElementById('ai-full-input');
-  const msg = input.value.trim();
+  var input = document.getElementById('ai-full-input');
+  var msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  const hist = document.getElementById('ai-chat-history');
+  var hist = document.getElementById('ai-chat-history');
   hist.innerHTML += '<div style="text-align:right;margin:8px 0"><span style="background:rgba(255,255,255,.15);padding:8px 14px;border-radius:12px 12px 4px 12px;display:inline-block;font-size:14px;max-width:80%">'+msg.replace(/</g,'&lt;')+'</span></div>';
-  hist.innerHTML += '<div id="ai-typing" style="margin:8px 0;color:rgba(255,255,255,.4);font-size:13px">Thinking...</div>';
+  hist.innerHTML += '<div id="ai-typing" class="typing-dots" style="margin:8px 0;padding:8px 0"><span></span><span></span><span></span></div>';
   hist.scrollTop = hist.scrollHeight;
   
   chatHistory.push({role:'user',content:msg});
   try {
-    const res = await fetch('/api/chat', {
+    var res = await fetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6)})
+      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6), stream:true})
     });
-    const data = await res.json();
     document.getElementById('ai-typing')?.remove();
-    chatHistory.push({role:'assistant',content:data.reply||''});
-    const reply = (data.reply||'Sorry, please try again.').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-    hist.innerHTML += '<div style="margin:8px 0"><span style="background:rgba(255,255,255,.08);padding:12px 16px;border-radius:12px 12px 12px 4px;display:inline-block;font-size:14px;line-height:1.6;max-width:85%">'+reply+'</span></div>';
+    
+    if (res.headers.get('content-type')?.includes('text/event-stream')) {
+      var replyDiv = document.createElement('div');
+      replyDiv.style.cssText = 'margin:8px 0';
+      var replySpan = document.createElement('span');
+      replySpan.style.cssText = 'background:rgba(255,255,255,.08);padding:12px 16px;border-radius:12px 12px 12px 4px;display:inline-block;font-size:14px;line-height:1.6;max-width:85%';
+      replyDiv.appendChild(replySpan);
+      hist.appendChild(replyDiv);
+      
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var fullText = '';
+      var buffer = '';
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, {stream:true});
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (var line of lines) {
+          if (line.startsWith('data: ')) {
+            var d = line.slice(6).trim();
+            if (d === '[DONE]') continue;
+            try { var p = JSON.parse(d); if (p.text) { fullText += p.text; replySpan.innerHTML = fullText.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'); hist.scrollTop = hist.scrollHeight; } } catch(e){}
+          }
+        }
+      }
+      chatHistory.push({role:'assistant',content:fullText});
+    } else {
+      var data = await res.json();
+      chatHistory.push({role:'assistant',content:data.reply||''});
+      var reply = (data.reply||'Sorry, please try again.').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      hist.innerHTML += '<div style="margin:8px 0"><span style="background:rgba(255,255,255,.08);padding:12px 16px;border-radius:12px 12px 12px 4px;display:inline-block;font-size:14px;line-height:1.6;max-width:85%">'+reply+'</span></div>';
+    }
   } catch(e) {
     document.getElementById('ai-typing')?.remove();
     hist.innerHTML += '<div style="margin:8px 0;color:rgba(255,255,255,.5);font-size:13px">Connection error. Try again.</div>';
@@ -1083,51 +1142,83 @@ function showError(containerId, message, retryFn) {
     '</div>';
 }
 
-// ─── CHATBOT GROQ FALLBACK ───
-var originalAskAI = window.askAI;
+// ─── STREAMING AI — all buttons route here ───
 var chatRetryCount = 0;
-function askAIWithFallback(msg) {
-  // Try the normal path
-  var chatOut = document.getElementById('chat-output') || document.getElementById('ai-output');
+async function askAIWithFallback(msg) {
+  if (!msg) {
+    var dashInput = document.getElementById('ai-dash-input');
+    var fullInput = document.getElementById('ai-full-input');
+    msg = (dashInput && dashInput.value.trim()) || (fullInput && fullInput.value.trim());
+    if (dashInput) dashInput.value = '';
+    if (fullInput) fullInput.value = '';
+  }
+  if (!msg) return;
+
+  var resp = document.getElementById('ai-dash-response');
+  if (resp) {
+    resp.classList.add('show');
+    resp.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  }
   
-  fetch('/api/chat', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({message: msg, clientContext: CLIENT_CONTEXT, clientTier: CLIENT?.tier, entityName: CLIENT?.name, history: chatHistory.slice(-4)})
-  })
-  .then(function(res) {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  })
-  .then(function(d) {
-    if (d.success && d.reply) {
-      chatRetryCount = 0;
-      if (chatOut) {
-        chatOut.innerHTML += '<div class="ai-msg">' + d.reply.replace(/\n/g,'<br>') + '</div>';
-        chatOut.scrollTop = chatOut.scrollHeight;
+  chatHistory.push({role:'user',content:msg});
+  
+  try {
+    var res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4), stream:true})
+    });
+    
+    if (resp) resp.innerHTML = '';
+    chatRetryCount = 0;
+    
+    if (res.headers.get('content-type')?.includes('text/event-stream')) {
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var fullText = '';
+      var buffer = '';
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, {stream:true});
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (var line of lines) {
+          if (line.startsWith('data: ')) {
+            var d = line.slice(6).trim();
+            if (d === '[DONE]') continue;
+            try {
+              var p = JSON.parse(d);
+              if (p.text && resp) {
+                fullText += p.text;
+                resp.innerHTML = fullText.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+                resp.scrollTop = resp.scrollHeight;
+              }
+            } catch(e){}
+          }
+        }
       }
-      chatHistory.push({role:'user',content:msg},{role:'assistant',content:d.reply});
+      chatHistory.push({role:'assistant',content:fullText});
     } else {
-      throw new Error('Empty response');
+      var data = await res.json();
+      if (data.reply && resp) {
+        chatHistory.push({role:'assistant',content:data.reply});
+        resp.innerHTML = data.reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      }
     }
-  })
-  .catch(function(e) {
+  } catch(e) {
     chatRetryCount++;
-    if (chatOut) {
+    if (resp) {
       if (chatRetryCount >= 2) {
-        chatOut.innerHTML += '<div class="ai-msg" style="color:var(--gold)">' +
-          'The AI assistant is temporarily unavailable. Here are some resources:' +
-          '<br>• <a href="/what-is-a-pennsylvania-crop" style="color:var(--accent)">What is a PA CROP?</a>' +
-          '<br>• <a href="/pa-annual-report-requirement-guide" style="color:var(--accent)">Annual Report Guide</a>' +
-          '<br>• <a href="/pa-2027-dissolution-deadline" style="color:var(--accent)">2027 Deadline Info</a>' +
-          '<br>• Email us: <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a>' +
-          '</div>';
+        resp.innerHTML = 'I\'m having trouble connecting right now. Here are some resources:<br>' +
+          '<a href="/what-is-a-pennsylvania-crop" style="color:#60a5fa">What is a PA CROP?</a><br>' +
+          '<a href="/pa-annual-report-requirement-guide" style="color:#60a5fa">Annual Report Guide</a><br>' +
+          '<a href="mailto:hello@pacropservices.com" style="color:#60a5fa">Email our team</a>';
       } else {
-        chatOut.innerHTML += '<div class="ai-msg" style="color:var(--gold)">Connection issue. Retrying...</div>';
+        resp.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
         setTimeout(function() { askAIWithFallback(msg); }, 2000);
       }
-      chatOut.scrollTop = chatOut.scrollHeight;
     }
-  });
+  }
 }
 
 </script>
