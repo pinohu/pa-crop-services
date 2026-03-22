@@ -693,25 +693,6 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('set-ref')?.textContent||'');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
         </div></div>
       </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title">Quick actions</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-              <a href="mailto:hello@pacropservices.com?subject=Plan%20change%20request" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Request plan change</a>
-              <a href="mailto:hello@pacropservices.com?subject=Update%20my%20info" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Update contact info</a>
-              <a href="mailto:hello@pacropservices.com?subject=Add%20entity" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Add another entity</a>
-              <a href="mailto:hello@pacropservices.com?subject=Cancel" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none;color:#dc2626">Cancel account</a>
-            </div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-header"><span class="card-title">Support</span></div>
-          <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
-            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Email</div><a href="mailto:hello@pacropservices.com" style="color:var(--accent);font-weight:600;font-size:14px">hello@pacropservices.com</a></div>
-            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Phone</div><a href="tel:8144800989" style="color:var(--accent);font-weight:600;font-size:14px">814-480-0989</a></div>
-            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Hours</div><span style="font-size:14px">Mon–Fri 9am–5pm ET</span></div>
-          </div>
-        </div></div>';
   
   if (ctx.lastDocumentDate) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Document received: ' + (ctx.lastDocumentType || 'correspondence').replace(/_/g,' ') + '</div><div class="activity-time">' + ctx.lastDocumentDate + '</div></div></div>';
