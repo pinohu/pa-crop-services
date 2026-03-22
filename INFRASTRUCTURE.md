@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — 8 automation systems deployed (AI chatbot, entity monitor, email triage, lead qualifier, doc router, health scoring, SEO pipeline, partner commissions)
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — all 8 automations tested, 20 workflows active, 18 serverless functions, 8/8 API tests PASS (AI chatbot, entity monitor, email triage, lead qualifier, doc router, health scoring, SEO pipeline, partner commissions)
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -223,8 +223,8 @@ def push_file(remote_path, content_str, message):
 | `RSibNfwSM9aw3vUW` | CROP — Hot Lead Alert | `crop-hot-lead-alert` | ✅ Active |
 | `l2495RxXLxkYzqcU` | CROP — Portal Access Code Reset | `crop-portal-reset` | ✅ Active |
 | `9j4pW3PmmYufMG8T` | CROP — Partner Onboarding | `crop-partner-onboarding` | ✅ Active |
-| `wRLXTGXW60MDLUnI` | CROP — Renewal Sequence | (scheduled) | ✅ Content loaded |
-| `UGGPH8LOU4AR3eXk` | CROP — Win-Back (Churned Client Recovery) | (scheduled) | ✅ Content loaded |
+| `WzLsTyevzy2HdY26` | CROP — Renewal Sequence | (scheduled) | ✅ Content loaded |
+| `VroBVEpWgOgCTAF3` | CROP — Win-Back Sequence | (weekly Mon 8AM) | ✅ Active |
 | `cEC0aLvV4CMEUYHn` | CROP — Daily Entity Status Monitor | (daily 6AM) | ✅ Created |
 | `4RV1ZzWSkR4KkUjS` | CROP — AI Email Triage | (IMAP trigger) | ✅ Created |
 | `EfsC4jvIcS9j4RK0` | CROP — Weekly Client Health Score | (weekly Mon 7AM) | ✅ Created |
