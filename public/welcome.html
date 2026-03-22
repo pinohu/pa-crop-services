@@ -108,6 +108,52 @@ nav .container{display:flex;align-items:center;gap:10px}
   </div>
 </div>
 
+
+<div style="background:var(--light);border-radius:12px;padding:28px;margin:24px 0;max-width:500px;margin-left:auto;margin-right:auto">
+<h2 style="font-size:18px;margin-bottom:4px">Tell us about your entity</h2>
+<p style="font-size:14px;color:var(--gray);margin-bottom:16px">So we can start monitoring your compliance immediately.</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<input type="text" id="ei-name" placeholder="Entity name (e.g. Acme LLC)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<select id="ei-type" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff">
+  <option value="">Entity type...</option>
+  <option value="LLC">LLC</option>
+  <option value="Corporation">Corporation</option>
+  <option value="LP">Limited Partnership</option>
+  <option value="LLP">LLP</option>
+  <option value="Foreign LLC">Foreign LLC</option>
+  <option value="Foreign Corp">Foreign Corporation</option>
+</select>
+<input type="text" id="ei-dos" placeholder="PA DOS file number (optional)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<input type="email" id="ei-email" placeholder="Your email" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<button onclick="submitEntity()" style="background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Submit entity details</button>
+<p id="ei-msg" style="font-size:13px;color:var(--green);display:none"></p>
+</div>
+</div>
+
+<script>
+async function submitEntity() {
+  const name = document.getElementById('ei-name').value;
+  const type = document.getElementById('ei-type').value;
+  const dos = document.getElementById('ei-dos').value;
+  const email = document.getElementById('ei-email').value;
+  if (!name || !email) { document.getElementById('ei-msg').textContent = 'Please fill in entity name and email'; document.getElementById('ei-msg').style.display = 'block'; document.getElementById('ei-msg').style.color = '#dc2626'; return; }
+  
+  try {
+    await fetch('/api/entity-intake', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, entityName: name, entityType: type, dosFileNumber: dos })
+    });
+    document.getElementById('ei-msg').textContent = 'Saved! We will begin verifying your entity with PA DOS.';
+    document.getElementById('ei-msg').style.display = 'block';
+    document.getElementById('ei-msg').style.color = 'var(--green)';
+  } catch(e) {
+    document.getElementById('ei-msg').textContent = 'Error — please email hello@pacropservices.com with your entity details.';
+    document.getElementById('ei-msg').style.display = 'block';
+    document.getElementById('ei-msg').style.color = '#dc2626';
+  }
+}
+</script>
+
 <a href="/portal" class="btn btn-accent" style="margin-bottom:20px">Go to your portal &rarr;</a>
 
 <div class="footer">
