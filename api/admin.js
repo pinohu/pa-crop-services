@@ -280,33 +280,33 @@ export default async function handler(req, res) {
       // ── Generate Service Agreement (Documentero) ──────────────────────
       case 'generate_agreement': {
         const { clientName, entityName, entityNumber, entityType, clientAddress, clientEmail, tier } = payload;
-        const tierFees = { compliance_only: '$99.00', business_starter: '$199.00', business_pro: '$349.00', business_empire: '$699.00' };
+        const tierFees = { compliance_only: '$99', business_starter: '$199', business_pro: '$349', business_empire: '$699' };
         
-        const res2 = await fetch('https://app.documentero.com/api', {
+        // Native PDF generation — no external service needed
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers['x-forwarded-host'] || req.headers.host || 'pacropservices.com';
+        const baseUrl = `${protocol}://${host}`;
+        
+        const pdfRes = await fetch(`${baseUrl}/api/generate-agreement`, {
           method: 'POST',
-          headers: { 'Authorization': DOCUMENTERO_KEY, 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'
+          },
           body: JSON.stringify({
-            document: process.env.DOCUMENTERO_TEMPLATE_ID || 'DOCUMENTERO_TEMPLATE_ID',
-            format: 'pdf',
-            data: [{
-              client_name: clientName,
-              entity_name: entityName,
-              entity_number: entityNumber,
-              entity_type: entityType,
-              client_address: clientAddress,
-              client_email: clientEmail,
-              service_tier: tier,
-              annual_fee: tierFees[tier] || '$99.00',
-              effective_date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-              provider_name: 'PA Registered Office Services, LLC',
-              provider_address: '924 W 23rd St, Erie, PA 16502',
-              provider_phone: '814-480-0989',
-              provider_email: 'hello@pacropservices.com'
-            }]
+            client_name: clientName,
+            entity_name: entityName,
+            entity_number: entityNumber,
+            entity_type: entityType || 'LLC',
+            client_address: clientAddress,
+            client_email: clientEmail,
+            service_tier: tier,
+            annual_fee: tierFees[tier] || '$99',
+            effective_date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
           })
         });
-        const docResult = await res2.json();
-        return res.status(200).json({ success: true, document: docResult });
+        const pdfResult = await pdfRes.json();
+        return res.status(200).json({ success: true, document: pdfResult });
       }
 
       // ── Acumbamail Stats ──────────────────────────────────────────────
