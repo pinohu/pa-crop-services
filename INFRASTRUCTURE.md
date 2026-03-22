@@ -539,6 +539,52 @@ The following upgrades close every gap between the documented user journeys and 
 - Copy code AND copy full referral link buttons
 - Referral list placeholder ready for /api/partner-commission data
 
+
+### Phase 0 Deployment (March 22, 2026 — Final)
+
+**Legal pages:**
+- `/terms` — Terms of Service (13 sections, PA statutory references, liability cap, service of process obligations)
+- `/privacy` — Privacy Policy (11 sections, discloses all third-party processors: Stripe, SuiteDash, Acumbamail, Emailit, Groq, 20i, Plausible, Clarity, Vercel)
+
+**Trust & SEO:**
+- Trust footer on 29 public pages: license number, Terms, Privacy links, phone number
+- Author box on 14 article/comparison pages (Dr. Ikechukwu P.N. Ohu, credentials, photo placeholder)
+- 8 thin city pages noindexed (kept Philadelphia + Pittsburgh)
+- sitemap.xml with 22 indexed pages
+- robots.txt blocking /portal, /admin, /api/
+
+**System health:**
+- `/api/health` — monitors Groq, SuiteDash, 20i, n8n in one call
+- `/api/stripe-webhook` — Stripe signature verification + event routing
+- n8n Error Alert workflow — Telegram notification on any CROP workflow failure
+- Error workflow set on all 20+ CROP workflows
+- Portal error states: showError(), Groq fallback with FAQ links, retry buttons
+- askAIWithFallback() wired to all chat buttons and input handlers
+
+**Content pipeline:**
+- AI chatbot embed (chatbot.js) on homepage + 6 key article pages
+- `/api/publish-article` — generates and optionally publishes article HTML to GitHub
+
+**Platform totals:**
+- 38 public HTML pages (+ terms, privacy)
+- 25 serverless API functions
+- 21 n8n workflows (20 CROP + 1 error alerting)
+- 4 Stripe products, 2 webhooks
+- Emailit SMTP, SuiteDash CRM, 20i hosting, Acumbamail marketing, Groq AI
+
+**Ike action items (cannot be automated):**
+- [ ] Confirm CROP license with PA DOS (717-787-1057)
+- [ ] Apply for EIN (irs.gov)
+- [ ] Bind E&O insurance ($1M/$2M)
+- [ ] Open business bank account + connect to Stripe
+- [ ] Add SPF/DKIM/DMARC DNS records
+- [ ] Test physical mail pipeline at 924 W 23rd St
+- [ ] Attorney review of Terms + Privacy
+- [ ] Recruit founding client
+- [ ] Add STRIPE_WEBHOOK_SECRET to Vercel env vars
+- [ ] Add TWENTY_I_RESELLER_ID=10455 to Vercel env vars
+- [ ] Add TWENTY_I_DEFAULT_TYPE_REF=80397 to Vercel env vars
+
 ### Needs Ike action
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
 - [x] Create SuiteDash custom fields (10 fields — completed 2026-03-22)
