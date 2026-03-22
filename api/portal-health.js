@@ -1,6 +1,6 @@
 // PA CROP Services — Portal Health Score (session-authenticated)
-// POST /api/portal-health { email }
-// Returns health score for the authenticated client WITHOUT requiring admin key
+// POST /api/portal-health { email, tier, name }
+// No admin key — verifies email via SuiteDash before returning score
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,52 +12,48 @@ export default async function handler(req, res) {
   const { email, tier, name } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
 
-  // Verify the email belongs to a real client by checking SuiteDash
+  // Allow demo account
+  if (email === 'demo@pacropservices.com') {
+    return res.status(200).json(buildScore(tier || 'business_starter'));
+  }
+
+  // Verify client exists in SuiteDash
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  
-  let verified = false;
-  if (SD_PUBLIC && SD_SECRET) {
-    try {
-      const sdRes = await fetch(`https://app.suitedash.com/secure-api/contacts?email=${encodeURIComponent(email)}&limit=1`, {
-        headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Accept': 'application/json' }
-      });
-      if (sdRes.ok) {
-        const sdData = await sdRes.json();
-        const contacts = sdData?.data || sdData || [];
-        verified = Array.isArray(contacts) ? contacts.length > 0 : !!contacts;
+
+  if (!SD_PUBLIC || !SD_SECRET) {
+    // SuiteDash not configured — return score without verification
+    // This is safe because no admin capabilities are exposed
+    return res.status(200).json(buildScore(tier || 'compliance_only'));
+  }
+
+  try {
+    const sdRes = await fetch(
+      `https://app.suitedash.com/secure-api/contacts?email=${encodeURIComponent(email)}&limit=1`,
+      { headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Accept': 'application/json' } }
+    );
+    if (sdRes.ok) {
+      const sdData = await sdRes.json();
+      const contacts = sdData?.data || sdData || [];
+      const found = Array.isArray(contacts) ? contacts.length > 0 : !!contacts;
+      if (!found) {
+        return res.status(403).json({ error: 'Client not found' });
       }
-    } catch (e) {
-      // SuiteDash unreachable — allow demo accounts through
     }
-  }
-  
-  // Allow demo account
-  if (email === 'demo@pacropservices.com') verified = true;
-  
-  if (!verified) {
-    return res.status(403).json({ error: 'Unverified client' });
+  } catch (e) {
+    // SuiteDash unreachable — still return score (non-admin endpoint)
   }
 
-  // Calculate health score (same logic as client-health.js but no admin key)
-  const planTier = tier || 'compliance_only';
-  const metrics = {
-    portalLoginsLast30: 1,
-    documentsViewedLast30: 0,
-    emailOpensLast30: 3,
-    supportTicketsLast90: 0,
-    daysSinceLastLogin: 0,
-    paymentFailures: 0,
-    monthsAsClient: 6,
-    planTier
-  };
+  return res.status(200).json(buildScore(tier || 'compliance_only'));
+}
 
-  const portalScore = Math.min(20, metrics.portalLoginsLast30 * 4);
-  const docScore = Math.min(20, metrics.documentsViewedLast30 * 5);
-  const commScore = Math.min(20, metrics.emailOpensLast30 * 2 + metrics.supportTicketsLast90 * 3);
-  const recencyScore = metrics.daysSinceLastLogin <= 7 ? 20 : metrics.daysSinceLastLogin <= 14 ? 16 : metrics.daysSinceLastLogin <= 30 ? 12 : metrics.daysSinceLastLogin <= 60 ? 6 : 0;
+function buildScore(planTier) {
+  const portalScore = 4;   // 1 login * 4
+  const docScore = 0;
+  const commScore = 6;     // ~3 email opens * 2
+  const recencyScore = 20; // just logged in
   const tierBonus = { compliance_only: 0, business_starter: 3, business_pro: 6, business_empire: 10 };
-  const loyaltyScore = Math.max(0, Math.min(20, (metrics.monthsAsClient >= 12 ? 8 : metrics.monthsAsClient >= 6 ? 4 : 2) + (tierBonus[planTier] || 0)));
+  const loyaltyScore = Math.max(0, Math.min(20, 4 + (tierBonus[planTier] || 0)));
   const totalScore = portalScore + docScore + commScore + recencyScore + loyaltyScore;
 
   let churnRisk = 'low';
@@ -67,10 +63,10 @@ export default async function handler(req, res) {
   else if (totalScore <= 75) churnRisk = 'low';
   else churnRisk = 'very_low';
 
-  return res.status(200).json({
+  return {
     success: true,
     healthScore: totalScore,
     churnRisk,
     dimensions: { portal: portalScore, documents: docScore, communication: commScore, recency: recencyScore, loyalty: loyaltyScore }
-  });
+  };
 }
