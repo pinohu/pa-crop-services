@@ -4,908 +4,772 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA CROP Services | Client Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="description" content="Manage your Pennsylvania registered office, compliance status, documents, and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --navy:#0f1e3d;--navy2:#162952;--navy3:#1e3a6e;
-  --gold:#c9a227;--gold2:#e8b93a;--gold3:#f5d87a;
-  --cream:#faf8f3;--cream2:#f0ede4;--text:#0f1e3d;
-  --muted:#5a6a84;--border:#d4cfc0;--success:#1a7a4a;
-  --warn:#b55a00;--red:#c0392b;--card:#ffffff;
-  --shadow:0 2px 16px rgba(15,30,61,.08);--radius:10px;
+  --bg:#f8f7f4;--bg2:#ffffff;--bg3:#f1f0ec;
+  --ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;
+  --accent:#1a56db;--accent2:#2563eb;--accent-bg:#eff6ff;--accent-border:#bfdbfe;
+  --gold:#c27803;--gold-bg:#fef3c7;--gold-border:#fcd34d;
+  --green:#15803d;--green-bg:#f0fdf4;--green-border:#86efac;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --border:#e5e4e0;--border2:#d4d3cf;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.05);
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --topbar-h:56px;
+  --sidebar-w:240px;
 }
-body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
-.serif{font-family:'Playfair Display',serif}
-.mono{font-family:'DM Mono',monospace}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.fade-up{animation:fadeUp .4s var(--ease) both}
+.fade-in{animation:fadeIn .3s var(--ease) both}
+.stagger>*:nth-child(1){animation-delay:.05s}.stagger>*:nth-child(2){animation-delay:.1s}
+.stagger>*:nth-child(3){animation-delay:.15s}.stagger>*:nth-child(4){animation-delay:.2s}
+.stagger>*:nth-child(5){animation-delay:.25s}.stagger>*:nth-child(6){animation-delay:.3s}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+
+/* ─── LOGIN SCREEN ─── */
 #login-screen{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 60%,#0d2b52 100%);
-  position:relative;overflow:hidden;
+  background:var(--ink);position:relative;overflow:hidden;
 }
-#login-screen::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 30% 50%,rgba(201,162,39,.12) 0%,transparent 60%),
-             radial-gradient(ellipse at 80% 20%,rgba(201,162,39,.08) 0%,transparent 50%);
+#login-screen::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(26,86,219,.15) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 30%,rgba(194,120,3,.1) 0%,transparent 50%);
 }
 .login-card{
-  background:var(--card);border-radius:16px;padding:48px 40px;width:420px;
-  box-shadow:0 32px 80px rgba(0,0,0,.35);position:relative;z-index:1;
+  background:var(--bg2);border-radius:var(--radius-xl);padding:48px 40px;width:400px;
+  box-shadow:0 32px 64px rgba(0,0,0,.4);position:relative;z-index:1;
 }
-.login-logo{text-align:center;margin-bottom:32px}
-.login-logo .seal{
-  width:72px;height:72px;background:var(--navy);border-radius:50%;
+.login-header{text-align:center;margin-bottom:36px}
+.login-header .mark{
+  width:48px;height:48px;background:var(--ink);border-radius:10px;
   display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
-  border:3px solid var(--gold);
 }
-.login-logo .seal svg{width:38px;height:38px;fill:var(--gold)}
-.login-logo h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:700;letter-spacing:-.3px}
-.login-logo p{font-size:13px;color:var(--muted);margin-top:4px}
-.form-group{margin-bottom:18px}
-.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.form-group input{
-  width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;
-  font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);
-  transition:all .2s;outline:none;
+.login-header .mark svg{width:24px;height:24px;fill:#fff}
+.login-header h1{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px}
+.login-header p{font-size:14px;color:var(--ink3);margin-top:4px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field input{
+  width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius);
+  font-family:var(--font);font-size:15px;color:var(--ink);background:var(--bg);
+  transition:all .15s var(--ease);outline:none;
 }
-.form-group input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(201,162,39,.1)}
-.btn-primary{
-  width:100%;padding:14px;background:var(--navy);color:#fff;border:none;
-  border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;
-  cursor:pointer;transition:all .2s;
+.field input:focus{border-color:var(--accent);background:var(--bg2);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+.field input::placeholder{color:var(--ink3)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border-radius:var(--radius);font-family:var(--font);
+  font-size:14px;font-weight:600;cursor:pointer;transition:all .15s var(--ease);border:none;
 }
-.btn-primary:hover{background:var(--navy3);transform:translateY(-1px);box-shadow:0 6px 20px rgba(15,30,61,.3)}
-.error-msg{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);color:var(--red);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
-.demo-hint{text-align:center;margin-top:20px;font-size:12px;color:var(--muted)}
-.demo-hint a{color:var(--gold);cursor:pointer;text-decoration:none;font-weight:500}
+.btn-primary{background:var(--ink);color:#fff;width:100%;padding:13px}
+.btn-primary:hover{background:#333;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--ink2);padding:8px 14px}
+.btn-ghost:hover{background:var(--bg);border-color:var(--border2)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2)}
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:6px}
+.login-error{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);
+  padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none}
+.login-footer{text-align:center;margin-top:20px;font-size:13px;color:var(--ink3)}
+.login-footer a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:500}
+
+/* ─── PORTAL SHELL ─── */
 #portal{display:none;min-height:100vh;flex-direction:column}
 .topbar{
-  background:var(--navy);color:#fff;padding:0 28px;
-  display:flex;align-items:center;justify-content:space-between;height:60px;
-  border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:100;
+  height:var(--topbar-h);background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
+  background:rgba(255,255,255,.92);
 }
-.topbar-brand{display:flex;align-items:center;gap:12px}
-.topbar-seal{width:36px;height:36px;border-radius:50%;background:rgba(201,162,39,.15);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;}
-.topbar-seal svg{width:18px;height:18px;fill:var(--gold)}
-.topbar-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;letter-spacing:-.2px}
-.topbar-right{display:flex;align-items:center;gap:16px}
-.client-badge{background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.3);color:var(--gold2);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
-.client-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold2)}
-.btn-logout{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:.2s}
-.btn-logout:hover{border-color:rgba(255,255,255,.5);color:#fff}
-.portal-body{display:flex;flex:1;min-height:calc(100vh - 60px)}
-.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
-.sidebar-section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 20px;margin:16px 0 8px;}
-.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:.15s;border-left:3px solid transparent;font-size:13.5px;font-weight:500;color:var(--muted);}
-.sidebar-item:hover{background:var(--cream);color:var(--navy)}
-.sidebar-item.active{background:rgba(201,162,39,.08);color:var(--navy);border-left-color:var(--gold);font-weight:600;}
-.sidebar-item .icon{width:18px;height:18px;flex-shrink:0}
-.badge-count{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;}
-.main{flex:1;padding:28px 32px;max-width:calc(100vw - 220px)}
-.welcome-strip{background:var(--navy);color:#fff;border-radius:var(--radius);padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
-.welcome-strip::before{content:'';position:absolute;right:-20px;top:-20px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.15),transparent 70%);}
-.welcome-strip h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px}
-.welcome-strip p{font-size:13px;color:rgba(255,255,255,.7)}
-.deadline-pill{background:rgba(201,162,39,.15);border:1px solid rgba(201,162,39,.3);border-radius:8px;padding:12px 20px;text-align:right;flex-shrink:0;}
-.deadline-pill .label{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
-.deadline-pill .val{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold2)}
-.deadline-pill .sub{font-size:11px;color:rgba(255,255,255,.5)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);box-shadow:var(--shadow)}
-.stat-card .label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.stat-card .val{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1}
-.stat-card .sub{font-size:12px;color:var(--muted);margin-top:6px}
-.pill{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-top:6px;}
-.pill-green{background:rgba(26,122,74,.1);color:var(--success)}
-.pill-warn{background:rgba(181,90,0,.1);color:var(--warn)}
-.pill-gold{background:rgba(201,162,39,.12);color:#8a6800}
-.section{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px}
-.section-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
-.section-header h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--navy)}
-.section-header p{font-size:13px;color:var(--muted);margin-top:2px}
-.section-body{padding:24px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.info-card{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:18px;transition:.15s;}
-.info-card:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(201,162,39,.1)}
-.info-card h4{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:6px}
-.info-card p{font-size:13px;color:var(--muted);line-height:1.5}
-.info-card .tag{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;}
-.timeline{position:relative;padding-left:24px}
-.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
-.tl-item{position:relative;margin-bottom:20px}
-.tl-dot{position:absolute;left:-24px;top:4px;width:16px;height:16px;border-radius:50%;border:2px solid;}
-.tl-dot.done{background:var(--success);border-color:var(--success)}
-.tl-dot.active{background:var(--gold);border-color:var(--gold)}
-.tl-dot.pending{background:#fff;border-color:var(--border)}
-.tl-date{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-.tl-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:2px}
-.tl-desc{font-size:12px;color:var(--muted)}
-.checklist{display:flex;flex-direction:column;gap:10px}
-.check-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:.15s;}
-.check-item:hover{background:var(--cream);border-color:var(--gold)}
-.check-item.done{background:rgba(26,122,74,.04);border-color:rgba(26,122,74,.2)}
-.check-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;}
-.check-item.done .check-box{background:var(--success);border-color:var(--success)}
-.check-title{font-size:14px;font-weight:600;color:var(--navy)}
-.check-item.done .check-title{color:var(--muted);text-decoration:line-through}
-.check-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.chat-wrap{display:flex;flex-direction:column;height:420px}
-.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--cream);border-radius:8px;margin-bottom:12px}
-.msg{display:flex;gap:10px;align-items:flex-start;max-width:90%}
-.msg.user{align-self:flex-end;flex-direction:row-reverse}
-.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
-.msg.ai .msg-avatar{background:var(--navy);color:var(--gold)}
-.msg.user .msg-avatar{background:var(--gold);color:var(--navy)}
-.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;}
-.msg.ai .msg-bubble{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:4px 12px 12px 12px}
-.msg.user .msg-bubble{background:var(--navy);color:#fff;border-radius:12px 4px 12px 12px}
-.chat-input-row{display:flex;gap:8px}
-.chat-input{flex:1;padding:11px 16px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.2s;}
-.chat-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1)}
-.btn-send{padding:11px 20px;background:var(--navy);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;transition:.2s;}
-.btn-send:hover{background:var(--navy3)}
-.btn-send:disabled{opacity:.5;cursor:not-allowed}
-.quick-qs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.quick-q{background:rgba(15,30,61,.05);border:1px solid rgba(15,30,61,.1);color:var(--navy);padding:5px 11px;border-radius:16px;font-size:11.5px;font-weight:500;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;}
-.quick-q:hover{background:rgba(201,162,39,.1);border-color:rgba(201,162,39,.3)}
-.typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
-.typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce .9s infinite}
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.alert{padding:14px 18px;border-radius:8px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
-.alert-gold{background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);color:#6b4f00}
-.alert-green{background:rgba(26,122,74,.08);border:1px solid rgba(26,122,74,.2);color:#0d4a28}
-.btn-sm{padding:8px 16px;border:1.5px solid var(--navy);color:var(--navy);background:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
-.btn-sm:hover{background:var(--navy);color:#fff}
-.btn-gold{padding:10px 22px;background:var(--gold);color:var(--navy);border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
-.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
-.progress-bar{background:var(--cream2);border-radius:4px;height:8px;overflow:hidden;margin-top:8px}
-.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:.4s}
-.notify-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--cream2);align-items:flex-start;}
-.notify-item:last-child{border-bottom:none}
-.notify-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.notify-text{font-size:13.5px;color:var(--text);line-height:1.4}
-.notify-date{font-size:11.5px;color:var(--muted);margin-top:3px}
-.notify-unread .notify-text{font-weight:600;color:var(--navy)}
-.ref-code{background:var(--navy);color:var(--gold2);padding:18px 24px;border-radius:8px;font-family:'DM Mono',monospace;font-size:22px;font-weight:500;text-align:center;letter-spacing:2px;margin:16px 0;cursor:pointer;transition:.2s;}
-.ref-code:hover{background:var(--navy3)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-mark{width:32px;height:32px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.topbar-mark svg{width:16px;height:16px;fill:#fff}
+.topbar-title{font-weight:700;font-size:15px;color:var(--ink);letter-spacing:-.2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-accent{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge-gold{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-bg);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer}
+.topbar-divider{width:1px;height:24px;background:var(--border)}
 
-@media(max-width:768px){
-  #mobile-sidebar-btn{display:inline-block!important}
-  .sidebar{display:none;position:fixed;top:60px;left:0;bottom:0;z-index:50;overflow-y:auto}
-  .sidebar.mobile-open{display:block;box-shadow:4px 0 20px rgba(0,0,0,.15)}
-  .main{max-width:100%;padding:16px}
+/* ─── LAYOUT ─── */
+.shell{display:flex;min-height:calc(100vh - var(--topbar-h))}
+.sidebar{
+  width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);
+  padding:16px 0;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));
+  overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;
 }
+.nav-group{margin-bottom:8px}
+.nav-label{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;
+  letter-spacing:.8px;padding:12px 16px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:8px 16px;margin:1px 8px;
+  border-radius:var(--radius);cursor:pointer;transition:all .12s var(--ease);
+  font-size:13.5px;font-weight:500;color:var(--ink2);position:relative;
+}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.nav-item .ico{width:18px;height:18px;flex-shrink:0;opacity:.6}
+.nav-item.active .ico{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+.nav-item kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink3);
+  background:var(--bg3);padding:2px 5px;border-radius:4px;border:1px solid var(--border)}
+.sidebar-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border)}
+
+.main{flex:1;padding:24px 28px;max-width:100%;overflow-x:hidden}
+
+/* ─── DASHBOARD ─── */
+.page-header{margin-bottom:24px}
+.page-header h1{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-.5px;line-height:1.2}
+.page-header p{font-size:14px;color:var(--ink3);margin-top:4px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:18px 20px;box-shadow:var(--shadow-sm);transition:all .2s var(--ease)}
+.kpi:hover{box-shadow:var(--shadow);border-color:var(--border2)}
+.kpi-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.kpi-value{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.5px}
+.kpi-sub{font-size:12px;color:var(--ink3);margin-top:6px;display:flex;align-items:center;gap:4px}
+.kpi-trend{display:inline-flex;align-items:center;gap:2px;font-weight:600;font-size:11px}
+.kpi-trend.up{color:var(--green)}.kpi-trend.down{color:var(--red)}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700;color:var(--ink)}
+.card-body{padding:20px}
+.card-footer{padding:12px 20px;border-top:1px solid var(--border);background:var(--bg)}
+
+/* ─── ENTITY STATUS HERO ─── */
+.entity-hero{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
+  padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;gap:20px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.entity-hero.good{border-left:4px solid var(--green)}
+.entity-hero.warn{border-left:4px solid var(--gold)}
+.entity-hero.bad{border-left:4px solid var(--red)}
+.entity-status-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.entity-hero.good .entity-status-icon{background:var(--green-bg);color:var(--green)}
+.entity-hero.warn .entity-status-icon{background:var(--gold-bg);color:var(--gold)}
+.entity-hero.bad .entity-status-icon{background:var(--red-bg);color:var(--red)}
+.entity-info{flex:1}
+.entity-name{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.3px}
+.entity-status-text{font-size:14px;margin-top:2px}
+.entity-meta{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--ink3)}
+.entity-meta span{display:flex;align-items:center;gap:4px}
+.deadline-block{text-align:right;flex-shrink:0}
+.deadline-number{font-family:var(--serif);font-size:36px;font-weight:700;color:var(--ink);line-height:1}
+.deadline-label{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.3px}
+
+/* ─── AI ASSISTANT (INLINE) ─── */
+.ai-card{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:var(--radius-xl);
+  color:#fff;padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.ai-card::before{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;
+  border-radius:50%;background:rgba(26,86,219,.2)}
+.ai-card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;z-index:1}
+.ai-card-header .ai-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+.ai-card-header span{font-size:13px;font-weight:600;color:rgba(255,255,255,.7)}
+.ai-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:relative;z-index:1}
+.ai-quick{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.9);
+  padding:7px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;
+  transition:all .15s var(--ease);font-family:var(--font)}
+.ai-quick:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3)}
+.ai-input-row{display:flex;gap:8px;position:relative;z-index:1}
+.ai-input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  color:#fff;padding:10px 14px;border-radius:var(--radius);font-family:var(--font);
+  font-size:14px;outline:none;transition:all .15s}
+.ai-input::placeholder{color:rgba(255,255,255,.4)}
+.ai-input:focus{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
+.ai-send{background:#2563eb;color:#fff;border:none;border-radius:var(--radius);padding:10px 18px;
+  font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.ai-send:hover{background:#3b82f6}
+.ai-response{margin-top:14px;background:rgba(255,255,255,.08);border-radius:var(--radius);
+  padding:14px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.9);display:none;
+  position:relative;z-index:1;max-height:300px;overflow-y:auto}
+.ai-response.show{display:block;animation:fadeUp .3s var(--ease)}
+
+/* ─── DOCUMENTS LIST ─── */
+.doc-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.doc-row:last-child{border-bottom:none}
+.doc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.doc-icon.legal{background:var(--red-bg);color:var(--red)}
+.doc-icon.gov{background:var(--accent-bg);color:var(--accent)}
+.doc-icon.tax{background:var(--gold-bg);color:var(--gold)}
+.doc-icon.report{background:var(--green-bg);color:var(--green)}
+.doc-info{flex:1;min-width:0}
+.doc-title{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:12px;color:var(--ink3);margin-top:2px}
+.doc-action{flex-shrink:0}
+
+/* ─── COMPLIANCE CHECKLIST ─── */
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.check-box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
+.check-box.done{background:var(--green);border-color:var(--green);color:#fff}
+.check-text{font-size:14px;color:var(--ink2)}
+.check-text.done{text-decoration:line-through;color:var(--ink3)}
+
+/* ─── ACTIVITY FEED ─── */
+.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.activity-dot.blue{background:var(--accent)}.activity-dot.green{background:var(--green)}
+.activity-dot.gold{background:var(--gold)}.activity-dot.red{background:var(--red)}
+.activity-text{font-size:13px;color:var(--ink2)}
+.activity-time{font-size:12px;color:var(--ink3);margin-top:2px}
+
+/* ─── EMPTY STATES ─── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--ink3)}
+.empty-state .icon{font-size:32px;margin-bottom:12px;opacity:.4}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.empty-state p{font-size:13px;max-width:300px;margin:0 auto}
+
+/* ─── TAB CONTENT ─── */
 .hidden{display:none!important}
+.section{margin-bottom:28px}
+.section-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
-  .stats{grid-template-columns:1fr 1fr}
-  .grid2,.grid3{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .main{max-width:100%;padding:16px}
+  .sidebar{display:none;position:fixed;left:0;top:var(--topbar-h);width:260px;z-index:200;
+    box-shadow:var(--shadow-lg);height:calc(100vh - var(--topbar-h))}
+  .sidebar.open{display:flex}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199}
+  .overlay.show{display:block}
+  .main{padding:16px}
+  .entity-hero{flex-direction:column;align-items:flex-start;gap:14px}
+  .deadline-block{text-align:left}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .menu-btn{display:flex!important}
 }
+.menu-btn{display:none;align-items:center;justify-content:center;width:32px;height:32px;
+  border:none;background:none;cursor:pointer;color:var(--ink);border-radius:6px}
+.menu-btn:hover{background:var(--bg)}
+
+/* ─── LOADING / SKELETON ─── */
+.loading-bar{height:2px;background:var(--accent);position:fixed;top:0;left:0;z-index:9999;
+  width:0;transition:width .3s;opacity:0}
+.loading-bar.active{opacity:1}
+
+/* ─── TOOLTIPS ─── */
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);
+  left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:500;
+  padding:5px 10px;border-radius:6px;white-space:nowrap;z-index:100;animation:fadeIn .15s}
 </style>
+
 <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "vzhtq2nted");
+(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "vzhtq2nted");
 </script>
+<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
+<div class="loading-bar" id="loading-bar"></div>
 
-<a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;focus:visible" class="skip-link" onFocus="this.style.cssText='position:fixed;top:10px;left:10px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:8px;z-index:9999;width:auto;height:auto;font-family:DM Sans,sans-serif;font-weight:600;font-size:14px;text-decoration:none'" onBlur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden'">Skip to main content</a>
+<!-- ═══ LOGIN ═══ -->
 <div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="seal">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.25C17.25 21.15 21 16.25 21 11V5L12 1zm0 4.5l6 2.5v4c0 3.75-2.7 7.25-6 8.4-3.3-1.15-6-4.65-6-8.4V8l6-2.5z"/></svg>
-      </div>
-      <h1 class="serif">PA CROP Services</h1>
-      <p>Client Compliance Portal</p>
+  <div class="login-card fade-up">
+    <div class="login-header">
+      <div class="mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L19.09 7.5 12 10.82 4.91 7.5 12 4.18zM4 9.14l7 3.5v7.72l-7-3.5V9.14zm9 11.22v-7.72l7-3.5v7.72l-7 3.5z"/></svg></div>
+      <h1>PA CROP Services</h1>
+      <p>Client compliance portal</p>
     </div>
-    <div id="login-error" class="error-msg">Invalid email or access code. Please try again or contact hello@pacropservices.com</div>
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="login-email" placeholder="you@yourbusiness.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-error" id="login-error"></div>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="login-email" placeholder="you@business.com" autocomplete="email">
     </div>
-    <div class="form-group">
-      <label>Access Code</label>
-      <input type="password" id="login-code" placeholder="Your portal access code" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="field">
+      <label>Access code</label>
+      <input type="text" id="login-code" placeholder="Enter your 6-character code" autocomplete="off" style="font-family:var(--mono);letter-spacing:2px">
     </div>
-    <button class="btn-primary" onclick="doLogin()">Access My Portal &rarr;</button>
-    <div style="text-align:center;margin-top:10px">
-      <a onclick="resetCode()" style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:none" tabindex="0">Forgot access code?</a>
+    <button class="btn btn-primary" onclick="doLogin()" id="login-btn">Sign in</button>
+    <div class="login-footer">
+      <a onclick="resetCode()">Forgot your access code?</a>
+      <span style="margin:0 8px;color:var(--border2)">|</span>
+      <a onclick="demoLogin()">Try demo</a>
     </div>
-    <div class="demo-hint">Demo access: <a onclick="demoLogin()">click here to enter</a></div>
   </div>
 </div>
 
+<!-- ═══ PORTAL ═══ -->
 <div id="portal">
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-seal">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.25C17.25 21.15 21 16.25 21 11V5L12 1zm0 4.5l6 2.5v4c0 3.75-2.7 7.25-6 8.4-3.3-1.15-6-4.65-6-8.4V8l6-2.5z"/></svg>
-      </div>
-      <span class="topbar-name serif">PA CROP Services</span>
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div class="topbar-mark"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>
+      <span class="topbar-title">PA CROP Services</span>
     </div>
     <div class="topbar-right">
-      <div class="client-badge"><div class="dot"></div><span id="tier-badge">Professional Plan</span></div>
-      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-      <button id="mobile-sidebar-btn" onclick="toggleMobileSidebar()" aria-label="Toggle navigation" style="display:none;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:18px">☰</button>
+      <span class="badge badge-accent" id="tier-badge"><span class="dot"></span> Plan</span>
+      <div class="topbar-divider"></div>
+      <div class="avatar" id="user-avatar" data-tooltip="Account">?</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
     </div>
   </div>
 
-  <div class="portal-body">
-    <div class="sidebar">
-      <div class="sidebar-section-label">Main</div>
-      <div class="sidebar-item active" onclick="setTab('dashboard',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
-      </div>
-      <div class="sidebar-item" onclick="setTab('onboarding',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Onboarding
-        <span class="badge-count" id="onboard-badge">3</span>
-      </div>
-      <div class="sidebar-section-label">Services</div>
-      <div class="sidebar-item" onclick="setTab('credit',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Business Credit
-      </div>
-      <div class="sidebar-item" onclick="setTab('templates',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Legal Templates
-      </div>
-      <div class="sidebar-item" onclick="setTab('entity',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>New Entity
-      </div>
-      <div class="sidebar-item" onclick="setTab('insurance',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Insurance
-      </div>
-      <div class="sidebar-section-label">Account</div>
-      <div class="sidebar-item" onclick="setTab('notifications',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>Notifications
-        <span class="badge-count" id="notif-badge">2</span>
-      </div>
-      <div class="sidebar-item" onclick="setTab('referral',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Referral Program
-      </div>
-      <div class="sidebar-item" onclick="setTab('ai',this)">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>AI Assistant
-      </div>
-    </div>
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-    <div class="main" id="main-content">
-      <!-- DASHBOARD -->
+  <div class="shell">
+    <!-- ─── SIDEBAR ─── -->
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-group">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active" onclick="setTab('dashboard',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard<kbd>D</kbd></div>
+        <div class="nav-item" onclick="setTab('documents',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Documents</div>
+        <div class="nav-item" onclick="setTab('compliance',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Compliance</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Services</div>
+        <div class="nav-item" onclick="setTab('entity',this)" id="entity-nav">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          Entity Status</div>
+        <div class="nav-item" onclick="setTab('hosting',this)" id="hosting-nav" style="display:none">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          Hosting</div>
+        <div class="nav-item" onclick="setTab('ai',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          AI Assistant<kbd>A</kbd></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Account</div>
+        <div class="nav-item" onclick="setTab('referral',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Referral</div>
+        <div class="nav-item" onclick="setTab('settings',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          Settings</div>
+      </div>
+      <div class="sidebar-footer">
+        <div style="font-size:11px;color:var(--ink3)">PA Registered Office Services, LLC</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:2px">Licensed PA CROP · 15 Pa. C.S. §109</div>
+      </div>
+    </nav>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main" id="main-content">
+
+      <!-- ══ DASHBOARD ══ -->
       <div id="tab-dashboard">
-        <div class="welcome-strip">
-          <div>
-            <h2 class="serif" id="welcome-name">Good morning</h2>
-            <p>Registered Office: 924 W 23rd St, Erie, PA 16502 &nbsp;&middot;&nbsp; <span id="client-email-show"></span></p>
+        <div class="page-header fade-up">
+          <h1 id="welcome-heading">Welcome back</h1>
+          <p id="welcome-sub">Your compliance overview for <span id="client-entity-name">your entity</span></p>
+        </div>
+
+        <!-- Entity Status Hero -->
+        <div class="entity-hero good fade-up" id="entity-hero" style="animation-delay:.1s">
+          <div class="entity-status-icon" id="entity-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
-          <div class="deadline-pill">
-            <div class="label">2027 Deadline</div>
-            <div class="val" id="days-left">636</div>
-            <div class="sub">days remaining</div>
+          <div class="entity-info">
+            <div class="entity-name" id="entity-display-name">Your Entity</div>
+            <div class="entity-status-text"><span class="badge badge-green" id="entity-status-badge"><span class="dot"></span> Active — Good Standing</span></div>
+            <div class="entity-meta">
+              <span id="entity-file-num">PA DOS File #</span>
+              <span id="entity-type-display">LLC</span>
+              <span id="plan-display-inline">Plan</span>
+            </div>
+          </div>
+          <div class="deadline-block">
+            <div class="deadline-label">Days until Sept 30</div>
+            <div class="deadline-number" id="days-to-deadline">—</div>
+            <div style="font-size:11px;color:var(--ink3)">Annual report deadline</div>
           </div>
         </div>
-        <div class="stats">
-          <div class="stat-card">
-            <div class="label">Annual Report</div>
-            <div class="val">Sept 30</div>
-            <div class="sub">2026 deadline</div>
-            <span class="pill pill-warn">193 days away</span>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid stagger">
+          <div class="kpi fade-up">
+            <div class="kpi-label">Documents received</div>
+            <div class="kpi-value" id="kpi-docs">0</div>
+            <div class="kpi-sub">This year</div>
           </div>
-          <div class="stat-card">
-            <div class="label">CROP Status</div>
-            <div class="val">Active</div>
-            <div class="sub">Since Jan 2026</div>
-            <span class="pill pill-green">&#10003; Current</span>
+          <div class="kpi fade-up">
+            <div class="kpi-label">Health score</div>
+            <div class="kpi-value" id="kpi-health">—</div>
+            <div class="kpi-sub" id="kpi-health-risk">Calculating...</div>
           </div>
-          <div class="stat-card">
-            <div class="label">Plan</div>
-            <div class="val" id="plan-display">Business Pro</div>
-            <div class="sub">Renews Jan 2027</div>
-            <span class="pill pill-gold" id="plan-price">$349/yr</span>
+          <div class="kpi fade-up">
+            <div class="kpi-label">Client since</div>
+            <div class="kpi-value" id="kpi-since">—</div>
+            <div class="kpi-sub" id="kpi-tenure">—</div>
           </div>
-          <div class="stat-card">
-            <div class="label">Entities Covered</div>
-            <div class="val">1</div>
-            <div class="sub">Add more anytime</div>
-            <button class="btn-sm" style="margin-top:8px;font-size:12px;padding:5px 12px" onclick="setTab('entity',document.querySelector('[onclick*=entity]'))">+ Add Entity</button>
+          <div class="kpi fade-up">
+            <div class="kpi-label">Annual fee</div>
+            <div class="kpi-value" id="kpi-fee">—</div>
+            <div class="kpi-sub" id="kpi-plan-label">—</div>
           </div>
         </div>
-        <div class="grid2">
-          <div class="section">
-            <div class="section-header"><div><h3 class="serif">Compliance Timeline</h3><p>Your 2026 compliance milestones</p></div></div>
-            <div class="section-body">
-              <div class="timeline">
-                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">Jan 2026</div><div class="tl-title">CROP Service Activated</div><div class="tl-desc">Registered office established at 924 W 23rd St</div></div>
-                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">Mar 2026</div><div class="tl-title">Portal Access Granted</div><div class="tl-desc">Client onboarding completed</div></div>
-                <div class="tl-item"><div class="tl-dot active"></div><div class="tl-date">Jul 2026</div><div class="tl-title">Annual Report Reminder</div><div class="tl-desc">60-day advance notice sent automatically</div></div>
-                <div class="tl-item"><div class="tl-dot pending"></div><div class="tl-date">Sept 30, 2026</div><div class="tl-title">Annual Report Due</div><div class="tl-desc">$7 filing fee &mdash; we'll remind you 5 times</div></div>
-                <div class="tl-item"><div class="tl-dot pending"></div><div class="tl-date">Dec 31, 2027</div><div class="tl-title">2027 Deadline (PA DOS)</div><div class="tl-desc">All PA entities must file or face dissolution</div></div>
+
+        <!-- AI Assistant Card (inline on dashboard) -->
+        <div class="ai-card fade-up" style="animation-delay:.25s">
+          <div class="ai-card-header">
+            <div class="ai-dot"></div>
+            <span>AI Compliance Assistant</span>
+          </div>
+          <div class="ai-quick-actions">
+            <button class="ai-quick" onclick="askAI('When is my annual report due?')">Annual report deadline</button>
+            <button class="ai-quick" onclick="askAI('What documents have you received for me?')">My documents</button>
+            <button class="ai-quick" onclick="askAI('How do I change my registered office?')">Change registered office</button>
+            <button class="ai-quick" onclick="askAI('What is the 2027 dissolution deadline?')">2027 deadline</button>
+          </div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-dash-input" placeholder="Ask anything about PA compliance..." onkeydown="if(event.key==='Enter')askAI()">
+            <button class="ai-send" onclick="askAI()">Ask</button>
+          </div>
+          <div class="ai-response" id="ai-dash-response"></div>
+        </div>
+
+        <!-- Two Column: Recent Docs + Activity -->
+        <div class="grid-2">
+          <div class="card fade-up" style="animation-delay:.3s">
+            <div class="card-header">
+              <span class="card-title">Recent documents</span>
+              <button class="btn btn-ghost btn-sm" onclick="setTab('documents',document.querySelectorAll('.nav-item')[1])">View all</button>
+            </div>
+            <div class="card-body" id="recent-docs">
+              <div class="empty-state">
+                <div class="icon">📄</div>
+                <h3>No documents yet</h3>
+                <p>Documents received at your registered office will appear here with AI summaries.</p>
               </div>
             </div>
           </div>
-          <div class="section">
-            <div class="section-header"><div><h3 class="serif">Quick Actions</h3><p>Most requested services</p></div></div>
-            <div class="section-body">
-              <div style="display:flex;flex-direction:column;gap:10px">
-                <div class="info-card" onclick="setTab('entity',null)" style="cursor:pointer"><h4>&#127962; Form a New Entity</h4><p>PA LLC, WY LLC, or S-Corp &mdash; we guide you through formation and add it to your compliance coverage.</p></div>
-                <div class="info-card" onclick="setTab('templates',null)" style="cursor:pointer"><h4>&#128196; Download Legal Templates</h4><p>Operating agreements, resolutions, and compliance docs &mdash; pre-drafted for PA businesses.</p></div>
-                <div class="info-card" onclick="setTab('ai',null)" style="cursor:pointer"><h4>&#129302; Ask AI Compliance Assistant</h4><p>Get instant answers about your annual report, 2027 deadline, or PA compliance requirements.</p></div>
-                <div class="info-card" onclick="setTab('referral',null)" style="cursor:pointer"><h4>&#127881; Refer a Business &mdash; Earn Credit</h4><p>Refer another PA business and earn $25 account credit for each one that signs up.</p></div>
-              </div>
+          <div class="card fade-up" style="animation-delay:.35s">
+            <div class="card-header">
+              <span class="card-title">Activity</span>
+            </div>
+            <div class="card-body" id="activity-feed">
+              <div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Portal accessed</div><div class="activity-time">Just now</div></div></div>
+              <div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Registered office address verified</div><div class="activity-time">Ongoing</div></div></div>
+              <div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report reminders active</div><div class="activity-time">Next: 90 days before Sept 30</div></div></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ONBOARDING -->
-      <div id="tab-onboarding" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Onboarding Checklist</h3><p>Complete these steps to get fully set up</p></div></div>
-          <div class="section-body">
-            <div class="alert alert-gold">&#9889; <strong>3 steps remaining.</strong> Complete your onboarding to unlock all compliance protections.</div>
-            <div class="checklist" id="checklist">
-              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">CROP service activated</div><div class="check-desc">Your registered office is live at 924 W 23rd St, Erie, PA 16502</div></div></div>
-              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">Portal account created</div><div class="check-desc">You're in! Bookmark this portal for easy access.</div></div></div>
-              <div class="check-item done" onclick="toggleCheck(this)"><div class="check-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="check-title">PA DOS CROP filing confirmed</div><div class="check-desc">Statement of Commercial Registered Office filed with PA DOS</div></div></div>
-              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Download &amp; review your Service Agreement</div><div class="check-desc">Review and sign the CROP service agreement &mdash; required for legal coverage</div></div></div>
-              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Set annual report calendar reminder</div><div class="check-desc">Annual reports are due Sept 30 each year &mdash; we send 5 reminders but set your own too</div></div></div>
-              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Add emergency contact for legal documents</div><div class="check-desc">Required by PA law &mdash; who should we call if you receive legal process at your registered office?</div></div></div>
-              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><div><div class="check-title">Upgrade to Premium for annual report filing</div><div class="check-desc">Let us handle the $7 PA DOS annual report filing automatically each year</div></div></div>
-            </div>
-            <div style="margin-top:20px">
-              <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px"><span>Onboarding progress</span><span id="progress-pct">3 / 7 complete</span></div>
-              <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:43%"></div></div>
-            </div>
-          </div>
-        </div>
+      <!-- ══ DOCUMENTS TAB ══ -->
+      <div id="tab-documents" class="hidden">
+        <div class="page-header"><h1>Documents</h1><p>All documents received at your registered office, classified by AI</p></div>
+        <div class="card"><div class="card-body" id="documents-list">
+          <div class="empty-state"><div class="icon">📬</div><h3>No documents yet</h3>
+          <p>When we receive documents at your registered office (924 W 23rd St, Erie PA), they'll be scanned, classified, and uploaded here within one business day.</p></div>
+        </div></div>
       </div>
 
-      <!-- BUSINESS CREDIT -->
-      <div id="tab-credit" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Business Credit Building</h3><p>Build your business credit profile &mdash; separate from personal credit</p></div></div>
-          <div class="section-body">
-            <div class="alert alert-gold">&#128161; <strong>Your CROP address</strong> (924 W 23rd St, Erie, PA) is a legitimate commercial address &mdash; ideal for building business credit with major bureaus.</div>
-            <div class="grid3" style="margin-top:20px">
-              <div class="info-card"><h4>&#128203; Step 1: EIN &amp; Dun &amp; Bradstreet</h4><p>Get a D-U-N-S number (free). This creates your D&B profile &mdash; the foundation of business credit.</p><span class="tag pill-gold">Free &middot; 30 days</span></div>
-              <div class="info-card"><h4>&#127970; Step 2: Net-30 Vendor Accounts</h4><p>Open accounts with Uline, Quill, and Grainger. They report to business bureaus. Pay on time, every time.</p><span class="tag pill-gold">~$0 to start</span></div>
-              <div class="info-card"><h4>&#128179; Step 3: Business Credit Cards</h4><p>After 6 months of vendor history, apply for a no-PG business card (Brex, Ramp, or BILL Divvy).</p><span class="tag pill-gold">Month 6+</span></div>
-              <div class="info-card"><h4>&#128202; Paydex Score Target</h4><p>Aim for 80+ Paydex score by paying vendors 10 days early. This unlocks the best credit terms.</p><span class="tag pill-green">Goal: 80+</span></div>
-              <div class="info-card"><h4>&#127978; Bank Account &amp; LOC</h4><p>Open a business bank account using your EIN + CROP address. After 12 months, apply for a line of credit.</p><span class="tag pill-green">Month 12+</span></div>
-              <div class="info-card"><h4>&#9888;&#65039; Common Mistakes</h4><p>Don't use a PO Box or home address. Don't mix personal and business finances. Keep your registered address consistent.</p><span class="tag" style="background:rgba(192,57,43,.08);color:var(--red)">Avoid These</span></div>
-            </div>
-          </div>
-        </div>
+      <!-- ══ COMPLIANCE TAB ══ -->
+      <div id="tab-compliance" class="hidden">
+        <div class="page-header"><h1>Compliance checklist</h1><p>Track your PA entity compliance requirements</p></div>
+        <div class="card"><div class="card-body">
+          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">Registered office address on file with PA DOS</div></div>
+          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Annual report filed for current year</div></div>
+          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">CROP provider license verified (15 Pa. C.S. §109)</div></div>
+          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Entity status verified with PA DOS</div></div>
+          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Service agreement signed and on file</div></div>
+          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">Annual report reminders active (90/60/30/14/7 days)</div></div>
+        </div></div>
       </div>
 
-      <!-- LEGAL TEMPLATES -->
-      <div id="tab-templates" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Legal Templates Library</h3><p>Pre-drafted PA compliance documents &mdash; download and customize</p></div></div>
-          <div class="section-body">
-            <div style="display:flex;flex-direction:column;gap:12px" id="templates-list"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NEW ENTITY -->
+      <!-- ══ ENTITY STATUS TAB ══ -->
       <div id="tab-entity" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Form a New Entity</h3><p>Add a new LLC or corporation to your compliance coverage</p></div></div>
-          <div class="section-body">
-            <div class="alert alert-gold">&#127959;&#65039; Dynasty tip: Stack entities strategically &mdash; WY holding company &rarr; PA operating LLC &rarr; CROP coverage on each one.</div>
-            <div class="grid3" style="margin-top:20px">
-              <div class="info-card" style="border:2px solid var(--gold);position:relative"><div style="position:absolute;top:-10px;left:16px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px">MOST POPULAR</div><h4>&#127962; Pennsylvania LLC</h4><p>$125 PA DOS filing fee. 7-10 business days standard. We handle the CROP registration simultaneously.</p><div style="margin-top:12px;display:flex;gap:8px"><button class="btn-gold" style="font-size:12px;padding:7px 14px" onclick="alert('Contact hello@pacropservices.com or call 814-480-0989 to begin your PA LLC filing.')">Start Filing</button></div></div>
-              <div class="info-card"><h4>&#127797; Wyoming LLC</h4><p>$102 filing fee. No state income tax, strong asset protection. Ideal for holding companies in the Dynasty structure.</p><div style="margin-top:12px"><button class="btn-sm" style="font-size:12px;padding:7px 14px" onclick="alert('Contact hello@pacropservices.com or call 814-480-0989 to begin your WY LLC filing.')">Start Filing</button></div></div>
-              <div class="info-card"><h4>&#127963; PA S-Corporation</h4><p>Elect S-Corp status after forming your LLC. Ideal for businesses clearing $80K+ profit annually for tax savings.</p><div style="margin-top:12px"><button class="btn-sm" style="font-size:12px;padding:7px 14px" onclick="alert('Contact hello@pacropservices.com or call 814-480-0989 to discuss S-Corp election.')">Consult First</button></div></div>
-            </div>
-          </div>
-        </div>
+        <div class="page-header"><h1>Entity status</h1><p>Real-time monitoring of your PA Department of State record</p></div>
+        <div class="card"><div class="card-body" id="entity-detail">
+          <p style="color:var(--ink3)">Loading entity status...</p>
+        </div></div>
       </div>
 
-      <!-- INSURANCE -->
-      <div id="tab-insurance" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Business Insurance</h3><p>Coverage recommendations for your entity type</p></div></div>
-          <div class="section-body">
-            <div class="grid2">
-              <div class="info-card"><h4>&#128737;&#65039; General Liability (GL)</h4><p>Required by most commercial leases and clients. Covers third-party bodily injury and property damage. Starting at $500-$1,200/year for most PA LLCs.</p><span class="tag pill-warn">Recommended First</span></div>
-              <div class="info-card"><h4>&#128188; Professional Liability (E&amp;O)</h4><p>Essential for service businesses &mdash; covers errors and omissions in your professional services. CROP Services carries this coverage.</p><span class="tag pill-warn">Service Businesses</span></div>
-              <div class="info-card"><h4>&#127968; Business Owner's Policy (BOP)</h4><p>Bundles GL + commercial property into one policy at a discount. Best value for brick-and-mortar or hybrid businesses.</p><span class="tag pill-gold">Best Value Bundle</span></div>
-              <div class="info-card"><h4>&#128274; Cyber Liability</h4><p>Covers data breaches, ransomware, and cyber incidents. Increasingly required by clients. Starting at $600/year for small businesses.</p><span class="tag pill-gold">Growing Requirement</span></div>
-              <div class="info-card"><h4>&#127959;&#65039; Workers' Comp (Required in PA)</h4><p>Required by PA law if you have employees. Single-member LLC owners may qualify for an exemption.</p><span class="tag" style="background:rgba(192,57,43,.08);color:var(--red)">PA Law: Required w/ Employees</span></div>
-              <div class="info-card"><h4>&#9748;&#65039; Commercial Umbrella</h4><p>Extends your GL or BOP coverage limits. $1M additional coverage typically runs $200-$400/year.</p><span class="tag pill-green">Asset Protection</span></div>
-            </div>
-            <div style="margin-top:20px;padding:16px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--muted)">&#128161; We partner with licensed insurance brokers in Erie, PA. Email <strong>partners@pacropservices.com</strong> for a referral.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NOTIFICATIONS -->
-      <div id="tab-notifications" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Notifications</h3><p>Your compliance alerts and service updates</p></div></div>
-          <div class="section-body">
-            <div class="notify-item notify-unread"><div class="notify-dot" style="background:var(--gold)"></div><div><div class="notify-text">&#9889; Annual Report Reminder: Your PA annual report is due September 30, 2026. That's 193 days away &mdash; you're on track.</div><div class="notify-date">March 21, 2026</div></div></div>
-            <div class="notify-item notify-unread"><div class="notify-dot" style="background:var(--warn)"></div><div><div class="notify-text">&#9888;&#65039; 2027 PA Deadline: All PA entities must file annual reports by Dec 31, 2027 or face administrative dissolution. You have 636 days.</div><div class="notify-date">March 15, 2026</div></div></div>
-            <div class="notify-item"><div class="notify-dot" style="background:var(--success)"></div><div><div class="notify-text">&#10003; CROP Service Activated: Your commercial registered office is now live at 924 W 23rd St, Erie, PA 16502.</div><div class="notify-date">January 10, 2026</div></div></div>
-            <div class="notify-item"><div class="notify-dot" style="background:var(--success)"></div><div><div class="notify-text">&#10003; Welcome to PA CROP Services! Complete your onboarding checklist to get fully protected.</div><div class="notify-date">January 10, 2026</div></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- REFERRAL -->
-      <div id="tab-referral" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">Referral Program</h3><p>Earn $25 credit for every PA business you refer</p></div></div>
-          <div class="section-body">
-            <div class="alert alert-green">&#127881; You have <strong>$0 referral credit</strong> available &mdash; refer 4 businesses and your renewal is free!</div>
-            <div style="margin:20px 0">
-              <div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-align:center">Your unique referral code</div>
-              <div class="ref-code" id="ref-code" onclick="copyRef()">CROP-DEMO2026</div>
-              <div style="font-size:11px;color:var(--muted);text-align:center">Click to copy &middot; Share with other PA business owners</div>
-            </div>
-            <div class="grid3">
-              <div class="info-card" style="text-align:center"><div style="font-size:28px;font-family:'Playfair Display',serif;font-weight:700;color:var(--navy)">0</div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:4px">Referrals</div><div style="font-size:12px;color:var(--muted)">All time</div></div>
-              <div class="info-card" style="text-align:center"><div style="font-size:28px;font-family:'Playfair Display',serif;font-weight:700;color:var(--gold)">$0</div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:4px">Credits Earned</div><div style="font-size:12px;color:var(--muted)">Applied to renewal</div></div>
-              <div class="info-card" style="text-align:center"><div style="font-size:28px;font-family:'Playfair Display',serif;font-weight:700;color:var(--success)">$25</div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:4px">Per Referral</div><div style="font-size:12px;color:var(--muted)">Unlimited</div></div>
-            </div>
-            <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn-sm" onclick="shareEmail()">&#128231; Email a Colleague</button>
-              <button class="btn-sm" onclick="copyRef()">&#128279; Copy Referral Link</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI CHAT -->
+      <!-- ══ HOSTING TAB ══ -->
       <div id="tab-hosting" class="hidden">
-        <div class="section">
-          <div class="section-header">
-            <div><h3 class="serif">🖥️ Your Hosting Account</h3><p>Business Starter, Pro, and Empire plans include 20i hosting</p></div>
-            <button class="btn-sm" onclick="loadHostingStatus()">⟳ Refresh</button>
-          </div>
-          <div class="section-body" id="hosting-tab-body">
-            <div style="text-align:center;padding:32px;color:var(--muted)">
-              <div style="font-size:32px;margin-bottom:12px">🖥️</div>
-              <p>Click "Refresh" to load your hosting status from 20i.</p>
-            </div>
-          </div>
-        </div>
+        <div class="page-header"><h1>Web hosting</h1><p>Manage your website, email, and hosting dashboard</p></div>
+        <div class="card"><div class="card-body" id="hosting-content">
+          <div class="empty-state"><div class="icon">🌐</div><h3>Setting up your hosting</h3>
+          <p>Your web hosting package is being provisioned. Access your control panel at <a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a>.</p></div>
+        </div></div>
       </div>
+
+      <!-- ══ AI ASSISTANT TAB ══ -->
       <div id="tab-ai" class="hidden">
-        <div class="section">
-          <div class="section-header"><div><h3 class="serif">AI Compliance Assistant</h3><p>Instant answers about your PA compliance requirements</p></div></div>
-          <div class="section-body">
-            <div class="quick-qs">
-              <button class="quick-q" onclick="sendQuick(this)">When is my annual report due?</button>
-              <button class="quick-q" onclick="sendQuick(this)">What does the 2027 deadline mean?</button>
-              <button class="quick-q" onclick="sendQuick(this)">How do I build business credit?</button>
-              <button class="quick-q" onclick="sendQuick(this)">Do I need business insurance?</button>
-              <button class="quick-q" onclick="sendQuick(this)">How do I form a second LLC?</button>
-              <button class="quick-q" onclick="sendQuick(this)">What's my registered office address?</button>
-            </div>
-            <div class="chat-wrap">
-              <div class="chat-messages" id="chat-messages">
-                <div class="msg ai"><div class="msg-avatar">&#10022;</div><div class="msg-bubble">Hello! I'm your PA compliance assistant. I can help with annual reports, the 2027 dissolution deadline, entity formation, and PA compliance requirements. What do you need help with?</div></div>
-              </div>
-              <div class="chat-input-row">
-                <input class="chat-input" id="chat-input" type="text" placeholder="Ask about your PA compliance..." onkeydown="if(event.key==='Enter')sendMsg()">
-                <button class="btn-send" id="chat-send" onclick="sendMsg()">Send</button>
-              </div>
-            </div>
-            <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">AI responses are informational only and do not constitute legal advice. For legal matters, consult a licensed PA attorney.</p>
+        <div class="page-header"><h1>AI Compliance Assistant</h1><p>Ask anything about Pennsylvania business compliance</p></div>
+        <div class="ai-card" style="background:linear-gradient(135deg,#0f172a,#1e293b)">
+          <div class="ai-card-header"><div class="ai-dot"></div><span>Powered by PA compliance knowledge base</span></div>
+          <div id="ai-chat-history" style="max-height:400px;overflow-y:auto;margin-bottom:14px"></div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-full-input" placeholder="Ask about annual reports, CROP requirements, 2027 deadline..." onkeydown="if(event.key==='Enter')askAIFull()">
+            <button class="ai-send" onclick="askAIFull()">Ask</button>
           </div>
         </div>
       </div>
 
-    </div>
+      <!-- ══ REFERRAL TAB ══ -->
+      <div id="tab-referral" class="hidden">
+        <div class="page-header"><h1>Refer and earn</h1><p>Share PA CROP Services and earn account credits</p></div>
+        <div class="card"><div class="card-body" style="text-align:center;padding:32px">
+          <div style="font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Your referral code</div>
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:16px" id="ref-code">CROP-XXXX</div>
+          <button class="btn btn-accent" onclick="navigator.clipboard.writeText(document.getElementById('ref-code').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
+          <p style="font-size:13px;color:var(--ink3);margin-top:16px;max-width:360px;margin-left:auto;margin-right:auto">Share this code with other PA business owners. When they sign up using your code, you both benefit.</p>
+        </div></div>
+      </div>
+
+      <!-- ══ SETTINGS TAB ══ -->
+      <div id="tab-settings" class="hidden">
+        <div class="page-header"><h1>Account settings</h1><p>Manage your account and preferences</p></div>
+        <div class="card"><div class="card-body">
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;font-size:14px">
+            <div style="font-weight:600;color:var(--ink3)">Email</div><div id="settings-email">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Plan</div><div id="settings-plan">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Since</div><div id="settings-since">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Address</div><div>924 W 23rd St, Erie, PA 16502</div>
+          </div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <p style="font-size:13px;color:var(--ink3)">Need to change your plan or update your information? Contact us at <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or call <a href="tel:8144800989" style="color:var(--accent)">814-480-0989</a>.</p>
+          </div>
+        </div></div>
+      </div>
+
+    </main>
   </div>
 </div>
 
 <script>
 let CLIENT = null;
+const chatHistory = [];
 
-function mountClient(c) {
-  document.getElementById('login-screen').style.display='none';
-  const p = document.getElementById('portal'); p.style.display='flex';
-  document.getElementById('welcome-name').textContent = 'Welcome back, ' + (c.firstName || c.name.split(' ')[0] || c.name);
-  document.getElementById('client-email-show').textContent = c.email;
-  document.getElementById('tier-badge').textContent = planLabel(c.tier || c.plan) + ' Plan';
-  document.getElementById('plan-display').textContent = planLabel(c.tier || c.plan);
-  document.getElementById('plan-price').textContent = c.price || tierPrice(c.tier || c.plan);
-  document.getElementById('ref-code').textContent = c.refCode || 'CROP-' + (c.email||'').split('@')[0].toUpperCase().slice(0,6);
-  document.getElementById('days-left').textContent = Math.ceil((new Date('2027-12-31') - new Date()) / 86400000);
-  // Show hosting tab for Business Starter+ plans
-  const hasHosting = ['Business Starter','Business Pro','Business Empire','business_starter','business_pro','business_empire','Professional','Premium','business_essentials','business_professional','business_command'].includes(c.tier || c.plan);
-  const hostingTab = document.getElementById('hosting-nav-item');
-  if (hostingTab) hostingTab.style.display = hasHosting ? 'flex' : 'none';
-  // Load real SuiteDash data async
-  if (c.suitedashId) { loadClientDataFromSD(c.suitedashId); }
-  buildTemplates();
-}
+// ─── LOADING BAR ───
+function showLoading() { const b=document.getElementById('loading-bar'); b.style.width='60%'; b.classList.add('active'); }
+function hideLoading() { const b=document.getElementById('loading-bar'); b.style.width='100%'; setTimeout(()=>{b.classList.remove('active');b.style.width='0'},300); }
 
+// ─── AUTH ───
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const code  = document.getElementById('login-code').value.trim().toUpperCase();
-  const err   = document.getElementById('login-error');
-  const btn   = document.querySelector('.btn-primary');
+  const code = document.getElementById('login-code').value.trim().toUpperCase();
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
   if (!email || !code) { err.style.display='block'; err.textContent='Please enter your email and access code.'; return; }
-  btn.textContent = 'Verifying...'; btn.disabled = true;
+  btn.textContent='Signing in...'; btn.disabled=true; showLoading();
   try {
-    const res  = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code })
-    });
+    const res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
     const data = await res.json();
-    if (!data.success) {
-      err.style.display='block';
-      err.textContent = data.error || 'Invalid email or access code.';
-      btn.textContent = 'Access My Portal →'; btn.disabled = false;
-      return;
-    }
-    err.style.display='none';
-    CLIENT = data.client;
-    mountClient(CLIENT);
-  } catch(e) {
-    err.style.display='block';
-    err.textContent = 'Connection error. Please try again or call 814-480-0989.';
-    btn.textContent = 'Access My Portal →'; btn.disabled = false;
-  }
-}
-function demoLogin() {
-  document.getElementById('login-email').value = 'demo@pacropservices.com';
-  document.getElementById('login-code').value  = 'DEMO2026';
-  setTimeout(doLogin, 200);
-}
-function doLogout() {
-  CLIENT = null;
-  document.getElementById('portal').style.display='none';
-  const btn = document.querySelector('.btn-primary');
-  btn.textContent = 'Access My Portal →'; btn.disabled = false;
-  document.getElementById('login-screen').style.display='flex';
+    if (!data.success) { err.style.display='block'; err.textContent=data.error||'Invalid credentials.'; btn.textContent='Sign in'; btn.disabled=false; hideLoading(); return; }
+    err.style.display='none'; CLIENT=data.client; mountClient(CLIENT);
+  } catch(e) { err.style.display='block'; err.textContent='Connection error. Please try again.'; btn.textContent='Sign in'; btn.disabled=false; }
+  hideLoading();
 }
 
+function demoLogin() {
+  document.getElementById('login-email').value='demo@pacropservices.com';
+  document.getElementById('login-code').value='DEMO2026';
+  doLogin();
+}
+
+function doLogout() { CLIENT=null; document.getElementById('portal').style.display='none'; document.getElementById('login-screen').style.display='flex'; }
+
+// ─── MOUNT CLIENT ───
+function mountClient(c) {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('portal').style.display='flex';
+  
+  const first = c.firstName || c.name?.split(' ')[0] || 'there';
+  document.getElementById('welcome-heading').textContent = 'Welcome back, ' + first;
+  document.getElementById('client-entity-name').textContent = c.name || '';
+  document.getElementById('entity-display-name').textContent = c.name || 'Your Entity';
+  document.getElementById('user-avatar').textContent = first[0]?.toUpperCase() || '?';
+  
+  // Plan badge
+  const label = planLabel(c.tier);
+  document.getElementById('tier-badge').innerHTML = '<span class="dot"></span> ' + label;
+  document.getElementById('plan-display-inline').textContent = label;
+  document.getElementById('kpi-fee').textContent = c.price || tierPrice(c.tier);
+  document.getElementById('kpi-plan-label').textContent = label;
+  
+  // Since
+  const since = c.since || new Date().toISOString().split('T')[0];
+  document.getElementById('kpi-since').textContent = formatDate(since);
+  document.getElementById('settings-email').textContent = c.email;
+  document.getElementById('settings-plan').textContent = label + ' (' + (c.price||tierPrice(c.tier)) + ')';
+  document.getElementById('settings-since').textContent = formatDate(since);
+  
+  // Deadline countdown
+  const now = new Date();
+  const deadline = new Date(now.getFullYear(), 8, 30); // Sept 30
+  if (deadline < now) deadline.setFullYear(deadline.getFullYear()+1);
+  document.getElementById('days-to-deadline').textContent = Math.ceil((deadline-now)/86400000);
+  
+  // Referral
+  document.getElementById('ref-code').textContent = c.refCode || 'CROP-' + (c.email||'').split('@')[0].toUpperCase().slice(0,6);
+  
+  // Entity info
+  if (c.entityType) document.getElementById('entity-type-display').textContent = c.entityType;
+  
+  // Hosting tab visibility
+  const hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
+  document.getElementById('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
+  
+  // Async: load health score
+  loadHealthScore(c);
+}
+
+async function loadHealthScore(c) {
+  try {
+    const res = await fetch('/api/client-health', {
+      method:'POST', headers:{'Content-Type':'application/json','X-Admin-Key':'CROP-ADMIN-2026-IKE'},
+      body:JSON.stringify({clientEmail:c.email, clientName:c.name, metrics:{planTier:c.tier||'compliance_only',monthsAsClient:6,daysSinceLastLogin:0,portalLoginsLast30:1}})
+    });
+    const d = await res.json();
+    if (d.success) {
+      document.getElementById('kpi-health').textContent = d.healthScore + '/100';
+      const riskColors = {very_low:'var(--green)',low:'var(--green)',medium:'var(--gold)',high:'var(--red)',critical:'var(--red)'};
+      document.getElementById('kpi-health-risk').innerHTML = '<span style="color:'+( riskColors[d.churnRisk]||'var(--ink3)')+'">'+d.churnRisk.replace('_',' ')+' risk</span>';
+    }
+  } catch(e) { document.getElementById('kpi-health').textContent = '—'; }
+}
+
+// ─── NAVIGATION ───
 function setTab(id, el) {
   document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
   const tab = document.getElementById('tab-'+id);
-  if(tab) tab.classList.remove('hidden');
-  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  if(el) el.classList.add('active');
-  else {
-    document.querySelectorAll('.sidebar-item').forEach(i => {
-      if(i.getAttribute('onclick') && i.getAttribute('onclick').includes("'"+id+"'")) i.classList.add('active');
-    });
-  }
-  if(id==='notifications') document.getElementById('notif-badge').style.display='none';
-  if(id==='onboarding') updateProgress();
+  if (tab) tab.classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(i => { if(i.textContent.toLowerCase().includes(id)) i.classList.add('active'); });
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
 }
 
-function toggleCheck(el) {
-  el.classList.toggle('done');
-  const box = el.querySelector('.check-box');
-  box.innerHTML = el.classList.contains('done') ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '';
-  updateProgress();
-}
-function updateProgress() {
-  const items = document.querySelectorAll('.check-item');
-  const done  = [...items].filter(i => i.classList.contains('done')).length;
-  const pct   = Math.round(done/items.length*100);
-  document.getElementById('progress-fill').style.width = pct+'%';
-  document.getElementById('progress-pct').textContent  = done+' / '+items.length+' complete';
-  const rem = items.length - done;
-  const badge = document.getElementById('onboard-badge');
-  badge.textContent = rem;
-  badge.style.display = rem===0 ? 'none' : '';
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
 }
 
-function buildTemplates() {
-  const isPro = CLIENT && (CLIENT.tier==='Professional'||CLIENT.tier==='Premium');
-  const templates = [
-    ['Single-Member LLC Operating Agreement','Standard PA operating agreement for single-member LLCs.','Core Template',true],
-    ['Multi-Member LLC Operating Agreement','PA-compliant operating agreement for 2-5 member LLCs.','Core Template',true],
-    ['Annual Meeting Resolution','Corporate resolution confirming officers and compliance status.','Compliance',true],
-    ['Change of Registered Office Form','PA DOS form to update your registered office address.','CROP Specific',true],
-    ['Independent Contractor Agreement','PA-specific ICA with IP assignment and non-solicitation.','Business Ops',isPro],
-    ['Non-Disclosure Agreement (NDA)','Mutual NDA with PA governing law, 3-year term.','Business Ops',isPro],
-    ['CROP Service Agreement','Your executed CROP service agreement.','CROP Specific',true],
-  ];
-  document.getElementById('templates-list').innerHTML = templates.map(([name,desc,cat,avail])=>`
-    <div class="info-card" style="display:flex;align-items:center;gap:16px">
-      <div style="flex:1"><h4>${name}</h4><p style="font-size:12px">${desc}</p><span class="tag pill-gold">${cat}</span></div>
-      <div style="flex-shrink:0;text-align:right">
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">${avail?'Included':'Professional+'}</div>
-        <button class="btn-sm" style="font-size:12px;padding:6px 14px" onclick="fakeDownload(this,${avail})">${avail?'&#8595; Download':'&#128274; Upgrade'}</button>
-      </div>
-    </div>`).join('');
-}
-
-function fakeDownload(btn,avail) {
-  if(!avail){alert('Upgrade to Professional or Premium to unlock this template.\nEmail hello@pacropservices.com or call 814-480-0989.');return;}
-  btn.textContent='&#10003; Downloaded';setTimeout(()=>{btn.innerHTML='&#8595; Download';},2000);
-}
-
-function copyRef() {
-  const code = document.getElementById('ref-code').textContent;
-  navigator.clipboard.writeText(code).catch(()=>{});
-  const el = document.getElementById('ref-code');
-  el.textContent='Copied!'; setTimeout(()=>{el.textContent=code;},1500);
-}
-function shareEmail() {
-  const c = CLIENT||{refCode:'CROP-DEMO2026'};
-  window.location.href='mailto:?subject=Use my code for PA CROP Services&body=Hey! I use PA CROP Services for my registered office address in Pennsylvania.%0A%0AUse my code '+c.refCode+' at https://pacropservices.com';
-}
-
-// AI CHAT
-const chatHistory = [];
-const SYS = `You are the PA compliance AI assistant for PA CROP Services, a Pennsylvania Commercial Registered Office Provider (CROP) at 924 W 23rd St, Erie, PA 16502. You are embedded in the client compliance portal. Be warm, direct, and specific. Under 120 words per response. Key facts: PA annual reports due Sept 30 each year, $7 fee. 2027 deadline: all PA entities must file by Dec 31 2027 or face dissolution. CROP satisfies PA registered office requirement. Phone: 814-480-0989. Email: hello@pacropservices.com. Plans: Compliance Only $99/yr, Business Starter $199/yr (includes domain + hosting + email), Business Pro $349/yr (includes annual report filing), Business Empire $699/yr (VPS + multi-entity).`;
-
-async function sendMsg() {
-  const inp = document.getElementById('chat-input');
-  const msg = inp.value.trim(); if(!msg) return;
-  addMsg('user',msg); inp.value='';
-  document.getElementById('chat-send').disabled=true;
-  const typing=addTyping();
-  chatHistory.push({role:'user',content:msg});
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,messages:chatHistory})
-    });
-    const data = await res.json();
-    typing.remove();
-    const reply = data.content?.[0]?.text || 'Connection issue. Please call 814-480-0989.';
-    chatHistory.push({role:'assistant',content:reply});
-    addMsg('ai',reply);
-  } catch(e) {
-    typing.remove();
-    addMsg('ai','Connection error. Please call us at 814-480-0989.');
-  }
-  document.getElementById('chat-send').disabled=false;
-}
-function sendQuick(btn){document.getElementById('chat-input').value=btn.textContent;sendMsg();}
-function addMsg(role,text){
-  const el=document.createElement('div');
-  el.className='msg '+(role==='ai'?'ai':'user');
-  const init=role==='ai'?'&#10022;':(CLIENT&&CLIENT.name?CLIENT.name[0].toUpperCase():'C');
-  el.innerHTML=`<div class="msg-avatar">${init}</div><div class="msg-bubble">${text}</div>`;
-  const msgs=document.getElementById('chat-messages');
-  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;return el;
-}
-function addTyping(){
-  const el=document.createElement('div');
-  el.className='msg ai';
-  el.innerHTML='<div class="msg-avatar">&#10022;</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
-  const msgs=document.getElementById('chat-messages');
-  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;return el;
-}
-
-// GAP-10: Keyboard shortcuts (Nielsen Norman Heuristic 7 — Flexibility & Efficiency)
-document.addEventListener('keydown', function(e) {
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if (document.getElementById('portal').style.display === 'none') return;
-  if (e.shiftKey && e.key === '?') { showShortcutsHelp(); return; }
-  if (e.key === 'Escape') { closeAllModals(); return; }
-  var shortcuts = { d:'dashboard', o:'onboarding', c:'credit', t:'templates', e:'entity', n:'notifications', r:'referral', a:'ai' };
-  if (shortcuts[e.key.toLowerCase()]) {
-    var tabId = shortcuts[e.key.toLowerCase()];
-    var el = document.querySelector('[onclick*="setTab(\''+tabId+''"]');
-    setTab(tabId, el);
-  }
+  if (!CLIENT) return;
+  if (e.key === 'd' || e.key === 'D') setTab('dashboard');
+  if (e.key === 'a' || e.key === 'A') setTab('ai');
 });
-function showShortcutsHelp() {
-  var existing = document.getElementById('shortcuts-modal');
-  if (existing) { existing.remove(); return; }
-  var modal = document.createElement('div');
-  modal.id = 'shortcuts-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
-  modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px;width:400px;max-width:90vw"><h3 style="font-family:Playfair Display,serif;margin-bottom:16px;color:#0f1e3d">Keyboard Shortcuts</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px"><span style="color:#c9a227;font-weight:700">D</span><span>Dashboard</span><span style="color:#c9a227;font-weight:700">O</span><span>Onboarding</span><span style="color:#c9a227;font-weight:700">C</span><span>Business Credit</span><span style="color:#c9a227;font-weight:700">T</span><span>Legal Templates</span><span style="color:#c9a227;font-weight:700">E</span><span>New Entity</span><span style="color:#c9a227;font-weight:700">N</span><span>Notifications</span><span style="color:#c9a227;font-weight:700">R</span><span>Referral</span><span style="color:#c9a227;font-weight:700">A</span><span>AI Assistant</span><span style="color:#c9a227;font-weight:700">Esc</span><span>Close modal</span><span style="color:#c9a227;font-weight:700">Shift+?</span><span>This help</span></div><button onclick="document.getElementById('shortcuts-modal').remove()" style="margin-top:20px;width:100%;padding:10px;background:#0f1e3d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600">Close</button></div>';
-  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
-function closeAllModals() {
-  var m = document.getElementById('shortcuts-modal');
-  if (m) m.remove();
-  var em = document.getElementById('entity-modal');
-  if (em) em.classList.add('hidden');
-}
 
-function toggleMobileSidebar(){
-  var s=document.querySelector('.sidebar');
-  s.classList.toggle('mobile-open');
-}
-
-
-// ── Real SuiteDash Data Loader ─────────────────────────────────────────
-async function loadClientDataFromSD(sdId) {
-  // Update compliance calendar with real dates
-  try {
-    // Load documents count from portal
-    const today = new Date();
-    const annualDue = new Date(today.getFullYear(), 8, 30); // Sept 30
-    if (today > annualDue) annualDue.setFullYear(annualDue.getFullYear() + 1);
-    const daysToAnnual = Math.ceil((annualDue - today) / 86400000);
-    const urgency = daysToAnnual < 30 ? 'var(--red)' : daysToAnnual < 90 ? 'var(--gold)' : 'var(--green)';
-    const annualEl = document.getElementById('annual-report-countdown');
-    if (annualEl) {
-      annualEl.textContent = daysToAnnual + ' days';
-      annualEl.style.color = urgency;
-    }
-  } catch(e) {}
-}
-
-// ── Hosting Status Loader (for Business+ clients) ──────────────────────
-async function loadHostingStatus() {
-  const el = document.getElementById('hosting-tab-body');
-  if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Loading your hosting account...</div>';
-  try {
-    const res = await fetch('/api/client-hosting', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email: CLIENT.email, suitedashId: CLIENT.suitedashId })
-    });
-    const data = await res.json();
-    if (data.package) {
-      el.innerHTML = `
-        <div class="alert alert-gold" style="margin-bottom:20px">
-          Your 20i hosting control panel: <a href="https://my.20i.com" target="_blank" style="color:var(--gold);font-weight:700">my.20i.com</a>
-        </div>
-        <div class="grid3">
-          <div class="metric-box"><div class="label">Domain</div><div class="value" style="font-size:16px">${data.package.domain || '(pending)'}</div></div>
-          <div class="metric-box"><div class="label">Hosting Status</div><div class="value" style="color:${data.package.status==='active'?'var(--green)':'var(--red)'};">${data.package.status || 'Active'}</div></div>
-          <div class="metric-box"><div class="label">Email Mailboxes</div><div class="value">${data.package.emails || 0}</div></div>
-        </div>
-        <div class="grid3" style="margin-top:16px">
-          <div class="metric-box"><div class="label">SSL Certificate</div><div class="value">${data.package.ssl ? '✅ Active' : '⏳ Pending'}</div></div>
-          <div class="metric-box"><div class="label">Turbo</div><div class="value">${data.package.turbo ? '⚡ Enabled' : 'Standard'}</div></div>
-          <div class="metric-box"><div class="label">Backups</div><div class="value">${data.package.backups ? '✅ Daily' : 'Not included'}</div></div>
-        </div>`;
-    } else {
-      el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">
-        <div style="font-size:32px;margin-bottom:12px">🖥️</div>
-        <p>Your hosting package is being set up. Check back in a few minutes.</p>
-        <p style="margin-top:8px;font-size:13px">Once ready, access it at <a href="https://my.20i.com" target="_blank">my.20i.com</a></p>
-      </div>`;
-    }
-  } catch(e) {
-    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px">Hosting status unavailable. Contact support.</div>';
-  }
-}
-
-// ── Plan helpers ──────────────────────────────────────────────────────
-function planLabel(tier) {
-  const m = {'compliance_only':'Compliance Only','business_starter':'Business Starter','business_pro':'Business Pro','business_empire':'Business Empire','compliance_core':'Compliance Core','business_essentials':'Business Essentials','business_professional':'Business Professional','business_command':'Business Command','Starter':'Compliance Only','Professional':'Business Pro','Premium':'Business Empire'};
-  return m[tier] || tier || 'Unknown';
-}
-function tierPrice(tier) {
-  const m = {'compliance_only':'$99/yr','business_starter':'$199/yr','business_pro':'$349/yr','business_empire':'$699/yr','Starter':'$99/yr','Professional':'$349/yr','Premium':'$699/yr'};
-  return m[tier] || '—';
-}
-
-// ── Reset code ────────────────────────────────────────────────────────
-async function resetCode() {
-  const email = document.getElementById('login-email')?.value?.trim();
-  if (!email) { alert('Enter your email address first.'); return; }
-  const el = event.target;
-  el.textContent = 'Sending...';
-  await fetch('/api/reset-code', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({email})
-  }).catch(()=>{});
-  el.textContent = '✓ Check your email';
-  setTimeout(() => { el.textContent = 'Forgot access code?'; }, 5000);
-}
-
-</script>
-
-<!-- AI Compliance Chatbot Widget -->
-<style>
-.chat-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--accent,#534AB7);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(83,74,183,.4);display:flex;align-items:center;justify-content:center;z-index:9000;transition:transform .2s}
-.chat-fab:hover{transform:scale(1.08)}
-.chat-fab svg{width:24px;height:24px}
-.chat-panel{position:fixed;bottom:90px;right:24px;width:380px;max-width:calc(100vw - 48px);height:500px;max-height:calc(100vh - 120px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.18);display:none;flex-direction:column;z-index:9001;overflow:hidden}
-.chat-panel.open{display:flex}
-.chat-head{background:#1B4F8A;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
-.chat-head h4{margin:0;font-size:14px;font-weight:600}
-.chat-head button{background:none;border:none;color:#fff;cursor:pointer;font-size:18px}
-.chat-body{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-.chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5}
-.chat-msg.bot{background:#f0f4ff;color:#1E2333;align-self:flex-start;border-bottom-left-radius:4px}
-.chat-msg.user{background:#534AB7;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.chat-input{display:flex;border-top:1px solid #eee;padding:10px 12px;gap:8px}
-.chat-input input{flex:1;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
-.chat-input input:focus{border-color:#534AB7}
-.chat-input button{background:#534AB7;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px}
-.chat-input button:disabled{opacity:.5;cursor:not-allowed}
-.chat-typing{font-size:12px;color:#6B7280;padding:4px 0}
-@media(max-width:480px){.chat-panel{width:calc(100vw - 24px);right:12px;bottom:80px;height:calc(100vh - 100px)}}
-</style>
-
-<button class="chat-fab" onclick="toggleChat()" title="AI Compliance Assistant" id="chat-fab">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-</button>
-
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-head">
-    <h4>PA Compliance Assistant</h4>
-    <button onclick="toggleChat()">&times;</button>
-  </div>
-  <div class="chat-body" id="chat-body">
-    <div class="chat-msg bot">Hi! I'm your PA compliance assistant. Ask me anything about registered offices, annual reports, entity compliance, or your PA CROP Services account.</div>
-  </div>
-  <div class="chat-input">
-    <input id="chat-input" placeholder="Ask about PA compliance..." onkeydown="if(event.key==='Enter')sendChat()">
-    <button onclick="sendChat()" id="chat-send">Send</button>
-  </div>
-</div>
-
-<script>
-const chatHistory = [];
-function toggleChat() {
-  document.getElementById('chat-panel').classList.toggle('open');
-  if (document.getElementById('chat-panel').classList.contains('open')) {
-    document.getElementById('chat-input').focus();
-  }
-}
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
+// ─── AI ASSISTANT ───
+async function askAI(question) {
+  const input = document.getElementById('ai-dash-input');
+  const msg = question || input.value.trim();
   if (!msg) return;
-  
   input.value = '';
-  document.getElementById('chat-send').disabled = true;
-  
-  const body = document.getElementById('chat-body');
-  body.innerHTML += `<div class="chat-msg user">${msg.replace(/</g,'&lt;')}</div>`;
-  body.innerHTML += `<div class="chat-typing" id="typing">Thinking...</div>`;
-  body.scrollTop = body.scrollHeight;
-  
-  chatHistory.push({ role: 'user', content: msg });
+  const resp = document.getElementById('ai-dash-response');
+  resp.classList.add('show');
+  resp.innerHTML = '<div style="animation:pulse 1s infinite;color:rgba(255,255,255,.5)">Thinking...</div>';
   
   try {
     const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: msg,
-        history: chatHistory.slice(-6),
-        clientTier: typeof CLIENT !== 'undefined' ? CLIENT?.tier : null,
-        entityName: typeof CLIENT !== 'undefined' ? CLIENT?.name : null
-      })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4)})
     });
     const data = await res.json();
-    document.getElementById('typing')?.remove();
-    
-    const reply = data.reply || 'Sorry, I could not process that. Please try again.';
-    chatHistory.push({ role: 'assistant', content: reply });
-    
-    // Convert markdown-like formatting
-    const formatted = reply
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/
-
-/g, '</p><p>')
-      .replace(/
-/g, '<br>');
-    
-    body.innerHTML += `<div class="chat-msg bot"><p>${formatted}</p></div>`;
+    chatHistory.push({role:'user',content:msg},{role:'assistant',content:data.reply||''});
+    resp.innerHTML = (data.reply||'Sorry, please try again.')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
   } catch(e) {
-    document.getElementById('typing')?.remove();
-    body.innerHTML += `<div class="chat-msg bot">I'm having trouble connecting right now. Please try again in a moment, or email hello@pacropservices.com.</div>`;
+    resp.innerHTML = 'Connection error. Please try again.';
   }
-  
-  body.scrollTop = body.scrollHeight;
-  document.getElementById('chat-send').disabled = false;
-  document.getElementById('chat-input').focus();
 }
-</script>
 
+async function askAIFull() {
+  const input = document.getElementById('ai-full-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const hist = document.getElementById('ai-chat-history');
+  hist.innerHTML += '<div style="text-align:right;margin:8px 0"><span style="background:rgba(255,255,255,.15);padding:8px 14px;border-radius:12px 12px 4px 12px;display:inline-block;font-size:14px;max-width:80%">'+msg.replace(/</g,'&lt;')+'</span></div>';
+  hist.innerHTML += '<div id="ai-typing" style="margin:8px 0;color:rgba(255,255,255,.4);font-size:13px">Thinking...</div>';
+  hist.scrollTop = hist.scrollHeight;
+  
+  chatHistory.push({role:'user',content:msg});
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6)})
+    });
+    const data = await res.json();
+    document.getElementById('ai-typing')?.remove();
+    chatHistory.push({role:'assistant',content:data.reply||''});
+    const reply = (data.reply||'Sorry, please try again.').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+    hist.innerHTML += '<div style="margin:8px 0"><span style="background:rgba(255,255,255,.08);padding:12px 16px;border-radius:12px 12px 12px 4px;display:inline-block;font-size:14px;line-height:1.6;max-width:85%">'+reply+'</span></div>';
+  } catch(e) {
+    document.getElementById('ai-typing')?.remove();
+    hist.innerHTML += '<div style="margin:8px 0;color:rgba(255,255,255,.5);font-size:13px">Connection error. Try again.</div>';
+  }
+  hist.scrollTop = hist.scrollHeight;
+}
+
+// ─── HELPERS ───
+function planLabel(tier) {
+  const m = {compliance_only:'Compliance Only',business_starter:'Business Starter',business_pro:'Business Pro',business_empire:'Business Empire',Professional:'Business Pro',Premium:'Business Empire',Starter:'Compliance Only'};
+  return m[tier] || tier || 'Unknown';
+}
+function tierPrice(tier) {
+  const m = {compliance_only:'$99/yr',business_starter:'$199/yr',business_pro:'$349/yr',business_empire:'$699/yr'};
+  return m[tier] || '—';
+}
+function formatDate(d) {
+  if (!d) return '—';
+  try { return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}); } catch { return d; }
+}
+
+async function resetCode() {
+  const email = document.getElementById('login-email')?.value?.trim();
+  if (!email) { alert('Enter your email address first.'); return; }
+  await fetch('/api/reset-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) }).catch(()=>{});
+  alert('If an account exists with that email, we sent a code reset. Check your inbox.');
+}
+
+// Enter key on login
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-code')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-email')?.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-code').focus(); });
+});
+</script>
 </body>
 </html>
