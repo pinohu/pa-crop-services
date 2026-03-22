@@ -291,6 +291,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1
 [data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);
   left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:500;
   padding:5px 10px;border-radius:6px;white-space:nowrap;z-index:100;animation:fadeIn .15s}
+
+/* ─── ONBOARDING PROGRESS ─── */
+.onboard-card{background:var(--bg2);border:1px solid var(--accent-border);border-radius:var(--radius-xl);
+  padding:20px 24px;margin-bottom:20px;display:none}
+.onboard-card.show{display:block;animation:fadeUp .4s var(--ease)}
+.onboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.onboard-header h3{font-size:15px;font-weight:700;color:var(--ink)}
+.onboard-progress{display:flex;align-items:center;gap:8px}
+.onboard-bar{width:120px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.onboard-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .5s var(--ease)}
+.onboard-pct{font-size:12px;font-weight:600;color:var(--accent)}
+.onboard-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.onboard-step{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);
+  font-size:13px;color:var(--ink2);background:var(--bg)}
+.onboard-step.done{color:var(--green);background:var(--green-bg)}
+.onboard-step .step-icon{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.onboard-step.done .step-icon{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:768px){.onboard-steps{grid-template-columns:1fr 1fr}}
+
 </style>
 
 <script type="text/javascript">
@@ -421,6 +441,26 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           </div>
         </div>
 
+        
+        <!-- Onboarding Progress (shown for new clients) -->
+        <div class="onboard-card" id="onboard-card">
+          <div class="onboard-header">
+            <h3>Getting started</h3>
+            <div class="onboard-progress">
+              <div class="onboard-bar"><div class="onboard-bar-fill" id="onboard-fill" style="width:0%"></div></div>
+              <span class="onboard-pct" id="onboard-pct">0%</span>
+            </div>
+          </div>
+          <div class="onboard-steps" id="onboard-steps">
+            <div class="onboard-step" id="ob-account"><div class="step-icon"></div>Account created</div>
+            <div class="onboard-step" id="ob-portal"><div class="step-icon"></div>Portal accessed</div>
+            <div class="onboard-step" id="ob-agreement"><div class="step-icon"></div>Agreement signed</div>
+            <div class="onboard-step" id="ob-entity"><div class="step-icon"></div>Entity verified</div>
+            <div class="onboard-step" id="ob-document"><div class="step-icon"></div>First document</div>
+            <div class="onboard-step" id="ob-reminders"><div class="step-icon"></div>Reminders active</div>
+          </div>
+        </div>
+
         <!-- KPI Cards -->
         <div class="kpi-grid stagger">
           <div class="kpi fade-up">
@@ -452,10 +492,12 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <span>AI Compliance Assistant</span>
           </div>
           <div class="ai-quick-actions">
-            <button class="ai-quick" onclick="askAI('When is my annual report due?')">Annual report deadline</button>
-            <button class="ai-quick" onclick="askAI('What documents have you received for me?')">My documents</button>
-            <button class="ai-quick" onclick="askAI('How do I change my registered office?')">Change registered office</button>
-            <button class="ai-quick" onclick="askAI('What is the 2027 dissolution deadline?')">2027 deadline</button>
+            <button class="ai-quick" onclick="askAI('When is my annual report due and what do I need to do?')">My annual report</button>
+            <button class="ai-quick" onclick="askAI('What documents have you received for my entity?')">My documents</button>
+            <button class="ai-quick" onclick="askAI('What is included in my current plan?')">My plan details</button>
+            <button class="ai-quick" onclick="askAI('What is the 2027 dissolution deadline and am I at risk?')">2027 deadline</button>
+            <button class="ai-quick" id="aq-upgrade" style="display:none" onclick="askAI('What would I get if I upgraded my plan?')">Upgrade options</button>
+            <button class="ai-quick" id="aq-hosting" style="display:none" onclick="askAI('How do I set up my website and email hosting?')">My hosting</button>
           </div>
           <div class="ai-input-row">
             <input class="ai-input" id="ai-dash-input" placeholder="Ask anything about PA compliance..." onkeydown="if(event.key==='Enter')askAI()">
@@ -546,13 +588,39 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <!-- ══ REFERRAL TAB ══ -->
       <div id="tab-referral" class="hidden">
-        <div class="page-header"><h1>Refer and earn</h1><p>Share PA CROP Services and earn account credits</p></div>
-        <div class="card"><div class="card-body" style="text-align:center;padding:32px">
-          <div style="font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Your referral code</div>
-          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:16px" id="ref-code">CROP-XXXX</div>
-          <button class="btn btn-accent" onclick="navigator.clipboard.writeText(document.getElementById('ref-code').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
-          <p style="font-size:13px;color:var(--ink3);margin-top:16px;max-width:360px;margin-left:auto;margin-right:auto">Share this code with other PA business owners. When they sign up using your code, you both benefit.</p>
-        </div></div>
+        <div class="page-header"><h1>Refer and earn</h1><p>Share PA CROP Services with other PA business owners</p></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Your referral code</span></div>
+            <div class="card-body" style="text-align:center;padding:28px">
+              <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:16px" id="ref-code">CROP-XXXX</div>
+              <div style="display:flex;gap:8px;justify-content:center">
+                <button class="btn btn-accent btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('ref-code').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy code',2000)">Copy code</button>
+                <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('https://pacropservices.com/?ref='+document.getElementById('ref-code').textContent);this.textContent='Link copied!';setTimeout(()=>this.textContent='Copy link',2000)">Copy link</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">How it works</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</div><div style="font-size:13px;color:var(--ink2)">Share your referral code or link with another PA business owner</div></div>
+                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</div><div style="font-size:13px;color:var(--ink2)">They sign up using your code and get a PA registered office</div></div>
+                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">&#10003;</div><div style="font-size:13px;color:var(--ink2)">You both benefit — they get compliance protection, you get credit on your next renewal</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-header"><span class="card-title">Your referrals</span></div>
+          <div class="card-body" id="referral-list">
+            <div class="empty-state">
+              <div class="icon">🤝</div>
+              <h3>No referrals yet</h3>
+              <p>Share your code with PA business owners. When they sign up, they'll appear here.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ══ SETTINGS TAB ══ -->
@@ -577,6 +645,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
 <script>
 let CLIENT = null;
+let CLIENT_CONTEXT = null;
 const chatHistory = [];
 
 // ─── LOADING BAR ───
@@ -649,8 +718,101 @@ function mountClient(c) {
   const hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
   document.getElementById('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
   
-  // Async: load health score
+  // Async: load health score + client context for AI
   loadHealthScore(c);
+  loadClientContext(c);
+}
+
+// ─── LOAD CLIENT CONTEXT (for AI personalization) ───
+async function loadClientContext(c) {
+  try {
+    const res = await fetch('/api/client-context', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:c.email})
+    });
+    const d = await res.json();
+    if (d.success && d.context) {
+      CLIENT_CONTEXT = d.context;
+      showOnboarding(d.context);
+      showTierActions(d.context);
+      updateActivityFeed(d.context);
+    }
+  } catch(e) { console.log('Context load skipped:', e.message); }
+}
+
+// ─── ONBOARDING PROGRESS ───
+function showOnboarding(ctx) {
+  if (!ctx.onboardingSteps || ctx.onboardingComplete) return;
+  const card = document.getElementById('onboard-card');
+  if (!card) return;
+  card.classList.add('show');
+  
+  const steps = ctx.onboardingSteps;
+  const map = {
+    accountCreated: 'ob-account', portalAccessed: 'ob-portal', agreementSigned: 'ob-agreement',
+    entityVerified: 'ob-entity', firstDocumentReceived: 'ob-document', annualReportReminderSet: 'ob-reminders'
+  };
+  
+  let done = 0;
+  const total = Object.keys(steps).length;
+  for (const [key, elId] of Object.entries(map)) {
+    const el = document.getElementById(elId);
+    if (el && steps[key]) {
+      el.classList.add('done');
+      el.querySelector('.step-icon').textContent = '✓';
+      done++;
+    }
+  }
+  
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('onboard-fill').style.width = pct + '%';
+  document.getElementById('onboard-pct').textContent = pct + '%';
+  
+  // Mark portal accessed (since they're here now)
+  const portalEl = document.getElementById('ob-portal');
+  if (portalEl && !portalEl.classList.contains('done')) {
+    portalEl.classList.add('done');
+    portalEl.querySelector('.step-icon').textContent = '✓';
+  }
+}
+
+// ─── TIER-CONTEXTUAL QUICK ACTIONS ───
+function showTierActions(ctx) {
+  // Show upgrade button for lower tiers
+  const upgradeBtn = document.getElementById('aq-upgrade');
+  if (upgradeBtn && ['compliance_only','business_starter'].includes(ctx.plan)) {
+    upgradeBtn.style.display = '';
+  }
+  // Show hosting button for hosting tiers
+  const hostingBtn = document.getElementById('aq-hosting');
+  if (hostingBtn && ctx.includesHosting) {
+    hostingBtn.style.display = '';
+  }
+}
+
+// ─── DYNAMIC ACTIVITY FEED ───
+function updateActivityFeed(ctx) {
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  
+  let items = '';
+  items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Portal accessed</div><div class="activity-time">Just now</div></div></div>';
+  
+  if (ctx.lastDocumentDate) {
+    items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Document received: ' + (ctx.lastDocumentType || 'correspondence').replace(/_/g,' ') + '</div><div class="activity-time">' + ctx.lastDocumentDate + '</div></div></div>';
+  }
+  
+  if (ctx.entityStatus === 'active') {
+    items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Entity status: Active — Good Standing</div><div class="activity-time">Last checked today</div></div></div>';
+  }
+  
+  items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: Sept 30 (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : 'Self-file at file.dos.pa.gov') + '</div></div></div>';
+  
+  if (ctx.referralCount > 0) {
+    items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">' + ctx.referralCount + ' referral(s) active</div><div class="activity-time">Earning credits</div></div></div>';
+  }
+  
+  feed.innerHTML = items;
 }
 
 async function loadHealthScore(c) {
@@ -707,7 +869,7 @@ async function askAI(question) {
   try {
     const res = await fetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:msg, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4)})
+      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4)})
     });
     const data = await res.json();
     chatHistory.push({role:'user',content:msg},{role:'assistant',content:data.reply||''});
@@ -733,7 +895,7 @@ async function askAIFull() {
   try {
     const res = await fetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:msg, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6)})
+      body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6)})
     });
     const data = await res.json();
     document.getElementById('ai-typing')?.remove();
