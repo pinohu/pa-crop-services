@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — 5 city pages + 4 comparison pages + email sequences added
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — revenue-blocking fixes complete, all workflows updated
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -214,8 +214,8 @@ def push_file(remote_path, content_str, message):
 | `RSibNfwSM9aw3vUW` | CROP — Hot Lead Alert | `crop-hot-lead-alert` | ✅ Active |
 | `l2495RxXLxkYzqcU` | CROP — Portal Access Code Reset | `crop-portal-reset` | ✅ Active |
 | `9j4pW3PmmYufMG8T` | CROP — Partner Onboarding | `crop-partner-onboarding` | ✅ Active |
-| `wRLXTGXW60MDLUnI` | Dynasty Pack 3: Renewal Sequence | — | ❌ Needs content |
-| `UGGH8LOU4AR3eXk` | Dynasty Pack 4: Win-Back | — | ❌ Needs content |
+| `wRLXTGXW60MDLUnI` | CROP — Renewal Sequence | (scheduled) | ✅ Content loaded |
+| `UGGPH8LOU4AR3eXk` | CROP — Win-Back (Churned Client Recovery) | (scheduled) | ✅ Content loaded |
 
 ### n8n Credential IDs (referenced in workflows)
 
@@ -429,11 +429,11 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
 ## Outstanding Items
 
 ### Needs Ike action
-- [ ] Fix 20i API: `my.20i.com → Reseller → API` → generate reseller bearer token → update `TWENTY_I_TOKEN` in Vercel
-- [ ] Create SuiteDash custom fields (10 fields — see `docs/SUITEDASH_CUSTOM_FIELDS.md`)
+- [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
+- [x] Create SuiteDash custom fields (10 fields — completed 2026-03-22)
 - [ ] Google Search Console: add property, verify via DNS TXT, submit sitemap (see `docs/GOOGLE_SEARCH_CONSOLE.md`)
 - [ ] Google Business Profile: create listing (see `docs/GOOGLE_BUSINESS_PROFILE.md`)
-- [ ] Documentero: create service agreement template, set `DOCUMENTERO_TEMPLATE_ID` in Vercel
+- [ ] Documentero: upload `docs/CROP_Service_Agreement_Template.docx` → copy template ID → set `DOCUMENTERO_TEMPLATE_ID` in Vercel
 - [x] n8n renewal sequence content (`wRLXTGXW60MDLUnI`) — see docs/RENEWAL_EMAIL_SEQUENCE.md
 - [x] n8n win-back sequence content (`UGGH8LOU4AR3eXk`) — see docs/WINBACK_EMAIL_SEQUENCE.md
 - [ ] LinkedIn profile slug → add to author schema `sameAs` in all articles
