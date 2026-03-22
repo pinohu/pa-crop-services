@@ -198,5 +198,19 @@ async function submitEntityIntake() {
   }
 }
 </script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const plan = params.get('plan') || '';
+const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+const planPrices = { compliance_only: '$99/yr', business_starter: '$199/yr', business_pro: '$349/yr', business_empire: '$699/yr' };
+if (plan && planLabels[plan]) {
+  const h1 = document.querySelector('h1');
+  if (h1) h1.textContent = 'Welcome to ' + planLabels[plan] + '!';
+  const badge = document.createElement('div');
+  badge.style.cssText = 'display:inline-block;background:#ECFDF5;color:#059669;font-size:14px;font-weight:600;padding:6px 16px;border-radius:20px;margin-bottom:16px';
+  badge.textContent = planLabels[plan] + ' \u2014 ' + planPrices[plan];
+  h1.after(badge);
+}
+</script>
 </body>
 </html>
