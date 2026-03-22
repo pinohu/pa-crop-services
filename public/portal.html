@@ -350,9 +350,9 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     </div>
     <button class="btn btn-primary" onclick="doLogin()" id="login-btn">Sign in</button>
     <div class="login-footer">
-      <a onclick="resetCode()">Forgot your access code?</a>
+      <a href="#" onclick="resetCode();return false;" style="cursor:pointer">Forgot your access code?</a>
       <span style="margin:0 8px;color:var(--border2)">|</span>
-      <a onclick="demoLogin()">Try demo</a>
+      <a href="#" onclick="demoLogin();return false;" style="cursor:pointer">Try demo</a>
     </div>
   </div>
 </div>
