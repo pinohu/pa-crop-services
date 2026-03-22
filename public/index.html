@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var heroBtn=document.querySelector('.hero-ctas .btn-primary');
     if(heroBtn){heroBtn.textContent='Check if you're at risk →';}
     var navCta=document.querySelector('.nav-cta');
-    if(navCta){navCta.textContent='Free compliance check';}
+    if(navCta){navCta.textContent='Free entity checkup';}
   }
   trackEvent('Page View',{ab_hero:localStorage.getItem('ab_hero')||'unknown',page:location.pathname});
 });
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li><a href="#partners">Partners</a></li>
 <li><a href="#faq">FAQ</a></li>
 <li><a href="/portal" style="color:var(--gray);font-size:14px;font-weight:500">Client Login</a></li>
-<li><a href="#pricing" class="nav-cta">Get started</a></li>
+<li><a href="/compliance-check" class="nav-cta">Free checkup</a></li>
 </ul>
 <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">
   <span></span><span></span><span></span>
@@ -196,24 +196,24 @@ document.addEventListener('DOMContentLoaded',function(){
   <a href="#partners" onclick="closeMobileMenu()">Partners</a>
   <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
   <a href="/portal" onclick="closeMobileMenu()" style="color:var(--gray)">Client Login</a>
-  <a href="/compliance-check" onclick="closeMobileMenu()" style="color:var(--accent);font-weight:700">Free Compliance Check →</a>
+  <a href="/compliance-check" onclick="closeMobileMenu()" style="color:var(--accent);font-weight:700">Free entity checkup →</a>
 </div>
 
 <section class="hero">
 <div class="container">
 <div class="hero-badge">Licensed Pennsylvania CROP Provider</div>
-<h1>Your Pennsylvania registered office, <em>handled</em></h1>
-<p>Keep your home address private. Never miss a deadline. We receive your legal documents and keep your business in good standing — from $99 a year.</p>
+<h1>We take care of your PA compliance, <em>so you don't have to</em></h1>
+<p>Your registered office. Your annual report. Your peace of mind. We handle the compliance details so you can focus on building something great.</p>
 <div class="hero-ctas">
-<a href="#pricing" class="btn-primary">View plans →</a>
-<a href="#features" class="btn-secondary">How it works</a>
+<a href="/compliance-check" class="btn-primary">See where you stand →</a>
+<a href="#features" class="btn-secondary">See how we help</a>
 </div>
 </div>
 </section>
 
 <section class="trust-bar">
 <div class="container">
-<p>Trusted by Pennsylvania businesses</p>
+<p>Built for PA business owners who value their time</p>
 <div class="trust-stats">
 <div class="trust-stat"><div class="num">3.8M+</div><div class="label">PA business entities</div></div>
 <div class="trust-stat"><div class="num">~65</div><div class="label">Total CROPs statewide</div></div>
@@ -225,8 +225,8 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="urgency">
 <div class="container">
-<h2>The 2027 deadline is real</h2>
-<p>Starting in 2027, PA businesses that fail to file their annual report face <em>administrative dissolution</em>. Foreign entities cannot reinstate — they must re-register under a new name. Don't let compliance slip through the cracks.</p>
+<h2>Something important is changing in 2027</h2>
+<p>Pennsylvania is introducing mandatory annual reports. If yours isn't filed by the deadline, your entity could face <em>administrative dissolution</em>. We're here to make sure that never happens to you — our clients get five reminders plus hands-on filing help.</p>
 </div>
 </section>
 
@@ -234,47 +234,47 @@ document.addEventListener('DOMContentLoaded',function(){
 <section style="background:#f0f4ff;padding:48px 0;text-align:center;border-top:1px solid #e0e8ff;border-bottom:1px solid #e0e8ff">
   <div class="container" style="max-width:640px">
     <div style="display:inline-block;background:#EDE9FE;color:var(--accent);font-size:13px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:16px">Free Resource</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:8px;color:var(--dark)">PA 2027 Compliance Checklist</h2>
-    <p style="color:var(--gray);margin-bottom:24px;font-size:16px">15 things every Pennsylvania business must do before 2027 to avoid administrative dissolution. Free, instant delivery.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:8px;color:var(--dark)">Stay ahead of the 2027 changes</h2>
+    <p style="color:var(--gray);margin-bottom:24px;font-size:16px">We put together a plain-English guide to everything that's changing for PA businesses. No jargon, no fear-mongering — just what you need to know.</p>
     <form id="nl-form" onsubmit="subscribeNewsletter(event)" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:500px;margin:0 auto">
       <input type="email" id="nl-email" placeholder="your@email.com" required
         style="flex:1;min-width:220px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none">
-      <button type="submit" style="background:var(--accent);color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Get the checklist →</button>
+      <button type="submit" style="background:var(--accent);color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Send me the guide</button>
     </form>
-    <p id="nl-success" style="display:none;color:var(--green);margin-top:12px;font-weight:600">✓ Checklist sent! Check your inbox.</p>
+    <p id="nl-success" style="display:none;color:var(--green);margin-top:12px;font-weight:600">✓ On its way! Check your inbox in a minute.</p>
     <p style="font-size:12px;color:var(--gray);margin-top:12px">No spam. Unsubscribe anytime.</p>
   </div>
 </section>
 
 <section class="features" id="features">
 <div class="container">
-<div class="section-label">What you get</div>
-<h2>Everything your PA business needs</h2>
+<div class="section-label">How we take care of you</div>
+<h2>The things you shouldn't have to worry about</h2>
 <div class="feature-grid">
 <div class="feature-card">
 <div class="feature-icon">📬</div>
-<h3>Registered office address</h3>
-<p>A professional Erie, PA address listed on your state filing. Your home address stays off public records.</p>
+<h3>Your address stays private</h3>
+<p>We put our Erie, PA address on your state filing so your home address never shows up in public records. Simple as that.</p>
 </div>
 <div class="feature-card">
 <div class="feature-icon">📄</div>
-<h3>Same-day document scanning</h3>
-<p>Legal documents and service of process scanned and uploaded to your portal the day they arrive.</p>
+<h3>We open your mail, you get notified</h3>
+<p>When something arrives for your entity, we scan it and put it in your portal the same day. You'll know before the ink is dry.</p>
 </div>
 <div class="feature-card">
 <div class="feature-icon">📅</div>
-<h3>Compliance calendar</h3>
-<p>Automated reminders at 90, 60, 30, 14, and 7 days before your annual report deadline. Never miss a filing.</p>
+<h3>We'll remind you (5 times)</h3>
+<p>You'll hear from us at 90, 60, 30, 14, and 7 days before your filing deadline. We're persistent about the things that matter.</p>
 </div>
 <div class="feature-card">
 <div class="feature-icon">💻</div>
-<h3>Secure client portal</h3>
-<p>24/7 access to every document we receive. Encrypted storage, mobile-friendly, always available. <a href="/portal" style="color:var(--accent);font-weight:600">Login →</a></p>
+<h3>Your own compliance dashboard</h3>
+<p>See your entity status, documents, deadlines, and health score anytime. It's like having a compliance team on call 24/7. <a href="/portal" style="color:var(--accent);font-weight:600">Take a look →</a></p>
 </div>
 <div class="feature-card">
 <div class="feature-icon">📝</div>
-<h3>Annual report filing</h3>
-<p>We assist with or file your PA annual report for you. The $7 state fee is all you pay on top of our service.</p>
+<h3>We'll file your annual report</h3>
+<p>On our Pro and Empire plans, we handle the filing for you. You just confirm the details — we do the rest. The $7 state fee is all that's extra.</p>
 </div>
 <div class="feature-card">
 <div class="feature-icon">🔏</div>
@@ -288,13 +288,13 @@ document.addEventListener('DOMContentLoaded',function(){
 <section class="pricing" id="pricing">
 <div class="container">
 <div class="section-label" style="text-align:center">Pricing</div>
-<h2>Everything your PA business needs, one annual price.</h2>
-<p>More than a registered agent — your complete Pennsylvania business infrastructure partner.</p>
+<h2>Pick the level of care that fits your business.</h2>
+<p>Every plan includes a real person who knows your entity by name. No call centers, no ticket queues.</p>
 <div class="pricing-grid">
 <div class="price-card">
 <div class="price-name">Compliance only</div>
 <div class="price-amount">$99<span>/year</span></div>
-<div class="price-desc">Market value: $150–299/yr. For established businesses that need a reliable registered office.</div>
+<div class="price-desc">For businesses that just need the essentials handled well.</div>
 <ul class="price-features">
 <li>PA registered office (CROP)</li>
 <li>Mail &amp; process forwarding</li>
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>Entity status monitoring</li>
 <li>Secure client portal</li>
 </ul>
-<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank">Get started →</a>
+<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank">Choose this plan</a>
 </div>
 <div class="price-card featured">
 <div class="price-badge">Most popular</div>
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>Business website hosting + SSL</li>
 <li>1-page website included</li>
 </ul>
-<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank">Get started →</a>
+<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank">Choose this plan</a>
 </div>
 <div class="price-card">
 <div class="price-name">Business pro</div>
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>5-page website included</li>
 <li>3 domains + priority support</li>
 </ul>
-<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank">Get started →</a>
+<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank">Choose this plan</a>
 </div>
 <div class="price-card">
 <div class="price-name">Business empire</div>
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>10 domains included</li>
 <li>Multi-entity management</li>
 </ul>
-<a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank">Get started →</a>
+<a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank">Choose this plan</a>
 </div>
 </div>
 </div>
@@ -353,10 +353,10 @@ document.addEventListener('DOMContentLoaded',function(){
 <div class="partner-grid">
 <div>
 <div class="section-label">For CPAs and attorneys</div>
-<h2>Add CROP services to your practice</h2>
-<p>Our white-label partner program lets you offer registered office services under your own brand. We handle all operations — you earn recurring revenue from your existing client relationships.</p>
+<h2>Your clients need this. We'll do the work.</h2>
+<p>If you're a CPA or attorney with PA business clients, they probably need a registered office. We'll handle everything behind the scenes — the address, the documents, the compliance — under your brand. Your clients get taken care of. You earn recurring revenue without lifting a finger.</p>
 <p>$99 per client per year. Your branding. Your pricing. Zero operational burden.</p>
-<a href="mailto:partners@pacropservices.com" class="btn-primary">Become a partner →</a>
+<a href="mailto:partners@pacropservices.com" class="btn-primary">Let's talk about partnering</a>
 </div>
 <div class="partner-stats">
 <div class="partner-stat"><div class="num">$99</div><div class="label">Per client, per year</div></div>
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="faq" id="faq">
 <div class="container">
-<h2>Common questions</h2>
+<h2>Questions we hear a lot</h2>
 <div class="faq-grid">
 <div class="faq-item" onclick="this.classList.toggle('open')">
 <div class="faq-q">What is a CROP?<span class="faq-arrow">▾</span></div>
@@ -406,10 +406,10 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="final-cta" id="signup">
 <div class="container">
-<h2>Protect your PA business today</h2>
-<p>Professional registered office. Compliance monitoring. Annual report reminders. From $99 a year.</p>
-<a href="#pricing" class="btn-primary" style="font-size:18px;padding:16px 40px;">View plans →</a>
-<p style="margin-top:16px;font-size:14px;color:rgba(255,255,255,0.7)">Not sure? <a href="/compliance-check.html" style="color:#fff;text-decoration:underline">Take our free compliance risk assessment →</a></p>
+<h2>Ready to stop worrying about PA compliance?</h2>
+<p>We'd love to take this off your plate. Start with a free checkup — we'll tell you exactly where your entity stands.</p>
+<a href="/compliance-check" class="btn-primary" style="font-size:18px;padding:16px 40px;">Check my entity's health →</a>
+<p style="margin-top:16px;font-size:14px;color:rgba(255,255,255,0.7)">Or if you already know what you need, <a href="#pricing" style="color:#fff;text-decoration:underline">see our plans</a></p>
 </div>
 </section>
 
@@ -458,11 +458,11 @@ async function subscribeNewsletter(e){
       document.getElementById('nl-success').style.display='block';
       trackEvent('Newsletter Subscribe',{source:'homepage-checklist'});
     } else {
-      btn.textContent='Get the checklist →';btn.disabled=false;
+      btn.textContent='Send me the guide';btn.disabled=false;
       alert('Something went wrong. Please try again.');
     }
   }catch(err){
-    btn.textContent='Get the checklist →';btn.disabled=false;
+    btn.textContent='Send me the guide';btn.disabled=false;
   }
 }
 </script>
