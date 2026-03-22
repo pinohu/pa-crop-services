@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — session complete, all files pushed
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -129,13 +129,15 @@ python3 push_to_github.py  # uses token from INFRASTRUCTURE.md
 | `SUITEDASH_PUBLIC_ID` | SuiteDash API auth | SuiteDash Settings → API |
 | `SUITEDASH_SECRET_KEY` | SuiteDash API auth | SuiteDash Settings → API |
 | `STRIPE_SECRET_KEY` | Stripe API | Stripe → Developers → API Keys |
-| `TWENTY_I_TOKEN` | 20i hosting API (combined bearer) | `c06713cf69af0d6ec+c90a39ba2702465b6` |
-| `TWENTY_I_GENERAL` | 20i general API key | `c06713cf69af0d6ec` |
-| `TWENTY_I_OAUTH` | 20i OAuth client key | `c90a39ba2702465b6` |
+| `TWENTY_I_TOKEN` | 20i (combined, legacy) | `c2387393b8125d868+c0471cadcfe5a7837` |
+| `TWENTY_I_GENERAL` | 20i general key (base64 → bearer) | `c2387393b8125d868` |
+| `TWENTY_I_OAUTH` | 20i OAuth key | `c0471cadcfe5a7837` |
 | `ACUMBAMAIL_API_KEY` | Acumbamail email lists | `0cdbad074aa140a5bf7274027a53f780` |
 | `ADMIN_SECRET_KEY` | Admin dashboard auth | `CROP-ADMIN-2026-IKE` |
 | `DOCUMENTERO_API_KEY` | PDF agreement generation | `R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A` |
 | `DOCUMENTERO_TEMPLATE_ID` | Service agreement template | Set after Documentero template created |
+| `TWENTY_I_RESELLER_ID` | 20i reseller account ID | `10455` |
+| `TWENTY_I_DEFAULT_TYPE_REF` | Default package type for new hosting | `80397` (Linux Elevate) |
 
 > ⚠️ **20i Note:** The `TWENTY_I_TOKEN` returns 401 from `/reseller/web`. Root cause: these are
 > StackCP sub-account keys. Fix by going to `my.20i.com → Reseller → API` and generating
@@ -246,16 +248,14 @@ def push_file(remote_path, content_str, message):
 
 **Dashboard:** `https://my.20i.com`  
 **API base:** `https://api.20i.com`  
-**General key:** `c06713cf69af0d6ec`  
-**OAuth key:** `c90a39ba2702465b6`  
-**Combined bearer:** `c06713cf69af0d6ec+c90a39ba2702465b6`  
+**General key:** `c2387393b8125d868`  
+**OAuth key:** `c0471cadcfe5a7837`  
+**Combined bearer:** `c2387393b8125d868+c0471cadcfe5a7837` (new keys, March 22 2026)  
 
-> ⚠️ **Current status:** Bearer returns 401 from `/reseller/web` endpoint.
-> These appear to be StackCP sub-account keys. To fix:
-> 1. Log into `my.20i.com`
-> 2. Navigate to **Reseller → API** (or Stack API section)
-> 3. Generate reseller-level bearer token
-> 4. Update `TWENTY_I_TOKEN` in Vercel env vars
+> ✅ **Auth resolved (March 22 2026):** 20i requires base64-encoding the general key.
+> `Authorization: Bearer <base64(general_key)>` — e.g. `Bearer YzIzODczOTNiODEyNWQ4Njg=`
+> All API files updated. Reseller ID: `10455`. 137 packages confirmed via GET /package.
+> ⚠️ Package creation endpoint still needs correct type-ref — use `GET /reseller/10455` → webTypes
 
 ### Key API endpoints used
 
