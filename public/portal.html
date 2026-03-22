@@ -318,6 +318,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1
 .error-state .retry-btn{display:inline-block;margin-top:8px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;cursor:pointer;font-family:inherit}
 .error-state .retry-btn:hover{opacity:.8}
 
+@keyframes cropBounce{to{transform:translateY(-4px);opacity:.7}}
 </style>
 
 <script type="text/javascript">
@@ -760,6 +761,20 @@ function mountClient(c) {
   if(h('hosting-nav')) h('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
   if(hasHosting) loadHostingTab(c);
   setTab('dashboard', document.querySelector('.nav-item'));
+  // Personalize greeting
+  var firstName = (c.name || '').split(' ')[0] || (c.email || '').split('@')[0];
+  if (firstName && firstName !== 'demo') {
+    var wh = document.getElementById('welcome-heading');
+    if (wh) wh.textContent = 'Welcome back, ' + firstName;
+  }
+  var cen = document.getElementById('client-entity-name');
+  if (cen) cen.textContent = c.name || 'your entity';
+  var edn = document.getElementById('entity-display-name');
+  if (edn) edn.textContent = c.name || 'Your Entity';
+  var tierBadge = document.getElementById('tier-badge');
+  if (tierBadge) tierBadge.innerHTML = '<span class="dot"></span> ' + (c.tierLabel || c.tier || 'Plan');
+  var avatar = document.getElementById('user-avatar');
+  if (avatar) avatar.textContent = (c.name||'?')[0].toUpperCase();
   loadHealthScore(c);
   loadClientContext(c);
   if(typeof initSettings === 'function') initSettings(c);
