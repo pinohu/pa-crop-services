@@ -311,6 +311,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1
 .onboard-step.done .step-icon{background:var(--green);border-color:var(--green);color:#fff}
 @media(max-width:768px){.onboard-steps{grid-template-columns:1fr 1fr}}
 
+
+/* ─── ERROR STATES ─── */
+.error-state{padding:24px;text-align:center;border:1px dashed var(--border);border-radius:var(--radius);background:var(--bg)}
+.error-state p{font-size:14px;color:var(--ink3);margin-bottom:8px}
+.error-state .retry-btn{display:inline-block;margin-top:8px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;cursor:pointer;font-family:inherit}
+.error-state .retry-btn:hover{opacity:.8}
+
 </style>
 
 <script type="text/javascript">
@@ -735,7 +742,7 @@ async function loadHealthScore(c) {
       const riskColors = {very_low:'var(--green)',low:'var(--green)',medium:'var(--gold)',high:'var(--red)',critical:'var(--red)'};
       document.getElementById('kpi-health-risk').innerHTML = '<span style="color:'+(riskColors[d.churnRisk]||'var(--ink3)')+'">'+d.churnRisk.replace('_',' ')+' risk</span>';
     }
-  } catch(e) { document.getElementById('kpi-health').textContent = '—'; }
+  } catch(e) { document.getElementById('kpi-health').textContent = '—'; document.getElementById('kpi-health-risk').innerHTML = '<span style="color:var(--ink3);font-size:11px">Unavailable</span>'; }
 }
 
 // ─── NAVIGATION ───
@@ -907,7 +914,7 @@ async function loadHostingTab(c) {
       el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up. Check back shortly.</p><p style="margin-top:8px"><a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a></p></div>';
     }
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--ink3);text-align:center;padding:24px">Hosting status unavailable. <a href="https://my.20i.com" target="_blank" style="color:var(--accent)">Access 20i directly</a></div>';
+    showError('hosting-content', 'Could not load hosting status.', 'loadHostingTab(CLIENT)');
   }
 }
 
@@ -1114,6 +1121,65 @@ function savePref(cb) {
   localStorage.setItem(key, JSON.stringify(saved));
   const msg = document.getElementById('pref-saved');
   if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 2000); }
+}
+
+
+// ─── ERROR DISPLAY HELPER ───
+function showError(containerId, message, retryFn) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div class="error-state">' +
+    '<p>' + (message || 'Something went wrong. Please try again.') + '</p>' +
+    (retryFn ? '<button class="retry-btn" onclick="' + retryFn + '">Try again</button>' : '') +
+    '<p style="font-size:12px;color:var(--ink3);margin-top:12px">If this persists, email <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a></p>' +
+    '</div>';
+}
+
+// ─── CHATBOT GROQ FALLBACK ───
+var originalAskAI = window.askAI;
+var chatRetryCount = 0;
+function askAIWithFallback(msg) {
+  // Try the normal path
+  var chatOut = document.getElementById('chat-output') || document.getElementById('ai-output');
+  
+  fetch('/api/chat', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({message: msg, clientContext: CLIENT_CONTEXT, clientTier: CLIENT?.tier, entityName: CLIENT?.name, history: chatHistory.slice(-4)})
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  })
+  .then(function(d) {
+    if (d.success && d.reply) {
+      chatRetryCount = 0;
+      if (chatOut) {
+        chatOut.innerHTML += '<div class="ai-msg">' + d.reply.replace(/\n/g,'<br>') + '</div>';
+        chatOut.scrollTop = chatOut.scrollHeight;
+      }
+      chatHistory.push({role:'user',content:msg},{role:'assistant',content:d.reply});
+    } else {
+      throw new Error('Empty response');
+    }
+  })
+  .catch(function(e) {
+    chatRetryCount++;
+    if (chatOut) {
+      if (chatRetryCount >= 2) {
+        chatOut.innerHTML += '<div class="ai-msg" style="color:var(--gold)">' +
+          'The AI assistant is temporarily unavailable. Here are some resources:' +
+          '<br>• <a href="/what-is-a-pennsylvania-crop" style="color:var(--accent)">What is a PA CROP?</a>' +
+          '<br>• <a href="/pa-annual-report-requirement-guide" style="color:var(--accent)">Annual Report Guide</a>' +
+          '<br>• <a href="/pa-2027-dissolution-deadline" style="color:var(--accent)">2027 Deadline Info</a>' +
+          '<br>• Email us: <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a>' +
+          '</div>';
+      } else {
+        chatOut.innerHTML += '<div class="ai-msg" style="color:var(--gold)">Connection issue. Retrying...</div>';
+        setTimeout(function() { askAIWithFallback(msg); }, 2000);
+      }
+      chatOut.scrollTop = chatOut.scrollHeight;
+    }
+  });
 }
 
 </script>
