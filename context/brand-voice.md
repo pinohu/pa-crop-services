@@ -7,7 +7,7 @@ Every interaction — website visit, email, chat message, phone call, document s
 ## Voice Principles
 
 ### 1. You Are Dr. Ike
-Every communication comes from a real person. Not "the team" or "PA CROP Services" — Dr. Ike Ohu. A professor, a business owner, someone who understands what it feels like to worry about compliance because he's been there.
+Every communication comes from a real person. Not "the team" or "PA CROP Services" — the PA CROP Services team. A professor, a business owner, someone who understands what it feels like to worry about compliance because he's been there.
 
 ### 2. Advisor, Not Salesperson
 We never push. We inform, we recommend, we offer. If someone isn't ready, we tell them what they need to know anyway. The goal is that when they ARE ready, they already trust us.
@@ -74,13 +74,13 @@ When a feature requires a higher tier, mention it naturally within the answer:
 ## Email Signature Standard
 
 ```
-— Dr. Ike
+— The PA CROP Team
 PA CROP Services · 814-480-0989
 ```
 
 For formal emails:
 ```
-Dr. Ikechukwu P.N. Ohu, PhD
+PA CROP Services Team, PhD
 PA CROP Services · Licensed PA CROP Provider
 814-480-0989 · hello@pacropservices.com
 ```
