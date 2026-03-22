@@ -537,22 +537,30 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <!-- ══ DOCUMENTS TAB ══ -->
       <div id="tab-documents" class="hidden">
         <div class="page-header"><h1>Documents</h1><p>All documents received at your registered office, classified by AI</p></div>
-        <div class="card"><div class="card-body" id="documents-list">
-          <div class="empty-state"><div class="icon">📬</div><h3>No documents yet</h3>
-          <p>When we receive documents at your registered office (924 W 23rd St, Erie PA), they'll be scanned, classified, and uploaded here within one business day.</p></div>
-        </div></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="docs-count-label">Documents received</span>
+          </div>
+          <div class="card-body" id="documents-list">
+            <div class="empty-state" id="docs-empty">
+              <div style="font-size:32px;margin-bottom:12px;opacity:.4">&#x1F4EC;</div>
+              <h3 style="font-size:16px;font-weight:600;color:var(--ink2);margin-bottom:4px">No documents yet</h3>
+              <p style="font-size:13px;max-width:300px;margin:0 auto;color:var(--ink3)">When we receive documents at your registered office (924 W 23rd St, Erie PA), they will be scanned, AI-classified, and uploaded here within one business day.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ══ COMPLIANCE TAB ══ -->
       <div id="tab-compliance" class="hidden">
         <div class="page-header"><h1>Compliance checklist</h1><p>Track your PA entity compliance requirements</p></div>
         <div class="card"><div class="card-body">
-          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">Registered office address on file with PA DOS</div></div>
-          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Annual report filed for current year</div></div>
-          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">CROP provider license verified (15 Pa. C.S. §109)</div></div>
-          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Entity status verified with PA DOS</div></div>
-          <div class="check-item"><div class="check-box" onclick="this.classList.toggle('done')"></div><div class="check-text">Service agreement signed and on file</div></div>
-          <div class="check-item"><div class="check-box done" onclick="this.classList.toggle('done')">✓</div><div class="check-text done">Annual report reminders active (90/60/30/14/7 days)</div></div>
+          <div class="check-item" id="cl-ro"><div class="check-box done">✓</div><div class="check-text done">Registered office address on file with PA DOS</div></div>
+          <div class="check-item" id="cl-report"><div class="check-box"></div><div class="check-text">Annual report filed for current year</div></div>
+          <div class="check-item" id="cl-crop"><div class="check-box done">✓</div><div class="check-text done">CROP provider license verified (15 Pa. C.S. §109)</div></div>
+          <div class="check-item" id="cl-entity"><div class="check-box"></div><div class="check-text">Entity status verified with PA DOS</div></div>
+          <div class="check-item" id="cl-agreement"><div class="check-box"></div><div class="check-text">Service agreement signed and on file</div></div>
+          <div class="check-item" id="cl-reminders"><div class="check-box done">✓</div><div class="check-text done">Annual report reminders active (90/60/30/14/7 days)</div></div>
         </div></div>
       </div>
 
@@ -560,17 +568,33 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <div id="tab-entity" class="hidden">
         <div class="page-header"><h1>Entity status</h1><p>Real-time monitoring of your PA Department of State record</p></div>
         <div class="card"><div class="card-body" id="entity-detail">
-          <p style="color:var(--ink3)">Loading entity status...</p>
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;font-size:14px">
+            <div style="font-weight:600;color:var(--ink3)">Entity name</div><div id="ed-name">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Entity type</div><div id="ed-type">—</div>
+            <div style="font-weight:600;color:var(--ink3)">File number</div><div id="ed-number">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Status</div><div id="ed-status">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Registered office</div><div>924 W 23rd St, Erie, PA 16502</div>
+            <div style="font-weight:600;color:var(--ink3)">Annual report</div><div id="ed-report">—</div>
+            <div style="font-weight:600;color:var(--ink3)">Next deadline</div><div id="ed-deadline">—</div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+            <p style="font-size:13px;color:var(--ink3)">Entity status is verified daily against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" style="color:var(--accent)">Verify on PA DOS</a></p>
+          </div>
         </div></div>
       </div>
 
       <!-- ══ HOSTING TAB ══ -->
       <div id="tab-hosting" class="hidden">
         <div class="page-header"><h1>Web hosting</h1><p>Manage your website, email, and hosting dashboard</p></div>
-        <div class="card"><div class="card-body" id="hosting-content">
-          <div class="empty-state"><div class="icon">🌐</div><h3>Setting up your hosting</h3>
-          <p>Your web hosting package is being provisioned. Access your control panel at <a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a>.</p></div>
-        </div></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Hosting dashboard</span>
+            <a href="https://my.20i.com" target="_blank" class="btn btn-ghost btn-sm">Open 20i panel</a>
+          </div>
+          <div class="card-body" id="hosting-content">
+            <p style="color:var(--ink3);font-size:13px">Loading hosting status...</p>
+          </div>
+        </div>
       </div>
 
       <!-- ══ AI ASSISTANT TAB ══ -->
@@ -714,9 +738,10 @@ function mountClient(c) {
   // Entity info
   if (c.entityType) document.getElementById('entity-type-display').textContent = c.entityType;
   
-  // Hosting tab visibility
+  // Hosting tab visibility + data
   const hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
   document.getElementById('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
+  if (hasHosting) loadHostingTab(c);
   
   // Async: load health score + client context for AI
   loadHealthScore(c);
@@ -736,6 +761,9 @@ async function loadClientContext(c) {
       showOnboarding(d.context);
       showTierActions(d.context);
       updateActivityFeed(d.context);
+      loadEntityTab(d.context);
+      loadDocumentsTab(d.context);
+      loadChecklist(d.context);
     }
   } catch(e) { console.log('Context load skipped:', e.message); }
 }
@@ -935,6 +963,90 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('login-code')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
   document.getElementById('login-email')?.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-code').focus(); });
 });
+
+// ─── ENTITY TAB ───
+function loadEntityTab(ctx) {
+  if (!ctx) return;
+  var el = function(id) { return document.getElementById(id); };
+  if (el('ed-name')) el('ed-name').textContent = ctx.entityName || CLIENT?.name || '—';
+  if (el('ed-type')) el('ed-type').textContent = ctx.entityType || '—';
+  if (el('ed-number')) el('ed-number').textContent = ctx.entityNumber ? 'PA DOS #' + ctx.entityNumber : 'Not yet on file';
+  if (el('ed-status')) {
+    var s = ctx.entityStatus || 'active';
+    el('ed-status').innerHTML = '<span class="badge ' + (s==='active'?'badge-green':'badge-gold') + '"><span class="dot"></span> ' + s.charAt(0).toUpperCase()+s.slice(1) + '</span>';
+  }
+  if (el('ed-report')) el('ed-report').textContent = ctx.annualReportStatus === 'filed' ? 'Filed for ' + new Date().getFullYear() : (ctx.includesFiling ? 'We will file for you' : 'Not yet filed — file at file.dos.pa.gov ($7)');
+  if (el('ed-deadline')) el('ed-deadline').textContent = 'September 30 (' + (ctx.daysUntilDeadline || '—') + ' days away)';
+}
+
+// ─── DOCUMENTS TAB ───
+function loadDocumentsTab(ctx) {
+  var list = document.getElementById('documents-list');
+  var empty = document.getElementById('docs-empty');
+  var label = document.getElementById('docs-count-label');
+  if (!ctx || !ctx.documentsReceived || ctx.documentsReceived === 0) return;
+  
+  if (empty) empty.style.display = 'none';
+  if (label) label.textContent = ctx.documentsReceived + ' document' + (ctx.documentsReceived > 1 ? 's' : '') + ' received';
+  
+  // Show last document
+  if (ctx.lastDocumentDate) {
+    var typeIcons = {service_of_process:'legal',government_correspondence:'gov',tax_notice:'tax',irs_notice:'tax',annual_report_reminder:'report',pa_dos_notice:'gov',court_filing:'legal'};
+    var icon = typeIcons[ctx.lastDocumentType] || 'gov';
+    var html = '<div class="doc-row">' +
+      '<div class="doc-icon ' + icon + '" style="font-size:16px">' + (icon==='legal'?'&#x2696;':icon==='tax'?'&#x1F4B0;':'&#x1F3DB;') + '</div>' +
+      '<div class="doc-info"><div class="doc-title">' + (ctx.lastDocumentType||'Document').replace(/_/g,' ') + '</div>' +
+      '<div class="doc-meta">Received ' + ctx.lastDocumentDate + '</div></div></div>';
+    list.insertAdjacentHTML('afterbegin', html);
+  }
+}
+
+// ─── HOSTING TAB ───
+async function loadHostingTab(c) {
+  var el = document.getElementById('hosting-content');
+  if (!el) return;
+  try {
+    var res = await fetch('/api/client-hosting', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: c.email, suitedashId: c.suitedashId })
+    });
+    var data = await res.json();
+    if (data.package) {
+      el.innerHTML =
+        '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
+        '<div class="kpi"><div class="kpi-label">Domain</div><div style="font-size:16px;font-weight:600">' + (data.package.domain || '(pending)') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Status</div><div style="font-size:16px;font-weight:600;color:' + (data.package.status==='active'?'var(--green)':'var(--gold)') + '">' + (data.package.status || 'Active') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Email boxes</div><div style="font-size:16px;font-weight:600">' + (data.package.emails || 0) + '</div></div>' +
+        '</div>' +
+        '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">' +
+        '<div class="kpi"><div class="kpi-label">SSL</div><div style="font-size:16px;font-weight:600">' + (data.package.ssl ? 'Active' : 'Pending') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Backups</div><div style="font-size:16px;font-weight:600">' + (data.package.backups ? 'Daily' : 'Not included') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Control panel</div><div><a href="https://my.20i.com" target="_blank" style="color:var(--accent);font-weight:600;font-size:14px">my.20i.com</a></div></div>' +
+        '</div>';
+    } else {
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up. Check back shortly.</p><p style="margin-top:8px"><a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a></p></div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--ink3);text-align:center;padding:24px">Hosting status unavailable. <a href="https://my.20i.com" target="_blank" style="color:var(--accent)">Access 20i directly</a></div>';
+  }
+}
+
+// ─── COMPLIANCE CHECKLIST (wire to context) ───
+function loadChecklist(ctx) {
+  if (!ctx || !ctx.onboardingSteps) return;
+  var steps = ctx.onboardingSteps;
+  function mark(id, done) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var box = el.querySelector('.check-box');
+    var txt = el.querySelector('.check-text');
+    if (done) { box.classList.add('done'); box.textContent='✓'; txt.classList.add('done'); }
+  }
+  mark('cl-agreement', steps.agreementSigned);
+  mark('cl-entity', steps.entityVerified);
+  if (ctx.annualReportStatus === 'filed') mark('cl-report', true);
+}
+
 </script>
 </body>
 </html>
