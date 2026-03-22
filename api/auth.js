@@ -32,8 +32,9 @@ export default async function handler(req, res) {
       client: {
         name:         'Acme LLC',
         email:        cleanEmail,
-        tier:         'Professional',
-        price:        '$179/yr',
+        tier:         'business_pro',
+        tierLabel:    'Business Pro',
+        price:        '$349/yr',
         refCode:      'CROP-DEMO2026',
         since:        'January 2026',
         firstName:    'Demo',
@@ -100,10 +101,19 @@ export default async function handler(req, res) {
 
     // ── Build client object ───────────────────────────────────
     const tags = contact.tags || [];
-    let tier  = 'Starter';
-    let price = '$79/yr';
-    if      (tags.includes('crop-premium')       || customFields.crop_plan === 'premium')       { tier = 'Premium';      price = '$299/yr'; }
-    else if (tags.includes('crop-professional')  || customFields.crop_plan === 'professional')  { tier = 'Professional'; price = '$179/yr'; }
+    // Map crop_plan custom field to tier + price
+    const plan = (customFields.crop_plan || '').toLowerCase();
+    let tier = 'compliance_only';
+    let tierLabel = 'Compliance Only';
+    let price = '$99/yr';
+    let includesHosting = false;
+    if (plan === 'business_empire' || tags.includes('crop-business_empire')) {
+      tier = 'business_empire'; tierLabel = 'Business Empire'; price = '$699/yr'; includesHosting = true;
+    } else if (plan === 'business_pro' || tags.includes('crop-business_pro')) {
+      tier = 'business_pro'; tierLabel = 'Business Pro'; price = '$349/yr'; includesHosting = true;
+    } else if (plan === 'business_starter' || tags.includes('crop-business_starter')) {
+      tier = 'business_starter'; tierLabel = 'Business Starter'; price = '$199/yr'; includesHosting = true;
+    }
 
     const firstName  = contact.first_name || '';
     const lastName   = contact.last_name  || '';
@@ -122,15 +132,19 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       client: {
-        name:        entityName,
-        email:       cleanEmail,
+        name:           entityName,
+        email:          cleanEmail,
         tier,
+        tierLabel,
         price,
+        includesHosting,
         refCode,
         since,
         firstName,
         lastName,
-        suitedashId: contact.id
+        entityType:     customFields.entity_type || '',
+        hasForeignEntity: customFields.has_foreign_entity || 'no',
+        suitedashId:    contact.id
       }
     });
 
