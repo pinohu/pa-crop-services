@@ -24,38 +24,22 @@ async function sdFetch(path, opts = {}) {
 }
 
 async function twentyiFetch(path, opts = {}) {
-  // Try combined key first, then individual formats
-  const BEARER = process.env.TWENTY_I_TOKEN || 
-    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
-      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` 
-      : null);
+  // 20i requires Bearer token to be base64-encoded general API key
+  const GENERAL_KEY = process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN?.split('+')[0];
+  if (!GENERAL_KEY) return { error: '20i token not configured' };
   
-  if (!BEARER) return { error: '20i token not configured', packages: {} };
+  // base64-encode the general key as required by 20i API docs
+  const BEARER_B64 = Buffer.from(GENERAL_KEY).toString('base64');
   
-  const makeRequest = async (authHeader) => {
-    const res = await fetch(`${TWENTY_I_BASE}${path}`, {
-      ...opts,
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(opts.headers || {})
-      }
-    });
-    return res;
-  };
-  
-  // Try Bearer prefix
-  let res = await makeRequest(`Bearer ${BEARER}`);
-  if (res.status === 401) {
-    // Try without Bearer prefix (some 20i endpoints)
-    res = await makeRequest(BEARER);
-  }
-  if (res.status === 401) {
-    // Try just the general key
-    const generalKey = process.env.TWENTY_I_GENERAL || BEARER.split('+')[0];
-    res = await makeRequest(`Bearer ${generalKey}`);
-  }
+  const res = await fetch(`${TWENTY_I_BASE}${path}`, {
+    ...opts,
+    headers: {
+      'Authorization': `Bearer ${BEARER_B64}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(opts.headers || {})
+    }
+  });
   return res.json().catch(() => ({ error: 'Invalid JSON from 20i', status: res.status }));
 }
 
@@ -182,9 +166,11 @@ export default async function handler(req, res) {
 
       // ── Hosting Packages (20i) ────────────────────────────────────────
       case 'hosting': {
-        const packages = await twentyiFetch('/reseller/web');
+        const packages = await twentyiFetch('/package');
         const list = [];
-        for (const [id, pkg] of Object.entries(packages || {})) {
+        const pkgArray = Array.isArray(packages) ? packages : Object.values(packages || {});
+        for (const pkg of pkgArray) {
+          const id = pkg.id;
           list.push({
             id,
             name: pkg.name || id,
@@ -206,10 +192,10 @@ export default async function handler(req, res) {
         const { email, tierName, accountSlug, hostingPassword, suggestedDomain } = payload;
         
         // Create hosting package
-        const pkg = await twentyiFetch('/reseller/web', {
+        const pkg = await twentyiFetch('/reseller/' + process.env.TWENTY_I_RESELLER_ID + '/addWeb', {
           method: 'POST',
           body: JSON.stringify({
-            'extra-names': [accountSlug],
+            'domain_name': suggestedDomain || accountSlug + '.com',
             type: 'standard',
             packageBundle: {
               name: `PA CROP — ${tierName}`,
