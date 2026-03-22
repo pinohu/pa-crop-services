@@ -652,15 +652,15 @@ function mountClient(c) {
 
 async function loadHealthScore(c) {
   try {
-    const res = await fetch('/api/client-health', {
-      method:'POST', headers:{'Content-Type':'application/json','X-Admin-Key':'CROP-ADMIN-2026-IKE'},
-      body:JSON.stringify({clientEmail:c.email, clientName:c.name, metrics:{planTier:c.tier||'compliance_only',monthsAsClient:6,daysSinceLastLogin:0,portalLoginsLast30:1}})
+    const res = await fetch('/api/portal-health', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:c.email, tier:c.tier||'compliance_only', name:c.name})
     });
     const d = await res.json();
     if (d.success) {
       document.getElementById('kpi-health').textContent = d.healthScore + '/100';
       const riskColors = {very_low:'var(--green)',low:'var(--green)',medium:'var(--gold)',high:'var(--red)',critical:'var(--red)'};
-      document.getElementById('kpi-health-risk').innerHTML = '<span style="color:'+( riskColors[d.churnRisk]||'var(--ink3)')+'">'+d.churnRisk.replace('_',' ')+' risk</span>';
+      document.getElementById('kpi-health-risk').innerHTML = '<span style="color:'+(riskColors[d.churnRisk]||'var(--ink3)')+'">'+d.churnRisk.replace('_',' ')+' risk</span>';
     }
   } catch(e) { document.getElementById('kpi-health').textContent = '—'; }
 }
