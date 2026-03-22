@@ -26,7 +26,9 @@ export default async function handler(req, res) {
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const BEARER = process.env.TWENTY_I_TOKEN;
+  const BEARER = process.env.TWENTY_I_TOKEN || 
+    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
+      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` : null);
   const SMTP_HOST = process.env.SMTP_HOST || 'smtp.emailit.com';
   const N8N = 'https://n8n.audreysplace.place/webhook';
 
