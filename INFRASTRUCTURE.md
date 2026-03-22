@@ -458,8 +458,7 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
 
 Check at start of every session:
 ```bash
-curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c035282722cb4b030" \
-  https://claude-outbox.audreysplace.place/messages
+curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c035282722cb4b030"   https://claude-outbox.audreysplace.place/messages
 ```
 
 ---
