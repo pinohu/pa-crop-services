@@ -1005,102 +1005,6 @@ function loadChecklist(ctx) {
 
 
 
-// ─── FIX #6: POPULATE ENTITY TAB ───
-function loadEntityTab(ctx) {
-  if (!ctx) return;
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || '—'; };
-  set('ed-name', ctx.entityName);
-  set('ed-type', ctx.entityType);
-  set('ed-number', ctx.entityNumber ? '#' + ctx.entityNumber : 'Pending verification');
-  
-  const statusEl = document.getElementById('ed-status');
-  if (statusEl) {
-    const colors = { active: 'var(--green)', inactive: 'var(--red)', unknown: 'var(--ink3)' };
-    const labels = { active: 'Active — Good Standing', inactive: 'Inactive — Action Required', unknown: 'Pending Verification' };
-    statusEl.innerHTML = '<span style="color:' + (colors[ctx.entityStatus] || colors.unknown) + ';font-weight:600">' + (labels[ctx.entityStatus] || labels.unknown) + '</span>';
-  }
-  
-  const deadline = ctx.daysUntilDeadline || '—';
-  const filingNote = ctx.includesFiling ? ' (we will file for you)' : ' (self-file at file.dos.pa.gov)';
-  set('ed-report', 'Due Sept 30, ' + deadline + ' days' + filingNote);
-  set('ed-plan', (ctx.planLabel || '—') + ' (' + (ctx.price || '') + ')');
-}
-
-// ─── FIX #7: POPULATE DOCUMENTS TAB ───
-function loadDocumentsTab(ctx) {
-  const container = document.getElementById('docs-content');
-  if (!container) return;
-  
-  if (!ctx || !ctx.documentsReceived || ctx.documentsReceived === 0) {
-    container.innerHTML = '<div class="empty-state"><div style="font-size:16px;margin-bottom:8px">📬</div><h3>No documents yet</h3><p>When we receive documents at your registered office (924 W 23rd St, Erie PA), they will be scanned, AI-classified, and uploaded here within one business day.</p></div>';
-    return;
-  }
-  
-  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
-  const typeIcons = { government_correspondence: '🏛️', legal_notice: '⚖️', tax_notice: '💰', irs_notice: '📋', annual_report_reminder: '📅', business_correspondence: '📨', service_of_process: '🔴', junk_mail: '📭' };
-  const typeLabels = { government_correspondence: 'Government Correspondence', legal_notice: 'Legal Notice', tax_notice: 'Tax Notice', irs_notice: 'IRS Notice', annual_report_reminder: 'Annual Report Reminder', business_correspondence: 'Business Mail', service_of_process: 'Service of Process', junk_mail: 'Junk Mail' };
-  
-  // Show recent documents from context
-  if (ctx.lastDocumentDate) {
-    for (let i = 0; i < ctx.documentsReceived && i < 5; i++) {
-      const docType = i === 0 ? (ctx.lastDocumentType || 'business_correspondence') : 'business_correspondence';
-      const icon = typeIcons[docType] || '📄';
-      const label = typeLabels[docType] || docType.replace(/_/g, ' ');
-      const dateOffset = i * 15;
-      const d = new Date(ctx.lastDocumentDate);
-      d.setDate(d.getDate() - dateOffset);
-      const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-      
-      html += '<div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">';
-      html += '<span style="font-size:16px">' + icon + '</span>';
-      html += '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--ink)">' + label + '</div>';
-      html += '<div style="font-size:12px;color:var(--ink3)">Received ' + dateStr + ' — AI classified</div></div>';
-      html += '<span style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--green-bg);color:var(--green);font-weight:600">Scanned</span>';
-      html += '</div>';
-    }
-  }
-  
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-// ─── FIX #8: POPULATE HOSTING TAB ───
-async function loadHostingTab(ctx) {
-  const container = document.getElementById('hosting-data');
-  if (!container) return;
-  
-  if (!ctx || !ctx.includesHosting) {
-    container.innerHTML = '<div class="empty-state"><div style="font-size:16px;margin-bottom:8px">🌐</div><h3>Hosting not included</h3><p>Your current plan (' + (ctx?.planLabel || 'Compliance Only') + ') does not include web hosting. <a href="/#pricing" style="color:var(--accent)">Upgrade to Business Starter+</a> to get website hosting, email, and SSL included.</p></div>';
-    return;
-  }
-  
-  try {
-    const res = await fetch('/api/client-hosting', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({email: CLIENT?.email})
-    });
-    const d = await res.json();
-    
-    if (d.success && d.package) {
-      const pkg = d.package;
-      container.innerHTML = '<div style="display:grid;grid-template-columns:140px 1fr;gap:12px 20px;font-size:14px">'
-        + '<span style="color:var(--ink3);font-weight:600">Package</span><span>' + (pkg.name || 'Web Hosting') + '</span>'
-        + '<span style="color:var(--ink3);font-weight:600">Domain</span><span>' + (pkg.domain || 'Pending setup') + '</span>'
-        + '<span style="color:var(--ink3);font-weight:600">SSL</span><span style="color:var(--green)">Active</span>'
-        + '<span style="color:var(--ink3);font-weight:600">Email</span><span>' + (pkg.email || 'Available') + '</span>'
-        + '<span style="color:var(--ink3);font-weight:600">Control panel</span><span><a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com ↗</a></span>'
-        + '</div>';
-    } else {
-      container.innerHTML = '<div style="display:grid;grid-template-columns:140px 1fr;gap:12px 20px;font-size:14px">'
-        + '<span style="color:var(--ink3);font-weight:600">Status</span><span style="color:var(--gold)">Provisioning in progress</span>'
-        + '<span style="color:var(--ink3);font-weight:600">Control panel</span><span><a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com ↗</a></span>'
-        + '<span style="color:var(--ink3);font-weight:600">Support</span><span><a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a></span>'
-        + '</div>';
-    }
-  } catch(e) {
-    container.innerHTML = '<div style="text-align:center;padding:20px"><p>Hosting dashboard is loading. Visit <a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a> for your control panel.</p></div>';
-  }
-}
 
 // ─── FIX #9: CHECKLIST PERSISTENCE ───
 function initChecklist() {
@@ -1139,27 +1043,6 @@ async function loadReferralData(ctx) {
     container.innerHTML = html;
   }
 }
-
-// ─── WIRE EVERYTHING ON LOGIN ───
-const _origMountClient = mountClient;
-mountClient = function(c) {
-  _origMountClient(c);
-  
-  // Wait for context to load then populate tabs
-  const waitForContext = setInterval(() => {
-    if (CLIENT_CONTEXT) {
-      clearInterval(waitForContext);
-      loadEntityTab(CLIENT_CONTEXT);
-      loadDocumentsTab(CLIENT_CONTEXT);
-      loadHostingTab(CLIENT_CONTEXT);
-      loadReferralData(CLIENT_CONTEXT);
-      initChecklist();
-    }
-  }, 300);
-  
-  // Timeout after 5s
-  setTimeout(() => clearInterval(waitForContext), 5000);
-};
 
 
 
