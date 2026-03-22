@@ -12,15 +12,15 @@ export default async function handler(req, res) {
   const { email, suitedashId } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
 
-  const BEARER = process.env.TWENTY_I_TOKEN || 
-    (process.env.TWENTY_I_GENERAL && process.env.TWENTY_I_OAUTH 
-      ? `${process.env.TWENTY_I_GENERAL}+${process.env.TWENTY_I_OAUTH}` : null);
+  // 20i requires base64-encoded general API key as bearer token
+  const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN?.split('+')[0];
+  const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
   if (!BEARER) return res.status(200).json({ package: null, message: '20i not configured' });
 
   try {
     // Get all packages and find one matching this client
-    const packagesRes = await fetch('https://api.20i.com/reseller/web', {
-      headers: { 'Authorization': `Bearer ${BEARER}` }
+    const packagesRes = await fetch('https://api.20i.com/package', {
+      headers: { 'Authorization': BEARER }
     });
     const packages = await packagesRes.json();
 
@@ -29,9 +29,11 @@ export default async function handler(req, res) {
     let matchedPkg = null;
     let matchedId = null;
 
-    for (const [id, pkg] of Object.entries(packages || {})) {
+    const pkgList = Array.isArray(packages) ? packages : [];
+    for (const pkg of pkgList) {
+      const id = pkg.id;
       const name = (pkg.name || '').toLowerCase();
-      if (name.includes(emailSlug) || (pkg['extra-names'] || []).some(n => n.includes(emailSlug))) {
+      if (name.includes(emailSlug) || (pkg.names || []).some(n => typeof n === 'string' && n.includes(emailSlug))) {
         matchedPkg = pkg;
         matchedId = id;
         break;
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
 
     // Get detailed package info
     const detailRes = await fetch(`https://api.20i.com/package/${matchedId}`, {
-      headers: { 'Authorization': `Bearer ${BEARER}` }
+      headers: { 'Authorization': BEARER }
     }).catch(() => null);
     const detail = detailRes ? await detailRes.json().catch(() => ({})) : {};
 
