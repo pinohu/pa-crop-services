@@ -1061,6 +1061,37 @@ mountClient = function(c) {
   setTimeout(() => clearInterval(waitForContext), 5000);
 };
 
+
+
+// ─── FIX #15: SETTINGS & PREFERENCES ───
+function initSettings(c) {
+  document.getElementById('set-email').textContent = c.email || '';
+  document.getElementById('set-plan').textContent = (c.tierLabel || c.tier || '') + ' (' + (c.price || '') + ')';
+  document.getElementById('set-since').textContent = c.since || '';
+  const refEl = document.getElementById('set-ref');
+  if (refEl) refEl.textContent = c.refCode || '';
+  
+  // Load prefs from localStorage
+  const key = 'crop_prefs_' + (c.email || 'anon');
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    for (const [id, val] of Object.entries(saved)) {
+      const el = document.getElementById(id);
+      if (el) el.checked = val;
+    }
+  } catch(e) {}
+}
+
+function savePref(cb) {
+  const key = 'crop_prefs_' + (CLIENT?.email || 'anon');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
+  saved[cb.id] = cb.checked;
+  localStorage.setItem(key, JSON.stringify(saved));
+  const msg = document.getElementById('pref-saved');
+  if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 2000); }
+}
+
 </script>
 </body>
 </html>
