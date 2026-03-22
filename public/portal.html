@@ -171,6 +171,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .notify-unread .notify-text{font-weight:600;color:var(--navy)}
 .ref-code{background:var(--navy);color:var(--gold2);padding:18px 24px;border-radius:8px;font-family:'DM Mono',monospace;font-size:22px;font-weight:500;text-align:center;letter-spacing:2px;margin:16px 0;cursor:pointer;transition:.2s;}
 .ref-code:hover{background:var(--navy3)}
+
+@media(max-width:768px){
+  #mobile-sidebar-btn{display:inline-block!important}
+  .sidebar{display:none;position:fixed;top:60px;left:0;bottom:0;z-index:50;overflow-y:auto}
+  .sidebar.mobile-open{display:block;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  .main{max-width:100%;padding:16px}
+}
 .hidden{display:none!important}
 @media(max-width:768px){
   .stats{grid-template-columns:1fr 1fr}
@@ -182,6 +189,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 </head>
 <body>
 
+<a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;focus:visible" class="skip-link" onFocus="this.style.cssText='position:fixed;top:10px;left:10px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:8px;z-index:9999;width:auto;height:auto;font-family:DM Sans,sans-serif;font-weight:600;font-size:14px;text-decoration:none'" onBlur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden'">Skip to main content</a>
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
@@ -201,6 +209,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
       <input type="password" id="login-code" placeholder="Your portal access code" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn-primary" onclick="doLogin()">Access My Portal &rarr;</button>
+    <div style="text-align:center;margin-top:10px">
+      <a onclick="resetCode()" style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:none" tabindex="0">Forgot access code?</a>
+    </div>
     <div class="demo-hint">Demo access: <a onclick="demoLogin()">click here to enter</a></div>
   </div>
 </div>
@@ -216,6 +227,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="topbar-right">
       <div class="client-badge"><div class="dot"></div><span id="tier-badge">Professional Plan</span></div>
       <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      <button id="mobile-sidebar-btn" onclick="toggleMobileSidebar()" aria-label="Toggle navigation" style="display:none;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:18px">☰</button>
     </div>
   </div>
 
@@ -255,7 +267,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
       </div>
     </div>
 
-    <div class="main">
+    <div class="main" id="main-content">
       <!-- DASHBOARD -->
       <div id="tab-dashboard">
         <div class="welcome-strip">
@@ -646,6 +658,42 @@ function addTyping(){
   const msgs=document.getElementById('chat-messages');
   msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;return el;
 }
+
+// GAP-10: Keyboard shortcuts (Nielsen Norman Heuristic 7 — Flexibility & Efficiency)
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (document.getElementById('portal').style.display === 'none') return;
+  if (e.shiftKey && e.key === '?') { showShortcutsHelp(); return; }
+  if (e.key === 'Escape') { closeAllModals(); return; }
+  var shortcuts = { d:'dashboard', o:'onboarding', c:'credit', t:'templates', e:'entity', n:'notifications', r:'referral', a:'ai' };
+  if (shortcuts[e.key.toLowerCase()]) {
+    var tabId = shortcuts[e.key.toLowerCase()];
+    var el = document.querySelector('[onclick*="setTab(\''+tabId+''"]');
+    setTab(tabId, el);
+  }
+});
+function showShortcutsHelp() {
+  var existing = document.getElementById('shortcuts-modal');
+  if (existing) { existing.remove(); return; }
+  var modal = document.createElement('div');
+  modal.id = 'shortcuts-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px;width:400px;max-width:90vw"><h3 style="font-family:Playfair Display,serif;margin-bottom:16px;color:#0f1e3d">Keyboard Shortcuts</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px"><span style="color:#c9a227;font-weight:700">D</span><span>Dashboard</span><span style="color:#c9a227;font-weight:700">O</span><span>Onboarding</span><span style="color:#c9a227;font-weight:700">C</span><span>Business Credit</span><span style="color:#c9a227;font-weight:700">T</span><span>Legal Templates</span><span style="color:#c9a227;font-weight:700">E</span><span>New Entity</span><span style="color:#c9a227;font-weight:700">N</span><span>Notifications</span><span style="color:#c9a227;font-weight:700">R</span><span>Referral</span><span style="color:#c9a227;font-weight:700">A</span><span>AI Assistant</span><span style="color:#c9a227;font-weight:700">Esc</span><span>Close modal</span><span style="color:#c9a227;font-weight:700">Shift+?</span><span>This help</span></div><button onclick="document.getElementById('shortcuts-modal').remove()" style="margin-top:20px;width:100%;padding:10px;background:#0f1e3d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600">Close</button></div>';
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+function closeAllModals() {
+  var m = document.getElementById('shortcuts-modal');
+  if (m) m.remove();
+  var em = document.getElementById('entity-modal');
+  if (em) em.classList.add('hidden');
+}
+
+function toggleMobileSidebar(){
+  var s=document.querySelector('.sidebar');
+  s.classList.toggle('mobile-open');
+}
+
 </script>
 </body>
 </html>
