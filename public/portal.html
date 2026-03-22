@@ -651,6 +651,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <div id="tab-settings" class="hidden">
         <div class="page-header"><h1>Account settings</h1><p>Manage your account and preferences</p></div>
         <div class="grid-2">
+                  <div class="grid-2">
           <div class="card">
             <div class="card-header"><span class="card-title">Your account</span></div>
             <div class="card-body">
@@ -665,185 +666,21 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div class="card">
             <div class="card-header"><span class="card-title">Quick actions</span></div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-              <a href="mailto:hello@pacropservices.com?subject=Plan%20change%20request" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Request plan change</a>
-              <a href="mailto:hello@pacropservices.com?subject=Update%20my%20information" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Update contact information</a>
-              <a href="mailto:hello@pacropservices.com?subject=Add%20another%20entity" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Add another entity</a>
-              <a href="mailto:hello@pacropservices.com?subject=Account%20cancellation" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;color:var(--red,#dc2626)">Cancel account</a>
+              <a href="mailto:hello@pacropservices.com?subject=Plan%20change%20request" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Request plan change</a>
+              <a href="mailto:hello@pacropservices.com?subject=Update%20my%20info" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Update contact info</a>
+              <a href="mailto:hello@pacropservices.com?subject=Add%20entity" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none">Add another entity</a>
+              <a href="mailto:hello@pacropservices.com?subject=Cancel" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;text-decoration:none;color:#dc2626">Cancel account</a>
             </div>
           </div>
         </div>
         <div class="card" style="margin-top:16px">
-          <div class="card-header"><span class="card-title">Contact support</span></div>
+          <div class="card-header"><span class="card-title">Support</span></div>
           <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
             <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Email</div><a href="mailto:hello@pacropservices.com" style="color:var(--accent);font-weight:600;font-size:14px">hello@pacropservices.com</a></div>
             <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Phone</div><a href="tel:8144800989" style="color:var(--accent);font-weight:600;font-size:14px">814-480-0989</a></div>
-            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Hours</div><span style="font-size:14px">Mon-Fri 9am-5pm ET</span></div>
+            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Hours</div><span style="font-size:14px">Mon–Fri 9am–5pm ET</span></div>
           </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
-</div>
-
-<script>
-let CLIENT = null;
-let CLIENT_CONTEXT = null;
-const chatHistory = [];
-
-// ─── LOADING BAR ───
-function showLoading() { const b=document.getElementById('loading-bar'); b.style.width='60%'; b.classList.add('active'); }
-function hideLoading() { const b=document.getElementById('loading-bar'); b.style.width='100%'; setTimeout(()=>{b.classList.remove('active');b.style.width='0'},300); }
-
-// ─── AUTH ───
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const code = document.getElementById('login-code').value.trim().toUpperCase();
-  const err = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-  if (!email || !code) { err.style.display='block'; err.textContent='Please enter your email and access code.'; return; }
-  btn.textContent='Signing in...'; btn.disabled=true; showLoading();
-  try {
-    const res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
-    const data = await res.json();
-    if (!data.success) { err.style.display='block'; err.textContent=data.error||'Invalid credentials.'; btn.textContent='Sign in'; btn.disabled=false; hideLoading(); return; }
-    err.style.display='none'; CLIENT=data.client; mountClient(CLIENT);
-  } catch(e) { err.style.display='block'; err.textContent='Connection error. Please try again.'; btn.textContent='Sign in'; btn.disabled=false; }
-  hideLoading();
-}
-
-function demoLogin() {
-  document.getElementById('login-email').value='demo@pacropservices.com';
-  document.getElementById('login-code').value='DEMO2026';
-  doLogin();
-}
-
-function doLogout() { CLIENT=null; document.getElementById('portal').style.display='none'; document.getElementById('login-screen').style.display='flex'; }
-
-// ─── MOUNT CLIENT ───
-function mountClient(c) {
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('portal').style.display='flex';
-  
-  const first = c.firstName || c.name?.split(' ')[0] || 'there';
-  document.getElementById('welcome-heading').textContent = 'Welcome back, ' + first;
-  document.getElementById('client-entity-name').textContent = c.name || '';
-  document.getElementById('entity-display-name').textContent = c.name || 'Your Entity';
-  document.getElementById('user-avatar').textContent = first[0]?.toUpperCase() || '?';
-  
-  // Plan badge
-  const label = planLabel(c.tier);
-  document.getElementById('tier-badge').innerHTML = '<span class="dot"></span> ' + label;
-  document.getElementById('plan-display-inline').textContent = label;
-  document.getElementById('kpi-fee').textContent = c.price || tierPrice(c.tier);
-  document.getElementById('kpi-plan-label').textContent = label;
-  
-  // Since
-  const since = c.since || new Date().toISOString().split('T')[0];
-  document.getElementById('kpi-since').textContent = formatDate(since);
-  document.getElementById('settings-email').textContent = c.email;
-  document.getElementById('settings-plan').textContent = label + ' (' + (c.price||tierPrice(c.tier)) + ')';
-  document.getElementById('settings-since').textContent = formatDate(since);
-  
-  // Deadline countdown
-  const now = new Date();
-  const deadline = new Date(now.getFullYear(), 8, 30); // Sept 30
-  if (deadline < now) deadline.setFullYear(deadline.getFullYear()+1);
-  document.getElementById('days-to-deadline').textContent = Math.ceil((deadline-now)/86400000);
-  
-  // Referral
-  document.getElementById('ref-code').textContent = c.refCode || 'CROP-' + (c.email||'').split('@')[0].toUpperCase().slice(0,6);
-  
-  // Entity info
-  if (c.entityType) document.getElementById('entity-type-display').textContent = c.entityType;
-  
-  // Hosting tab visibility + data
-  const hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
-  document.getElementById('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
-  if (hasHosting) loadHostingTab(c);
-  
-  // Async: load health score + client context for AI
-  loadHealthScore(c);
-  loadClientContext(c);
-}
-
-// ─── LOAD CLIENT CONTEXT (for AI personalization) ───
-async function loadClientContext(c) {
-  try {
-    const res = await fetch('/api/client-context', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:c.email})
-    });
-    const d = await res.json();
-    if (d.success && d.context) {
-      CLIENT_CONTEXT = d.context;
-      showOnboarding(d.context);
-      showTierActions(d.context);
-      updateActivityFeed(d.context);
-      loadEntityTab(d.context);
-      loadDocumentsTab(d.context);
-      loadChecklist(d.context);
-    }
-  } catch(e) { console.log('Context load skipped:', e.message); }
-}
-
-// ─── ONBOARDING PROGRESS ───
-function showOnboarding(ctx) {
-  if (!ctx.onboardingSteps || ctx.onboardingComplete) return;
-  const card = document.getElementById('onboard-card');
-  if (!card) return;
-  card.classList.add('show');
-  
-  const steps = ctx.onboardingSteps;
-  const map = {
-    accountCreated: 'ob-account', portalAccessed: 'ob-portal', agreementSigned: 'ob-agreement',
-    entityVerified: 'ob-entity', firstDocumentReceived: 'ob-document', annualReportReminderSet: 'ob-reminders'
-  };
-  
-  let done = 0;
-  const total = Object.keys(steps).length;
-  for (const [key, elId] of Object.entries(map)) {
-    const el = document.getElementById(elId);
-    if (el && steps[key]) {
-      el.classList.add('done');
-      el.querySelector('.step-icon').textContent = '✓';
-      done++;
-    }
-  }
-  
-  const pct = Math.round((done / total) * 100);
-  document.getElementById('onboard-fill').style.width = pct + '%';
-  document.getElementById('onboard-pct').textContent = pct + '%';
-  
-  // Mark portal accessed (since they're here now)
-  const portalEl = document.getElementById('ob-portal');
-  if (portalEl && !portalEl.classList.contains('done')) {
-    portalEl.classList.add('done');
-    portalEl.querySelector('.step-icon').textContent = '✓';
-  }
-}
-
-// ─── TIER-CONTEXTUAL QUICK ACTIONS ───
-function showTierActions(ctx) {
-  // Show upgrade button for lower tiers
-  const upgradeBtn = document.getElementById('aq-upgrade');
-  if (upgradeBtn && ['compliance_only','business_starter'].includes(ctx.plan)) {
-    upgradeBtn.style.display = '';
-  }
-  // Show hosting button for hosting tiers
-  const hostingBtn = document.getElementById('aq-hosting');
-  if (hostingBtn && ctx.includesHosting) {
-    hostingBtn.style.display = '';
-  }
-}
-
-// ─── DYNAMIC ACTIVITY FEED ───
-function updateActivityFeed(ctx) {
-  const feed = document.getElementById('activity-feed');
-  if (!feed) return;
-  
-  let items = '';
-  items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Portal accessed</div><div class="activity-time">Just now</div></div></div>';
+        </div></div>';
   
   if (ctx.lastDocumentDate) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Document received: ' + (ctx.lastDocumentType || 'correspondence').replace(/_/g,' ') + '</div><div class="activity-time">' + ctx.lastDocumentDate + '</div></div></div>';
