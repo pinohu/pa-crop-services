@@ -730,6 +730,75 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
   feed.innerHTML = items;
 }
 
+// ═══ CORE AUTH ═══
+let CLIENT = null;
+let CLIENT_CONTEXT = null;
+const chatHistory = [];
+
+async function doLogin() {
+  var email = document.getElementById('login-email')?.value?.trim();
+  var code = document.getElementById('login-code')?.value?.trim();
+  if (!email || !code) { alert('Please enter your email and access code.'); return; }
+  var btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  try {
+    var res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
+    var data = await res.json();
+    if (data.success && data.client) { mountClient(data.client); }
+    else { alert(data.error || 'Invalid email or access code.'); btn.textContent = 'Sign in'; btn.disabled = false; }
+  } catch(e) { alert('Connection error. Please try again.'); btn.textContent = 'Sign in'; btn.disabled = false; }
+}
+function demoLogin() {
+  document.getElementById('login-email').value = 'demo@pacropservices.com';
+  document.getElementById('login-code').value = 'DEMO2026';
+  doLogin();
+}
+function doLogout() {
+  CLIENT = null; CLIENT_CONTEXT = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('portal').style.display = 'none';
+  document.getElementById('login-code').value = '';
+  document.getElementById('login-btn').textContent = 'Sign in';
+  document.getElementById('login-btn').disabled = false;
+}
+function mountClient(c) {
+  CLIENT = c;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('portal').style.display = 'block';
+  var h = function(id){ return document.getElementById(id); };
+  if(h('entity-name')) h('entity-name').textContent = c.name || 'Your Entity';
+  if(h('entity-status')) h('entity-status').innerHTML = '<span class="badge badge-green"><span class="dot"></span> Active</span>';
+  if(h('kpi-since')) h('kpi-since').textContent = c.since || 'New';
+  if(h('kpi-fee')) h('kpi-fee').textContent = c.price || '$99/yr';
+  if(h('ref-code')) h('ref-code').textContent = c.refCode || 'N/A';
+  if(h('set-ref')) h('set-ref').textContent = c.refCode || 'N/A';
+  if(h('settings-email')) h('settings-email').textContent = c.email || '';
+  if(h('settings-plan')) h('settings-plan').textContent = (c.tierLabel||c.tier||'') + ' (' + (c.price||'') + ')';
+  if(h('settings-since')) h('settings-since').textContent = c.since || '';
+  var hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
+  if(h('hosting-nav')) h('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
+  if(hasHosting) loadHostingTab(c);
+  setTab('dashboard', document.querySelector('.nav-item'));
+  loadHealthScore(c);
+  loadClientContext(c);
+  if(typeof initSettings === 'function') initSettings(c);
+}
+async function loadClientContext(c) {
+  try {
+    var res = await fetch('/api/client-context', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:c.email}) });
+    var d = await res.json();
+    if (d.success && d.context) {
+      CLIENT_CONTEXT = d.context;
+      if(typeof showOnboarding==='function') showOnboarding(d.context);
+      if(typeof showTierActions==='function') showTierActions(d.context);
+      if(typeof updateActivityFeed==='function') updateActivityFeed(d.context);
+      loadEntityTab(d.context);
+      loadDocumentsTab(d.context);
+      loadChecklist(d.context);
+    }
+  } catch(e) { console.log('Context load skipped:', e.message); }
+}
+
 async function loadHealthScore(c) {
   try {
     const res = await fetch('/api/portal-health', {
