@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — session complete, all files pushed
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — 5 city pages + 4 comparison pages + email sequences added
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -51,11 +51,21 @@ pa-crop-services/
 │   ├── reinstate-dissolved-pennsylvania-llc.html
 │   ├── pennsylvania-foreign-entity-annual-report.html
 │   │
-│   ├── registered-office-philadelphia-pa.html   # City pages (5)
+│   ├── registered-office-philadelphia-pa.html   # City pages (10)
 │   ├── registered-office-pittsburgh-pa.html
 │   ├── registered-office-harrisburg-pa.html
 │   ├── registered-office-allentown-pa.html
 │   ├── registered-office-erie-pa.html
+│   ├── registered-office-reading-pa.html
+│   ├── registered-office-bethlehem-pa.html
+│   ├── registered-office-scranton-pa.html
+│   ├── registered-office-lancaster-pa.html
+│   ├── registered-office-wilkes-barre-pa.html
+│   │
+│   ├── pa-crop-services-vs-northwest-registered-agent.html  # Comparison pages (4)
+│   ├── pa-crop-services-vs-ct-corporation.html
+│   ├── pa-crop-services-vs-zenbusiness.html
+│   ├── pa-crop-services-vs-incfile.html
 │   │
 │   ├── embed/
 │   │   └── crop-widget.js           # Partner embeddable compliance widget
@@ -82,7 +92,9 @@ pa-crop-services/
 ├── docs/                            # Setup guides (for humans)
 │   ├── SUITEDASH_CUSTOM_FIELDS.md
 │   ├── GOOGLE_SEARCH_CONSOLE.md
-│   └── GOOGLE_BUSINESS_PROFILE.md
+│   ├── GOOGLE_BUSINESS_PROFILE.md
+│   ├── RENEWAL_EMAIL_SEQUENCE.md    # 4-email renewal copy for n8n wRLXTGXW60MDLUnI
+│   └── WINBACK_EMAIL_SEQUENCE.md    # 4-email win-back copy for n8n UGGH8LOU4AR3eXk
 │
 ├── vercel.json                      # outputDirectory: public, cleanUrls: true
 ├── INFRASTRUCTURE.md                # This file — auto-updated on every commit
@@ -399,9 +411,18 @@ Executes in sequence: access code generation → SuiteDash contact → 20i hosti
 | `/pennsylvania-foreign-entity-annual-report` | PA Foreign Entity Annual Report | ~1,400 |
 | `/pennsylvania-business-glossary` | PA Business Glossary (15 terms) | — |
 
+### Comparison pages (Article + FAQPage schema, author E-A-T)
+
+| URL | Title | Word Count |
+|-----|-------|-----------|
+| `/pa-crop-services-vs-northwest-registered-agent` | vs Northwest Registered Agent | ~1,800 |
+| `/pa-crop-services-vs-ct-corporation` | vs CT Corporation | ~1,800 |
+| `/pa-crop-services-vs-zenbusiness` | vs ZenBusiness | ~1,800 |
+| `/pa-crop-services-vs-incfile` | vs Incfile | ~1,800 |
+
 ### City pages (LegalService + areaServed schema)
 
-Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie
+Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre
 
 ---
 
@@ -413,16 +434,16 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie
 - [ ] Google Search Console: add property, verify via DNS TXT, submit sitemap (see `docs/GOOGLE_SEARCH_CONSOLE.md`)
 - [ ] Google Business Profile: create listing (see `docs/GOOGLE_BUSINESS_PROFILE.md`)
 - [ ] Documentero: create service agreement template, set `DOCUMENTERO_TEMPLATE_ID` in Vercel
-- [ ] n8n renewal sequence content (`wRLXTGXW60MDLUnI`)
-- [ ] n8n win-back sequence content (`UGGH8LOU4AR3eXk`)
+- [x] n8n renewal sequence content (`wRLXTGXW60MDLUnI`) — see docs/RENEWAL_EMAIL_SEQUENCE.md
+- [x] n8n win-back sequence content (`UGGH8LOU4AR3eXk`) — see docs/WINBACK_EMAIL_SEQUENCE.md
 - [ ] LinkedIn profile slug → add to author schema `sameAs` in all articles
 - [ ] E&O insurance
 - [ ] Business bank account
 - [ ] CROP mail filing with PA DOS ($70)
 
 ### Future development
-- [ ] Comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile
-- [ ] 5 more city pages: Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre
+- [x] Comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile (added 2026-03-22)
+- [x] 5 more city pages: Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre (added 2026-03-22)
 - [ ] PA Compliance Cost Calculator (interactive tool)
 - [ ] Expand city pages to 300+ words each with local business references
 - [ ] Activate renewal + win-back n8n sequences
