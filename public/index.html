@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li><a href="#partners">Partners</a></li>
 <li><a href="#faq">FAQ</a></li>
 <li><a href="/portal" style="color:var(--gray);font-size:14px;font-weight:500">Client Login</a></li>
-<li><a href="/compliance-check" class="nav-cta">Free checkup</a></li>
+<li><a href="/compliance-check" class="nav-cta">Is my entity OK?</a></li>
 </ul>
 <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">
   <span></span><span></span><span></span>
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <a href="#partners" onclick="closeMobileMenu()">Partners</a>
   <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
   <a href="/portal" onclick="closeMobileMenu()" style="color:var(--gray)">Client Login</a>
-  <a href="/compliance-check" onclick="closeMobileMenu()" style="color:var(--accent);font-weight:700">Free entity checkup →</a>
+  <a href="/compliance-check" onclick="closeMobileMenu()" style="color:var(--accent);font-weight:700">Is my entity compliant? →</a>
 </div>
 
 <section class="hero">
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="trust-bar">
 <div class="container">
-<p>Built for PA business owners who value their time</p>
+<p>Trusted by PA business owners who'd rather focus on their business</p>
 <div class="trust-stats">
 <div class="trust-stat"><div class="num">3.8M+</div><div class="label">PA business entities</div></div>
 <div class="trust-stat"><div class="num">~65</div><div class="label">Total CROPs statewide</div></div>
@@ -225,8 +225,8 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="urgency">
 <div class="container">
-<h2>Something important is changing in 2027</h2>
-<p>Pennsylvania is introducing mandatory annual reports. If yours isn't filed by the deadline, your entity could face <em>administrative dissolution</em>. We're here to make sure that never happens to you — our clients get five reminders plus hands-on filing help.</p>
+<h2>A quiet deadline most PA business owners don't know about</h2>
+<p>Starting in 2027, Pennsylvania will dissolve entities that haven't filed their annual reports. For foreign entities, there's no coming back. We started this company because <em>no business owner should lose what they've built</em> over a $7 filing they forgot about. That's why every one of our clients gets five personal reminders before every deadline.</p>
 </div>
 </section>
 
@@ -234,8 +234,8 @@ document.addEventListener('DOMContentLoaded',function(){
 <section style="background:#f0f4ff;padding:48px 0;text-align:center;border-top:1px solid #e0e8ff;border-bottom:1px solid #e0e8ff">
   <div class="container" style="max-width:640px">
     <div style="display:inline-block;background:#EDE9FE;color:var(--accent);font-size:13px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:16px">Free Resource</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:8px;color:var(--dark)">Stay ahead of the 2027 changes</h2>
-    <p style="color:var(--gray);margin-bottom:24px;font-size:16px">We put together a plain-English guide to everything that's changing for PA businesses. No jargon, no fear-mongering — just what you need to know.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:8px;color:var(--dark)">We wrote this for PA business owners like you</h2>
+    <p style="color:var(--gray);margin-bottom:24px;font-size:16px">A short, clear guide to PA's new annual report requirement and what it means for your entity. Written by Dr. Ike Ohu — no legalese, no scare tactics, just what matters.</p>
     <form id="nl-form" onsubmit="subscribeNewsletter(event)" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:500px;margin:0 auto">
       <input type="email" id="nl-email" placeholder="your@email.com" required
         style="flex:1;min-width:220px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none">
@@ -284,17 +284,29 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 </div>
 </section>
+<section style="padding:64px 0;background:#fff;border-top:1px solid #eee;border-bottom:1px solid #eee">
+<div class="container" style="max-width:680px;text-align:center">
+<div style="font-size:13px;color:var(--accent);text-transform:uppercase;font-weight:600;letter-spacing:1px;margin-bottom:16px">Why this exists</div>
+<h2 style="font-size:32px;margin-bottom:24px">I built this because I needed it myself</h2>
+<p style="color:var(--gray);font-size:16px;line-height:1.8;text-align:left;margin-bottom:16px">When I registered my first LLC in Pennsylvania, I didn't know what a CROP was. I used my home address as the registered office because nobody told me not to. Then I started getting legal documents at my house. Then I almost missed a filing deadline because I was traveling.</p>
+<p style="color:var(--gray);font-size:16px;line-height:1.8;text-align:left;margin-bottom:16px">I'm an engineering professor, a researcher, and a business owner. I understand systems. And the PA compliance system is good — it just has zero tolerance for the business owners who don't know the rules.</p>
+<p style="color:var(--gray);font-size:16px;line-height:1.8;text-align:left;margin-bottom:24px">That's why I built PA CROP Services. Not as a faceless service, but as the compliance team I wished I'd had from day one. Every client gets my direct phone number. Every question gets a real answer. Every deadline gets watched.</p>
+<p style="font-size:15px;font-weight:600;color:var(--dark)">— Dr. Ike Ohu, Founder</p>
+<p style="font-size:13px;color:var(--gray)">PhD Engineering · Licensed PA Notary · Erie, PA</p>
+</div>
+</section>
+
 
 <section class="pricing" id="pricing">
 <div class="container">
 <div class="section-label" style="text-align:center">Pricing</div>
-<h2>Pick the level of care that fits your business.</h2>
-<p>Every plan includes a real person who knows your entity by name. No call centers, no ticket queues.</p>
+<h2>How much protection does your business need?</h2>
+<p>Every plan includes a real person who knows your entity by name. Start with what makes sense — you can always adjust as your business grows.</p>
 <div class="pricing-grid">
 <div class="price-card">
 <div class="price-name">Compliance only</div>
 <div class="price-amount">$99<span>/year</span></div>
-<div class="price-desc">For businesses that just need the essentials handled well.</div>
+<div class="price-desc">Everything you need to stay compliant, nothing you don't.</div>
 <ul class="price-features">
 <li>PA registered office (CROP)</li>
 <li>Mail &amp; process forwarding</li>
@@ -302,13 +314,13 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>Entity status monitoring</li>
 <li>Secure client portal</li>
 </ul>
-<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank">Choose this plan</a>
+<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank">Get started</a>
 </div>
 <div class="price-card featured">
 <div class="price-badge">Most popular</div>
 <div class="price-name">Business starter</div>
 <div class="price-amount">$199<span>/year</span></div>
-<div class="price-desc" style="color:#059669;font-weight:600">Market: $600–900/yr → you save 67%</div>
+<div class="price-desc">Compliance plus a professional web presence — one bill, one team.</div>
 <ul class="price-features">
 <li>Everything in Compliance</li>
 <li>1 domain name (.com/.net)</li>
@@ -316,12 +328,12 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>Business website hosting + SSL</li>
 <li>1-page website included</li>
 </ul>
-<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank">Choose this plan</a>
+<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank">Get started</a>
 </div>
 <div class="price-card">
 <div class="price-name">Business pro</div>
 <div class="price-amount">$349<span>/year</span></div>
-<div class="price-desc" style="color:#059669;font-weight:600">Market: $1,200–2,000/yr → you save 72%</div>
+<div class="price-desc">We handle your filing too. You confirm the details, we do the rest.</div>
 <ul class="price-features">
 <li>Everything in Starter</li>
 <li>Annual report filing handled</li>
@@ -329,12 +341,12 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>5-page website included</li>
 <li>3 domains + priority support</li>
 </ul>
-<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank">Choose this plan</a>
+<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank">Get started</a>
 </div>
 <div class="price-card">
 <div class="price-name">Business empire</div>
 <div class="price-amount">$699<span>/year</span></div>
-<div class="price-desc" style="color:#059669;font-weight:600">Market: $2,500–5,000/yr → you save 78%</div>
+<div class="price-desc">For owners with multiple entities who want one team managing everything.</div>
 <ul class="price-features">
 <li>Everything in Pro</li>
 <li>VPS hosting (dedicated)</li>
@@ -342,7 +354,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <li>10 domains included</li>
 <li>Multi-entity management</li>
 </ul>
-<a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank">Choose this plan</a>
+<a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank">Get started</a>
 </div>
 </div>
 </div>
@@ -406,10 +418,10 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <section class="final-cta" id="signup">
 <div class="container">
-<h2>Ready to stop worrying about PA compliance?</h2>
-<p>We'd love to take this off your plate. Start with a free checkup — we'll tell you exactly where your entity stands.</p>
-<a href="/compliance-check" class="btn-primary" style="font-size:18px;padding:16px 40px;">Check my entity's health →</a>
-<p style="margin-top:16px;font-size:14px;color:rgba(255,255,255,0.7)">Or if you already know what you need, <a href="#pricing" style="color:#fff;text-decoration:underline">see our plans</a></p>
+<h2>Your business has enough to worry about.<br>Compliance shouldn't be one of them.</h2>
+<p>Let's start with a quick checkup. We'll show you exactly where your entity stands — no commitment, no sales pitch. Just clarity.</p>
+<a href="/compliance-check" class="btn-primary" style="font-size:18px;padding:16px 40px;">See where my entity stands →</a>
+<p style="margin-top:16px;font-size:14px;color:rgba(255,255,255,0.7)">Or call us directly: <a href="tel:8144800989" style="color:#fff;text-decoration:underline">814-480-0989</a> &nbsp;·&nbsp; <a href="mailto:hello@pacropservices.com" style="color:#fff;text-decoration:underline">hello@pacropservices.com</a></p>
 </div>
 </section>
 
