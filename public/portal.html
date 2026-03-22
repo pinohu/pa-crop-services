@@ -650,17 +650,36 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <!-- ══ SETTINGS TAB ══ -->
       <div id="tab-settings" class="hidden">
         <div class="page-header"><h1>Account settings</h1><p>Manage your account and preferences</p></div>
-        <div class="card"><div class="card-body">
-          <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;font-size:14px">
-            <div style="font-weight:600;color:var(--ink3)">Email</div><div id="settings-email">—</div>
-            <div style="font-weight:600;color:var(--ink3)">Plan</div><div id="settings-plan">—</div>
-            <div style="font-weight:600;color:var(--ink3)">Since</div><div id="settings-since">—</div>
-            <div style="font-weight:600;color:var(--ink3)">Address</div><div>924 W 23rd St, Erie, PA 16502</div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Your account</span></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:100px 1fr;gap:10px;font-size:14px">
+                <div style="font-weight:600;color:var(--ink3)">Email</div><div id="settings-email">—</div>
+                <div style="font-weight:600;color:var(--ink3)">Plan</div><div id="settings-plan">—</div>
+                <div style="font-weight:600;color:var(--ink3)">Since</div><div id="settings-since">—</div>
+                <div style="font-weight:600;color:var(--ink3)">Address</div><div>924 W 23rd St, Erie, PA 16502</div>
+              </div>
+            </div>
           </div>
-          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-            <p style="font-size:13px;color:var(--ink3)">Need to change your plan or update your information? Contact us at <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or call <a href="tel:8144800989" style="color:var(--accent)">814-480-0989</a>.</p>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Quick actions</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+              <a href="mailto:hello@pacropservices.com?subject=Plan%20change%20request" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Request plan change</a>
+              <a href="mailto:hello@pacropservices.com?subject=Update%20my%20information" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Update contact information</a>
+              <a href="mailto:hello@pacropservices.com?subject=Add%20another%20entity" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%">Add another entity</a>
+              <a href="mailto:hello@pacropservices.com?subject=Account%20cancellation" class="btn btn-ghost btn-sm" style="justify-content:flex-start;width:100%;color:var(--red,#dc2626)">Cancel account</a>
+            </div>
           </div>
-        </div></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-header"><span class="card-title">Contact support</span></div>
+          <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
+            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Email</div><a href="mailto:hello@pacropservices.com" style="color:var(--accent);font-weight:600;font-size:14px">hello@pacropservices.com</a></div>
+            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Phone</div><a href="tel:8144800989" style="color:var(--accent);font-weight:600;font-size:14px">814-480-0989</a></div>
+            <div><div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Hours</div><span style="font-size:14px">Mon-Fri 9am-5pm ET</span></div>
+          </div>
+        </div>
       </div>
 
     </main>
