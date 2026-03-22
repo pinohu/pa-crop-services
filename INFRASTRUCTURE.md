@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — revenue-blocking fixes complete, all workflows updated
+> **Auto-updated on every commit.** Last updated: 2026-03-22 — 8 automation systems deployed (AI chatbot, entity monitor, email triage, lead qualifier, doc router, health scoring, SEO pipeline, partner commissions)
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > and development context. Safe to share with AI assistants continuing work on this codebase.
 
@@ -81,7 +81,15 @@ pa-crop-services/
 │   ├── subscribe.js                 # Newsletter/lead magnet email capture
 │   ├── reset-code.js                # Portal access code recovery
 │   ├── partner-intake.js            # CPA/attorney partner application
-│   └── entity-request.js            # Entity formation lead flow
+│   ├── entity-request.js            # Entity formation lead flow
+│   ├── chat.js                      # AI compliance chatbot (Groq-powered)
+│   ├── entity-monitor.js            # PA DOS entity status checker (n8n daily)
+│   ├── email-triage.js              # AI email classifier + draft responder
+│   ├── qualify-lead.js              # AI 5-dimension lead scorer
+│   ├── classify-document.js         # AI document OCR classifier + summarizer
+│   ├── client-health.js             # 5-dimension client health + churn score
+│   ├── generate-article.js          # AI SEO article generator (brand voice)
+│   └── partner-commission.js        # Referral tracking + commission calculator
 │
 ├── context/                         # dynasty-seomachine brand voice
 │   ├── brand-voice.md
@@ -146,7 +154,8 @@ python3 push_to_github.py  # uses token from INFRASTRUCTURE.md
 | `TWENTY_I_OAUTH` | 20i OAuth key | `c0471cadcfe5a7837` |
 | `ACUMBAMAIL_API_KEY` | Acumbamail email lists | `0cdbad074aa140a5bf7274027a53f780` |
 | `ADMIN_SECRET_KEY` | Admin dashboard auth | `CROP-ADMIN-2026-IKE` |
-| `DOCUMENTERO_API_KEY` | PDF agreement generation | `R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A` |
+| `GROQ_API_KEY` | AI chatbot + email triage + lead scoring | `gsk_4Rns...` (set in code, add to env for security) |
+| `DOCUMENTERO_API_KEY` | PDF agreement generation (replaced by native) | `R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A` |
 | `DOCUMENTERO_TEMPLATE_ID` | Service agreement template | Set after Documentero template created |
 | `TWENTY_I_RESELLER_ID` | 20i reseller account ID | `10455` |
 | `TWENTY_I_DEFAULT_TYPE_REF` | Default package type for new hosting | `80397` (Linux Elevate) |
@@ -216,6 +225,10 @@ def push_file(remote_path, content_str, message):
 | `9j4pW3PmmYufMG8T` | CROP — Partner Onboarding | `crop-partner-onboarding` | ✅ Active |
 | `wRLXTGXW60MDLUnI` | CROP — Renewal Sequence | (scheduled) | ✅ Content loaded |
 | `UGGPH8LOU4AR3eXk` | CROP — Win-Back (Churned Client Recovery) | (scheduled) | ✅ Content loaded |
+| `cEC0aLvV4CMEUYHn` | CROP — Daily Entity Status Monitor | (daily 6AM) | ✅ Created |
+| `4RV1ZzWSkR4KkUjS` | CROP — AI Email Triage | (IMAP trigger) | ✅ Created |
+| `EfsC4jvIcS9j4RK0` | CROP — Weekly Client Health Score | (weekly Mon 7AM) | ✅ Created |
+| `9MNIDxWss0ew6Ngx` | CROP — SEO Content Pipeline | `crop-generate-article` | ✅ Created |
 
 ### n8n Credential IDs (referenced in workflows)
 
