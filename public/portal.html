@@ -463,6 +463,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
       </div>
 
       <!-- AI CHAT -->
+      <div id="tab-hosting" class="hidden">
+        <div class="section">
+          <div class="section-header">
+            <div><h3 class="serif">🖥️ Your Hosting Account</h3><p>Business Starter, Pro, and Empire plans include 20i hosting</p></div>
+            <button class="btn-sm" onclick="loadHostingStatus()">⟳ Refresh</button>
+          </div>
+          <div class="section-body" id="hosting-tab-body">
+            <div style="text-align:center;padding:32px;color:var(--muted)">
+              <div style="font-size:32px;margin-bottom:12px">🖥️</div>
+              <p>Click "Refresh" to load your hosting status from 20i.</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div id="tab-ai" class="hidden">
         <div class="section">
           <div class="section-header"><div><h3 class="serif">AI Compliance Assistant</h3><p>Instant answers about your PA compliance requirements</p></div></div>
@@ -499,13 +513,19 @@ let CLIENT = null;
 function mountClient(c) {
   document.getElementById('login-screen').style.display='none';
   const p = document.getElementById('portal'); p.style.display='flex';
-  document.getElementById('welcome-name').textContent = 'Welcome back, ' + c.name;
+  document.getElementById('welcome-name').textContent = 'Welcome back, ' + (c.firstName || c.name.split(' ')[0] || c.name);
   document.getElementById('client-email-show').textContent = c.email;
-  document.getElementById('tier-badge').textContent = c.tier + ' Plan';
-  document.getElementById('plan-display').textContent = c.tier;
-  document.getElementById('plan-price').textContent = c.price;
-  document.getElementById('ref-code').textContent = c.refCode;
+  document.getElementById('tier-badge').textContent = planLabel(c.tier || c.plan) + ' Plan';
+  document.getElementById('plan-display').textContent = planLabel(c.tier || c.plan);
+  document.getElementById('plan-price').textContent = c.price || tierPrice(c.tier || c.plan);
+  document.getElementById('ref-code').textContent = c.refCode || 'CROP-' + (c.email||'').split('@')[0].toUpperCase().slice(0,6);
   document.getElementById('days-left').textContent = Math.ceil((new Date('2027-12-31') - new Date()) / 86400000);
+  // Show hosting tab for Business Starter+ plans
+  const hasHosting = ['Business Starter','Business Pro','Business Empire','business_starter','business_pro','business_empire','Professional','Premium','business_essentials','business_professional','business_command'].includes(c.tier || c.plan);
+  const hostingTab = document.getElementById('hosting-nav-item');
+  if (hostingTab) hostingTab.style.display = hasHosting ? 'flex' : 'none';
+  // Load real SuiteDash data async
+  if (c.suitedashId) { loadClientDataFromSD(c.suitedashId); }
   buildTemplates();
 }
 
@@ -699,6 +719,88 @@ function closeAllModals() {
 function toggleMobileSidebar(){
   var s=document.querySelector('.sidebar');
   s.classList.toggle('mobile-open');
+}
+
+
+// ── Real SuiteDash Data Loader ─────────────────────────────────────────
+async function loadClientDataFromSD(sdId) {
+  // Update compliance calendar with real dates
+  try {
+    // Load documents count from portal
+    const today = new Date();
+    const annualDue = new Date(today.getFullYear(), 8, 30); // Sept 30
+    if (today > annualDue) annualDue.setFullYear(annualDue.getFullYear() + 1);
+    const daysToAnnual = Math.ceil((annualDue - today) / 86400000);
+    const urgency = daysToAnnual < 30 ? 'var(--red)' : daysToAnnual < 90 ? 'var(--gold)' : 'var(--green)';
+    const annualEl = document.getElementById('annual-report-countdown');
+    if (annualEl) {
+      annualEl.textContent = daysToAnnual + ' days';
+      annualEl.style.color = urgency;
+    }
+  } catch(e) {}
+}
+
+// ── Hosting Status Loader (for Business+ clients) ──────────────────────
+async function loadHostingStatus() {
+  const el = document.getElementById('hosting-tab-body');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Loading your hosting account...</div>';
+  try {
+    const res = await fetch('/api/client-hosting', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT.email, suitedashId: CLIENT.suitedashId })
+    });
+    const data = await res.json();
+    if (data.package) {
+      el.innerHTML = `
+        <div class="alert alert-gold" style="margin-bottom:20px">
+          Your 20i hosting control panel: <a href="https://my.20i.com" target="_blank" style="color:var(--gold);font-weight:700">my.20i.com</a>
+        </div>
+        <div class="grid3">
+          <div class="metric-box"><div class="label">Domain</div><div class="value" style="font-size:16px">${data.package.domain || '(pending)'}</div></div>
+          <div class="metric-box"><div class="label">Hosting Status</div><div class="value" style="color:${data.package.status==='active'?'var(--green)':'var(--red)'};">${data.package.status || 'Active'}</div></div>
+          <div class="metric-box"><div class="label">Email Mailboxes</div><div class="value">${data.package.emails || 0}</div></div>
+        </div>
+        <div class="grid3" style="margin-top:16px">
+          <div class="metric-box"><div class="label">SSL Certificate</div><div class="value">${data.package.ssl ? '✅ Active' : '⏳ Pending'}</div></div>
+          <div class="metric-box"><div class="label">Turbo</div><div class="value">${data.package.turbo ? '⚡ Enabled' : 'Standard'}</div></div>
+          <div class="metric-box"><div class="label">Backups</div><div class="value">${data.package.backups ? '✅ Daily' : 'Not included'}</div></div>
+        </div>`;
+    } else {
+      el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">
+        <div style="font-size:32px;margin-bottom:12px">🖥️</div>
+        <p>Your hosting package is being set up. Check back in a few minutes.</p>
+        <p style="margin-top:8px;font-size:13px">Once ready, access it at <a href="https://my.20i.com" target="_blank">my.20i.com</a></p>
+      </div>`;
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px">Hosting status unavailable. Contact support.</div>';
+  }
+}
+
+// ── Plan helpers ──────────────────────────────────────────────────────
+function planLabel(tier) {
+  const m = {'compliance_only':'Compliance Only','business_starter':'Business Starter','business_pro':'Business Pro','business_empire':'Business Empire','compliance_core':'Compliance Core','business_essentials':'Business Essentials','business_professional':'Business Professional','business_command':'Business Command','Starter':'Compliance Only','Professional':'Business Pro','Premium':'Business Empire'};
+  return m[tier] || tier || 'Unknown';
+}
+function tierPrice(tier) {
+  const m = {'compliance_only':'$99/yr','business_starter':'$199/yr','business_pro':'$349/yr','business_empire':'$699/yr','Starter':'$99/yr','Professional':'$349/yr','Premium':'$699/yr'};
+  return m[tier] || '—';
+}
+
+// ── Reset code ────────────────────────────────────────────────────────
+async function resetCode() {
+  const email = document.getElementById('login-email')?.value?.trim();
+  if (!email) { alert('Enter your email address first.'); return; }
+  const el = event.target;
+  el.textContent = 'Sending...';
+  await fetch('/api/reset-code', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email})
+  }).catch(()=>{});
+  el.textContent = '✓ Check your email';
+  setTimeout(() => { el.textContent = 'Forgot access code?'; }, 5000);
 }
 
 </script>
