@@ -1,0 +1,53 @@
+// PA CROP Services — /api/entity-request
+// Entity formation / add-entity lead capture
+// POST { entityName, entityType, email, phone, notes, clientEmail }
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { entityName, entityType, email, phone, notes, clientEmail } = req.body || {};
+  const contactEmail = email || clientEmail;
+  if (!contactEmail) return res.status(400).json({ error: 'Email required' });
+
+  const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
+  const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
+
+  try {
+    // Create a task/project in SuiteDash for Ike to follow up
+    if (SD_PUBLIC && SD_SECRET) {
+      // Update contact with entity request tag
+      const sdSearch = await fetch(
+        `https://app.suitedash.com/secure-api/contacts?email=${encodeURIComponent(contactEmail.toLowerCase())}&limit=1`,
+        { headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET } }
+      ).then(r => r.json()).catch(() => ({ data: [] }));
+
+      const contact = (sdSearch?.data || [])[0];
+      if (contact) {
+        await fetch(`https://app.suitedash.com/secure-api/contacts/${contact.id}`, {
+          method: 'PUT',
+          headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tags: ['entity-formation-request'] })
+        }).catch(() => {});
+      }
+    }
+
+    // Notify Ike via n8n
+    await fetch('https://n8n.audreysplace.place/webhook/crop-entity-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entityName, entityType, email: contactEmail, phone, notes })
+    }).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Entity formation request received. We will contact you within 1 business day.'
+    });
+  } catch (err) {
+    console.error('Entity request error:', err);
+    return res.status(500).json({ error: 'Internal error. Please call 814-480-0989.' });
+  }
+}
