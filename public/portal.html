@@ -649,19 +649,43 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <!-- ══ SETTINGS TAB ══ -->
       <div id="tab-settings" class="hidden">
-        <div class="page-header"><h1>Account settings</h1><p>Manage your account and preferences</p></div>
+        <div class="page-header"><h1>Settings</h1><p>Manage your account and notification preferences</p></div>
         <div class="grid-2">
-                  <div class="grid-2">
-          <div class="card">
-            <div class="card-header"><span class="card-title">Your account</span></div>
-            <div class="card-body">
-              <div style="display:grid;grid-template-columns:100px 1fr;gap:10px;font-size:14px">
-                <div style="font-weight:600;color:var(--ink3)">Email</div><div id="settings-email">—</div>
-                <div style="font-weight:600;color:var(--ink3)">Plan</div><div id="settings-plan">—</div>
-                <div style="font-weight:600;color:var(--ink3)">Since</div><div id="settings-since">—</div>
-                <div style="font-weight:600;color:var(--ink3)">Address</div><div>924 W 23rd St, Erie, PA 16502</div>
-              </div>
+          <div class="card"><div class="card-header"><span class="card-title">Account details</span></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:120px 1fr;gap:12px 20px;font-size:14px">
+              <span style="color:var(--ink3);font-weight:600">Email</span><span id="set-email"></span>
+              <span style="color:var(--ink3);font-weight:600">Plan</span><span id="set-plan"></span>
+              <span style="color:var(--ink3);font-weight:600">Since</span><span id="set-since"></span>
+              <span style="color:var(--ink3);font-weight:600">Referral code</span><span id="set-ref"></span>
             </div>
+          </div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Notifications</span></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                <input type="checkbox" id="pref-reminders" checked onchange="savePref(this)">
+                <span>Annual report reminders</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                <input type="checkbox" id="pref-docs" checked onchange="savePref(this)">
+                <span>Document scan notifications</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                <input type="checkbox" id="pref-newsletter" checked onchange="savePref(this)">
+                <span>Compliance newsletter</span>
+              </label>
+              <p id="pref-saved" style="font-size:12px;color:var(--green);display:none">Saved</p>
+            </div>
+          </div></div>
+        </div>
+        <div class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">Actions</span></div>
+        <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap">
+          <a href="mailto:hello@pacropservices.com?subject=Plan Change Request" class="btn btn-ghost btn-sm">Request plan change</a>
+          <a href="mailto:hello@pacropservices.com?subject=Update Contact Info" class="btn btn-ghost btn-sm">Update contact info</a>
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('set-ref')?.textContent||'');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
+        </div></div>
+      </div>
           </div>
           <div class="card">
             <div class="card-header"><span class="card-title">Quick actions</span></div>
