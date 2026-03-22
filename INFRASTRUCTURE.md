@@ -93,7 +93,8 @@ pa-crop-services/
 │   ├── classify-document.js         # AI document OCR classifier + summarizer
 │   ├── client-health.js             # 5-dimension client health + churn predictor
 │   ├── generate-article.js          # AI SEO article generator (brand voice)
-│   └── partner-commission.js        # Referral tracking + commission calculator
+│   ├── partner-commission.js        # Referral tracking + commission calculator
+│   └── portal-health.js             # Session-auth health score (no admin key)
 │
 ├── context/                         # dynasty-seomachine brand voice
 │   ├── brand-voice.md
@@ -475,6 +476,31 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
       AI assistant inline on dashboard, entity status hero, health score KPI, keyboard shortcuts
 - [x] All n8n workflows activated (20 active)
 - [x] Renewal + Win-Back workflows rebuilt from scratch (clean n8n v2 format)
+
+
+### Post-Audit Fixes Applied (2026-03-22)
+
+**P0 Security (RESOLVED):**
+- Created `/api/portal-health.js` — calculates health score using email verification, no admin key
+- Removed `CROP-ADMIN-2026-IKE` from portal.html — was exposed in client-side JS
+- Portal now calls `/api/portal-health` instead of `/api/client-health`
+- Unverified emails rejected with HTTP 403 when SuiteDash is configured
+
+**P1 SEO (RESOLVED):**
+- Trimmed titles to ≤70ch on 12 pages (articles, comparisons, city pages)
+- Trimmed meta descriptions to ≤160ch on 14 pages
+- Added OG tags to compliance-check.html
+- Added canonical + noindex to portal.html
+
+**P2 Ops (RESOLVED):**
+- Deleted stale CROP-16 and CROP-17 inactive workflows
+- 20 active, 0 inactive CROP workflows remain
+
+**Remaining (Ike action):**
+- [ ] Add `GROQ_API_KEY` to Vercel: Settings → Environment Variables
+  - Key: `GROQ_API_KEY`
+  - Value: `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`
+  - Environments: Production + Preview + Development
 
 ### Needs Ike action
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
