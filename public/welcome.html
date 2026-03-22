@@ -4,86 +4,153 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to PA CROP Services</title>
-<meta name="description" content="Welcome to PA CROP Services. Your payment has been received. Here's what happens next.">
 <meta name="robots" content="noindex">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#1B4F8A;--accent:#534AB7;--dark:#1E2333;--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669}
-body{font-family:'DM Sans',sans-serif;color:var(--dark);background:var(--white);line-height:1.7}
+:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#1a56db;--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--radius:12px;--font:'Plus Jakarta Sans',system-ui,sans-serif;--serif:'Fraunces',Georgia,serif;--mono:'JetBrains Mono',monospace}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6}
 .container{max-width:640px;margin:0 auto;padding:0 24px}
-h1,h2{font-family:'DM Serif Display',serif}
-a{color:var(--accent)}
-nav{padding:16px 0;border-bottom:1px solid #eee;text-align:center}
-.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--dark)}
-.logo span{color:var(--accent)}
-.welcome{padding:80px 0;text-align:center}
-.check{width:80px;height:80px;background:#ECFDF5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 32px}
-.check svg{width:40px;height:40px;color:var(--green)}
-.welcome h1{font-size:36px;margin-bottom:16px}
-.welcome p{font-size:18px;color:var(--gray);margin-bottom:32px}
-.steps{text-align:left;background:var(--light);border-radius:12px;padding:32px;margin-bottom:32px}
-.steps h2{font-size:20px;margin-bottom:16px}
-.step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start}
-.step-num{min-width:32px;height:32px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
-.step-text{font-size:15px}
-.step-text strong{display:block;margin-bottom:2px}
-.contact{font-size:15px;color:var(--gray)}
-.contact a{font-weight:500}
-footer{background:var(--dark);color:rgba(255,255,255,0.6);padding:40px 0;font-size:13px;text-align:center;margin-top:80px}
+nav{padding:16px 0;border-bottom:1px solid var(--border);background:var(--bg2)}
+nav .container{display:flex;align-items:center;gap:10px}
+.mark{width:28px;height:28px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.mark svg{width:14px;height:14px;fill:#fff}
+.brand{font-family:var(--serif);font-weight:700;font-size:16px}
+.hero{padding:60px 0 40px;text-align:center}
+.check-circle{width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.check-circle svg{width:32px;height:32px;color:var(--green)}
+.hero h1{font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px}
+.hero p{font-size:16px;color:var(--ink3)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px}
+.card-body{padding:20px}
+.step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+.step:last-child{margin-bottom:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.step-num.done{background:var(--green)}
+.step-text{font-size:14px;color:var(--ink2)}
+.step-text strong{display:block;color:var(--ink);margin-bottom:2px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.field input,.field select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--bg);outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent);background:var(--bg2)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;width:100%}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:#333}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-accent{background:var(--accent);color:#fff}
+.success-msg{display:none;text-align:center;padding:20px;color:var(--green);font-weight:600}
+.access-code{font-family:var(--mono);font-size:18px;letter-spacing:3px;background:var(--bg);padding:12px 20px;border-radius:8px;border:1px solid var(--border);text-align:center;margin:12px 0}
+.footer{text-align:center;padding:40px 0;font-size:13px;color:var(--ink3)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
-<script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "vzhtq2nted");
-</script>
 </head>
 <body>
-<nav><a href="/" class="logo">PA <span>CROP</span> Services</a></nav>
+<nav><div class="container"><div class="mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/></svg></div><span class="brand">PA CROP Services</span></div></nav>
 
-<section class="welcome">
+<section class="hero">
 <div class="container">
-<div class="check"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div>
-
-<h1>Welcome to PA CROP Services!</h1>
-<p>Your payment has been received. Here's what happens next.</p>
-
-<div class="steps">
-<h2>Your onboarding timeline</h2>
-
-<div class="step">
-<div class="step-num">1</div>
-<div class="step-text"><strong>Right now</strong>A welcome email is on its way with your <strong>portal access code</strong>. Check your inbox &#8212; the code looks like: <code style="background:#f0f4ff;padding:2px 8px;border-radius:4px;font-family:monospace">CROP + 4 letters + 4 numbers</code></div>
-</div>
-
-<div class="step">
-<div class="step-num">2</div>
-<div class="step-text"><strong>Within 1 business day</strong>We'll verify your entity information with the PA Department of State and set up your compliance calendar.</div>
-</div>
-
-<div class="step">
-<div class="step-num">3</div>
-<div class="step-text"><strong>Within 2 business days</strong>You'll receive your service agreement for e-signature. Once signed, you can list PA CROP Services as your registered office on any state filing.</div>
-</div>
-
-<div class="step">
-<div class="step-num">4</div>
-<div class="step-text"><strong>Ongoing</strong>We monitor your compliance deadlines, scan and forward documents same-day, and send reminders before every filing deadline.</div>
-</div>
-</div>
-
-<a href="/portal" style="display:block;text-align:center;background:#534AB7;color:#fff;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none;margin-bottom:24px;max-width:300px;margin-left:auto;margin-right:auto">Go to your portal &rarr;</a>
-<p class="contact">Questions? Email <a href="mailto:hello@pacropservices.com">hello@pacropservices.com</a> or call <a href="tel:+18144800989">814-480-0989</a>. We respond within one business day.</p>
+<div class="check-circle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div>
+<h1>Payment received</h1>
+<p>One quick step: tell us about your entity so we can set everything up.</p>
 </div>
 </section>
 
-<footer>
 <div class="container">
-<p>PA CROP Services &bull; PA Registered Office Services, LLC &bull; Erie, PA</p>
+
+<!-- Entity Intake Form -->
+<div class="card" id="intake-card">
+  <div class="card-header">Your entity details</div>
+  <div class="card-body">
+    <div class="field">
+      <label>Entity name (as registered with PA DOS)</label>
+      <input type="text" id="ei-name" placeholder="Acme Consulting LLC">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Entity type</label>
+        <select id="ei-type">
+          <option value="LLC">LLC</option>
+          <option value="Corporation">Corporation</option>
+          <option value="LP">Limited Partnership</option>
+          <option value="LLP">LLP</option>
+          <option value="Foreign LLC">Foreign LLC</option>
+          <option value="Foreign Corp">Foreign Corporation</option>
+          <option value="Nonprofit">Nonprofit</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>PA DOS file number (if known)</label>
+        <input type="text" id="ei-number" placeholder="e.g. 7654321">
+      </div>
+    </div>
+    <div class="field">
+      <label>Your email (used for checkout)</label>
+      <input type="email" id="ei-email" placeholder="you@business.com">
+    </div>
+    <button class="btn btn-primary" onclick="submitEntityIntake()" id="ei-btn">Save and continue</button>
+    <div class="success-msg" id="ei-success">
+      <p style="font-size:18px;margin-bottom:8px">Entity details saved</p>
+      <p style="font-size:14px;color:var(--ink2);font-weight:400">We are verifying your entity with the PA Department of State. Check your email for your portal access code.</p>
+    </div>
+  </div>
 </div>
-</footer>
+
+<!-- What happens next -->
+<div class="card">
+  <div class="card-header">What happens next</div>
+  <div class="card-body">
+    <div class="step"><div class="step-num done">&#10003;</div><div class="step-text"><strong>Payment received</strong>Your plan is now active.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Check your email</strong>Your portal access code is on its way. It looks like: <code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:13px">KR4N7P</code></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Within 1 business day</strong>We verify your entity with PA DOS and set up your compliance calendar.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Ongoing</strong>We monitor deadlines, scan documents same-day, and send reminders before every filing.</div></div>
+  </div>
+</div>
+
+<a href="/portal" class="btn btn-accent" style="margin-bottom:20px">Go to your portal &rarr;</a>
+
+<div class="footer">
+  <p>Questions? <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or <a href="tel:8144800989" style="color:var(--accent)">814-480-0989</a></p>
+  <p style="margin-top:8px">PA Registered Office Services, LLC &bull; Licensed PA CROP &bull; 15 Pa. C.S. &sect;109</p>
+</div>
+
+</div>
+
+<script>
+// Pre-fill email from URL params (Stripe can pass via success_url)
+const params = new URLSearchParams(window.location.search);
+const emailParam = params.get('email') || params.get('customer_email') || '';
+if (emailParam) document.getElementById('ei-email').value = emailParam;
+
+async function submitEntityIntake() {
+  const name = document.getElementById('ei-name').value.trim();
+  const type = document.getElementById('ei-type').value;
+  const number = document.getElementById('ei-number').value.trim();
+  const email = document.getElementById('ei-email').value.trim();
+  
+  if (!name || !email) { alert('Please enter your entity name and email.'); return; }
+  
+  const btn = document.getElementById('ei-btn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/entity-intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, entityName: name, entityType: type, entityNumber: number })
+    });
+    const data = await res.json();
+    
+    // Show success
+    btn.style.display = 'none';
+    document.querySelectorAll('.field, .field-row').forEach(f => f.style.display = 'none');
+    document.getElementById('ei-success').style.display = 'block';
+  } catch(e) {
+    btn.textContent = 'Save and continue'; btn.disabled = false;
+    alert('Connection error. Please try again.');
+  }
+}
+</script>
 </body>
 </html>
