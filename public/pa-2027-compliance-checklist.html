@@ -239,5 +239,6 @@ async function saveChecklist(){
 // Restore state
 try{var saved=JSON.parse(localStorage.getItem("pa_checklist")||"{}");Object.keys(saved).forEach(function(k){if(saved[k]){var items=document.querySelectorAll(".check-item");items.forEach(function(i){if(i.textContent.trim().slice(0,30)===k){i.classList.add("done");checkState[k]=true;}});}});updateProgress();}catch(e){}
 </script>
+<script src="/embed/chatbot.js" defer></script>
 </body>
 </html>
