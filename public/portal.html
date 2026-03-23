@@ -433,6 +433,18 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           AI Assistant<kbd>A</kbd></div>
       </div>
       <div class="nav-group">
+        <div class="nav-label">Learn & Grow</div>
+        <div class="nav-item" onclick="setTab('knowledge',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          Knowledge Base</div>
+        <div class="nav-item" onclick="setTab('certification',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88"/></svg>
+          Certification</div>
+        <div class="nav-item" onclick="setTab('multistate',this)" id="nav-multistate" style="display:none">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          Multi-State</div>
+      </div>
+      <div class="nav-group">
         <div class="nav-label">Account</div>
         <div class="nav-item" onclick="setTab('referral',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -730,6 +742,41 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       </div>
 
       <!-- ══ SETTINGS TAB ══ -->
+      <!-- ══ KNOWLEDGE BASE TAB ══ -->
+      <div id="tab-knowledge" class="hidden">
+        <div class="page-header"><h1>Knowledge Base</h1><p>Self-service answers to common PA compliance questions</p></div>
+        <div style="margin-bottom:16px">
+          <input type="text" id="kb-search" placeholder="Search knowledge base..." oninput="searchKB(this.value)" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-lg);font-size:15px">
+        </div>
+        <div id="kb-articles" class="card"><div class="card-body" style="padding:0"><div style="padding:20px;text-align:center;color:var(--ink3)">Loading...</div></div></div>
+      </div>
+
+      <!-- ══ MULTI-STATE TAB ══ -->
+      <div id="tab-multistate" class="hidden">
+        <div class="page-header"><h1>Multi-State Monitoring</h1><p>Track entity compliance across multiple states</p></div>
+        <div class="card"><div class="card-header"><span class="card-title">Monitored States</span></div>
+        <div class="card-body" id="ms-list"><p style="color:var(--ink3);font-size:14px">Loading state data...</p></div></div>
+        <div class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">+ Add State</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:8px">
+            <select id="ms-state" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:#fff">
+              <option value="NJ">New Jersey</option><option value="NY">New York</option><option value="DE">Delaware</option><option value="OH">Ohio</option><option value="MD">Maryland</option>
+            </select>
+            <input type="text" id="ms-entity" placeholder="Entity name in this state" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
+            <button class="btn btn-accent btn-sm" onclick="addState()">Add</button>
+          </div>
+          <p id="ms-msg" style="font-size:12px;display:none;margin-top:8px"></p>
+        </div></div>
+      </div>
+
+      <!-- ══ CERTIFICATION TAB ══ -->
+      <div id="tab-certification" class="hidden">
+        <div class="page-header"><h1>Compliance Certification</h1><p>Complete our 5-lesson course and earn your PA Compliance Certified badge</p></div>
+        <div id="cert-status" class="card"><div class="card-body" style="text-align:center;padding:32px"><p style="color:var(--ink3)">Loading certification status...</p></div></div>
+        <div id="cert-course" class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">📚 Course Lessons</span></div>
+        <div class="card-body" id="cert-lessons"></div></div>
+      </div>
+
       <div id="tab-settings" class="hidden">
         <div class="page-header"><h1>Settings</h1><p>Manage your account and notification preferences</p></div>
         <div class="grid-2">
@@ -882,6 +929,7 @@ function mountClient(c) {
   loadClientContext(c);
   if(typeof initSettings === 'function') initSettings(c);
   if(typeof checkUpgradeEligibility === 'function') checkUpgradeEligibility();
+  if(typeof initNewTabs === 'function') initNewTabs();
 }
 async function loadClientContext(c) {
   try {
@@ -1432,6 +1480,124 @@ document.addEventListener('click', function(e) {
   if (bell && panel && !bell.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
 });
 
+
+// ─── KNOWLEDGE BASE ───
+async function searchKB(query) {
+  const container = document.getElementById('kb-articles');
+  if (!container) return;
+  try {
+    const url = query ? `/api/knowledge-base?q=${encodeURIComponent(query)}` : '/api/knowledge-base';
+    const r = await fetch(url);
+    const data = await r.json();
+    const articles = data.results || data.articles || [];
+    if (!articles.length) { container.innerHTML = '<div class="card-body"><p style="color:var(--ink3);text-align:center">No results found</p></div>'; return; }
+    container.innerHTML = '<div class="card-body" style="padding:0">' + articles.map(a =>
+      '<div style="padding:16px 20px;border-bottom:1px solid var(--border)">' +
+      '<h3 style="font-size:15px;font-weight:600;color:var(--ink);margin:0 0 6px">' + a.q + '</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:0;line-height:1.5">' + a.a + '</p>' +
+      '<span style="font-size:11px;color:var(--ink3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-top:6px;display:inline-block">' + (a.category || 'general') + '</span>' +
+      '</div>'
+    ).join('') + '</div>';
+  } catch(e) { container.innerHTML = '<div class="card-body"><p style="color:var(--ink3)">Error loading knowledge base</p></div>'; }
+}
+
+// ─── MULTI-STATE ───
+async function loadMultiState() {
+  if (!CLIENT?.email) return;
+  const tier = CLIENT?.tier || 'compliance';
+  const msNav = document.getElementById('nav-multistate');
+  if (msNav && (tier === 'pro' || tier === 'empire')) msNav.style.display = 'flex';
+  
+  try {
+    const r = await fetch('/api/multi-state?email=' + encodeURIComponent(CLIENT.email));
+    const data = await r.json();
+    const list = document.getElementById('ms-list');
+    if (!list) return;
+    const states = data.monitoredStates || [];
+    if (!states.length) { list.innerHTML = '<p style="color:var(--ink3);font-size:14px">No additional states monitored. Add states where your entity operates.</p>'; return; }
+    list.innerHTML = states.map(s =>
+      '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:8px">' +
+      '<strong style="font-size:16px;color:var(--accent)">' + (s.state || '?') + '</strong>' +
+      '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + (s.entityName || s.stateInfo?.name || '') + '</div>' +
+      '<div style="font-size:12px;color:var(--ink3)">Status: ' + (s.status || 'pending') + '</div></div></div>'
+    ).join('');
+  } catch(e) {}
+}
+
+async function addState() {
+  const state = document.getElementById('ms-state').value;
+  const entity = document.getElementById('ms-entity').value.trim();
+  const msg = document.getElementById('ms-msg');
+  if (!entity) { msg.textContent = 'Enter entity name'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; return; }
+  try {
+    await fetch('/api/multi-state', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, states: [{ state, entityName: entity }] })
+    });
+    document.getElementById('ms-entity').value = '';
+    msg.textContent = '✓ State added'; msg.style.color = 'var(--green,#6B8F71)'; msg.style.display = 'block';
+    loadMultiState();
+  } catch(e) { msg.textContent = 'Error'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; }
+}
+
+// ─── CERTIFICATION ───
+async function loadCertification() {
+  if (!CLIENT?.email) return;
+  try {
+    const r = await fetch('/api/certification?email=' + encodeURIComponent(CLIENT.email));
+    const data = await r.json();
+    const statusEl = document.getElementById('cert-status');
+    const lessonsEl = document.getElementById('cert-lessons');
+    
+    if (data.certified) {
+      statusEl.innerHTML = '<div class="card-body" style="text-align:center;padding:32px">' +
+        '<div style="font-size:48px;margin-bottom:12px">🎓</div>' +
+        '<h2 style="color:var(--green,#6B8F71);margin:0 0 8px">PA Compliance Certified!</h2>' +
+        '<p style="color:var(--ink3);font-size:14px">Awarded ' + (data.certifiedDate || '') + '</p>' +
+        (data.embedCode ? '<div style="margin-top:16px"><p style="font-size:13px;color:var(--ink3);margin-bottom:8px">Add this badge to your website:</p><code style="display:block;background:var(--bg);padding:8px 12px;border-radius:var(--radius);font-size:11px;word-break:break-all;text-align:left">' + data.embedCode.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></div>' : '') +
+        '</div>';
+    } else {
+      const progress = data.progress || '0/5';
+      statusEl.innerHTML = '<div class="card-body" style="text-align:center;padding:24px">' +
+        '<div style="font-size:36px;margin-bottom:8px">📚</div>' +
+        '<p style="font-size:16px;font-weight:600;color:var(--ink)">Progress: ' + progress + ' lessons complete</p>' +
+        '<div style="background:var(--border);border-radius:20px;height:8px;margin:12px auto;max-width:300px"><div style="background:var(--accent);border-radius:20px;height:8px;width:' + (parseInt(progress)*20) + '%"></div></div>' +
+        '<p style="font-size:13px;color:var(--ink3)">Complete all 5 lessons to earn your PA Compliance Certified badge</p></div>';
+    }
+
+    // Load course lessons
+    const courseR = await fetch('/api/onboarding-course');
+    const courseData = await courseR.json();
+    const lessons = courseData?.course?.lessons || [];
+    const completedCount = parseInt((data.progress||'0').split('/')[0]) || 0;
+    lessonsEl.innerHTML = lessons.map(l =>
+      '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="width:32px;height:32px;border-radius:50%;background:' + (l.id <= completedCount ? 'var(--green,#6B8F71)' : 'var(--border)') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">' + (l.id <= completedCount ? '✓' : l.id) + '</div>' +
+      '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--ink)">' + l.title + '</div>' +
+      '<div style="font-size:12px;color:var(--ink3)">' + l.duration + ' · ' + l.topics.join(', ') + '</div></div>' +
+      (l.id === completedCount + 1 ? '<button class="btn btn-accent btn-sm" onclick="completeLesson(' + l.id + ')">Start →</button>' : '') +
+      (l.id <= completedCount ? '<span style="font-size:12px;color:var(--green,#6B8F71);font-weight:600">Complete</span>' : '') +
+      '</div>'
+    ).join('');
+  } catch(e) {}
+}
+
+async function completeLesson(id) {
+  try {
+    await fetch('/api/certification', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, action: 'complete_lesson', lessonId: id })
+    });
+    loadCertification();
+  } catch(e) {}
+}
+
+// ─── INIT NEW TABS ON AUTH ───
+function initNewTabs() {
+  searchKB('');
+  loadMultiState();
+  loadCertification();
+}
 
 // ─── ERROR DISPLAY HELPER ───
 function showError(containerId, message, retryFn) {
