@@ -5,16 +5,16 @@
 var style = document.createElement('style');
 style.textContent = `
 .crop-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;
-  background:#1a56db;color:#fff;border:none;cursor:pointer;z-index:9000;
-  box-shadow:0 4px 20px rgba(26,86,219,.35);display:flex;align-items:center;justify-content:center;
+  background:#0C1220;color:#fff;border:none;cursor:pointer;z-index:9000;
+  box-shadow:0 4px 20px rgba(12,18,32,.25);display:flex;align-items:center;justify-content:center;
   transition:all .25s cubic-bezier(.4,0,.2,1)}
-.crop-fab:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(26,86,219,.45)}
+.crop-fab:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(12,18,32,.35)}
 .crop-fab svg{width:24px;height:24px;transition:transform .2s}
 .crop-fab.open svg{transform:rotate(90deg)}
 .crop-panel{position:fixed;bottom:90px;right:24px;width:400px;max-width:calc(100vw - 48px);
   height:520px;max-height:calc(100vh - 120px);background:#fff;border-radius:20px;
   box-shadow:0 12px 48px rgba(0,0,0,.18);display:none;flex-direction:column;z-index:9001;
-  overflow:hidden;font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  overflow:hidden;font-family:'Outfit',system-ui,sans-serif;
   animation:cropSlideUp .3s cubic-bezier(.4,0,.2,1)}
 .crop-panel.open{display:flex}
 @keyframes cropSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -33,8 +33,8 @@ style.textContent = `
   animation:cropFade .3s ease}
 @keyframes cropFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .crop-msg.bot{background:#f1f5f9;color:#1e293b;align-self:flex-start;border-bottom-left-radius:4px}
-.crop-msg.user{background:#1a56db;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.crop-msg.bot a{color:#1a56db;font-weight:500}
+.crop-msg.user{background:#0C1220;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.crop-msg.bot a{color:#0C1220;font-weight:500}
 .crop-typing{display:flex;gap:4px;padding:12px 16px;align-self:flex-start}
 .crop-typing span{width:7px;height:7px;border-radius:50%;background:#94a3b8;
   animation:cropBounce .6s infinite alternate}
@@ -45,15 +45,15 @@ style.textContent = `
 .crop-suggest{background:#f8fafc;border:1px solid #e2e8f0;color:#475569;padding:8px 14px;
   border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit;
   white-space:nowrap}
-.crop-suggest:hover{background:#eff6ff;border-color:#bfdbfe;color:#1a56db}
+.crop-suggest:hover{background:#F5EDDA;border-color:#C9982A;color:#0C1220}
 .crop-input-area{display:flex;border-top:1px solid #f1f5f9;padding:12px;gap:8px;background:#fff}
 .crop-input{flex:1;border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 14px;
   font-size:14px;outline:none;font-family:inherit;color:#1e293b;transition:border-color .15s}
-.crop-input:focus{border-color:#1a56db}
+.crop-input:focus{border-color:#0C1220}
 .crop-input::placeholder{color:#94a3b8}
-.crop-send{background:#1a56db;color:#fff;border:none;border-radius:10px;padding:10px 16px;
+.crop-send{background:#0C1220;color:#fff;border:none;border-radius:10px;padding:10px 16px;
   cursor:pointer;font-weight:600;font-size:13px;transition:all .15s;font-family:inherit}
-.crop-send:hover{background:#1e40af}
+.crop-send:hover{background:#1A2332}
 .crop-send:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:480px){.crop-panel{width:calc(100vw - 16px);right:8px;bottom:76px;height:calc(100vh - 96px);border-radius:16px}}
 `;
