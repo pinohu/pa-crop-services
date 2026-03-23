@@ -16,6 +16,7 @@ export default async function handler(req, res) {
   const { title, slug, html, metaDescription, author } = req.body || {};
   if (!title || !slug || !html) return res.status(400).json({ error: 'title, slug, and html required' });
 
+  try {
   // Build complete article HTML page
   const articleHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -48,4 +49,8 @@ ${html}
     publishUrl: `https://pacropservices.com/${slug}`,
     message: 'Article assembled. Push to GitHub public/ directory to publish.'
   });
+  } catch (err) {
+    console.error('Publish article error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to assemble article' });
+  }
 }

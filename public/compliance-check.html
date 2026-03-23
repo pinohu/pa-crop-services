@@ -169,6 +169,11 @@ footer a{color:rgba(255,255,255,0.8)}
   <p id="lead-success" style="display:none;color:var(--green,#059669);margin-top:12px;font-weight:600">✓ On its way! We'll have your personalized report in your inbox shortly.</p>
 </div>
 <a href="/#pricing" class="cta-btn" style="margin-top:16px">View plans from $99/year →</a>
+<div id="plan-recs" style="display:none;margin-top:20px;text-align:left">
+  <p style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:12px">Recommended for you:</p>
+  <div id="rec-cards" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+  </div>
+</div>
 </div>
 </div>
 </section>
@@ -260,6 +265,35 @@ function showResult() {
   }
 
   document.getElementById('result').classList.add('show');
+
+  // Show plan recommendation based on risk score
+  var recDiv = document.getElementById('plan-recs');
+  var recCards = document.getElementById('rec-cards');
+  recDiv.style.display = 'block';
+  var cards = '';
+  if (totalRisk <= 3) {
+    cards = '<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #10B981;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
+      + '<div style="font-size:13px;color:#10B981;font-weight:700;margin-bottom:4px">RECOMMENDED</div>'
+      + '<div style="font-size:18px;font-weight:700;color:#111">Compliance Only</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$99<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:12px">PA CROP + annual report reminders + document scanning</div>'
+      + '<div style="background:#10B981;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Get Protected →</div></a>';
+  } else if (totalRisk <= 8) {
+    cards = '<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #F59E0B;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
+      + '<div style="font-size:13px;color:#F59E0B;font-weight:700;margin-bottom:4px">RECOMMENDED</div>'
+      + '<div style="font-size:18px;font-weight:700;color:#111">Business Starter</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$199<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Everything in Compliance + hosting, email, and annual filing</div>'
+      + '<div style="background:#F59E0B;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Fix My Compliance →</div></a>';
+  } else {
+    cards = '<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #EF4444;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
+      + '<div style="font-size:13px;color:#EF4444;font-weight:700;margin-bottom:4px">URGENT — RECOMMENDED</div>'
+      + '<div style="font-size:18px;font-weight:700;color:#111">Business Pro</div>'
+      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$349<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Full compliance management + entity monitoring + priority support</div>'
+      + '<div style="background:#EF4444;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Protect My Business →</div></a>';
+  }
+  recCards.innerHTML = cards;
 }
 
 async function submitLead() {

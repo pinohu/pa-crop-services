@@ -1,3 +1,4 @@
+import { rateLimit } from './_rateLimit.js';
 // PA CROP Services — AI Compliance Chatbot (Streaming)
 // POST /api/chat { message, clientContext?, stream? }
 // Returns streaming text/event-stream when stream=true
@@ -9,6 +10,9 @@ export default async function handler(req) {
     return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
   }
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 });
+
+  // Rate limit: AI chatbot — 10/min
+  if (rateLimit(req, res, 10, 60000)) return;
 
   const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });

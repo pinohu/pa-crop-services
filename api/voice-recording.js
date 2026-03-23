@@ -1,4 +1,9 @@
+import { rateLimit } from './_rateLimit.js';
+
 export default async function handler(req, res) {
+  // Rate limit: Voice recording — 20/min
+  if (rateLimit(req, res, 20, 60000)) return;
+
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
   // Log voicemail and notify via n8n

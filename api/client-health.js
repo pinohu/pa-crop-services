@@ -16,6 +16,7 @@ export default async function handler(req, res) {
 
   const { clientEmail, clientName, metrics = {} } = req.body || {};
 
+  try {
   // Scoring dimensions (0-20 each, total 0-100)
   const {
     portalLoginsLast30 = 0,    // How often they log in
@@ -88,4 +89,8 @@ export default async function handler(req, res) {
     recommendedAction: action,
     calculatedAt: new Date().toISOString()
   });
+  } catch (err) {
+    console.error('Health score error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to calculate health score' });
+  }
 }

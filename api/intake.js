@@ -1,3 +1,4 @@
+import { rateLimit } from './_rateLimit.js';
 // PA CROP Services — /api/intake
 // Lead capture from compliance check + embedded widget
 // Implements GAP-07: Lead Scoring
@@ -9,6 +10,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limit: Lead capture — 10/min
+  if (rateLimit(req, res, 10, 60000)) return;
 
   const {
     email, firstName, lastName, source, entityType,

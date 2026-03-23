@@ -197,6 +197,14 @@ tr:hover td{background:#fafafa}
         <div class="nav-group-label">Marketing</div>
         <button class="nav-item" onclick="showPage('email_stats')"><span class="icon">📧</span>Email Lists</button>
         <button class="nav-item" onclick="showPage('agreements')"><span class="icon">📄</span>Agreements</button>
+        <button class="nav-item" onclick="showPage('articles')"><span class="icon">✍️</span>Article Generator</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Operations</div>
+        <button class="nav-item" onclick="showPage('health')"><span class="icon">💓</span>Client Health</button>
+        <button class="nav-item" onclick="showPage('documents')"><span class="icon">🔍</span>Doc Classifier</button>
+        <button class="nav-item" onclick="showPage('email_triage')"><span class="icon">📬</span>Email Triage</button>
+        <button class="nav-item" onclick="showPage('webhooks')"><span class="icon">🔗</span>Webhook Status</button>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -437,6 +445,94 @@ tr:hover td{background:#fafafa}
         </div>
       </div>
 
+      <!-- ── ARTICLE GENERATOR ── -->
+      <div class="page" id="page-articles">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">✍️ AI SEO Article Generator</div></div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group"><label>Target Keyword</label><input type="text" id="art-keyword" placeholder="e.g., pennsylvania llc annual report"></div>
+              <div class="form-group"><label>Article Angle</label><input type="text" id="art-angle" placeholder="e.g., step-by-step guide for first-time filers"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Target Word Count</label>
+                <select id="art-wordcount"><option value="1200">1,200 (standard)</option><option value="2000">2,000 (in-depth)</option><option value="3000">3,000 (pillar)</option></select>
+              </div>
+              <div class="form-group"><label>Author</label><input type="text" id="art-author" value="Dr. Ikechukwu P.N. Ohu"></div>
+            </div>
+            <button class="btn btn-gold" onclick="generateArticle()">✍️ Generate Article</button>
+            <div id="article-result" style="margin-top:16px"></div>
+            <div id="article-preview" style="display:none;margin-top:16px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #e5e7eb;max-height:500px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CLIENT HEALTH ── -->
+      <div class="page" id="page-health">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">💓 Client Health Scores</div>
+            <button class="btn btn-outline btn-sm" onclick="loadHealthScores()">Refresh</button>
+          </div>
+          <div class="panel-body">
+            <p style="color:var(--gray);font-size:13px;margin-bottom:16px">Health scores are calculated from portal logins, document engagement, email opens, support tickets, and payment health. Higher is better.</p>
+            <div id="health-scores-body"><div class="loading"><div class="spinner"></div>Loading client health data...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DOCUMENT CLASSIFIER ── -->
+      <div class="page" id="page-documents">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">🔍 AI Document Classifier</div></div>
+          <div class="panel-body">
+            <p style="color:var(--gray);font-size:13px;margin-bottom:16px">Paste document text or a scanned document's OCR output. The AI will classify it, extract key data, and suggest next steps.</p>
+            <div class="form-group"><label>Client Email (optional)</label><input type="email" id="doc-email" placeholder="client@example.com"></div>
+            <div class="form-group"><label>Filename (optional)</label><input type="text" id="doc-filename" placeholder="e.g., PA_DOS_notice_2026.pdf"></div>
+            <div class="form-group"><label>Document Text</label><textarea id="doc-text" rows="8" placeholder="Paste the document text here..." style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
+            <button class="btn btn-gold" onclick="classifyDocument()">🔍 Classify Document</button>
+            <div id="doc-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EMAIL TRIAGE ── -->
+      <div class="page" id="page-email_triage">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">📬 AI Email Triage</div></div>
+          <div class="panel-body">
+            <p style="color:var(--gray);font-size:13px;margin-bottom:16px">Paste an incoming email. The AI will classify it, draft a response, and recommend routing (auto-reply, escalate, or archive).</p>
+            <div class="form-row">
+              <div class="form-group"><label>From</label><input type="text" id="triage-from" placeholder="sender@example.com"></div>
+              <div class="form-group"><label>Subject</label><input type="text" id="triage-subject" placeholder="Annual report question"></div>
+            </div>
+            <div class="form-group"><label>Email Body</label><textarea id="triage-body" rows="8" placeholder="Paste the email body here..." style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
+            <button class="btn btn-gold" onclick="triageEmail()">📬 Triage Email</button>
+            <div id="triage-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WEBHOOK STATUS ── -->
+      <div class="page" id="page-webhooks">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🔗 n8n Webhook & Workflow Status</div>
+            <button class="btn btn-outline btn-sm" onclick="loadWebhookStatus()">Refresh</button>
+          </div>
+          <div class="panel-body">
+            <div id="webhook-status-body"><div class="loading"><div class="spinner"></div>Checking webhook status...</div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-header"><div class="panel-title">🏥 System Health</div></div>
+          <div class="panel-body">
+            <button class="btn btn-primary" onclick="runSystemHealth()">Run Full Health Check</button>
+            <div id="system-health-body" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /admin-app -->
@@ -503,7 +599,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.textContent.toLowerCase().includes(name.replace('_',' '))) n.classList.add('active');
   });
-  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements' };
+  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status' };
   document.getElementById('page-title').textContent = titles[name] || name;
   currentPage = name;
   document.getElementById('last-refresh').textContent = '';
@@ -515,6 +611,8 @@ function showPage(name) {
   else if (name === 'revenue') loadRevenue();
   else if (name === 'email_stats') loadEmailStats();
   else if (name === 'compliance') loadCompliance();
+  else if (name === 'health') loadHealthScores();
+  else if (name === 'webhooks') loadWebhookStatus();
 }
 
 function refreshCurrent() { showPage(currentPage); }
@@ -946,6 +1044,264 @@ document.addEventListener('click', e => {
 
 // Enter key on login
 document.getElementById('admin-key-input').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+// ── Article Generator ───────────────────────────────────────────────
+async function generateArticle() {
+  const keyword = document.getElementById('art-keyword').value.trim();
+  const angle = document.getElementById('art-angle').value.trim();
+  const wordcount = document.getElementById('art-wordcount').value;
+  const author = document.getElementById('art-author').value.trim();
+  if (!keyword) { toast('Enter a target keyword', 'error'); return; }
+  
+  document.getElementById('article-result').innerHTML = '<div class="loading"><div class="spinner"></div>Generating article (30-60 seconds)...</div>';
+  document.getElementById('article-preview').style.display = 'none';
+  
+  try {
+    const res = await fetch('/api/generate-article', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify({ keyword, angle, targetWordCount: parseInt(wordcount), author })
+    });
+    const data = await res.json();
+    if (data.error) { document.getElementById('article-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    
+    const slug = data.slug || keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    document.getElementById('article-result').innerHTML = '<span style="color:var(--green)">✓ Article generated!</span> Slug: <code>' + slug + '</code> &nbsp; <button class="btn btn-outline btn-sm" onclick="publishArticle()">Publish to Site</button>';
+    document.getElementById('article-preview').style.display = 'block';
+    document.getElementById('article-preview').innerHTML = data.html || data.content || '<em>No preview available</em>';
+    window._lastArticle = data;
+    toast('Article generated', 'success');
+  } catch (e) {
+    document.getElementById('article-result').innerHTML = '<span style="color:var(--red)">Network error: ' + e.message + '</span>';
+  }
+}
+
+async function publishArticle() {
+  if (!window._lastArticle) { toast('Generate an article first', 'error'); return; }
+  const a = window._lastArticle;
+  try {
+    const res = await fetch('/api/publish-article', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify({ title: a.title, slug: a.slug, html: a.html || a.content, metaDescription: a.metaDescription, author: a.author })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast('Article ready! Push to GitHub to go live.', 'success');
+      document.getElementById('article-result').innerHTML += ' &nbsp;<span style="color:var(--green)">✓ Assembled at /' + data.slug + '</span>';
+    } else {
+      toast('Publish error: ' + (data.error || 'unknown'), 'error');
+    }
+  } catch (e) { toast('Network error', 'error'); }
+}
+
+// ── Client Health Scores ────────────────────────────────────────────
+async function loadHealthScores() {
+  const body = document.getElementById('health-scores-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Calculating health scores...</div>';
+  
+  try {
+    // Get all clients first
+    const clientsData = await callAPI('clients');
+    const clients = clientsData.clients || [];
+    
+    if (clients.length === 0) {
+      body.innerHTML = '<p style="color:var(--gray)">No clients found. Health scores require active clients in SuiteDash.</p>';
+      return;
+    }
+    
+    // Calculate health for each (using defaults since we don't have real metrics yet)
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    html += '<tr style="border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:10px 8px;font-weight:600">Client</th><th style="padding:10px 8px">Plan</th><th style="padding:10px 8px">Score</th><th style="padding:10px 8px">Risk</th><th style="padding:10px 8px">Action</th></tr>';
+    
+    for (const c of clients.slice(0, 50)) {
+      try {
+        const hRes = await fetch('/api/client-health', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY, 'X-Internal-Key': ADMIN_KEY },
+          body: JSON.stringify({ clientEmail: c.email, clientName: c.name || c.first_name, metrics: { planTier: c.tier || 'compliance_only', monthsAsClient: 3 } })
+        });
+        const h = await hRes.json();
+        const riskColors = { very_low: 'var(--green)', low: 'var(--green)', medium: 'var(--yellow)', high: 'var(--red)', critical: 'var(--red)' };
+        const riskColor = riskColors[h.churnRisk] || 'var(--gray)';
+        html += '<tr style="border-bottom:1px solid #f0f0f0">';
+        html += '<td style="padding:10px 8px">' + (c.name || c.first_name || c.email) + '</td>';
+        html += '<td style="padding:10px 8px;text-align:center"><span style="background:#f0f4ff;padding:2px 8px;border-radius:4px;font-size:11px">' + (c.tier || '—') + '</span></td>';
+        html += '<td style="padding:10px 8px;text-align:center;font-weight:700">' + (h.healthScore || '—') + '/100</td>';
+        html += '<td style="padding:10px 8px;text-align:center"><span style="color:' + riskColor + ';font-weight:600">' + (h.churnRisk || '—').replace('_', ' ') + '</span></td>';
+        html += '<td style="padding:10px 8px;text-align:center;font-size:12px">' + (h.recommendedAction || '—').replace('_', ' ') + '</td>';
+        html += '</tr>';
+      } catch (e) {
+        html += '<tr><td style="padding:10px 8px">' + (c.email || '?') + '</td><td colspan="4" style="color:var(--red);padding:10px 8px">Error calculating</td></tr>';
+      }
+    }
+    html += '</table>';
+    if (clients.length > 50) html += '<p style="margin-top:12px;color:var(--gray);font-size:12px">Showing first 50 of ' + clients.length + ' clients</p>';
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = '<span style="color:var(--red)">Error loading clients: ' + e.message + '</span>';
+  }
+}
+
+// ── Document Classifier ─────────────────────────────────────────────
+async function classifyDocument() {
+  const text = document.getElementById('doc-text').value.trim();
+  const email = document.getElementById('doc-email').value.trim();
+  const filename = document.getElementById('doc-filename').value.trim();
+  if (!text) { toast('Paste document text first', 'error'); return; }
+  
+  document.getElementById('doc-result').innerHTML = '<div class="loading"><div class="spinner"></div>Classifying document...</div>';
+  
+  try {
+    const res = await fetch('/api/classify-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify({ text, clientEmail: email, filename })
+    });
+    const data = await res.json();
+    if (data.error) { document.getElementById('doc-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    
+    let html = '<div style="background:#f8f9fa;border-radius:8px;padding:20px;border:1px solid #e5e7eb">';
+    html += '<div style="font-weight:700;font-size:16px;margin-bottom:12px">Classification Result</div>';
+    if (data.classification) {
+      html += '<div style="margin-bottom:8px"><strong>Type:</strong> <span style="background:#e0e7ff;padding:2px 10px;border-radius:4px">' + (data.classification.documentType || data.classification.type || 'Unknown') + '</span></div>';
+      html += '<div style="margin-bottom:8px"><strong>Summary:</strong> ' + (data.classification.summary || data.summary || '—') + '</div>';
+      html += '<div style="margin-bottom:8px"><strong>Priority:</strong> ' + (data.classification.priority || data.priority || '—') + '</div>';
+      if (data.classification.extractedData || data.extractedData) {
+        html += '<div style="margin-bottom:8px"><strong>Extracted Data:</strong><pre style="background:#fff;padding:12px;border-radius:6px;font-size:12px;overflow-x:auto;margin-top:4px">' + JSON.stringify(data.classification.extractedData || data.extractedData, null, 2) + '</pre></div>';
+      }
+      if (data.classification.nextSteps || data.nextSteps) {
+        html += '<div><strong>Next Steps:</strong> ' + (data.classification.nextSteps || data.nextSteps || '—') + '</div>';
+      }
+    } else {
+      html += '<pre style="font-size:12px">' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+    html += '</div>';
+    document.getElementById('doc-result').innerHTML = html;
+    toast('Document classified', 'success');
+  } catch (e) {
+    document.getElementById('doc-result').innerHTML = '<span style="color:var(--red)">Network error: ' + e.message + '</span>';
+  }
+}
+
+// ── Email Triage ────────────────────────────────────────────────────
+async function triageEmail() {
+  const from = document.getElementById('triage-from').value.trim();
+  const subject = document.getElementById('triage-subject').value.trim();
+  const body = document.getElementById('triage-body').value.trim();
+  if (!body) { toast('Paste the email body', 'error'); return; }
+  
+  document.getElementById('triage-result').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing email...</div>';
+  
+  try {
+    const res = await fetch('/api/email-triage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify({ from, subject, body })
+    });
+    const data = await res.json();
+    if (data.error) { document.getElementById('triage-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    
+    const routeColors = { auto_reply: 'var(--green)', escalate: 'var(--red)', archive: 'var(--gray)', follow_up: 'var(--yellow)' };
+    let html = '<div style="background:#f8f9fa;border-radius:8px;padding:20px;border:1px solid #e5e7eb">';
+    html += '<div style="font-weight:700;font-size:16px;margin-bottom:12px">Triage Result</div>';
+    
+    const t = data.triage || data;
+    html += '<div style="margin-bottom:8px"><strong>Category:</strong> <span style="background:#e0e7ff;padding:2px 10px;border-radius:4px">' + (t.category || '—') + '</span></div>';
+    html += '<div style="margin-bottom:8px"><strong>Priority:</strong> ' + (t.priority || '—') + '</div>';
+    html += '<div style="margin-bottom:8px"><strong>Route:</strong> <span style="color:' + (routeColors[t.route] || 'var(--gray)') + ';font-weight:600">' + (t.route || '—').replace('_', ' ') + '</span></div>';
+    html += '<div style="margin-bottom:8px"><strong>Sentiment:</strong> ' + (t.sentiment || '—') + '</div>';
+    if (t.draftResponse || t.draft) {
+      html += '<div style="margin-top:12px"><strong>Draft Response:</strong></div>';
+      html += '<div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb;margin-top:6px;white-space:pre-wrap;font-size:13px">' + (t.draftResponse || t.draft) + '</div>';
+      html += '<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.querySelector(\'#triage-result pre, #triage-result [style*=pre-wrap]\')?.textContent||\'Done\');toast(\'Copied!\',\'success\')">Copy Draft</button>';
+    }
+    html += '</div>';
+    document.getElementById('triage-result').innerHTML = html;
+    toast('Email triaged', 'success');
+  } catch (e) {
+    document.getElementById('triage-result').innerHTML = '<span style="color:var(--red)">Network error: ' + e.message + '</span>';
+  }
+}
+
+// ── Webhook Status ──────────────────────────────────────────────────
+async function loadWebhookStatus() {
+  const body = document.getElementById('webhook-status-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Checking webhooks...</div>';
+  
+  const webhooks = [
+    { path: 'crop-lead-nurture-start', name: 'Lead Nurture Start', id: 'ndDWaSmPO4290CgK' },
+    { path: 'crop-hot-lead-alert', name: 'Hot Lead Alert', id: 'RSibNfwSM9aw3vUW' },
+    { path: 'crop-portal-reset', name: 'Portal Reset', id: 'l2495RxXLxkYzqcU' },
+    { path: 'crop-partner-onboarding', name: 'Partner Onboarding', id: '9j4pW3PmmYufMG8T' },
+    { path: 'crop-new-client', name: 'New Client Onboarding', id: 'OkjdJx2bRqlgl1s7' },
+    { path: 'crop-annual-report-reminder', name: 'Annual Report Reminders', id: 'il9DOXSAK9hUo2Ru', cron: true },
+    { path: 'crop-acumbamail-sync', name: 'Acumbamail Sync', id: 'gE6dROHiqT2XAUiq', cron: true },
+    { path: 'crop-20i-provision', name: '20i Provisioning', id: 'Ov3nTuiJKarlRvhS' },
+    { path: 'crop-dos-entity-checker', name: 'DOS Entity Checker', id: null },
+    { path: 'crop-entity-request', name: 'Entity Request', id: null },
+    { path: 'crop-payment-failed', name: 'Payment Failed', id: null },
+    { path: 'crop-voicemail', name: 'Voicemail Handler', id: null },
+  ];
+  
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<tr style="border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:10px 8px">Webhook</th><th style="padding:10px 8px">Path</th><th style="padding:10px 8px">Workflow ID</th><th style="padding:10px 8px">Type</th><th style="padding:10px 8px">Status</th></tr>';
+  
+  for (const wh of webhooks) {
+    const hasWorkflow = wh.id !== null;
+    const statusColor = hasWorkflow ? 'var(--green)' : 'var(--red)';
+    const statusText = hasWorkflow ? 'Active' : 'MISSING';
+    const typeText = wh.cron ? 'Cron' : 'Webhook';
+    html += '<tr style="border-bottom:1px solid #f0f0f0">';
+    html += '<td style="padding:10px 8px;font-weight:600">' + wh.name + '</td>';
+    html += '<td style="padding:10px 8px"><code style="font-size:11px;background:#f0f2f5;padding:2px 6px;border-radius:4px">' + wh.path + '</code></td>';
+    html += '<td style="padding:10px 8px;text-align:center"><code style="font-size:11px">' + (wh.id || '—') + '</code></td>';
+    html += '<td style="padding:10px 8px;text-align:center">' + typeText + '</td>';
+    html += '<td style="padding:10px 8px;text-align:center"><span style="color:' + statusColor + ';font-weight:600">' + statusText + '</span></td>';
+    html += '</tr>';
+  }
+  html += '</table>';
+  html += '<p style="margin-top:16px;color:var(--gray);font-size:12px">n8n base: <a href="https://n8n.audreysplace.place" target="_blank">https://n8n.audreysplace.place</a></p>';
+  body.innerHTML = html;
+}
+
+async function runSystemHealth() {
+  const body = document.getElementById('system-health-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Running health checks (may take 10-15 seconds)...</div>';
+  
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
+    const checks = data.checks || data;
+    const services = [
+      { key: 'groq', name: 'Groq AI', icon: '🤖' },
+      { key: 'suitedash', name: 'SuiteDash CRM', icon: '📇' },
+      { key: 'twentyi', name: '20i Hosting', icon: '🖥️' },
+      { key: 'email', name: 'Email (Emailit)', icon: '📧' },
+      { key: 'n8n', name: 'n8n Automations', icon: '⚡' },
+    ];
+    
+    for (const svc of services) {
+      const check = checks?.[svc.key] || {};
+      const ok = check.ok || check.status === 'ok' || check.status === 'healthy';
+      const color = ok ? 'var(--green)' : 'var(--red)';
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;text-align:center">';
+      html += '<div style="font-size:24px;margin-bottom:8px">' + svc.icon + '</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">' + svc.name + '</div>';
+      html += '<div style="color:' + color + ';font-weight:700">' + (ok ? '✓ Healthy' : '✗ Down') + '</div>';
+      if (check.latency) html += '<div style="font-size:11px;color:var(--gray);margin-top:2px">' + check.latency + 'ms</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<p style="margin-top:12px;color:var(--gray);font-size:12px">Checked at: ' + new Date().toLocaleString() + '</p>';
+    body.innerHTML = html;
+    toast('Health check complete', 'success');
+  } catch (e) {
+    body.innerHTML = '<span style="color:var(--red)">Health check failed: ' + e.message + '</span>';
+  }
+}
 </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+import { rateLimit } from './_rateLimit.js';
 // PA CROP Services — /api/entity-request
 // Entity formation / add-entity lead capture
 // POST { entityName, entityType, email, phone, notes, clientEmail }
@@ -8,6 +9,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limit: Entity request — 5/min
+  if (rateLimit(req, res, 5, 60000)) return;
 
   const { entityName, entityType, email, phone, notes, clientEmail } = req.body || {};
   const contactEmail = email || clientEmail;

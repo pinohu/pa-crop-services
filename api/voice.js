@@ -1,5 +1,9 @@
+import { rateLimit } from './_rateLimit.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+
+  // Rate limit: Voice — 20/min
+  if (rateLimit(req, res, 20, 60000)) return;
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Matthew">Thank you for calling PA CROP Services. Please try again.</Say></Response>');
   }

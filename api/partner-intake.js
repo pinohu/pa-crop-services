@@ -1,3 +1,4 @@
+import { rateLimit } from './_rateLimit.js';
 // PA CROP Services — /api/partner-intake
 // CPA/Attorney partner application intake
 // Follows the neatcircle compliance-productized pattern (GAP-15)
@@ -9,6 +10,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limit: Partner apps — 5/min
+  if (rateLimit(req, res, 5, 60000)) return;
 
   const {
     firmName, firstName, lastName, email, phone,
