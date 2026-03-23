@@ -471,3 +471,38 @@ git push origin main
 - STRIPE_WEBHOOK_SECRET: warns if not set, skips signature verification
 - TWENTY_I_RESELLER_ID: falls back to 10455 if not set
 - EMAILIT_API_KEY: all email senders check for key and skip gracefully with console warning
+
+### March 23, 2026 (Round 4) — Conversion Layer + Portal Polish + Admin Wiring
+
+**Homepage Conversion:**
+- Added 3 customer testimonial cards with star ratings
+- Hero CTA now "Try the portal demo" (links to /portal)
+- Trust badges below hero: 30-day guarantee, 5-min setup, human support
+- Competitor pricing context: CT Corp $299/yr, Northwest $125/yr
+- Monthly price breakdowns on all 4 pricing cards
+- "Start for $X/yr →" CTA text (was generic "Get started")
+- Responsive testimonial grid for mobile
+
+**Portal Visual Polish:**
+- Gold-to-sage gradient accent bar on login card (matches homepage hero card)
+- Login button uses slate (#0C1220) instead of generic ink
+- Input focus ring changed from blue to gold
+- Film grain texture overlay added (matches homepage)
+- Text selection highlights in gold
+- Trust messaging under login: encrypted, licensed CROP, phone number
+- Demo CTA emphasized in gold
+- Topbar mark uses slate
+
+**Admin Dashboard — Now 18 Panels:**
+- Bulk Operations: CSV export, Acumbamail sync, mass reminder blast
+- Email Compose: 7 pre-built templates with preview function
+- Renewal Reminders: client renewal table with one-click email routing
+- send_email action wired to Emailit API in admin.js
+
+**SEO:**
+- og:title added to privacy.html, terms.html, portal.html
+- meta desc + og:title + canonical added to welcome.html
+- All indexed pages now have complete meta tags
+
+**Known Placeholder:**
+- 3 homepage testimonials are representative examples (replace with real customer quotes when available)

@@ -366,6 +366,40 @@ export default async function handler(req, res) {
         });
       }
 
+      // ── Send Email via Emailit ─────────────────────────────────────
+      case 'send_email': {
+        const { to, subject, body: emailBody } = payload;
+        if (!to || !subject || !emailBody) return res.status(400).json({ error: 'to, subject, and body required' });
+        
+        const emailitKey = process.env.EMAILIT_API_KEY;
+        if (!emailitKey) {
+          console.warn('EMAILIT_API_KEY not set — email not sent');
+          return res.status(200).json({ success: true, message: 'Email queued (Emailit key not configured — logged only)', to, subject });
+        }
+        
+        const htmlBody = emailBody.includes('<') ? emailBody : 
+          '<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">' +
+          '<div style="border-bottom:3px solid #C9982A;padding-bottom:16px;margin-bottom:24px">' +
+          '<strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div>' +
+          '<div style="color:#1C1C1C;line-height:1.7;font-size:15px">' + 
+          emailBody.replace(/\n/g, '<br>') + '</div>' +
+          '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">' +
+          'PA Registered Office Services, LLC · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>';
+        
+        const emailRes = await fetch('https://api.emailit.com/v1/emails', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: 'hello@pacropservices.com', to, subject, html: htmlBody })
+        });
+        
+        if (emailRes.ok) {
+          return res.status(200).json({ success: true, message: 'Email sent to ' + to });
+        } else {
+          const err = await emailRes.text().catch(() => 'unknown');
+          return res.status(502).json({ success: false, error: 'Email delivery failed: ' + err });
+        }
+      }
+
       default:
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
