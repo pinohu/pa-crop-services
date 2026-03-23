@@ -390,6 +390,14 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     <div class="topbar-right">
       <span class="badge badge-accent" id="tier-badge"><span class="dot"></span> Plan</span>
       <div class="topbar-divider"></div>
+      <div style="position:relative;cursor:pointer" onclick="toggleNotifications()" id="notif-bell">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notif-count" style="display:none;position:absolute;top:-4px;right:-4px;background:#C44536;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center">0</span>
+      </div>
+      <div id="notif-panel" style="display:none;position:absolute;top:50px;right:80px;width:320px;max-height:400px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12);z-index:100;padding:8px">
+        <div style="padding:8px 12px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border)">Notifications</div>
+        <div id="notif-list" style="padding:4px"></div>
+      </div>
       <div class="avatar" id="user-avatar" data-tooltip="Account">?</div>
       <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
     </div>
@@ -566,6 +574,18 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <!-- ══ DOCUMENTS TAB ══ -->
       <div id="tab-documents" class="hidden">
         <div class="page-header"><h1>Documents</h1><p>All documents received at your registered office, classified by AI</p></div>
+        <!-- Upload form -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><span class="card-title">📤 Upload a document</span></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <input type="file" id="doc-file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" style="font-size:14px">
+              <input type="text" id="doc-notes" placeholder="Notes (optional — e.g. 'Tax notice from IRS')" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
+              <button class="btn btn-accent btn-sm" onclick="uploadDocument()" id="doc-upload-btn">Upload &amp; classify →</button>
+              <p id="doc-upload-msg" style="font-size:13px;display:none"></p>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title" id="docs-count-label">Documents received</span>
@@ -608,6 +628,39 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <p style="font-size:13px;color:var(--ink3)">Entity status is verified daily against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" style="color:var(--accent)">Verify on PA DOS</a></p>
+          </div>
+          <!-- Entity update form -->
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Update entity information</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <input type="text" id="eu-name" placeholder="Entity name" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+              <input type="text" id="eu-dos" placeholder="DOS file number" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+              <input type="text" id="eu-address" placeholder="Principal address" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+              <input type="text" id="eu-phone" placeholder="Phone number" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <button class="btn btn-ghost btn-sm" onclick="updateEntity()">Save changes</button>
+              <span id="eu-msg" style="font-size:12px;display:none"></span>
+            </div>
+          </div>
+        </div>
+        <!-- Multi-entity management (Pro/Empire) -->
+        <div class="card" style="margin-top:16px" id="multi-entity-card" style="display:none">
+          <div class="card-header"><span class="card-title">🏢 Multi-Entity Management</span></div>
+          <div class="card-body">
+            <div id="entity-list"></div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <div style="display:flex;gap:8px">
+                <input type="text" id="me-name" placeholder="New entity name" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <select id="me-type" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff">
+                  <option value="LLC">LLC</option><option value="Corporation">Corporation</option><option value="LP">LP</option><option value="Foreign LLC">Foreign LLC</option>
+                </select>
+                <button class="btn btn-accent btn-sm" onclick="addEntity()">+ Add</button>
+              </div>
+              <p id="me-msg" style="font-size:12px;display:none;margin-top:8px"></p>
+            </div>
+          </div>
+        </div>
           </div>
         </div></div>
       </div>
@@ -1233,7 +1286,151 @@ function checkUpgradeEligibility() {
   const tier = CLIENT?.tier || 'compliance';
   const btn = document.getElementById('upgrade-btn');
   if (btn && tier !== 'empire') btn.style.display = 'inline-flex';
+  // Show multi-entity for Pro/Empire
+  const meCard = document.getElementById('multi-entity-card');
+  if (meCard && (tier === 'pro' || tier === 'empire')) { meCard.style.display = 'block'; loadEntities(); }
 }
+
+// ─── DOCUMENT UPLOAD ───
+async function uploadDocument() {
+  const fileInput = document.getElementById('doc-file');
+  const notes = document.getElementById('doc-notes').value;
+  const msg = document.getElementById('doc-upload-msg');
+  const btn = document.getElementById('doc-upload-btn');
+  if (!fileInput.files.length) { msg.textContent = 'Please select a file'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; return; }
+  const file = fileInput.files[0];
+  btn.textContent = 'Classifying...'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/document-upload', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, fileName: file.name, fileType: file.type, notes })
+    });
+    const data = await r.json();
+    if (data.success) {
+      const cat = data.classification?.category?.replace(/_/g,' ') || 'unknown';
+      const urg = data.classification?.urgency || 'normal';
+      msg.innerHTML = '✓ Classified as <strong>' + cat + '</strong> (urgency: ' + urg + ')' + (data.alertsSent ? ' — <strong>urgent alerts sent</strong>' : '');
+      msg.style.color = urg === 'critical' ? 'var(--red,#C44536)' : 'var(--green,#6B8F71)';
+    } else { msg.textContent = data.error || 'Upload failed'; msg.style.color = 'var(--red,#C44536)'; }
+    msg.style.display = 'block';
+  } catch(e) { msg.textContent = 'Error — email hello@pacropservices.com'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; }
+  btn.textContent = 'Upload & classify →'; btn.disabled = false;
+}
+
+// ─── ENTITY UPDATE ───
+async function updateEntity() {
+  const msg = document.getElementById('eu-msg');
+  const updates = {};
+  const name = document.getElementById('eu-name').value.trim();
+  const dos = document.getElementById('eu-dos').value.trim();
+  const addr = document.getElementById('eu-address').value.trim();
+  const phone = document.getElementById('eu-phone').value.trim();
+  if (name) updates.entityName = name;
+  if (dos) updates.dosNumber = dos;
+  if (addr) updates.address = addr;
+  if (phone) updates.phone = phone;
+  if (!Object.keys(updates).length) { msg.textContent = 'Enter at least one field to update'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'inline'; return; }
+  try {
+    const r = await fetch('/api/entity-update', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, ...updates })
+    });
+    const data = await r.json();
+    if (data.success) {
+      msg.innerHTML = '✓ Updated: ' + data.updated.join(', ') + (data.registeredOfficeChangeNeeded ? '<br>⚠️ ' + data.changeInstructions : '');
+      msg.style.color = 'var(--green,#6B8F71)';
+    } else { msg.textContent = data.error || 'Update failed'; msg.style.color = 'var(--red,#C44536)'; }
+    msg.style.display = 'inline';
+  } catch(e) { msg.textContent = 'Error'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'inline'; }
+}
+
+// ─── MULTI-ENTITY MANAGEMENT ───
+async function loadEntities() {
+  if (!CLIENT?.email) return;
+  try {
+    const r = await fetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT.email));
+    const data = await r.json();
+    if (!data.success) return;
+    const list = document.getElementById('entity-list');
+    if (!list) return;
+    if (!data.entities.length) { list.innerHTML = '<p style="color:var(--ink3);font-size:13px">No entities added yet.</p>'; return; }
+    list.innerHTML = data.entities.map(e => 
+      '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:8px">' +
+      '<div style="flex:1"><strong style="font-size:14px">' + e.name + '</strong>' +
+      '<span style="font-size:12px;color:var(--ink3);margin-left:8px">' + e.type + '</span>' +
+      (e.primary ? '<span style="font-size:11px;background:var(--accent-bg);color:var(--accent);padding:2px 8px;border-radius:10px;margin-left:8px">Primary</span>' : '') +
+      '<div style="font-size:12px;color:var(--ink3)">Status: ' + (e.status || '—') + '</div></div>' +
+      (!e.primary ? '<button class="btn btn-ghost btn-sm" style="font-size:12px" onclick="removeEntity(\'' + e.name.replace(/'/g,"\\'") + '\')">Remove</button>' : '') +
+      '</div>'
+    ).join('');
+    list.innerHTML += '<p style="font-size:12px;color:var(--ink3);margin-top:8px">' + data.count + ' of ' + data.maxEntities + ' entities</p>';
+  } catch(e) {}
+}
+
+async function addEntity() {
+  const name = document.getElementById('me-name').value.trim();
+  const type = document.getElementById('me-type').value;
+  const msg = document.getElementById('me-msg');
+  if (!name) { msg.textContent = 'Enter entity name'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/multi-entity', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, action: 'add', entityData: { name, type } })
+    });
+    const data = await r.json();
+    if (data.success) { document.getElementById('me-name').value = ''; loadEntities(); msg.textContent = '✓ Entity added'; msg.style.color = 'var(--green,#6B8F71)'; }
+    else { msg.textContent = data.error || 'Failed'; msg.style.color = 'var(--red,#C44536)'; }
+    msg.style.display = 'block';
+  } catch(e) { msg.textContent = 'Error'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; }
+}
+
+async function removeEntity(name) {
+  if (!confirm('Remove ' + name + ' from your entities?')) return;
+  try {
+    await fetch('/api/multi-entity', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, action: 'remove', entityData: { name } })
+    });
+    loadEntities();
+  } catch(e) {}
+}
+
+// ─── IN-APP NOTIFICATIONS ───
+var NOTIFICATIONS = [];
+function toggleNotifications() {
+  const panel = document.getElementById('notif-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+function addNotification(text, type) {
+  NOTIFICATIONS.unshift({ text, type: type || 'info', time: new Date().toLocaleTimeString(), read: false });
+  renderNotifications();
+}
+function renderNotifications() {
+  const list = document.getElementById('notif-list');
+  const count = document.getElementById('notif-count');
+  if (!list) return;
+  const unread = NOTIFICATIONS.filter(n => !n.read).length;
+  if (count) { count.textContent = unread; count.style.display = unread > 0 ? 'flex' : 'none'; }
+  if (!NOTIFICATIONS.length) { list.innerHTML = '<p style="padding:16px;text-align:center;color:var(--ink3);font-size:13px">No notifications yet</p>'; return; }
+  list.innerHTML = NOTIFICATIONS.slice(0, 10).map((n, i) => 
+    '<div style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;' + (!n.read ? 'background:var(--accent-bg);' : '') + '" onclick="NOTIFICATIONS[' + i + '].read=true;renderNotifications()">' +
+    '<div style="font-size:13px;color:var(--ink)">' + n.text + '</div>' +
+    '<div style="font-size:11px;color:var(--ink3);margin-top:2px">' + n.time + '</div></div>'
+  ).join('');
+}
+// Generate notifications from client data
+function generateNotifications(c) {
+  if (!c) return;
+  if (c.entityStatus === 'active') addNotification('✅ Your entity status: Active — all clear', 'success');
+  if (c.tier) addNotification('📋 Your ' + (c.tierLabel || c.tier) + ' plan is active', 'info');
+  if (c.nextDeadline) addNotification('📅 Next deadline: ' + c.nextDeadline, 'warning');
+}
+// Close notifications on outside click
+document.addEventListener('click', function(e) {
+  const bell = document.getElementById('notif-bell');
+  const panel = document.getElementById('notif-panel');
+  if (bell && panel && !bell.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
+});
 
 
 // ─── ERROR DISPLAY HELPER ───

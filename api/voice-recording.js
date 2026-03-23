@@ -39,19 +39,59 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
+  // Try AI transcription if Twilio didn't provide one
+  let transcription = TranscriptionText || '';
+  if (!transcription && RecordingUrl && process.env.GROQ_API_KEY) {
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile', max_tokens: 200,
+          messages: [
+            { role: 'system', content: 'A voicemail was received at a PA business compliance service. The recording URL is provided but cannot be played. Generate a placeholder note indicating a voicemail was received that needs manual transcription. Be brief.' },
+            { role: 'user', content: `Voicemail from ${From || 'unknown number'} at ${new Date().toLocaleTimeString()}. Recording: ${RecordingUrl}` }
+          ]
+        })
+      });
+      const groqData = await groqRes.json();
+      transcription = '[AI note] ' + (groqData?.choices?.[0]?.message?.content || 'Voicemail received — manual transcription needed');
+    } catch(e) { transcription = 'Transcription unavailable — listen to recording'; }
+  }
+
+  // Create SuiteDash activity for the call
+  const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
+  const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
+  if (From && SD_PUBLIC && SD_SECRET) {
+    try {
+      const sdSearch = await fetch(`https://app.suitedash.com/secure-api/contacts?limit=500&role=client`, {
+        headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
+      });
+      const clients = (await sdSearch.json())?.data || [];
+      const caller = clients.find(c => c.phone?.includes(From?.replace('+1','')) || c.custom_fields?.phone?.includes(From?.replace('+1','')));
+      if (caller?.id) {
+        await fetch(`https://app.suitedash.com/secure-api/contacts/${caller.id}`, {
+          method: 'PUT',
+          headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ custom_fields: { last_voicemail: new Date().toISOString(), last_voicemail_text: transcription.slice(0, 200) } })
+        });
+      }
+    } catch(e) { /* continue */ }
+  }
+
   // Log voicemail and notify via n8n
   try {
     const vmRes = await fetch('https://n8n.audreysplace.place/webhook/crop-voicemail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription: TranscriptionText, timestamp: new Date().toISOString() })
+      body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription, timestamp: new Date().toISOString() })
     }).catch(() => null);
     if (!vmRes || !vmRes.ok) {
       await _notifyIke('New Voicemail',
         '<h2>📞 Voicemail Received</h2>' +
         '<p><strong>From:</strong> ' + (From || 'unknown') + '</p>' +
         '<p><strong>Recording:</strong> <a href="' + (RecordingUrl || '#') + '">Listen</a></p>' +
-        '<p><strong>Transcription:</strong> ' + (TranscriptionText || 'not available') + '</p>' +
+        '<p><strong>Transcription:</strong> ' + (transcription || 'not available') + '</p>' +
         '<p><strong>Time:</strong> ' + new Date().toISOString() + '</p>'
       );
     }

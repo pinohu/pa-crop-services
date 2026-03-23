@@ -53,9 +53,27 @@ export default async function handler(req, res) {
       })
     });
     const result = await smsRes.json().catch(() => ({}));
-    return res.status(200).json({ success: true, sms_id: result?.data?.id, to, type: type || 'custom' });
+    return res.status(200).json({ success: true, sms_id: result?.data?.id, to, type: type || 'custom', via: 'smsit' });
   } catch (e) {
-    console.error('SMS send error:', e.message);
+    // Twilio fallback
+    const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
+    const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+    const TWILIO_FROM = process.env.TWILIO_PHONE || '+18142282822';
+    if (TWILIO_SID && TWILIO_TOKEN) {
+      try {
+        const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Basic ' + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ To: to, From: TWILIO_FROM, Body: smsBody })
+        });
+        const twilioData = await twilioRes.json();
+        return res.status(200).json({ success: true, sms_id: twilioData?.sid, to, type: type || 'custom', via: 'twilio_fallback' });
+      } catch (te) {
+        console.error('Twilio fallback also failed:', te.message);
+        return res.status(502).json({ error: 'Both SMS-iT and Twilio failed', detail: te.message });
+      }
+    }
+    console.error('SMS-iT failed and no Twilio configured:', e.message);
     return res.status(502).json({ error: 'SMS delivery failed', detail: e.message });
   }
 }
