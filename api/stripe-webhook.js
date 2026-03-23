@@ -138,6 +138,20 @@ export default async function handler(req, res) {
 
     // ── PAYMENT FAILED — Dunning ─────────────────────────────────────
     else if (type === 'invoice.payment_failed') {
+      const invoice = event?.data?.object;
+      const custEmail = invoice?.customer_email || '';
+      const amount = ((invoice?.amount_due || 0) / 100).toFixed(2);
+
+      // Day 1: Immediate SMS alert
+      if (custEmail) {
+        fetch(`${baseUrl}/api/sms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+          body: JSON.stringify({ to: custEmail, message: `PA CROP Services: Your payment of $${amount} failed. Please update your payment method to keep your compliance monitoring active. Questions? 814-228-2822` })
+        }).catch(() => {});
+      }
+
+      // n8n for full dunning workflow
       const pfRes = await fetch('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,8 +161,9 @@ export default async function handler(req, res) {
       if (!pfRes || !pfRes.ok) {
         await _notifyIke('Payment Failed — Action Required',
           '<h2>⚠️ Payment Failed</h2>' +
-          '<p><strong>Customer:</strong> ' + JSON.stringify(event?.data?.object?.customer || 'unknown') + '</p>' +
-          '<p><strong>Amount:</strong> $' + ((event?.data?.object?.amount_due || 0) / 100).toFixed(2) + '</p>'
+          '<p><strong>Customer:</strong> ' + (custEmail || JSON.stringify(invoice?.customer || 'unknown')) + '</p>' +
+          '<p><strong>Amount:</strong> $' + amount + '</p>' +
+          '<p>SMS alert sent. n8n dunning workflow ' + (pfRes ? 'responded' : 'unreachable') + '.</p>'
         );
       }
     }

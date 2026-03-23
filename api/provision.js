@@ -344,6 +344,51 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── STEP 10: Partner Co-Branding (if referral from partner) ──────────
+  const partnerId = body.partnerId || body.partner;
+  if (partnerId && refCodeUsed && SD_PUBLIC && SD_SECRET) {
+    try {
+      // Look up partner info
+      const partnerRes = await fetch('https://app.suitedash.com/secure-api/contacts?limit=500', {
+        headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
+      });
+      const allContacts = (await partnerRes.json())?.data || [];
+      const partner = allContacts.find(c => c.custom_fields?.referral_code === refCodeUsed && c.tags?.some(t => t.includes('partner')));
+      if (partner) {
+        results.partnerBranding = {
+          partnerName: partner.first_name || partner.name,
+          partnerEmail: partner.email,
+          applied: true
+        };
+        // Tag client with partner reference
+        if (results.suitedashId || allContacts.find(c => c.email === email)?.id) {
+          const clientId = results.suitedashId || allContacts.find(c => c.email === email)?.id;
+          await fetch(`https://app.suitedash.com/secure-api/contacts/${clientId}`, {
+            method: 'PUT',
+            headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tags: [`partner-${refCodeUsed}`], custom_fields: { referred_by_partner: partner.first_name || partner.name, partner_email: partner.email } })
+          }).catch(() => {});
+        }
+        // Notify partner of new referral
+        const emailitKey = process.env.EMAILIT_API_KEY;
+        if (emailitKey) {
+          fetch('https://api.emailit.com/v1/emails', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: 'partners@pacropservices.com', to: partner.email,
+              subject: '🎉 New client via your referral!',
+              html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px"><div style="border-bottom:3px solid #C9982A;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div><p>Hi ${partner.first_name || 'Partner'},</p><p>A new client just signed up using your referral code! Their <strong>${tier}</strong> plan is now active. Your commission has been credited.</p><p><a href="https://pacropservices.com/api/partner-dashboard?email=${encodeURIComponent(partner.email)}" style="color:#C9982A;font-weight:600">View your dashboard →</a></p></div>`
+            })
+          }).catch(() => {});
+        }
+        results.steps.push({ step: 'partner_cobranding', status: 'done', partner: partner.first_name || partner.name });
+      }
+    } catch (e) {
+      results.steps.push({ step: 'partner_cobranding', status: 'warning', error: e.message });
+    }
+  }
+
   // ── Summary ──────────────────────────────────────────────────────────
   const errors = results.steps.filter(s => s.status === 'error');
   const warnings = results.steps.filter(s => s.status === 'warning' || s.status === 'pending' || s.status === 'deferred');

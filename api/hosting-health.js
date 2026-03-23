@@ -65,5 +65,22 @@ export default async function handler(req, res) {
     }
   }
 
+  // Check main site SSL + connectivity
+  try {
+    const siteStart = Date.now();
+    const siteRes = await fetch('https://pacropservices.com/', { signal: AbortSignal.timeout(10000) });
+    results.mainSite = { status: siteRes.ok ? 'healthy' : 'degraded', latency: Date.now() - siteStart, httpStatus: siteRes.status };
+  } catch(e) {
+    results.mainSite = { status: 'down', error: e.message };
+    results.alerts.push({ domain: 'pacropservices.com', alert: 'Main site unreachable' });
+  }
+
+  results.summary = {
+    totalPackages: results.packages.length,
+    sslIssues: results.alerts.filter(a => a.alert?.includes('SSL')).length,
+    totalAlerts: results.alerts.length,
+    mainSite: results.mainSite?.status || 'unknown'
+  };
+
   return res.status(200).json({ success: true, ...results });
 }
