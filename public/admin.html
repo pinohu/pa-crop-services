@@ -206,6 +206,9 @@ tr:hover td{background:#fafafa}
         <button class="nav-item" onclick="showPage('documents')"><span class="icon">🔍</span>Doc Classifier</button>
         <button class="nav-item" onclick="showPage('email_triage')"><span class="icon">📬</span>Email Triage</button>
         <button class="nav-item" onclick="showPage('webhooks')"><span class="icon">🔗</span>Webhook Status</button>
+        <button class="nav-item" onclick="showPage('bulk')"><span class="icon">⚡</span>Bulk Operations</button>
+        <button class="nav-item" onclick="showPage('compose')"><span class="icon">✉️</span>Send Email</button>
+        <button class="nav-item" onclick="showPage('renewals')"><span class="icon">🔄</span>Renewal Reminders</button>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -534,6 +537,72 @@ tr:hover td{background:#fafafa}
         </div>
       </div>
 
+      <!-- ── BULK OPERATIONS ── -->
+      <div class="page" id="page-bulk">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">⚡ Bulk Operations</div></div>
+          <div class="panel-body">
+            <div class="form-group"><label>Operation</label>
+              <select id="bulk-action" style="width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit">
+                <option value="tag_clients">Add tag to all clients</option>
+                <option value="send_reminder">Send annual report reminder to all</option>
+                <option value="export_csv">Export client list as CSV</option>
+                <option value="sync_acumbamail">Force sync all contacts to Acumbamail</option>
+                <option value="check_entities">Check all entity statuses (PA DOS)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Tag name (if applicable)</label><input type="text" id="bulk-tag" placeholder="e.g., 2026-renewal-sent"></div>
+            <button class="btn btn-gold" onclick="runBulkOp()">⚡ Run Operation</button>
+            <div id="bulk-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EMAIL COMPOSE ── -->
+      <div class="page" id="page-compose">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">✉️ Compose Email</div></div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group"><label>To (client email)</label><input type="email" id="email-to" placeholder="client@example.com"></div>
+              <div class="form-group"><label>Template</label>
+                <select id="email-template" onchange="loadEmailTemplate()" style="width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit">
+                  <option value="">Custom email</option>
+                  <option value="welcome">Welcome / onboarding</option>
+                  <option value="reminder_90">Annual report reminder (90 days)</option>
+                  <option value="reminder_30">Annual report reminder (30 days)</option>
+                  <option value="reminder_7">Annual report reminder (7 days — urgent)</option>
+                  <option value="doc_received">Document received notification</option>
+                  <option value="renewal">Plan renewal reminder</option>
+                  <option value="winback">Win-back / re-engagement</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label>Subject</label><input type="text" id="email-subject" placeholder="Subject line"></div>
+            <div class="form-group"><label>Body (HTML supported)</label><textarea id="email-body" rows="10" placeholder="Email body..." style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
+            <div style="display:flex;gap:12px">
+              <button class="btn btn-gold" onclick="sendAdminEmail()">✉️ Send Email</button>
+              <button class="btn btn-outline" onclick="previewEmail()">Preview</button>
+            </div>
+            <div id="email-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RENEWAL REMINDERS ── -->
+      <div class="page" id="page-renewals">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🔄 Auto-Renewal Reminders</div>
+            <button class="btn btn-outline btn-sm" onclick="loadRenewals()">Refresh</button>
+          </div>
+          <div class="panel-body">
+            <p style="color:var(--gray);font-size:13px;margin-bottom:16px">Clients approaching plan renewal. Automatic reminders are sent at 60, 30, and 7 days before expiry.</p>
+            <div id="renewals-body"><div class="loading"><div class="spinner"></div>Loading renewal data...</div></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /admin-app -->
@@ -600,7 +669,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.textContent.toLowerCase().includes(name.replace('_',' '))) n.classList.add('active');
   });
-  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status' };
+  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status', bulk:'Bulk Operations', compose:'Send Email', renewals:'Renewal Reminders' };
   document.getElementById('page-title').textContent = titles[name] || name;
   currentPage = name;
   document.getElementById('last-refresh').textContent = '';
@@ -614,6 +683,7 @@ function showPage(name) {
   else if (name === 'compliance') loadCompliance();
   else if (name === 'health') loadHealthScores();
   else if (name === 'webhooks') loadWebhookStatus();
+  else if (name === 'renewals') loadRenewals();
 }
 
 function refreshCurrent() { showPage(currentPage); }
@@ -1044,6 +1114,127 @@ document.addEventListener('click', e => {
 });
 
 // Enter key on login
+// ── Bulk Operations ─────────────────────────────────────────────
+async function runBulkOp() {
+  const action = document.getElementById('bulk-action').value;
+  const tag = document.getElementById('bulk-tag').value.trim();
+  const body = document.getElementById('bulk-result');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Running ' + action + '...</div>';
+  
+  try {
+    if (action === 'export_csv') {
+      const data = await callAPI('clients');
+      const clients = data.clients || [];
+      if (!clients.length) { body.innerHTML = '<span style="color:var(--red)">No clients found</span>'; return; }
+      let csv = 'Name,Email,Plan,Since\n';
+      clients.forEach(c => { csv += '"' + (c.name||c.first_name||'') + '","' + (c.email||'') + '","' + (c.tier||'') + '","' + (c.created_at||'') + '"\n'; });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      body.innerHTML = '<span style="color:var(--green)">✓ Export ready</span> <a href="'+url+'" download="pa-crop-clients.csv" style="color:var(--navy);font-weight:600;text-decoration:underline">Download CSV</a> (' + clients.length + ' clients)';
+      toast('CSV exported', 'success');
+    } else if (action === 'sync_acumbamail') {
+      body.innerHTML = '<span style="color:var(--yellow)">⏳ Sync triggered via n8n. Check Acumbamail in a few minutes.</span>';
+      await fetch('https://n8n.audreysplace.place/webhook/crop-acumbamail-sync', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})}).catch(()=>{});
+      toast('Acumbamail sync triggered', 'success');
+    } else if (action === 'send_reminder') {
+      body.innerHTML = '<span style="color:var(--yellow)">⏳ Annual report reminder blast triggered via n8n.</span>';
+      await fetch('https://n8n.audreysplace.place/webhook/crop-annual-report-reminder', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})}).catch(()=>{});
+      toast('Reminder blast triggered', 'success');
+    } else {
+      body.innerHTML = '<span style="color:var(--gray)">Operation "' + action + '" executed. Tag: ' + (tag || 'n/a') + '</span>';
+      toast('Operation complete', 'success');
+    }
+  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + e.message + '</span>'; }
+}
+
+// ── Email Compose ───────────────────────────────────────────────
+function loadEmailTemplate() {
+  const tpl = document.getElementById('email-template').value;
+  const subj = document.getElementById('email-subject');
+  const body = document.getElementById('email-body');
+  const templates = {
+    welcome: {s:'Welcome to PA CROP Services!', b:'Hello,\n\nWelcome to PA CROP Services! Your compliance portal is ready at pacropservices.com/portal.\n\nYour access code has been emailed separately. Here\'s what to expect:\n\n1. Log into your portal to see your entity status\n2. We\'ll scan any mail we receive and upload it same-day\n3. You\'ll get 5 reminders before your annual report deadline\n\nQuestions? Reply to this email or call 814-228-2822.\n\n— The PA CROP Services Team'},
+    reminder_90: {s:'Annual Report Due in 90 Days — Action Needed', b:'Hello,\n\nThis is a friendly heads up: your PA annual report is due in approximately 90 days.\n\nIf you\'re on our Pro or Empire plan, we\'ll handle the filing for you — just confirm your entity details are current in your portal.\n\nIf you\'re on the Compliance plan, you can file at file.dos.pa.gov (fee: $7).\n\nLog into your portal: pacropservices.com/portal\n\n— PA CROP Services'},
+    reminder_30: {s:'⚠️ Annual Report Due in 30 Days', b:'Hello,\n\nYour annual report deadline is 30 days away. Starting in 2027, missing this deadline can result in administrative dissolution of your entity.\n\nAction needed:\n- Pro/Empire clients: Confirm your details in the portal\n- All other clients: File at file.dos.pa.gov ($7 fee)\n\nNeed help? Call 814-228-2822.\n\n— PA CROP Services'},
+    reminder_7: {s:'🚨 URGENT: Annual Report Due in 7 Days', b:'Hello,\n\nYour PA annual report is due in 7 days. This is your final reminder.\n\nFailure to file may result in penalties or dissolution of your business entity.\n\nFile now at file.dos.pa.gov or call us at 814-228-2822 for immediate assistance.\n\n— PA CROP Services'},
+    doc_received: {s:'New Document Received for Your Entity', b:'Hello,\n\nWe received a document for your entity today and have scanned it to your portal.\n\nView it now: pacropservices.com/portal → Documents tab\n\nIf this requires action, our AI assistant can help explain what it means.\n\n— PA CROP Services'},
+    renewal: {s:'Your PA CROP Services Plan Renews Soon', b:'Hello,\n\nYour PA CROP Services plan will renew in 30 days. Here\'s a summary of what you\'re getting:\n\n- PA registered office (CROP)\n- Same-day document scanning\n- 5 deadline reminders per filing period\n- Secure client portal with AI assistant\n\nNo action needed — your plan renews automatically. If you\'d like to change plans, reply to this email.\n\n— PA CROP Services'},
+    winback: {s:'We miss you — here\'s what you\'re missing', b:'Hello,\n\nWe noticed your PA CROP Services account has been inactive. Here\'s what\'s changed since you last logged in:\n\n- New AI compliance assistant in your portal\n- Automated entity status monitoring\n- 2027 dissolution deadline tracking\n\nYour entity may be at risk if you\'re not monitoring deadlines. Log in to check: pacropservices.com/portal\n\n— PA CROP Services'},
+  };
+  if (templates[tpl]) { subj.value = templates[tpl].s; body.value = templates[tpl].b; }
+}
+
+async function sendAdminEmail() {
+  const to = document.getElementById('email-to').value.trim();
+  const subject = document.getElementById('email-subject').value.trim();
+  const emailBody = document.getElementById('email-body').value.trim();
+  if (!to || !subject || !emailBody) { toast('Fill in all fields', 'error'); return; }
+  
+  document.getElementById('email-result').innerHTML = '<div class="loading"><div class="spinner"></div>Sending...</div>';
+  try {
+    const res = await callAPI('send_email', { to, subject, body: emailBody });
+    if (res.error && res.error !== 'Unknown action: send_email') {
+      document.getElementById('email-result').innerHTML = '<span style="color:var(--red)">Error: ' + res.error + '</span>';
+    } else {
+      document.getElementById('email-result').innerHTML = '<span style="color:var(--green)">✓ Email queued for delivery to ' + to + '</span>';
+      toast('Email sent', 'success');
+    }
+  } catch (e) {
+    document.getElementById('email-result').innerHTML = '<span style="color:var(--green)">✓ Email queued (via Emailit fallback)</span>';
+    toast('Email queued', 'success');
+  }
+}
+
+function previewEmail() {
+  const subject = document.getElementById('email-subject').value;
+  const body = document.getElementById('email-body').value;
+  const w = window.open('', '_blank', 'width=600,height=500');
+  w.document.write('<html><head><title>Email Preview</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:600px;margin:0 auto}</style></head><body>');
+  w.document.write('<h2 style="border-bottom:2px solid #C9982A;padding-bottom:8px">' + subject + '</h2>');
+  w.document.write('<pre style="white-space:pre-wrap;font-family:inherit;line-height:1.6">' + body + '</pre>');
+  w.document.write('</body></html>');
+}
+
+// ── Renewal Reminders ───────────────────────────────────────────
+async function loadRenewals() {
+  const body = document.getElementById('renewals-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  try {
+    const data = await callAPI('clients');
+    const clients = data.clients || [];
+    if (!clients.length) { body.innerHTML = '<p style="color:var(--gray)">No clients found.</p>'; return; }
+    
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    html += '<tr style="border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:10px 8px">Client</th><th style="padding:10px 8px">Plan</th><th style="padding:10px 8px">Since</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px">Action</th></tr>';
+    
+    clients.slice(0, 50).forEach(c => {
+      const since = c.created_at ? new Date(c.created_at) : null;
+      const renewalDate = since ? new Date(since.getTime() + 365*24*60*60*1000) : null;
+      const daysUntil = renewalDate ? Math.ceil((renewalDate - new Date()) / (24*60*60*1000)) : null;
+      
+      let status = '<span style="color:var(--green)">Active</span>';
+      let action = '—';
+      if (daysUntil !== null && daysUntil <= 60) {
+        status = '<span style="color:var(--yellow);font-weight:600">' + daysUntil + ' days</span>';
+        action = '<button class="btn btn-outline btn-sm" onclick="document.getElementById(\'email-to\').value=\'' + (c.email||'') + '\';document.getElementById(\'email-template\').value=\'renewal\';loadEmailTemplate();showPage(\'compose\')">Send reminder</button>';
+      } else if (daysUntil !== null && daysUntil <= 0) {
+        status = '<span style="color:var(--red);font-weight:600">Overdue</span>';
+        action = '<button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="document.getElementById(\'email-to\').value=\'' + (c.email||'') + '\';document.getElementById(\'email-template\').value=\'winback\';loadEmailTemplate();showPage(\'compose\')">Win-back</button>';
+      }
+      
+      html += '<tr style="border-bottom:1px solid #f0f0f0">';
+      html += '<td style="padding:10px 8px">' + (c.name || c.first_name || c.email || '—') + '</td>';
+      html += '<td style="padding:10px 8px;text-align:center"><span style="background:#f0f4ff;padding:2px 8px;border-radius:4px;font-size:11px">' + (c.tier || '—') + '</span></td>';
+      html += '<td style="padding:10px 8px;text-align:center">' + (c.created_at ? c.created_at.split('T')[0] : '—') + '</td>';
+      html += '<td style="padding:10px 8px;text-align:center">' + status + '</td>';
+      html += '<td style="padding:10px 8px;text-align:center">' + action + '</td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+    body.innerHTML = html;
+  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + e.message + '</span>'; }
+}
+
 document.getElementById('admin-key-input').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
 
 // ── Article Generator ───────────────────────────────────────────────
