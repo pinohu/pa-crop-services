@@ -704,16 +704,31 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
                 <input type="checkbox" id="pref-newsletter" checked onchange="savePref(this)">
                 <span>Compliance newsletter</span>
               </label>
+              <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                <input type="checkbox" id="pref-sms" onchange="savePref(this)">
+                <span>SMS alerts for deadlines (recommended)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                <input type="checkbox" id="pref-phone" onchange="savePref(this)">
+                <span>OK to call me for urgent matters</span>
+              </label>
               <p id="pref-saved" style="font-size:12px;color:var(--green);display:none">Saved</p>
             </div>
           </div></div>
         </div>
         <div class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">Actions</span></div>
         <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap">
-          <a href="mailto:hello@pacropservices.com?subject=Plan Change Request" class="btn btn-ghost btn-sm">Request plan change</a>
+          <button class="btn btn-accent btn-sm" id="upgrade-btn" onclick="showUpgrade()" style="display:none">⬆️ Upgrade my plan</button>
           <a href="mailto:hello@pacropservices.com?subject=Update Contact Info" class="btn btn-ghost btn-sm">Update contact info</a>
           <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('set-ref')?.textContent||'');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
         </div></div>
+        <div id="upgrade-modal" style="display:none;margin-top:16px" class="card">
+          <div class="card-header"><span class="card-title">⬆️ Upgrade your plan</span></div>
+          <div class="card-body">
+            <div id="upgrade-options" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+            <p style="font-size:12px;color:var(--ink3);margin-top:12px">Your existing features carry over. New features activate immediately after payment.</p>
+          </div>
+        </div>
       </div>
     </main>
   </div><!-- .shell -->
@@ -813,6 +828,7 @@ function mountClient(c) {
   loadHealthScore(c);
   loadClientContext(c);
   if(typeof initSettings === 'function') initSettings(c);
+  if(typeof checkUpgradeEligibility === 'function') checkUpgradeEligibility();
 }
 async function loadClientContext(c) {
   try {
@@ -1156,6 +1172,67 @@ function savePref(cb) {
   localStorage.setItem(key, JSON.stringify(saved));
   const msg = document.getElementById('pref-saved');
   if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 2000); }
+  // Sync to server
+  if (CLIENT?.email) {
+    const prefs = {};
+    if (cb.id === 'pref-reminders') prefs.email_notifications = cb.checked;
+    if (cb.id === 'pref-sms') prefs.sms_notifications = cb.checked;
+    if (cb.id === 'pref-phone') prefs.phone_ok = cb.checked;
+    if (cb.id === 'pref-newsletter') prefs.marketing_emails = cb.checked;
+    fetch('/api/notification-preferences', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT.email, prefs })
+    }).catch(() => {});
+  }
+}
+
+// ─── PLAN UPGRADE ───
+function showUpgrade() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal.style.display === 'none') {
+    modal.style.display = 'block';
+    const tiers = [
+      { id:'compliance', name:'Compliance Only', price:'$99/yr', monthly:'$8.25/mo' },
+      { id:'starter', name:'Business Starter', price:'$199/yr', monthly:'$16.58/mo' },
+      { id:'pro', name:'Business Pro', price:'$349/yr', monthly:'$29.08/mo' },
+      { id:'empire', name:'Business Empire', price:'$699/yr', monthly:'$58.25/mo' },
+    ];
+    const current = CLIENT?.tier || 'compliance';
+    const opts = document.getElementById('upgrade-options');
+    opts.innerHTML = tiers.filter(t => {
+      const order = ['compliance','starter','pro','empire'];
+      return order.indexOf(t.id) > order.indexOf(current);
+    }).map(t => `<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center">
+      <div style="font-weight:700;color:var(--ink)">${t.name}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent);margin:8px 0">${t.price}</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">${t.monthly}</div>
+      <button class="btn btn-accent btn-sm" onclick="doUpgrade('${t.id}')" style="width:100%">Upgrade →</button>
+    </div>`).join('') || '<p style="color:var(--ink3)">You are on the highest tier.</p>';
+  } else {
+    modal.style.display = 'none';
+  }
+}
+
+async function doUpgrade(targetTier) {
+  try {
+    const r = await fetch('/api/client-upgrade', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: CLIENT?.email, currentTier: CLIENT?.tier, targetTier })
+    });
+    const data = await r.json();
+    if (data.checkoutUrl) {
+      window.open(data.checkoutUrl, '_blank');
+    } else {
+      alert(data.message || 'Please contact us at 814-228-2822 to upgrade.');
+    }
+  } catch(e) { alert('Error — please call 814-228-2822 to upgrade.'); }
+}
+
+// Show upgrade button if not on Empire
+function checkUpgradeEligibility() {
+  const tier = CLIENT?.tier || 'compliance';
+  const btn = document.getElementById('upgrade-btn');
+  if (btn && tier !== 'empire') btn.style.display = 'inline-flex';
 }
 
 

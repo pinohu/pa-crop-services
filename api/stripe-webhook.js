@@ -115,6 +115,13 @@ export default async function handler(req, res) {
         body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
       }).catch(() => {});
 
+      // Step 2: Generate branded invoice
+      fetch(`${baseUrl}/api/invoice-generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        body: JSON.stringify({ email, name, amount: session.amount_total || 0, tier: tierConfig.tier, stripeSessionId: session.id })
+      }).catch(() => {}); // Fire and forget
+
       // Step 3: Notify Ike
       await _notifyIke(`🎉 New ${tierConfig.tier.toUpperCase()} Client: ${name || email}`,
         `<h2>New Client Signed Up!</h2>
