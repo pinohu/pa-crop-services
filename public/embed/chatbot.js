@@ -242,7 +242,7 @@ async function sendMessage(text) {
     }
   } catch(e) {
     removeTyping();
-    addMessage("I'm having trouble connecting right now. You can reach us directly at <a href='mailto:hello@pacropservices.com'>hello@pacropservices.com</a> or <a href='tel:8144800989'>814-480-0989</a>.", 'bot');
+    addMessage("I'm having trouble connecting right now. You can reach us directly at <a href='mailto:hello@pacropservices.com'>hello@pacropservices.com</a> or <a href='tel:8142282822'>814-228-2822</a>.", 'bot');
   }
 
   sendBtn.disabled = false;
