@@ -701,21 +701,35 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('set-ref')?.textContent||'');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy referral code',2000)">Copy referral code</button>
         </div></div>
       </div>
-  
+    </main>
+  </div><!-- .shell -->
+</div><!-- #portal -->
+
+<script>
+// ═══ ACTIVITY FEED ═══
+function updateActivityFeed(ctx) {
+  var feed = document.getElementById('activity-feed');
+  if (!feed || !ctx) return;
+  var items = '';
+
   if (ctx.lastDocumentDate) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Document received: ' + (ctx.lastDocumentType || 'correspondence').replace(/_/g,' ') + '</div><div class="activity-time">' + ctx.lastDocumentDate + '</div></div></div>';
   }
-  
+
   if (ctx.entityStatus === 'active') {
     items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Entity status: Active — Good Standing</div><div class="activity-time">Last checked today</div></div></div>';
   }
-  
+
   items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: Sept 30 (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : 'Self-file at file.dos.pa.gov') + '</div></div></div>';
-  
+
   if (ctx.referralCount > 0) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">' + ctx.referralCount + ' referral(s) active</div><div class="activity-time">Earning credits</div></div></div>';
   }
-  
+
+  if (items === '') {
+    items = '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Welcome to PA CROP Services</div><div class="activity-time">Your compliance portal is ready</div></div></div>';
+  }
+
   feed.innerHTML = items;
 }
 
