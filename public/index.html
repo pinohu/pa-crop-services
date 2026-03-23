@@ -76,7 +76,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 
 /* MOBILE */
 @media(max-width:1024px){.hero-inner{grid-template-columns:1fr;gap:48px}.hero-card{max-width:440px}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature-hero{grid-row:span 1;min-height:200px}.pricing-grid{grid-template-columns:repeat(2,1fr)}.story-inner,.partner-grid{grid-template-columns:1fr;gap:48px}.social-proof [style*="grid-template-columns:260px"]{grid-template-columns:1fr!important}.social-proof [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}}
-@media(max-width:768px){.nav-links{display:none}.nav-mobile{display:flex}.hero{padding:120px 0 60px}.hero h1{font-size:36px}.feature-grid,.pricing-grid{grid-template-columns:1fr}.feature-hero{min-height:180px}.pricing-grid{max-width:400px;margin:0 auto}.hero-actions{flex-direction:column}.btn-p,.btn-g{text-align:center;justify-content:center;width:100%}.footer-inner{flex-direction:column;text-align:center}.social-proof [style*="grid-template-columns"]{grid-template-columns:1fr!important}}
+@media(max-width:768px){.nav-links{display:none}.nav-mobile{display:flex}.hero{padding:120px 0 60px}.hero h1{font-size:36px}.feature-grid,.pricing-grid{grid-template-columns:1fr}.feature-hero{min-height:180px}.pricing-grid{max-width:400px;margin:0 auto}.hero-actions{flex-direction:column}.btn-p,.btn-g{text-align:center;justify-content:center;width:100%}.footer-inner{flex-direction:column;text-align:center}.social-proof [style*="grid-template-columns"]{grid-template-columns:1fr!important}[style*="grid-template-columns:1fr 1fr;gap:20px"]{grid-template-columns:1fr!important}[style*="grid-template-columns:1fr auto"]{grid-template-columns:1fr!important}}
 .mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--cream3);padding:12px 24px;z-index:99;box-shadow:0 8px 32px rgba(0,0,0,.08)}.mobile-menu.open{display:block}.mobile-menu a{display:block;padding:14px 0;font-size:15px;color:var(--ink2);border-bottom:1px solid var(--cream2);font-weight:500}.mobile-menu a:last-child{border:none;color:var(--gold-muted);font-weight:700}
 </style>
 </head>
@@ -184,18 +184,132 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 </div></section>
 
 <section class="pricing" id="pricing"><div class="container">
-  <div class="pricing-header reveal"><div class="section-tag">Pricing</div><h2>How much protection does your business need?</h2><p>Every plan includes a real person who knows your entity by name. 30-day money-back guarantee on all plans.</p>
-    <div style="margin-top:20px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink3)">
-      <span style="background:var(--sage-light);color:var(--sage);padding:4px 12px;border-radius:20px;font-weight:600">Licensed PA CROP provider</span>
-      <span style="background:var(--gold-light);color:var(--gold-muted);padding:4px 12px;border-radius:20px;font-weight:600">Same-day document scanning</span>
+  <div class="pricing-header reveal">
+    <div class="section-tag">Pricing</div>
+    <h2>Everything your PA entity needs.<br>One flat annual price.</h2>
+    <p style="font-size:16px;color:var(--ink3);max-width:560px;margin:12px auto 0">No hidden fees. No per-document charges. No surprise invoices. Just complete compliance coverage that protects your business 365 days a year.</p>
+  </div>
+
+  <!-- VALUE ANCHOR — What this stuff costs elsewhere -->
+  <div class="reveal" style="max-width:680px;margin:32px auto 48px;background:var(--white);border:1.5px solid var(--cream3);border-radius:16px;padding:28px 32px">
+    <div style="font-size:13px;font-weight:700;color:var(--gold-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">What you'd pay separately</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px 24px;font-size:14px;color:var(--ink2)">
+      <span>Registered office service</span><span style="font-weight:600;color:var(--slate)">$125–299/yr</span>
+      <span>Business email (5 accounts, Google Workspace equivalent)</span><span style="font-weight:600;color:var(--slate)">$432/yr</span>
+      <span>Domain registration</span><span style="font-weight:600;color:var(--slate)">$15/yr</span>
+      <span>Website hosting + SSL</span><span style="font-weight:600;color:var(--slate)">$150/yr</span>
+      <span>Basic business website</span><span style="font-weight:600;color:var(--slate)">$500–2,000</span>
+      <span>Annual report filing service</span><span style="font-weight:600;color:var(--slate)">$50–150</span>
+      <span>Entity monitoring + compliance alerts</span><span style="font-weight:600;color:var(--slate)">$75–100/yr</span>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1.5px solid var(--cream3);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:14px;color:var(--ink3)">Total if purchased separately</span>
+      <span style="font-family:var(--serif);font-size:24px;color:var(--slate);text-decoration:line-through;opacity:.5">$1,347+/yr</span>
     </div>
   </div>
+
   <div class="pricing-grid">
-    <div class="price-card reveal"><div class="price-name">Compliance Only</div><div class="price-amount">$99<span>/year</span></div><div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:8px">Just $8.25/month</div><div class="price-desc">Everything to stay compliant, nothing you don't need.</div><ul class="price-features"><li>PA registered office (CROP)</li><li>Mail &amp; process forwarding</li><li>Annual report reminders (5x)</li><li>Entity status monitoring</li><li>Secure client portal</li><li>AI compliance assistant</li></ul><a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank">Start for $99/yr →</a></div>
-    <div class="price-card featured reveal"><div class="price-badge">Most popular</div><div class="price-name">Business Starter</div><div class="price-amount">$199<span>/year</span></div><div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:8px">Just $16.58/month</div><div class="price-desc">Compliance + professional web presence — one team.</div><ul class="price-features"><li>Everything in Compliance</li><li>1 domain name (.com/.net)</li><li>5 professional email mailboxes</li><li>Business website hosting + SSL</li><li>1-page website included</li><li>Priority email support</li></ul><a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank">Start for $199/yr →</a></div>
-    <div class="price-card reveal"><div class="price-name">Business Pro</div><div class="price-amount">$349<span>/year</span></div><div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:8px">Just $29.08/month</div><div class="price-desc">We handle your filing. You confirm, we do the rest.</div><ul class="price-features"><li>Everything in Starter</li><li>Annual report filing included</li><li>Unlimited email mailboxes</li><li>5-page website included</li><li>3 domains + priority support</li><li>Direct phone line to our team</li></ul><a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank">Start for $349/yr →</a></div>
-    <div class="price-card reveal"><div class="price-name">Business Empire</div><div class="price-amount">$699<span>/year</span></div><div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:8px">Just $58.25/month</div><div class="price-desc">Multiple entities, one team managing everything.</div><ul class="price-features"><li>Everything in Pro</li><li>VPS hosting (dedicated)</li><li>Up to 3 websites managed</li><li>10 domains included</li><li>Multi-entity management</li><li>2 free notarizations/year</li></ul><a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank">Start for $699/yr →</a></div>
+
+    <!-- TIER 1 — Compliance Only -->
+    <div class="price-card reveal">
+      <div class="price-name">Compliance Only</div>
+      <div class="price-amount">$99<span>/year</span></div>
+      <div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:4px">That's 27¢ per day</div>
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:16px">Less than a cup of coffee per week</div>
+      <div class="price-desc">Everything you need to stay legally compliant. Nothing you don't.</div>
+      <ul class="price-features">
+        <li>PA registered office address (CROP) <span style="color:var(--ink4);font-size:11px">— $150+ value</span></li>
+        <li>Mail &amp; legal process forwarding</li>
+        <li>5 annual report deadline reminders <span style="color:var(--ink4);font-size:11px">— automated</span></li>
+        <li>Real-time entity status monitoring</li>
+        <li>Secure compliance dashboard</li>
+        <li>AI compliance assistant (24/7)</li>
+        <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
+      </ul>
+      <a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank" onclick="trackEvent('CTA Click',{plan:'compliance',price:'99'})">Protect my entity — $99/yr →</a>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">No credit card hassle. Cancel anytime.</div>
+    </div>
+
+    <!-- TIER 2 — Business Starter (FEATURED — center stage) -->
+    <div class="price-card featured reveal">
+      <div class="price-badge">Best value — saves you $1,100+/yr</div>
+      <div class="price-name">Business Starter</div>
+      <div class="price-amount">$199<span>/year</span></div>
+      <div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:4px">That's 55¢ per day</div>
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:16px">Everything in Compliance + your entire web presence</div>
+      <div class="price-desc">Compliance handled. Professional online presence included. One team, one bill.</div>
+      <ul class="price-features">
+        <li><strong>Everything in Compliance, plus:</strong></li>
+        <li>1 domain name (.com or .net) <span style="color:var(--ink4);font-size:11px">— $15 value</span></li>
+        <li>5 professional email mailboxes <span style="color:var(--ink4);font-size:11px">— $432/yr value</span></li>
+        <li>Website hosting + SSL certificate <span style="color:var(--ink4);font-size:11px">— $150/yr value</span></li>
+        <li>1-page business website <span style="color:var(--ink4);font-size:11px">— $500+ value</span></li>
+        <li>Priority email support</li>
+        <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
+      </ul>
+      <a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank" onclick="trackEvent('CTA Click',{plan:'starter',price:'199'})">Get started — $199/yr →</a>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">Most PA business owners choose this plan</div>
+    </div>
+
+    <!-- TIER 3 — Business Pro -->
+    <div class="price-card reveal">
+      <div class="price-name">Business Pro</div>
+      <div class="price-amount">$349<span>/year</span></div>
+      <div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:4px">That's 96¢ per day</div>
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:16px">We file your annual report. You confirm, we do the rest.</div>
+      <div class="price-desc">Full hands-off compliance. We handle the filing, the hosting, everything.</div>
+      <ul class="price-features">
+        <li><strong>Everything in Starter, plus:</strong></li>
+        <li>Annual report filing handled for you <span style="color:var(--ink4);font-size:11px">— $100+ value</span></li>
+        <li>Unlimited email mailboxes</li>
+        <li>5-page business website</li>
+        <li>3 domain names managed</li>
+        <li>Direct phone line to our team</li>
+        <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
+      </ul>
+      <a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank" onclick="trackEvent('CTA Click',{plan:'pro',price:'349'})">Go hands-free — $349/yr →</a>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For business owners who want zero compliance work</div>
+    </div>
+
+    <!-- TIER 4 — Business Empire -->
+    <div class="price-card reveal">
+      <div class="price-name">Business Empire</div>
+      <div class="price-amount">$699<span>/year</span></div>
+      <div style="font-size:13px;color:var(--sage);font-weight:600;margin-bottom:4px">That's $1.91 per day</div>
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:16px">Multiple entities, one dedicated team</div>
+      <div class="price-desc">For operators managing multiple PA entities who want one team handling everything.</div>
+      <ul class="price-features">
+        <li><strong>Everything in Pro, plus:</strong></li>
+        <li>Dedicated VPS hosting</li>
+        <li>Up to 3 websites managed</li>
+        <li>10 domain names</li>
+        <li>Multi-entity dashboard</li>
+        <li>2 free notarizations per year <span style="color:var(--ink4);font-size:11px">— $100 value</span></li>
+        <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
+      </ul>
+      <a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank" onclick="trackEvent('CTA Click',{plan:'empire',price:'699'})">Manage my entities — $699/yr →</a>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For multi-LLC and multi-entity operators</div>
+    </div>
+
   </div>
+
+  <!-- LOSS AVERSION + RISK REVERSAL -->
+  <div class="reveal" style="max-width:780px;margin:48px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div style="background:var(--white);border:1.5px solid var(--cream3);border-radius:14px;padding:24px">
+      <div style="font-size:15px;font-weight:700;color:var(--slate);margin-bottom:8px">💡 The math is simple</div>
+      <p style="font-size:14px;color:var(--ink2);line-height:1.6">If your entity gets dissolved for a missed filing, reinstatement costs <strong>$1,000+</strong> in legal fees and weeks of downtime. Our $99/yr plan catches that filing before you miss it. That's a 10x return on a single avoided mistake.</p>
+    </div>
+    <div style="background:var(--white);border:1.5px solid var(--cream3);border-radius:14px;padding:24px">
+      <div style="font-size:15px;font-weight:700;color:var(--slate);margin-bottom:8px">🛡️ Zero-risk guarantee</div>
+      <p style="font-size:14px;color:var(--ink2);line-height:1.6">Try any plan for 30 days. If you don't feel like you're getting at least 10x the value you paid for, we'll refund every penny. No questions, no friction, no hard feelings.</p>
+    </div>
+  </div>
+
+  <!-- SOCIAL PROOF UNDER PRICING -->
+  <div class="reveal" style="text-align:center;margin-top:32px;font-size:13px;color:var(--ink3)">
+    <span>Licensed PA CROP under 15 Pa. C.S. § 109</span> · <span>Real team in Erie, PA</span> · <span>Same-day document scanning</span> · <span>814-228-2822</span>
+  </div>
+
 </div></section>
 
 <section class="partners" id="partners"><div class="container"><div class="partner-grid">
