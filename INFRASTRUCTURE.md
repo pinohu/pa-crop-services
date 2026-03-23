@@ -654,10 +654,7 @@ When real testimonials become available, they replace the trust cards. Never mix
 - 20 active, 0 inactive CROP workflows remain
 
 **Remaining (Ike action):**
-- [ ] Add `GROQ_API_KEY` to Vercel: Settings → Environment Variables
-  - Key: `GROQ_API_KEY`
-  - Value: `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`
-  - Environments: Production + Preview + Development
+See "Ike action items (cannot be automated)" under Phase 0 Deployment below — prioritized as CRITICAL / HIGH / MEDIUM.
 
 
 ### Seamless Experience Layer (2026-03-22)
@@ -729,30 +726,36 @@ The following upgrades close every gap between the documented user journeys and 
 - All 36 pages: favicon, Plausible analytics, Microsoft Clarity, OG tags
 
 **Ike action items (cannot be automated):**
-- [ ] Confirm CROP license with PA DOS (717-787-1057)
+
+*CRITICAL — Blocking all indexing and organic traffic:*
+- [ ] **Fix SSL certificate on bare domain `pacropservices.com`** — Currently throws cert mismatch error. In Vercel → Settings → Domains: ensure both `pacropservices.com` and `www.pacropservices.com` are added. Bare domain needs A record → `76.76.21.21` (or CNAME `www` → `cname.vercel-dns.com`). Wait for green "Valid Configuration" in Vercel. Test: `curl -I https://pacropservices.com` should return 200.
+- [ ] **Google Search Console verification** — Site has zero Google presence. Go to search.google.com/search-console → Add property `https://pacropservices.com` → HTML file verification → download file → place in `public/` → push → verify → submit sitemap `https://pacropservices.com/sitemap.xml`. See `docs/GOOGLE_SEARCH_CONSOLE.md`.
+
+*HIGH — Revenue and credibility:*
+- [ ] Confirm CROP license with PA DOS (717-787-1057) — verify entity appears on official CROP directory at pa.gov
+- [ ] CROP mail filing with PA DOS ($70 Statement of CROP)
 - [ ] Apply for EIN (irs.gov)
-- [ ] Bind E&O insurance ($1M/$2M)
 - [ ] Open business bank account + connect to Stripe
-- [ ] Add SPF/DKIM/DMARC DNS records
+- [ ] Bind E&O insurance ($1M/$2M)
+- [ ] Google Business Profile: create listing for "PA CROP Services" at 924 W 23rd St, Erie, PA 16502. See `docs/GOOGLE_BUSINESS_PROFILE.md`
+- [ ] Recruit founding client
+
+*MEDIUM — Polish and completeness:*
+- [ ] Add `GROQ_API_KEY` to Vercel env vars: `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` (Production + Preview + Development)
+- [ ] Add STRIPE_WEBHOOK_SECRET to Vercel env vars
+- [ ] Wire n8n lead nurture email (workflow `ndDWaSmPO4290CgK`) to include `guideUrl` field in first welcome email — link: `https://pacropservices.com/pa-annual-report-compliance-checklist.pdf`
+- [ ] Generate polished og-image.jpg in Canva (1200×630, brand fonts) to replace programmatically generated version
+- [ ] Add SPF/DKIM/DMARC DNS records for email deliverability
 - [ ] Test physical mail pipeline at 924 W 23rd St
 - [ ] Attorney review of Terms + Privacy
-- [ ] Recruit founding client
-- [ ] Add STRIPE_WEBHOOK_SECRET to Vercel env vars
-- [ ] Add TWENTY_I_RESELLER_ID=10455 to Vercel env vars
-- [ ] Add TWENTY_I_DEFAULT_TYPE_REF=80397 to Vercel env vars
+- [ ] LinkedIn profile slug → add to author schema `sameAs` in all articles
+- [ ] Documentero: upload `docs/CROP_Service_Agreement_Template.docx` → copy template ID → set `DOCUMENTERO_TEMPLATE_ID` in Vercel
 
-### Needs Ike action
+### Previously completed (Ike action)
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
 - [x] Create SuiteDash custom fields (10 fields — completed 2026-03-22)
-- [ ] Google Search Console: add property, verify via DNS TXT, submit sitemap (see `docs/GOOGLE_SEARCH_CONSOLE.md`)
-- [ ] Google Business Profile: create listing (see `docs/GOOGLE_BUSINESS_PROFILE.md`)
-- [ ] Documentero: upload `docs/CROP_Service_Agreement_Template.docx` → copy template ID → set `DOCUMENTERO_TEMPLATE_ID` in Vercel
-- [x] n8n renewal sequence content (`wRLXTGXW60MDLUnI`) — see docs/RENEWAL_EMAIL_SEQUENCE.md
-- [x] n8n win-back sequence content (`UGGH8LOU4AR3eXk`) — see docs/WINBACK_EMAIL_SEQUENCE.md
-- [ ] LinkedIn profile slug → add to author schema `sameAs` in all articles
-- [ ] E&O insurance
-- [ ] Business bank account
-- [ ] CROP mail filing with PA DOS ($70)
+- [x] n8n renewal sequence content — see docs/RENEWAL_EMAIL_SEQUENCE.md
+- [x] n8n win-back sequence content — see docs/WINBACK_EMAIL_SEQUENCE.md
 
 ### Future development
 - [x] Comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile (added 2026-03-22)
@@ -765,10 +768,6 @@ The following upgrades close every gap between the documented user journeys and 
 - [ ] Expand city pages to 300+ words each with local business references
 - [ ] Activate renewal + win-back n8n sequences
 - [ ] Replace trust section with real testimonials (when clients exist)
-- [ ] Generate polished og-image via Canva (replace programmatic version)
-- [ ] SSL certificate fix for bare domain pacropservices.com (Vercel DNS)
-- [ ] Google Search Console verification + sitemap submission
-- [ ] Google Business Profile creation + verification
 
 ---
 
