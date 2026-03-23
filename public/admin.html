@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA CROP Admin Dashboard</title>
+<meta name="description" content="PA CROP Services admin dashboard.">
+<meta property="og:title" content="Admin — PA CROP Services">
+<link rel="canonical" href="https://pacropservices.com/admin">
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vzhtq2nted");</script>
@@ -153,6 +156,7 @@ tr:hover td{background:#fafafa}
 .step-dot.done:not(:last-child)::after{background:var(--green)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
 </head>
 <body>
 
@@ -1189,7 +1193,8 @@ function previewEmail() {
   const subject = document.getElementById('email-subject').value;
   const body = document.getElementById('email-body').value;
   const w = window.open('', '_blank', 'width=600,height=500');
-  w.document.write('<html><head><title>Email Preview</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:600px;margin:0 auto}</style></head><body>');
+  w.document.write('<html><head><title>Email Preview</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:600px;margin:0 auto}</style><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
+</head><body>');
   w.document.write('<h2 style="border-bottom:2px solid #C9982A;padding-bottom:8px">' + subject + '</h2>');
   w.document.write('<pre style="white-space:pre-wrap;font-family:inherit;line-height:1.6">' + body + '</pre>');
   w.document.write('</body></html>');
