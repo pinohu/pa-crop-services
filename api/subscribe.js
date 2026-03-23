@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     await fetch('https://n8n.audreysplace.place/webhook/crop-lead-nurture-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: cleanEmail, source: source || 'newsletter', tag, leadTier: 'warm' })
+      body: JSON.stringify({ email: cleanEmail, source: source || 'newsletter', tag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
     }).catch(() => {});
 
     return res.status(200).json({ success: true });
