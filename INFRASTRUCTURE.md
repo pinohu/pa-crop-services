@@ -1,8 +1,8 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-22 — COMPLETE: 34 pages, 18 APIs, 20 active workflows, portal redesign (NNG/Mercury aesthetic), 8 AI automations live-tested
+> **Auto-updated on every commit.** Last updated: 2026-03-23 — COMPLETE: 36 pages, 25 APIs, 20 active workflows, UX/UI/Conversion audit applied, design system codified
 > This file is the single source of truth for all infrastructure access, credentials topology,
-> and development context. Safe to share with AI assistants continuing work on this codebase.
+> development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
 ---
 
@@ -29,19 +29,20 @@
 
 ```
 pa-crop-services/
-├── public/                          # Static HTML site (Vercel outputDirectory) — 34 pages
-│   ├── index.html                   # Homepage — 4-tier pricing, A/B test, FAQ schema
-│   ├── portal.html                  # Client portal — redesigned (Plus Jakarta Sans + Fraunces)
-│   │                                #   NNG heuristic compliance, AI assistant inline,
-│   │                                #   entity status hero, health score KPI, keyboard shortcuts
+├── public/                          # Static HTML site (Vercel outputDirectory) — 36 pages
+│   ├── index.html                   # Homepage — 4-tier pricing, trust section, How It Works, FAQ schema
+│   ├── portal.html                  # Client portal — NNG heuristic compliance, AI assistant inline
 │   ├── admin.html                   # Admin dashboard — full ops (noindex)
 │   ├── compliance-check.html        # Free compliance assessment tool (lead gen)
 │   ├── welcome.html                 # Post-purchase welcome page
-│   ├── about.html                   # About page — Person schema, E-A-T
+│   ├── about.html                   # About page — Person schema, E-A-T, SVG icons
 │   ├── partners.html                # CPA/attorney partner program
 │   ├── pa-2027-compliance-checklist.html  # Interactive checklist (M1 lead capture)
 │   ├── pennsylvania-business-glossary.html
 │   ├── 404.html
+│   │
+│   ├── og-image.jpg                 # Social sharing image (1200×630, branded slate/gold)
+│   ├── pa-annual-report-compliance-checklist.pdf  # Lead magnet PDF (2-page checklist)
 │   │
 │   ├── pa-annual-report-requirement-guide.html    # SEO articles (9)
 │   ├── what-is-a-pennsylvania-crop.html
@@ -71,8 +72,9 @@ pa-crop-services/
 │   │
 │   ├── embed/
 │   │   ├── crop-widget.js           # Partner embeddable compliance widget
-│   │   └── chatbot.js               # Standalone AI chatbot embed (any page)
-│   ├── sitemap.xml
+│   │   └── chatbot.js               # AI chatbot embed — brand-aligned (Outfit, slate/gold)
+│   ├── site.css                     # Shared design system (Outfit + Instrument Serif)
+│   ├── sitemap.xml                  # 31 URLs
 │   └── robots.txt
 │
 ├── api/                             # Vercel serverless functions (18 endpoints)
@@ -81,7 +83,7 @@ pa-crop-services/
 │   ├── provision.js                 # Full client provisioning (20i+SuiteDash+email)
 │   ├── client-hosting.js            # 20i package lookup per client
 │   ├── intake.js                    # Lead capture + 5-dimension scoring
-│   ├── subscribe.js                 # Newsletter capture → Acumbamail + n8n
+│   ├── subscribe.js                 # Newsletter capture → Acumbamail + n8n + guideUrl delivery
 │   ├── reset-code.js                # Portal access code recovery
 │   ├── partner-intake.js            # CPA/attorney partner applications
 │   ├── entity-request.js            # Entity formation leads
@@ -141,13 +143,24 @@ git add . && git commit -m "your message" && git push origin main
 python3 push_to_github.py  # uses token from INFRASTRUCTURE.md
 ```
 
-### vercel.json (do NOT add custom properties — schema validates strictly)
+### vercel.json
 
 ```json
 {
   "outputDirectory": "public",
   "cleanUrls": true,
-  "headers": [{ "source": "/(.*)", "headers": [security headers] }]
+  "trailingSlash": false,
+  "redirects": [{ "source": "/index.html", "destination": "/", "permanent": true }],
+  "headers": [
+    // Global: X-Frame-Options DENY, X-Content-Type-Options nosniff,
+    //   Referrer-Policy strict-origin-when-cross-origin,
+    //   Strict-Transport-Security max-age=63072000,
+    //   X-DNS-Prefetch-Control on,
+    //   Permissions-Policy camera=() microphone=() geolocation=()
+    // og-image.jpg: Cache-Control public, max-age=604800, immutable
+    // site.css: Cache-Control public, max-age=31536000, immutable
+    // *.pdf: Cache-Control public, max-age=86400
+  ]
 }
 ```
 
@@ -365,11 +378,11 @@ GET  /reseller/domain-search    → check domain availability
 | PA DOS File # | 0015295203 |
 | EIN | 41-5024472 |
 | Address | 924 W 23rd St, Erie, PA 16502 |
-| Phone | 814-480-0989 |
+| Phone | 814-228-2822 |
 | Email | hello@pacropservices.com |
 | Partners email | partners@pacropservices.com |
-| Microsoft Clarity | `vzhtq2nted` (installed on all 23 pages) |
-| Plausible | `pacropservices.com` (installed on all pages) |
+| Microsoft Clarity | `vzhtq2nted` (installed on all 36 pages) |
+| Plausible | `pacropservices.com` (installed on all 36 pages) |
 
 ---
 
@@ -453,6 +466,148 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
 
 ## Outstanding Items
 
+### UX/UI/Conversion Audit Applied (2026-03-23)
+
+Full audit of homepage, about, compliance-check, welcome, 404, chatbot, and all 36 pages.
+3 commits, 40+ files changed. Findings and fixes documented in `AUDIT-UX-2026-03-23.md`.
+
+**Critical — Conversion Killers (fixed):**
+- [x] Fake testimonials removed (Michael R./Sarah K./David L.) — replaced with verified trust signals (CROP license, PA Notary, physical address). Fabricated "99% retention rate" stat removed.
+- [x] og-image.jpg created (1200×630 branded) — was referenced in OG tags but file didn't exist
+- [x] Lead magnet PDF created (`pa-annual-report-compliance-checklist.pdf`) — newsletter promised "Send me the guide" but no guide existed
+- [x] Newsletter success state updated to show direct PDF download link
+- [x] Subscribe API now sends `guideUrl` to n8n nurture webhook for email delivery
+
+**High — Conversion & UX (fixed):**
+- [x] Hero secondary CTA changed from "Try the portal demo" (high friction) to "View pricing" (scroll to conversion zone)
+- [x] "How it works" 3-step section added before pricing (Check → Pick → We handle)
+- [x] Phone number added to desktop nav (trust signal for local service business)
+- [x] Value anchor math corrected: one-time website cost labeled, annual total $847+/yr (was inflated $1,347+)
+- [x] Business Starter badge corrected to "saves $648+/yr" (was "saves $1,100+/yr")
+- [x] Repeated blockquote copy deduplicated (urgency section + story section were identical)
+
+**Medium — UI Polish (fixed):**
+- [x] Favicon injected into all 36 pages (inline SVG data URI)
+- [x] All emoji icons replaced with inline SVGs across homepage (7), about (4), pricing (2)
+- [x] Chatbot colors aligned to brand: #1a56db blue → #0C1220 slate, hover → #1A2332
+- [x] Chatbot font: Plus Jakarta Sans → Outfit (brand consistency)
+- [x] Welcome page fonts: Plus Jakarta Sans + Fraunces → Outfit + Instrument Serif
+- [x] Welcome page CSS circular variable references fixed (--font:var(--font) → --font:'Outfit')
+- [x] About page CSS circular variable references fixed
+- [x] Compliance-check canonical URL: removed .html (cleanUrls enabled)
+- [x] Sitemap: added 8 missing city pages (31 URLs total, was 22)
+- [x] vercel.json: added HSTS, Permissions-Policy, trailing slash normalization, cache headers, /index.html redirect
+
+---
+
+## Development & Design Philosophy
+
+> These standards were established during the March 2026 UX audit and apply to all future
+> development on this codebase. Any AI assistant or developer continuing work should follow
+> these principles — they exist because violations were found and fixed.
+
+### 1. No Fabricated Social Proof
+
+**Never create fake testimonials, reviews, or statistics.** This includes fabricated names, star ratings, retention rates, or client counts. Pre-launch businesses use verifiable trust signals instead: licenses, certifications, physical address, statutory references. Testimonials are added only when real clients provide them.
+
+*Why:* FTC violations, instant credibility destruction, competitor ammunition. The original site had "Michael R." / "Sarah K." / "David L." with 5-star reviews and a "99% retention rate" — all fabricated. This was the single highest-risk item in the audit.
+
+### 2. Brand Font Stack: Outfit + Instrument Serif
+
+| Context | Font | Weight |
+|---------|------|--------|
+| Body, UI, navigation | Outfit | 300–800 |
+| Headlines, display, serif accents | Instrument Serif | 400, italic |
+| Monospace (code, portal) | JetBrains Mono | 400 |
+
+**Never use:** Plus Jakarta Sans, Fraunces, Inter, Roboto, Arial, or any other font family anywhere in the project. Every page, every embed, every component must use the brand stack. The welcome page and chatbot were both using wrong fonts — this creates a jarring post-purchase experience that erodes trust at the exact moment a customer should feel confident.
+
+### 3. Color System (CSS Custom Properties)
+
+```css
+:root {
+  --slate: #0C1220;    --slate2: #1A2332;   --slate3: #2D3A4A;
+  --gold: #C9982A;     --gold-light: #F5EDDA; --gold-muted: #A68A3E;
+  --sage: #6B8F71;     --sage-light: #E8F0E9;
+  --cream: #FAF9F6;    --cream2: #F3F1EC;   --cream3: #EBE8E2;
+  --ink: #1C1C1C;      --ink2: #4A4A4A;     --ink3: #7A7A7A;  --ink4: #A8A8A8;
+  --white: #FFFFFF;    --red: #C44536;
+}
+```
+
+**Sub-pages that load `site.css`** inherit these variables and may use `var(--slate)` in their local styles. Pages with inline `<style>` blocks that do NOT load `site.css` must use hardcoded hex values. Circular references like `--primary: var(--slate)` are only safe when `site.css` is loaded first.
+
+### 4. Icons: Inline SVG Only — No Emoji
+
+Emoji render inconsistently across Windows, macOS, Android, and iOS. They break the professional aesthetic. All icons in feature cards, trust sections, pricing boxes, and credential grids must use inline SVG with brand colors (`stroke="var(--slate)"` or hex equivalents).
+
+The only acceptable emoji usage is in n8n workflow names, commit messages, and internal documentation — never in customer-facing HTML.
+
+### 5. Every Page Gets These
+
+| Element | Requirement |
+|---------|------------|
+| Favicon | `<link rel="icon" href="data:image/svg+xml,...">` (inline SVG, no external file) |
+| Plausible | `<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js">` |
+| Clarity | Microsoft Clarity tag `vzhtq2nted` |
+| `<html lang="en">` | Every page |
+| `<meta name="viewport">` | Every page |
+| OG tags | Homepage + all article/comparison/city pages |
+| Canonical URL | Every indexed page, no `.html` extension (cleanUrls enabled) |
+| Schema.org JSON-LD | Appropriate type per page (LegalService, Article, FAQPage, etc.) |
+
+### 6. Copy Principles
+
+- **No duplicate copy blocks.** If a phrase appears in one section, it does not appear verbatim elsewhere. The audit found the same sentence in both the urgency section and the story blockquote.
+- **Value claims must be mathematically honest.** If comparing costs, separate one-time and recurring. Never inflate annual savings by including one-time costs in an annual total.
+- **CTAs must have a clear hierarchy.** One primary (high-contrast, action verb), one secondary (ghost/outline, lower commitment). Never two equal-weight CTAs competing for attention.
+- **Phone number visible in nav.** For a local service business, phone is a trust signal — not buried in the footer.
+
+### 7. Vercel Configuration Standards
+
+```json
+{
+  "cleanUrls": true,           // Always — never link to .html
+  "trailingSlash": false,      // Canonical: /about not /about/
+  "headers": [
+    // HSTS (Strict-Transport-Security) on every response
+    // X-Frame-Options: DENY
+    // X-Content-Type-Options: nosniff
+    // Permissions-Policy: camera=(), microphone=(), geolocation=()
+  ]
+}
+```
+
+Static assets (CSS, images) get long-lived cache headers. PDFs get 1-day cache. Never add custom properties to vercel.json that Vercel's schema doesn't support — it will silently break.
+
+### 8. Git Commit Standards
+
+```bash
+git config user.email "polycarpohu@gmail.com"
+git config user.name "pinohu"
+```
+
+**Always set these before committing.** Vercel rejects deploys from other git authors. Commit messages should describe what changed and why, not just "update files."
+
+### 9. Lead Magnet / Email Capture Integrity
+
+If a form promises to deliver something ("Send me the guide"), the thing must actually exist and be delivered. The newsletter form originally showed "On its way! Check your inbox" — but no guide existed and no email was sent. Now:
+- Success state shows a direct PDF download link
+- Subscribe API passes `guideUrl` to n8n for email delivery
+- The PDF (`pa-annual-report-compliance-checklist.pdf`) is a real 2-page document in `public/`
+
+### 10. Pre-Launch Credibility Strategy
+
+Until real clients exist, the trust section uses only verifiable facts:
+- Licensed PA CROP (cite statute: 15 Pa. C.S. § 109)
+- PA Notary Public (commissioned by Commonwealth)
+- Real physical address (924 W 23rd St, Erie, PA 16502)
+- Market context (~65 licensed CROPs serving 3.8M entities)
+
+When real testimonials become available, they replace the trust cards. Never mix real and fabricated social proof.
+
+---
+
 ### Completed (this session — 2026-03-22)
 - [x] SuiteDash custom fields (10 fields created)
 - [x] 20i env vars: TWENTY_I_RESELLER_ID + TWENTY_I_DEFAULT_TYPE_REF added to Vercel
@@ -474,7 +629,7 @@ Philadelphia, Pittsburgh, Harrisburg, Allentown, Erie, Reading, Bethlehem, Scran
     6. Client Health Score (/api/client-health) — churn prediction, weekly cron
     7. SEO Content Pipeline (/api/generate-article) — AI articles in brand voice
     8. Partner Commission Engine (/api/partner-commission) — 20% referral tracking
-- [x] Portal redesigned: NNG heuristics, Mercury/Linear aesthetic, Plus Jakarta Sans + Fraunces,
+- [x] Portal redesigned: NNG heuristics, Mercury/Linear aesthetic, Outfit + Instrument Serif,
       AI assistant inline on dashboard, entity status hero, health score KPI, keyboard shortcuts
 - [x] All n8n workflows activated (20 active)
 - [x] Renewal + Win-Back workflows rebuilt from scratch (clean n8n v2 format)
@@ -547,10 +702,10 @@ The following upgrades close every gap between the documented user journeys and 
 - `/privacy` — Privacy Policy (11 sections, discloses all third-party processors: Stripe, SuiteDash, Acumbamail, Emailit, Groq, 20i, Plausible, Clarity, Vercel)
 
 **Trust & SEO:**
-- Trust footer on 29 public pages: license number, Terms, Privacy links, phone number
+- Trust footer on all 36 public pages: license number, Terms, Privacy links, phone number
 - Author box on 14 article/comparison pages (Dr. Ikechukwu P.N. Ohu, credentials, photo placeholder)
-- 8 thin city pages noindexed (kept Philadelphia + Pittsburgh)
-- sitemap.xml with 22 indexed pages
+- All 10 city pages indexed (added to sitemap 2026-03-23)
+- sitemap.xml with 31 indexed pages
 - robots.txt blocking /portal, /admin, /api/
 
 **System health:**
@@ -562,15 +717,16 @@ The following upgrades close every gap between the documented user journeys and 
 - askAIWithFallback() wired to all chat buttons and input handlers
 
 **Content pipeline:**
-- AI chatbot embed (chatbot.js) on homepage + 6 key article pages
+- AI chatbot embed (chatbot.js) on homepage + 6 key article pages — brand-aligned (Outfit, slate/gold palette)
 - `/api/publish-article` — generates and optionally publishes article HTML to GitHub
 
 **Platform totals:**
-- 38 public HTML pages (+ terms, privacy)
+- 36 public HTML pages (incl. terms, privacy)
 - 25 serverless API functions
 - 21 n8n workflows (20 CROP + 1 error alerting)
 - 4 Stripe products, 2 webhooks
 - Emailit SMTP, SuiteDash CRM, 20i hosting, Acumbamail marketing, Groq AI
+- All 36 pages: favicon, Plausible analytics, Microsoft Clarity, OG tags
 
 **Ike action items (cannot be automated):**
 - [ ] Confirm CROP license with PA DOS (717-787-1057)
@@ -601,9 +757,18 @@ The following upgrades close every gap between the documented user journeys and 
 ### Future development
 - [x] Comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile (added 2026-03-22)
 - [x] 5 more city pages: Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre (added 2026-03-22)
+- [x] UX/UI/Conversion audit + fixes (2026-03-23, 3 commits, 40+ files)
+- [x] Lead magnet PDF created (2026-03-23)
+- [x] og-image.jpg generated (2026-03-23)
+- [x] Brand consistency audit: fonts, colors, emoji→SVG, chatbot (2026-03-23)
 - [ ] PA Compliance Cost Calculator (interactive tool)
 - [ ] Expand city pages to 300+ words each with local business references
 - [ ] Activate renewal + win-back n8n sequences
+- [ ] Replace trust section with real testimonials (when clients exist)
+- [ ] Generate polished og-image via Canva (replace programmatic version)
+- [ ] SSL certificate fix for bare domain pacropservices.com (Vercel DNS)
+- [ ] Google Search Console verification + sitemap submission
+- [ ] Google Business Profile creation + verification
 
 ---
 
