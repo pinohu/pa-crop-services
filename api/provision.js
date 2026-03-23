@@ -280,6 +280,54 @@ export default async function handler(req, res) {
     results.steps.push({ step: 'acumbamail', status: 'warning', error: e.message });
   }
 
+  // ── STEP 6: Welcome SMS ─────────────────────────────────────────────
+  const phone = body.phone;
+  if (phone) {
+    try {
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+      await fetch(`${baseUrl}/api/sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        body: JSON.stringify({ to: phone, type: 'welcome', data: { code: accessCode } })
+      });
+      results.steps.push({ step: 'welcome_sms', status: 'done', to: phone });
+    } catch (e) {
+      results.steps.push({ step: 'welcome_sms', status: 'warning', error: e.message });
+    }
+  } else {
+    results.steps.push({ step: 'welcome_sms', status: 'skipped', reason: 'No phone number provided' });
+  }
+
+  // ── STEP 7: Service Agreement Generation ────────────────────────────
+  try {
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+    const agreeRes = await fetch(`${baseUrl}/api/generate-agreement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+      body: JSON.stringify({ email, name, entityName: body.entityName || '', entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
+    });
+    const agreeData = await agreeRes.json().catch(() => ({}));
+    results.steps.push({ step: 'service_agreement', status: agreeData.success ? 'done' : 'warning', pdf_url: agreeData.pdf_url || null });
+  } catch (e) {
+    results.steps.push({ step: 'service_agreement', status: 'warning', error: e.message });
+  }
+
+  // ── STEP 8: Entity Verification (if entity info provided) ──────────
+  if (body.entityName || body.dosNumber) {
+    try {
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+      const verifyRes = await fetch(`${baseUrl}/api/entity-monitor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        body: JSON.stringify({ entityName: body.entityName, dosNumber: body.dosNumber, email })
+      });
+      const verifyData = await verifyRes.json().catch(() => ({}));
+      results.steps.push({ step: 'entity_verification', status: 'done', entity_status: verifyData.status || 'checked' });
+    } catch (e) {
+      results.steps.push({ step: 'entity_verification', status: 'warning', error: e.message });
+    }
+  }
+
   // ── Summary ──────────────────────────────────────────────────────────
   const errors = results.steps.filter(s => s.status === 'error');
   const warnings = results.steps.filter(s => s.status === 'warning' || s.status === 'pending' || s.status === 'deferred');

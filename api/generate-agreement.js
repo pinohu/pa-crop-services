@@ -1,267 +1,104 @@
-// PA CROP Services — Native Service Agreement PDF Generator
-// POST /api/generate-agreement
-// Generates a professional PDF service agreement using pdf-lib (no external services)
-// Called from: admin dashboard, portal, n8n onboarding workflow
-
-import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+// PA CROP Services — Service Agreement PDF Generator
+// POST /api/generate-agreement { email, name, entityName, entityType, tier, dosNumber }
+// Uses Documentero API to generate branded service agreement PDF
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  // Auth: admin key or internal n8n call
-  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
-  const isInternal = req.headers['x-internal-key'] === process.env.ADMIN_SECRET_KEY;
-  if (!isInternal && adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
+  const adminKey = req.headers['x-admin-key'];
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const {
-    client_name = '',
-    entity_name = '',
-    entity_type = 'LLC',
-    entity_number = '',
-    client_address = '',
-    client_email = '',
-    client_title = 'Authorized Representative',
-    service_tier = 'compliance_only',
-    annual_fee = '$99',
-    effective_date = new Date().toISOString().split('T')[0],
-    agreement_number = `CROP-${Date.now().toString(36).toUpperCase().slice(-8)}`
-  } = req.body || {};
+  const { email, name, entityName, entityType, tier, dosNumber, phone } = req.body || {};
+  if (!email || !entityName) return res.status(400).json({ error: 'email and entityName required' });
 
-  if (!client_name || !entity_name) {
-    return res.status(400).json({ error: 'client_name and entity_name required' });
-  }
-
-  // Tier labels and included services
-  const tierMap = {
-    compliance_only: { label: 'Compliance Only', fee: '$99/year', services: 'Registered office address, same-day document scanning, annual report reminders, client portal access.' },
-    business_starter: { label: 'Business Starter', fee: '$199/year', services: 'All Compliance Only services, plus: web hosting with SSL, business email address, StackCP hosting dashboard.' },
-    business_pro: { label: 'Business Pro', fee: '$349/year', services: 'All Business Starter services, plus: annual report filing included, priority document handling, turbo hosting.' },
-    business_empire: { label: 'Business Empire', fee: '$699/year', services: 'All Business Pro services, plus: daily backups, entity formation assistance, dedicated compliance advisor, multi-entity management.' }
+  const DOCUMENTERO_KEY = process.env.DOCUMENTERO_API_KEY;
+  const tierLabel = { compliance: 'Compliance Only ($99/yr)', starter: 'Business Starter ($199/yr)', pro: 'Business Pro ($349/yr)', empire: 'Business Empire ($699/yr)' }[tier] || tier;
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  // Generate agreement content
+  const agreementData = {
+    client_name: name || 'Client',
+    client_email: email,
+    client_phone: phone || '',
+    entity_name: entityName,
+    entity_type: entityType || 'LLC',
+    dos_number: dosNumber || 'Pending verification',
+    plan_name: tierLabel,
+    effective_date: today,
+    provider_name: 'PA Registered Office Services, LLC',
+    provider_address: '924 W 23rd St, Erie, PA 16502',
+    provider_phone: '814-228-2822',
+    provider_email: 'hello@pacropservices.com',
+    crop_statute: '15 Pa. C.S. § 109',
   };
-  const tier = tierMap[service_tier] || tierMap.compliance_only;
-  const feeDisplay = annual_fee.startsWith('$') ? annual_fee : tier.fee;
 
   try {
-    const doc = await PDFDocument.create();
-    const helvetica = await doc.embedFont(StandardFonts.Helvetica);
-    const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
-    const helveticaOblique = await doc.embedFont(StandardFonts.HelveticaOblique);
-
-    const blue = rgb(0.106, 0.31, 0.541);     // #1B4F8A
-    const accent = rgb(0.325, 0.29, 0.718);    // #534AB7
-    const dark = rgb(0.118, 0.137, 0.2);       // #1E2333
-    const gray = rgb(0.42, 0.45, 0.5);         // #6B7280
-    const lightBg = rgb(0.969, 0.965, 0.953);  // #F7F6F3
-
-    const pageW = 612; // US Letter
-    const pageH = 792;
-    const marginL = 60;
-    const marginR = 60;
-    const contentW = pageW - marginL - marginR;
-
-    // Helper: draw text and return new Y position
-    function drawText(page, text, x, y, opts = {}) {
-      const font = opts.bold ? helveticaBold : (opts.italic ? helveticaOblique : helvetica);
-      const size = opts.size || 10;
-      const color = opts.color || dark;
-      const maxW = opts.maxWidth || contentW;
-
-      // Word wrap
-      const words = text.split(' ');
-      let lines = [];
-      let currentLine = '';
-      for (const word of words) {
-        const testLine = currentLine ? currentLine + ' ' + word : word;
-        if (font.widthOfTextAtSize(testLine, size) > maxW && currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = testLine;
-        }
+    if (DOCUMENTERO_KEY) {
+      // Use Documentero API for PDF generation
+      const docRes = await fetch('https://app.documentero.com/api', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${DOCUMENTERO_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          document: 'crop-service-agreement',
+          format: 'pdf',
+          data: agreementData
+        })
+      });
+      
+      if (docRes.ok) {
+        const result = await docRes.json();
+        return res.status(200).json({ success: true, pdf_url: result.url || result.data?.url, agreement: agreementData });
       }
-      if (currentLine) lines.push(currentLine);
-
-      let currentY = y;
-      for (const line of lines) {
-        if (currentY < 60) {
-          page = doc.addPage([pageW, pageH]);
-          currentY = pageH - 60;
-        }
-        page.drawText(line, { x, y: currentY, size, font, color });
-        currentY -= size * 1.5;
-      }
-      return { y: currentY, page };
     }
 
-    // Helper: draw a horizontal line
-    function drawLine(page, y, color = gray, thickness = 0.5) {
-      page.drawLine({ start: { x: marginL, y }, end: { x: pageW - marginR, y }, thickness, color });
-    }
-
-    // ── PAGE 1 ──────────────────────────────────────────────────
-    let page = doc.addPage([pageW, pageH]);
-    let y = pageH - 50;
-
-    // Header
-    page.drawText('PA REGISTERED OFFICE SERVICES, LLC', { x: marginL, y, size: 14, font: helveticaBold, color: blue });
-    y -= 18;
-    page.drawText('924 W 23rd St, Erie, PA 16502  |  814-480-0989  |  hello@pacropservices.com', { x: marginL, y, size: 8, font: helvetica, color: gray });
-    y -= 12;
-    page.drawText('PA DOS File #0015295203  |  EIN: 41-5024472', { x: marginL, y, size: 8, font: helvetica, color: gray });
-    y -= 8;
-    drawLine(page, y, blue, 1.5);
-    y -= 30;
-
-    // Title
-    page.drawText('COMMERCIAL REGISTERED OFFICE PROVIDER', { x: marginL, y, size: 16, font: helveticaBold, color: blue });
-    y -= 22;
-    page.drawText('SERVICE AGREEMENT', { x: marginL, y, size: 14, font: helveticaBold, color: blue });
-    y -= 30;
-
-    // Agreement info block
-    const infoFields = [
-      ['Agreement Date:', effective_date],
-      ['Agreement Number:', agreement_number],
-      ['Service Tier:', tier.label],
-      ['Annual Fee:', feeDisplay],
-    ];
-    for (const [label, value] of infoFields) {
-      page.drawText(label, { x: marginL, y, size: 10, font: helveticaBold, color: dark });
-      page.drawText(value, { x: marginL + 130, y, size: 10, font: helvetica, color: dark });
-      y -= 16;
-    }
-    y -= 16;
-
-    // PARTIES
-    page.drawText('PARTIES', { x: marginL, y, size: 12, font: helveticaBold, color: blue });
-    y -= 20;
-
-    let result;
-
-    result = drawText(page, `Provider: PA Registered Office Services, LLC, a Pennsylvania limited liability company, licensed as a Commercial Registered Office Provider under 15 Pa. C.S. \u00A7 109, with its principal office at 924 W 23rd St, Erie, PA 16502 ("Provider").`, marginL, y, { size: 10 });
-    y = result.y - 10; page = result.page;
-
-    result = drawText(page, `Client: ${client_name}, on behalf of ${entity_name}, a ${entity_type} registered with the Pennsylvania Department of State under File Number ${entity_number || '[pending]'}, with a mailing address at ${client_address || '[to be provided]'} ("Client").`, marginL, y, { size: 10 });
-    y = result.y - 20; page = result.page;
-
-    // SECTIONS
-    const sections = [
-      {
-        title: '1. SCOPE OF SERVICES',
-        text: `Provider agrees to furnish the following services for the Client\u2019s entity during the term of this Agreement:\n\n\u2022 Registered Office Address: Provider shall serve as the Commercial Registered Office Provider (CROP) for Client\u2019s entity, maintaining the address 924 W 23rd St, Erie, PA 16502 as the entity\u2019s registered office on file with the Pennsylvania Department of State.\n\n\u2022 Document Receipt and Forwarding: Provider shall receive all service of process, government correspondence, and official mail delivered to the registered office address and forward scanned copies to Client via the client portal within one (1) business day of receipt.\n\n\u2022 Annual Report Reminders: Provider shall send automated compliance reminders at 90, 60, 30, 14, and 7 days prior to the September 30 annual report filing deadline.\n\n\u2022 Client Portal Access: Provider shall maintain a secure online portal for Client to view received documents, compliance status, and account information.\n\nAdditional services included in the ${tier.label} plan: ${tier.services}`
-      },
-      {
-        title: '2. TERM AND RENEWAL',
-        text: `This Agreement shall commence on ${effective_date} and continue for a period of one (1) year (the "Initial Term"). This Agreement shall automatically renew for successive one-year periods (each a "Renewal Term") unless either party provides written notice of non-renewal at least thirty (30) days prior to the expiration of the then-current term.`
-      },
-      {
-        title: '3. FEES AND PAYMENT',
-        text: `Client shall pay Provider an annual fee of ${feeDisplay} for the services described in Section 1. Payment is due upon execution of this Agreement and upon each annual renewal date thereafter. All fees are non-refundable except as required by applicable law.`
-      },
-      {
-        title: '4. CLIENT OBLIGATIONS',
-        text: `Client shall: (a) promptly notify Provider of any change in entity name, entity type, mailing address, or contact information; (b) maintain its entity in good standing with the Pennsylvania Department of State, including timely filing of annual reports; (c) promptly retrieve and review all documents forwarded by Provider through the client portal; and (d) not use Provider\u2019s registered office address for any purpose other than as the entity\u2019s registered office with the PA Department of State.`
-      },
-      {
-        title: '5. PROVIDER OBLIGATIONS',
-        text: `Provider shall: (a) maintain a physical office at 924 W 23rd St, Erie, PA 16502, staffed during normal business hours (Monday\u2013Friday, 9:00 AM\u20135:00 PM Eastern); (b) accept service of process and official mail on behalf of Client\u2019s entity and forward scanned copies within one (1) business day; (c) maintain its license as a Commercial Registered Office Provider under 15 Pa. C.S. \u00A7 109; and (d) maintain reasonable security measures to protect Client\u2019s documents and personal information.`
-      },
-      {
-        title: '6. LIMITATION OF LIABILITY',
-        text: `Provider\u2019s total liability under this Agreement shall not exceed the annual fee paid by Client for the then-current term. Provider shall not be liable for any indirect, incidental, consequential, or punitive damages arising from or related to this Agreement, including but not limited to delays caused by postal service, courier, or government agency processing times.`
-      },
-      {
-        title: '7. TERMINATION',
-        text: `Either party may terminate this Agreement by providing thirty (30) days\u2019 written notice to the other party. Upon termination, Client shall promptly file DSCB:15-108 (Statement of Change of Registered Office) with the PA Department of State to designate a new registered office. Provider shall continue to forward documents received after termination for a period of sixty (60) days.`
-      },
-      {
-        title: '8. GOVERNING LAW',
-        text: `This Agreement shall be governed by the laws of the Commonwealth of Pennsylvania. Any dispute arising under this Agreement shall be resolved in the courts of Erie County, Pennsylvania.`
-      },
-      {
-        title: '9. ENTIRE AGREEMENT',
-        text: `This Agreement constitutes the entire agreement between the parties with respect to the subject matter hereof and supersedes all prior agreements, understandings, and representations, whether written or oral. This Agreement may not be amended except by written instrument signed by both parties.`
-      }
-    ];
-
-    for (const section of sections) {
-      if (y < 100) {
-        page = doc.addPage([pageW, pageH]);
-        y = pageH - 60;
-      }
-      page.drawText(section.title, { x: marginL, y, size: 11, font: helveticaBold, color: blue });
-      y -= 18;
-
-      // Split on \n\n for paragraph breaks, handle bullet points
-      const paragraphs = section.text.split('\n\n');
-      for (const para of paragraphs) {
-        result = drawText(page, para.replace(/\n/g, ' '), marginL, y, { size: 10 });
-        y = result.y - 8; page = result.page;
-      }
-      y -= 8;
-    }
-
-    // ── SIGNATURE BLOCK ────────────────────────────────────────
-    if (y < 200) {
-      page = doc.addPage([pageW, pageH]);
-      y = pageH - 60;
-    }
-    drawLine(page, y, blue, 1.5);
-    y -= 30;
-
-    // Provider signature
-    page.drawText('PROVIDER:', { x: marginL, y, size: 10, font: helveticaBold, color: dark });
-    page.drawText('CLIENT:', { x: marginL + 260, y, size: 10, font: helveticaBold, color: dark });
-    y -= 16;
-    page.drawText('PA Registered Office Services, LLC', { x: marginL, y, size: 10, font: helvetica, color: dark });
-    page.drawText(entity_name, { x: marginL + 260, y, size: 10, font: helvetica, color: dark });
-    y -= 30;
-    page.drawText('________________________________', { x: marginL, y, size: 10, font: helvetica, color: gray });
-    page.drawText('________________________________', { x: marginL + 260, y, size: 10, font: helvetica, color: gray });
-    y -= 16;
-    page.drawText('Ikechukwu P.N. Ohu, PhD', { x: marginL, y, size: 10, font: helvetica, color: dark });
-    page.drawText(client_name, { x: marginL + 260, y, size: 10, font: helvetica, color: dark });
-    y -= 14;
-    page.drawText('Managing Member', { x: marginL, y, size: 9, font: helvetica, color: gray });
-    page.drawText(client_title, { x: marginL + 260, y, size: 9, font: helvetica, color: gray });
-    y -= 18;
-    page.drawText(`Date: ${effective_date}`, { x: marginL, y, size: 10, font: helvetica, color: dark });
-    page.drawText('Date: _______________', { x: marginL + 260, y, size: 10, font: helvetica, color: dark });
-    y -= 40;
-
-    // Footer
-    page.drawText('PA CROP Services  \u2022  pacropservices.com  \u2022  814-480-0989', {
-      x: pageW / 2 - 130, y: 30, size: 8, font: helvetica, color: gray
-    });
-
-    // Serialize
-    const pdfBytes = await doc.save();
-    const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
-    const filename = `CROP_Service_Agreement_${entity_name.replace(/[^a-zA-Z0-9]/g, '_')}_${effective_date}.pdf`;
-
-    // Return as downloadable or base64 depending on accept header
-    if (req.headers.accept === 'application/pdf') {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      return res.status(200).send(Buffer.from(pdfBytes));
-    }
-
-    return res.status(200).json({
-      success: true,
-      filename,
-      agreement_number,
-      pdf_base64: pdfBase64,
-      size_bytes: pdfBytes.length
-    });
-
-  } catch (err) {
-    console.error('PDF generation error:', err);
-    return res.status(500).json({ error: 'Failed to generate PDF', detail: err.message });
+    // Fallback: generate HTML agreement (can be converted to PDF by client)
+    const html = generateAgreementHTML(agreementData);
+    return res.status(200).json({ success: true, html, agreement: agreementData, note: 'PDF generation unavailable — HTML agreement returned' });
+    
+  } catch (e) {
+    console.error('Agreement generation error:', e);
+    return res.status(500).json({ error: e.message });
   }
+}
+
+function generateAgreementHTML(d) {
+  return `<!DOCTYPE html><html><head><style>
+    body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#1C1C1C;line-height:1.6}
+    h1{font-size:22px;border-bottom:3px solid #C9982A;padding-bottom:12px}
+    h2{font-size:16px;margin-top:24px;color:#0C1220}
+    .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:20px 0;padding:16px;background:#FAF9F6;border-radius:8px}
+    .sig{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+    .sig-line{border-top:1px solid #000;padding-top:4px;margin-top:40px;font-size:13px}
+  </style></head><body>
+    <h1>Commercial Registered Office Provider Service Agreement</h1>
+    <p><strong>Effective Date:</strong> ${d.effective_date}</p>
+    <div class="parties">
+      <div><strong>Provider:</strong><br>${d.provider_name}<br>${d.provider_address}<br>${d.provider_phone}<br>${d.provider_email}<br>Licensed CROP under ${d.crop_statute}</div>
+      <div><strong>Client:</strong><br>${d.client_name}<br>${d.client_email}${d.client_phone ? '<br>' + d.client_phone : ''}<br><br><strong>Entity:</strong> ${d.entity_name}<br>Type: ${d.entity_type}<br>DOS#: ${d.dos_number}</div>
+    </div>
+    <h2>1. Services</h2>
+    <p>Provider agrees to serve as the Commercial Registered Office Provider (CROP) for the above entity under the <strong>${d.plan_name}</strong> plan, providing: registered office address at ${d.provider_address}, same-day document scanning and portal notification, annual report deadline reminders, entity status monitoring, and secure client portal access.</p>
+    <h2>2. Term & Renewal</h2>
+    <p>This agreement begins on ${d.effective_date} and continues for one (1) year. The agreement auto-renews unless cancelled in writing 30 days before the renewal date.</p>
+    <h2>3. Fees</h2>
+    <p>Client agrees to pay the annual fee for the ${d.plan_name} plan. All fees are non-refundable after the 30-day money-back guarantee period.</p>
+    <h2>4. Provider Obligations</h2>
+    <p>Provider will: (a) maintain the registered office at the address above during business hours; (b) receive and scan documents same-day; (c) send annual report reminders at 90, 60, 30, 14, and 7 days before deadline; (d) monitor entity status with the PA Department of State.</p>
+    <h2>5. Client Obligations</h2>
+    <p>Client will: (a) keep contact information current; (b) respond to time-sensitive documents promptly; (c) pay fees when due; (d) file any required PA DOS forms in a timely manner (unless filing is included in Client's plan).</p>
+    <h2>6. Limitation of Liability</h2>
+    <p>Provider's liability is limited to the annual fee paid. Provider is not liable for consequences of late filings, missed deadlines, or legal process where Provider fulfilled notification obligations under this agreement.</p>
+    <h2>7. Governing Law</h2>
+    <p>This agreement is governed by the laws of the Commonwealth of Pennsylvania.</p>
+    <div class="sig">
+      <div><div class="sig-line">Provider: ${d.provider_name}<br>Date: ${d.effective_date}</div></div>
+      <div><div class="sig-line">Client: ${d.client_name}<br>Date: _______________</div></div>
+    </div>
+  </body></html>`;
 }
