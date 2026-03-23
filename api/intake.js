@@ -106,6 +106,14 @@ export default async function handler(req, res) {
       })
     }).catch(() => {}); // Fire and forget
 
+    // Add to retargeting drip (for leads that don't convert immediately)
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+    fetch(`${baseUrl}/api/retarget`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, name: firstName, riskScore: score, source })
+    }).catch(() => {}); // Fire and forget
+
     return res.status(200).json({
       success: true,
       score,

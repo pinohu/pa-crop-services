@@ -328,6 +328,22 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── STEP 9: Referral Commission Tracking ────────────────────────────
+  const refCodeUsed = body.refCode || body.referralCode;
+  if (refCodeUsed) {
+    try {
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+      await fetch(`${baseUrl}/api/referral-track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        body: JSON.stringify({ newClientEmail: email, refCode: refCodeUsed, tier })
+      });
+      results.steps.push({ step: 'referral_commission', status: 'done', refCode: refCodeUsed });
+    } catch (e) {
+      results.steps.push({ step: 'referral_commission', status: 'warning', error: e.message });
+    }
+  }
+
   // ── Summary ──────────────────────────────────────────────────────────
   const errors = results.steps.filter(s => s.status === 'error');
   const warnings = results.steps.filter(s => s.status === 'warning' || s.status === 'pending' || s.status === 'deferred');
