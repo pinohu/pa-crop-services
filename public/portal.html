@@ -9,14 +9,14 @@
 
 <meta name="description" content="Manage your Pennsylvania registered office, compliance status, documents, and more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#f8f7f4;--bg2:#ffffff;--bg3:#f1f0ec;
   --ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;
-  --accent:#1a56db;--accent2:#2563eb;--accent-bg:#eff6ff;--accent-border:#bfdbfe;
-  --gold:#c27803;--gold-bg:#fef3c7;--gold-border:#fcd34d;
+  --accent:#C9982A;--accent2:#D4A843;--accent-bg:#F5EDDA;--accent-border:#E8D5A0;
+  --gold:#C9982A;--gold-bg:#fef3c7;--gold-border:#fcd34d;
   --green:#15803d;--green-bg:#f0fdf4;--green-border:#86efac;
   --red:#dc2626;--red-bg:#fef2f2;--red-border:#fca5a5;
   --border:#e5e4e0;--border2:#d4d3cf;
@@ -25,8 +25,8 @@
   --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
   --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.05);
   --radius:8px;--radius-lg:12px;--radius-xl:16px;
-  --font:'Plus Jakarta Sans',system-ui,sans-serif;
-  --serif:'Fraunces',Georgia,serif;
+  --font:'Outfit',system-ui,sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
   --mono:'JetBrains Mono',monospace;
   --ease:cubic-bezier(.4,0,.2,1);
   --topbar-h:56px;
@@ -51,10 +51,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1
 /* ─── LOGIN SCREEN ─── */
 #login-screen{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--ink);position:relative;overflow:hidden;
+  background:#0C1220;position:relative;overflow:hidden;
 }
 #login-screen::before{content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 20% 50%,rgba(26,86,219,.15) 0%,transparent 60%),
+  background:radial-gradient(ellipse at 20% 50%,rgba(201,152,42,.12) 0%,transparent 60%),
              radial-gradient(ellipse at 80% 30%,rgba(194,120,3,.1) 0%,transparent 50%);
 }
 .login-card{

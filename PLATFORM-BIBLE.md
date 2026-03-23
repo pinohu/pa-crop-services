@@ -427,3 +427,25 @@ git push origin main
 - Terms of Service, Privacy Policy, trust footer
 - Stripe live with 3 products
 - 7 n8n workflows active
+
+### March 23, 2026 (Round 2) — Final Design Cascade + Hardening
+
+**Design:**
+- Portal updated to Outfit/Instrument Serif + gold accent palette (was Plus Jakarta Sans)
+- Admin dashboard updated to Outfit/Instrument Serif + slate/gold (was DM Sans)
+- Welcome page cleaned of old font references
+- Design consistency: 36/36 pages (100%)
+
+**Security:**
+- chat.js (Edge runtime) — cannot do in-memory rate limiting; Groq's own API rate limits provide protection; frontend chatbot has UI-level throttling
+- All Node.js public APIs (13) now have in-memory IP-based rate limiting
+
+**Analytics:**
+- admin.html — Plausible added
+- gsc-verify-placeholder.html — Plausible + Clarity added
+- Full coverage: 36/36 pages
+
+**Known Limitations:**
+- 4 n8n workflows still need building (requires n8n dashboard access)
+- 4 Vercel env vars need manual verification
+- chat.js Edge function lacks server-side rate limiting (mitigated by Groq API limits)

@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA CROP Admin Dashboard</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vzhtq2nted");</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--navy:#0f1e3d;--gold:#c9a227;--accent:#534AB7;--dark:#1E2333;--light:#f8f7f4;--white:#fff;--gray:#6B7280;--green:#059669;--red:#dc2626;--yellow:#d97706;--radius:10px;--sidebar:240px}
-body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
+:root{--navy:#0C1220;--gold:#C9982A;--accent:#C9982A;--dark:#1E2333;--light:#f8f7f4;--white:#fff;--gray:#6B7280;--green:#059669;--red:#dc2626;--yellow:#d97706;--radius:10px;--sidebar:240px}
+body{font-family:'Outfit',system-ui,sans-serif;background:#f0f2f5;color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
 
 /* Login */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--navy)}
 .login-card{background:#fff;border-radius:16px;padding:48px;width:380px;text-align:center}
-.login-card h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy);margin-bottom:4px}
+.login-card h1{font-family:'Instrument Serif',Georgia,serif;font-size:28px;color:var(--navy);margin-bottom:4px}
 .login-card p{color:var(--gray);margin-bottom:32px;font-size:14px}
 .login-card input{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px;outline:none}
 .login-card input:focus{border-color:var(--accent)}
@@ -26,7 +26,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:var(--dark);min-h
 #admin-app{display:none;min-height:100vh}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar);background:var(--navy);color:#fff;display:flex;flex-direction:column;z-index:10}
 .sidebar-logo{padding:20px 20px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
-.sidebar-logo .brand{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
+.sidebar-logo .brand{font-family:'Instrument Serif',Georgia,serif;font-size:18px;color:#fff}
 .sidebar-logo .brand span{color:var(--gold)}
 .sidebar-logo .sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
 .sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
@@ -116,7 +116,7 @@ tr:hover td{background:#fafafa}
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center}
 .modal{background:#fff;border-radius:12px;padding:32px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto}
-.modal h3{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:20px;color:var(--navy)}
+.modal h3{font-family:'Instrument Serif',Georgia,serif;font-size:22px;margin-bottom:20px;color:var(--navy)}
 .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
 
 /* Section pages */
@@ -152,6 +152,7 @@ tr:hover td{background:#fafafa}
 .step-dot:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#e5e7eb}
 .step-dot.done:not(:last-child)::after{background:var(--green)}
 </style>
+<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
 
@@ -945,7 +946,7 @@ async function executeProvision() {
     if (data.success) {
       document.getElementById('provision-result').innerHTML = `
         <div style="font-size:40px;margin-bottom:16px">✅</div>
-        <h3 style="font-family:'DM Serif Display',serif;color:var(--navy);margin-bottom:16px">Client Provisioned!</h3>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;color:var(--navy);margin-bottom:16px">Client Provisioned!</h3>
         <div style="background:#f8f9fa;border-radius:8px;padding:20px;text-align:left;max-width:400px;margin:0 auto;font-size:13px">
           <div style="margin-bottom:8px"><strong>Portal Access Code:</strong> <code style="background:#f0f4ff;padding:3px 10px;border-radius:4px;font-size:16px;color:var(--accent)">${data.accessCode}</code></div>
           <div style="margin-bottom:8px"><strong>Referral Code:</strong> ${data.refCode}</div>
