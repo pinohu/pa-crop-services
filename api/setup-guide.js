@@ -27,14 +27,14 @@ const GUIDES = {
     priority: 'HIGH — activates all scheduled automations',
     estimatedTime: '45 minutes',
     url: 'https://n8n.audreysplace.place',
-    quickMethod: 'Import JSON from /api/n8n-export?key=CROP-ADMIN-2026-IKE&workflow=<id>',
+    quickMethod: 'Import JSON from /api/n8n-export?key=<YOUR_ADMIN_KEY>&workflow=<id>',
     steps: [
       { step: 1, action: 'Go to n8n dashboard: https://n8n.audreysplace.place' },
       { step: 2, action: 'For each workflow: Click + New Workflow → Import from JSON → Paste JSON from /api/n8n-export' },
       { step: 3, action: 'Activate each workflow (toggle ON)' },
       { step: 4, action: 'Test each by clicking "Execute Workflow" manually once' },
     ],
-    workflows: '17 total — see /api/n8n-export?key=CROP-ADMIN-2026-IKE&workflow=list for full list',
+    workflows: '17 total — see /api/n8n-export?key=<YOUR_ADMIN_KEY>&workflow=list for full list',
   },
   suitedash: {
     title: 'SuiteDash — 10 Native Automations',

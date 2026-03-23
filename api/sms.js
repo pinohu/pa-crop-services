@@ -38,7 +38,8 @@ export default async function handler(req, res) {
   const { to, message, type, data = {} } = req.body || {};
   if (!to) return res.status(400).json({ error: 'to (phone number) required' });
 
-  const SMSIT_KEY = process.env.SMSIT_API_KEY || 'SMSIT_a1a5c935d1626fb1ad8d95de9455857d3225730e1b992f62c355c83158a4a7dc';
+  const SMSIT_KEY = process.env.SMSIT_API_KEY;
+  if (!SMSIT_KEY) return res.status(503).json({ error: 'SMSIT_API_KEY not configured. Add to Vercel env vars.' });
   const smsBody = message || (TEMPLATES[type] ? TEMPLATES[type](data) : null);
   if (!smsBody) return res.status(400).json({ error: 'message or valid type required' });
 

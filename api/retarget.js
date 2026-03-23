@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   const { email, name, riskScore, source } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
 
-  const acuKey = process.env.ACUMBAMAIL_API_KEY || '0cdbad074aa140a5bf7274027a53f780';
+  const acuKey = process.env.ACUMBAMAIL_API_KEY;
   const RETARGET_LIST = '1267325'; // Acumbamail retargeting list
 
   try {

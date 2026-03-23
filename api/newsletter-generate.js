@@ -68,7 +68,7 @@ export default async function handler(req, res) {
 
     // Send via Acumbamail if requested
     if (req.query?.send === 'true') {
-      const acuKey = process.env.ACUMBAMAIL_API_KEY || '0cdbad074aa140a5bf7274027a53f780';
+      const acuKey = process.env.ACUMBAMAIL_API_KEY;
       try {
         const sendRes = await fetch('https://acumbamail.com/api/1/sendOne/', {
           method: 'POST',

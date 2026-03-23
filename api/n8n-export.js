@@ -3,7 +3,7 @@
 // Returns importable n8n workflow JSON for each cron job
 
 const BASE = 'https://pacropservices.com/api';
-const KEY = 'CROP-ADMIN-2026-IKE';
+const KEY = process.env.ADMIN_SECRET_KEY || 'CHANGE-ME';
 
 function makeWorkflow(name, cron, url, notes) {
   return {

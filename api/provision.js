@@ -269,7 +269,7 @@ export default async function handler(req, res) {
 
   // ── STEP 5: Acumbamail ────────────────────────────────────────────────
   try {
-    const acuKey = process.env.ACUMBAMAIL_API_KEY || '0cdbad074aa140a5bf7274027a53f780';
+    const acuKey = process.env.ACUMBAMAIL_API_KEY;
     await fetch('https://acumbamail.com/api/1/addSubscriber/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
