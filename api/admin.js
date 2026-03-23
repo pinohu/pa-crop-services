@@ -51,6 +51,25 @@ async function stripeFetch(path) {
   return res.json();
 }
 
+
+// ── Emailit Fallback Notifier ──
+async function _notifyIke(subject, body) {
+  const key = process.env.EMAILIT_API_KEY;
+  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  try {
+    await fetch('https://api.emailit.com/v1/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'alerts@pacropservices.com',
+        to: 'hello@pacropservices.com',
+        subject: '[PA CROP] ' + subject,
+        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+      })
+    });
+  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
@@ -330,12 +349,21 @@ export default async function handler(req, res) {
       // ── DOS Entity Check (trigger n8n) ────────────────────────────────
       case 'check_entity': {
         const { entityName, entityNumber } = payload;
-        const r = await fetch('https://n8n.audreysplace.place/webhook/crop-dos-entity-checker', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entityName, entityNumber })
+        try {
+          const r = await fetch('https://n8n.audreysplace.place/webhook/crop-dos-entity-checker', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entityName, entityNumber })
+          });
+          if (r.ok) return res.status(200).json(await r.json().catch(() => ({})));
+        } catch (e) { /* n8n unreachable */ }
+        // Fallback: return manual check instructions
+        return res.status(200).json({
+          status: 'manual_check_required',
+          message: 'Automated entity check unavailable. Check manually at https://www.dos.pa.gov/BusinessCharities/Business/Pages/default.aspx',
+          entityName, entityNumber,
+          instructions: 'Search for the entity name or DOS file number on the PA DOS website.'
         });
-        return res.status(200).json(await r.json().catch(() => ({})));
       }
 
       default:

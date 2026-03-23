@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   // 20i requires base64-encoded general API key as bearer token
   const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN?.split('+')[0];
   const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
-  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID || '10455';
+  const TWENTY_RESELLER_ID = (process.env.TWENTY_I_RESELLER_ID || '10455') || '10455';
   const SMTP_HOST = process.env.SMTP_HOST || 'smtp.emailit.com';
   const N8N = 'https://n8n.audreysplace.place/webhook';
 

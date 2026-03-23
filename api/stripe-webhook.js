@@ -2,6 +2,25 @@
 // POST /api/stripe-webhook
 // Verifies Stripe webhook signatures and routes events to n8n
 
+
+// ── Emailit Fallback Notifier ──
+async function _notifyIke(subject, body) {
+  const key = process.env.EMAILIT_API_KEY;
+  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  try {
+    await fetch('https://api.emailit.com/v1/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'alerts@pacropservices.com',
+        to: 'hello@pacropservices.com',
+        subject: '[PA CROP] ' + subject,
+        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+      })
+    });
+  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -69,11 +88,20 @@ async function routeEvent(event, res) {
       });
     } else if (type === 'invoice.payment_failed') {
       // Route to dunning workflow
-      await fetch('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
+      const pfRes = await fetch('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(event)
-      });
+      }).catch(() => null);
+      if (!pfRes || !pfRes.ok) {
+        await _notifyIke('Payment Failed — Action Required',
+          '<h2>⚠️ Payment Failed</h2>' +
+          '<p><strong>Event:</strong> ' + (event?.id || 'unknown') + '</p>' +
+          '<p><strong>Customer:</strong> ' + JSON.stringify(event?.data?.object?.customer || 'unknown') + '</p>' +
+          '<p><strong>Amount:</strong> $' + ((event?.data?.object?.amount_due || 0) / 100).toFixed(2) + '</p>' +
+          '<p>n8n workflow unreachable. Handle manually in Stripe dashboard.</p>'
+        );
+      }
     }
     // Log all events
     console.log(`Stripe webhook: ${type} (${event?.id})`);

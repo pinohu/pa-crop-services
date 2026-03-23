@@ -2,6 +2,16 @@
 // GET /api/health
 // Tests: Groq AI, SuiteDash CRM, 20i hosting, email deliverability
 
+
+// ── Env Var Validation ──
+const _envWarnings = [];
+['GROQ_API_KEY','SUITEDASH_PUBLIC_ID','SUITEDASH_SECRET_KEY','STRIPE_SECRET_KEY',
+ 'ADMIN_SECRET_KEY','TWENTY_I_TOKEN','TWENTY_I_GENERAL','ACUMBAMAIL_API_KEY',
+ 'EMAILIT_API_KEY','STRIPE_WEBHOOK_SECRET','TWENTY_I_RESELLER_ID'].forEach(k => {
+  if (!process.env[k]) _envWarnings.push(k);
+});
+if (_envWarnings.length) console.warn('⚠️ Missing env vars:', _envWarnings.join(', '));
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
@@ -62,6 +72,7 @@ export default async function handler(req, res) {
   return res.status(overall === 'healthy' ? 200 : 503).json({
     status: overall,
     timestamp: new Date().toISOString(),
+      envWarnings: _envWarnings.length > 0 ? _envWarnings : undefined,
     totalLatency: (Date.now() - start) + 'ms',
     services: checks
   });

@@ -13,6 +13,25 @@ function _rateLimit(req, res, max, win) {
   return false;
 }
 
+
+// ── Emailit Fallback Notifier ──
+async function _notifyIke(subject, body) {
+  const key = process.env.EMAILIT_API_KEY;
+  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  try {
+    await fetch('https://api.emailit.com/v1/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'alerts@pacropservices.com',
+        to: 'hello@pacropservices.com',
+        subject: '[PA CROP] ' + subject,
+        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+      })
+    });
+  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+}
+
 export default async function handler(req, res) {
   // Rate limit: Voice recording — 20/min
   if (_rateLimit(req, res, 20, 60000)) return;
@@ -22,19 +41,23 @@ export default async function handler(req, res) {
   
   // Log voicemail and notify via n8n
   try {
-    await fetch('https://n8n.audreysplace.place/webhook/crop-voicemail', {
+    const vmRes = await fetch('https://n8n.audreysplace.place/webhook/crop-voicemail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: From,
-        callSid: CallSid,
-        recordingUrl: RecordingUrl,
-        transcription: TranscriptionText,
-        timestamp: new Date().toISOString()
-      })
-    });
+      body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription: TranscriptionText, timestamp: new Date().toISOString() })
+    }).catch(() => null);
+    if (!vmRes || !vmRes.ok) {
+      await _notifyIke('New Voicemail',
+        '<h2>📞 Voicemail Received</h2>' +
+        '<p><strong>From:</strong> ' + (From || 'unknown') + '</p>' +
+        '<p><strong>Recording:</strong> <a href="' + (RecordingUrl || '#') + '">Listen</a></p>' +
+        '<p><strong>Transcription:</strong> ' + (TranscriptionText || 'not available') + '</p>' +
+        '<p><strong>Time:</strong> ' + new Date().toISOString() + '</p>'
+      );
+    }
   } catch (e) {
-    console.error('Voicemail webhook error:', e);
+    console.error('Voicemail error:', e);
+    await _notifyIke('Voicemail Error', '<p>Voicemail processing failed: ' + (e.message || 'unknown') + '</p>').catch(() => {});
   }
 
   res.setHeader('Content-Type', 'text/xml');

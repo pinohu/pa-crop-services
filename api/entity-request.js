@@ -16,6 +16,25 @@ function _rateLimit(req, res, max, win) {
   return false;
 }
 
+
+// ── Emailit Fallback Notifier ──
+async function _notifyIke(subject, body) {
+  const key = process.env.EMAILIT_API_KEY;
+  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  try {
+    await fetch('https://api.emailit.com/v1/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'alerts@pacropservices.com',
+        to: 'hello@pacropservices.com',
+        subject: '[PA CROP] ' + subject,
+        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+      })
+    });
+  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -52,12 +71,22 @@ export default async function handler(req, res) {
       }
     }
 
-    // Notify Ike via n8n
-    await fetch('https://n8n.audreysplace.place/webhook/crop-entity-request', {
+    // Notify Ike via n8n (with email fallback)
+    const erRes = await fetch('https://n8n.audreysplace.place/webhook/crop-entity-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entityName, entityType, email: contactEmail, phone, notes })
-    }).catch(() => {});
+    }).catch(() => null);
+    if (!erRes || !erRes.ok) {
+      await _notifyIke('New Entity Formation Request',
+        '<h2>🏢 Entity Formation Request</h2>' +
+        '<p><strong>Entity:</strong> ' + (entityName || 'not specified') + '</p>' +
+        '<p><strong>Type:</strong> ' + (entityType || 'not specified') + '</p>' +
+        '<p><strong>Contact:</strong> ' + contactEmail + '</p>' +
+        '<p><strong>Phone:</strong> ' + (phone || 'not provided') + '</p>' +
+        '<p><strong>Notes:</strong> ' + (notes || 'none') + '</p>'
+      );
+    }
 
     return res.status(200).json({
       success: true,
