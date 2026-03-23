@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   const docText = text || ocrText || '';
   if (!docText) return res.status(400).json({ error: 'text or ocrText required' });
 
-  const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+  const GROQ_KEY = process.env.GROQ_API_KEY;
 
   const classifyPrompt = `Classify this document received at a PA registered office and generate a plain-English summary for the client.
 

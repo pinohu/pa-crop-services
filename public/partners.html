@@ -8,15 +8,16 @@
 <meta property="og:title" content="CPA & Attorney Working together — PA CROP Services">
 <meta property="og:description" content="White-label PA registered office services for accounting and legal practices. Earn $99-$699 per client per year with zero operational burden.">
 <meta property="og:image" content="https://pacropservices.com/og-image.jpg">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}:root{--primary:#1B4F8A;--accent:#534AB7;--dark:#1E2333;--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--gold:#C9A227;--radius:12px}
-body{font-family:"DM Sans",sans-serif;color:var(--dark);background:var(--white);line-height:1.8}.container{max-width:900px;margin:0 auto;padding:0 24px}
-h1,h2,h3{font-family:"DM Serif Display",serif;line-height:1.3}a{color:var(--accent);text-decoration:none}
+*{margin:0;padding:0;box-sizing:border-box}:root{--primary:var(--slate);--accent:var(--gold-muted);--dark:var(--slate);--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--gold:#C9A227;--radius:12px}
+body{font-family:var(--font);color:var(--dark);background:var(--white);line-height:1.8}.container{max-width:900px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);line-height:1.3}a{color:var(--accent);text-decoration:none}
 nav{padding:16px 0;border-bottom:1px solid #eee;position:sticky;top:0;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);z-index:100}
 nav .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-family:"DM Serif Display",serif;font-size:20px;color:var(--dark)}.logo span{color:var(--accent)}
+.logo{font-family:var(--serif);font-size:20px;color:var(--dark)}.logo span{color:var(--accent)}
 .nav-cta{background:var(--accent);color:#fff!important;padding:8px 20px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none!important}
 .hero{background:var(--dark);color:#fff;padding:80px 0;text-align:center}
 .hero h1{font-size:clamp(28px,5vw,48px);color:#fff;margin-bottom:16px}
@@ -27,7 +28,7 @@ section h2{font-size:32px;margin-bottom:32px;color:var(--dark)}
 .value-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}@media(max-width:768px){.value-grid{grid-template-columns:1fr}}
 .value-card{background:var(--light);border-radius:var(--radius);padding:28px}
 .value-card .icon{font-size:28px;margin-bottom:12px}
-.value-card h3{font-size:18px;font-family:"DM Serif Display",serif;margin-bottom:8px}
+.value-card h3{font-size:18px;font-family:var(--serif);margin-bottom:8px}
 .value-card p{font-size:14px;color:var(--gray);line-height:1.6}
 .calc{background:#f0f4ff;border-radius:var(--radius);padding:40px;text-align:center;margin:32px 0}
 .calc h3{font-size:24px;margin-bottom:8px}.calc p{color:var(--gray);margin-bottom:24px}
@@ -37,7 +38,7 @@ section h2{font-size:32px;margin-bottom:32px;color:var(--dark)}
 .steps{counter-reset:step}
 .step{display:flex;gap:20px;margin-bottom:28px;align-items:flex-start}
 .step-num{min-width:40px;height:40px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
-.step-text h3{font-size:18px;font-family:"DM Serif Display",serif;margin-bottom:4px}
+.step-text h3{font-size:18px;font-family:var(--serif);margin-bottom:4px}
 .step-text p{font-size:15px;color:var(--gray);line-height:1.6}
 .form-section{background:var(--dark);padding:64px 0;color:#fff}
 .form-section h2{font-size:32px;color:#fff;margin-bottom:8px;text-align:center}
@@ -66,7 +67,12 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
 </script>
 </head>
 <body>
-<nav><div class="nav-inner"><a href="/" class="logo">PA <span>CROP</span> Services</a><a href="mailto:partners@pacropservices.com" class="nav-cta">Contact us</a></div></nav>
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
 
 <div class="hero">
   <div class="container">
@@ -205,13 +211,10 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
   </div>
 </div>
 
-<footer style="background:#0F1E3D;color:rgba(255,255,255,.7);padding:40px 0;font-size:13px;text-align:center">
-<div style="max-width:720px;margin:0 auto;padding:0 24px">
-<p>&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</p>
-<p style="margin-top:8px"><a href="/" style="color:rgba(255,255,255,.85)">Home</a> &bull; <a href="/#pricing" style="color:rgba(255,255,255,.85)">Pricing</a> &bull; <a href="/terms" style="color:rgba(255,255,255,.85)">Terms</a> &bull; <a href="/privacy" style="color:rgba(255,255,255,.85)">Privacy</a> &bull; <a href="/portal" style="color:rgba(255,255,255,.85)">Client Login</a></p>
-<p style="font-size:11px;color:rgba(255,255,255,.4);margin-top:12px">Licensed Pennsylvania CROP &bull; 924 W 23rd St, Erie, PA 16502 &bull; 814-228-2822</p>
-</div>
-</footer>
+<footer class="site-footer"><div class="footer-inner">
+  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
+  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
+</div></footer>
 
 <script>
 function updateCalc(){
@@ -244,5 +247,6 @@ async function submitPartnerForm(){
 }
 </script>
 <script src="/embed/chatbot.js" defer></script>
+<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 </body>
 </html>

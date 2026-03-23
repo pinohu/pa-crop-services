@@ -5,18 +5,19 @@
 <title>Terms of Service — PA CROP Services</title>
 <meta name="description" content="Terms of Service for PA CROP Services (PA Registered Office Services, LLC). Effective March 2026.">
 <link rel="canonical" href="https://pacropservices.com/terms">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;color:#1E2333;line-height:1.8;background:#fff}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);color:var(--slate);line-height:1.8;background:#fff}
 .container{max-width:720px;margin:0 auto;padding:0 24px}
 nav{padding:16px 0;border-bottom:1px solid #eee;position:sticky;top:0;background:rgba(255,255,255,.97);z-index:100}
 nav .container{display:flex;justify-content:space-between;align-items:center}
-.logo{font-family:'DM Serif Display',serif;font-size:20px;color:#1E2333;text-decoration:none}.logo span{color:#534AB7}
-article{padding:60px 0 80px}article h1{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:8px}
+.logo{font-family:var(--serif);font-size:20px;color:var(--slate);text-decoration:none}.logo span{color:var(--gold-muted)}
+article{padding:60px 0 80px}article h1{font-family:var(--serif);font-size:32px;margin-bottom:8px}
 .updated{font-size:14px;color:#6B7280;margin-bottom:32px}
-article h2{font-size:20px;font-weight:700;margin:32px 0 12px;color:#1B4F8A}
+article h2{font-size:20px;font-weight:700;margin:32px 0 12px;color:var(--slate)}
 article p,article li{font-size:15px;color:#374151;margin-bottom:12px}
 article ul{margin:0 0 16px 20px}article li{margin-bottom:6px}
 .trust-footer{background:#0F1E3D;color:rgba(255,255,255,.7);padding:40px 0;font-size:13px;text-align:center}
@@ -25,7 +26,12 @@ article ul{margin:0 0 16px 20px}article li{margin-bottom:6px}
 </style>
 </head>
 <body>
-<nav><div class="container"><a href="/" class="logo">PA <span>CROP</span> Services</a><a href="/#pricing" style="background:#534AB7;color:#fff;padding:8px 20px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none">Get started</a></div></nav>
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
 <article><div class="container">
 <h1>Terms of Service</h1>
 <p class="updated">Effective: March 22, 2026 | Last updated: March 22, 2026</p>
@@ -67,7 +73,7 @@ article ul{margin:0 0 16px 20px}article li{margin-bottom:6px}
 <p>Client agrees to indemnify and hold harmless Provider from any claims, damages, or expenses arising from: (a) Client's use of the registered office address for unlawful purposes; (b) Client's failure to maintain entity compliance; (c) inaccurate information provided by Client.</p>
 
 <h2>10. Data and Privacy</h2>
-<p>Provider handles Client data in accordance with our <a href="/privacy" style="color:#534AB7">Privacy Policy</a>. Client consents to Provider scanning and digitally storing documents received at the registered office address.</p>
+<p>Provider handles Client data in accordance with our <a href="/privacy" style="color:var(--gold-muted)">Privacy Policy</a>. Client consents to Provider scanning and digitally storing documents received at the registered office address.</p>
 
 <h2>11. Governing Law and Disputes</h2>
 <p>These Terms are governed by the laws of the Commonwealth of Pennsylvania. Any disputes shall be resolved in the courts of Erie County, Pennsylvania. Before initiating legal proceedings, parties agree to attempt resolution through good-faith negotiation for 30 days.</p>
@@ -80,9 +86,10 @@ article ul{margin:0 0 16px 20px}article li{margin-bottom:6px}
 
 </div></article>
 
-<footer class="trust-footer"><div class="container">
-<p>&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</p>
-<p style="margin-top:8px"><a href="/">Home</a> &bull; <a href="/terms">Terms</a> &bull; <a href="/privacy">Privacy</a> &bull; <a href="/portal">Client Login</a></p>
-<p class="license">Licensed Pennsylvania CROP &bull; 924 W 23rd St, Erie, PA 16502</p>
+<footer class="site-footer"><div class="footer-inner">
+  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
+  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></footer>
+<script src="/embed/chatbot.js" defer></script>
+<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 </body></html>

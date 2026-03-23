@@ -2,6 +2,20 @@
 // POST /api/auth  { email, code }
 // Returns client data from SuiteDash or error
 
+
+// ── Rate Limiter ──
+const _rl = new Map();
+function _rateLimit(req, res, max, win) {
+  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
+  const k = ip + ':' + (req.url||'').split('?')[0];
+  const now = Date.now();
+  let d = _rl.get(k);
+  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
+  d.c++;
+  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
+  return false;
+}
+
 export default async function handler(req, res) {
   // CORS headers — allow the portal to call this from any domain
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,6 +27,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
+
+  // Rate limit: 10/min
+  if (_rateLimit(req, res, 10, 60000)) return;
+
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 

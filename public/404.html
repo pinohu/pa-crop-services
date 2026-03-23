@@ -6,21 +6,22 @@
 <title>Page Not Found | PA CROP Services</title>
 <meta name="description" content="The page you're looking for doesn't exist. Return to PA CROP Services homepage.">
 <meta name="robots" content="noindex">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;color:#1E2333;background:#fff;display:flex;flex-direction:column;min-height:100vh}
-h1{font-family:'DM Serif Display',serif}
-a{color:#534AB7}
+body{font-family:var(--font);color:var(--slate);background:#fff;display:flex;flex-direction:column;min-height:100vh}
+h1{font-family:var(--serif)}
+a{color:var(--gold-muted)}
 nav{padding:16px 24px;border-bottom:1px solid #eee;text-align:center}
-.logo{font-family:'DM Serif Display',serif;font-size:20px;color:#1E2333}
-.logo span{color:#534AB7}
+.logo{font-family:var(--serif);font-size:20px;color:var(--slate)}
+.logo span{color:var(--gold-muted)}
 main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
-.code{font-size:120px;font-weight:700;color:#eee;line-height:1;font-family:'DM Serif Display',serif}
+.code{font-size:120px;font-weight:700;color:#eee;line-height:1;font-family:var(--serif)}
 h1{font-size:28px;margin:16px 0 12px}
 p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto}
-.btn{display:inline-block;background:#534AB7;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px}
-.btn:hover{background:#1B4F8A}
+.btn{display:inline-block;background:var(--gold-muted);color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px}
+.btn:hover{background:var(--slate)}
 .links{margin-top:32px;font-size:14px;color:#6B7280}
 .links a{margin:0 12px}
 </style>
@@ -34,7 +35,12 @@ p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:au
 </script>
 </head>
 <body>
-<nav><a href="/" class="logo">PA <span>CROP</span> Services</a></nav>
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
 <main>
 <div>
 <div class="code">404</div>
@@ -48,5 +54,7 @@ p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:au
 </div>
 </div>
 </main>
+<script src="/embed/chatbot.js" defer></script>
+<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 </body>
 </html>

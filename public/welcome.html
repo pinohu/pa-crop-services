@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#1a56db;--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--radius:12px;--font:'Plus Jakarta Sans',system-ui,sans-serif;--serif:'Fraunces',Georgia,serif;--mono:'JetBrains Mono',monospace}
+:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:var(--gold-muted);--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--radius:12px;--font:'Plus Jakarta Sans',system-ui,sans-serif;--serif:'Fraunces',Georgia,serif;--mono:'JetBrains Mono',monospace}
 body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6}
 .container{max-width:640px;margin:0 auto;padding:0 24px}
 nav{padding:16px 0;border-bottom:1px solid var(--border);background:var(--bg2)}
@@ -45,9 +45,17 @@ nav .container{display:flex;align-items:center;gap:10px}
 .footer{text-align:center;padding:40px 0;font-size:13px;color:var(--ink3)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
 </head>
 <body>
-<nav><div class="container"><div class="mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/></svg></div><span class="brand">PA CROP Services</span></div></nav>
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
 
 <section class="hero">
 <div class="container">
@@ -212,5 +220,7 @@ if (plan && planLabels[plan]) {
   h1.after(badge);
 }
 </script>
+<script src="/embed/chatbot.js" defer></script>
+<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 </body>
 </html>

@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const { answers, email, name } = req.body || {};
   if (!answers) return res.status(400).json({ error: 'answers required' });
 
-  const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+  const GROQ_KEY = process.env.GROQ_API_KEY;
 
   const qualifyPrompt = `Score this lead for PA CROP Services (PA registered office provider).
 

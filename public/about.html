@@ -10,7 +10,8 @@
 <meta property="og:description" content="Founded by a PhD-credentialed PA Notary and IRS Enrolled Agent. Licensed CROP provider at 924 W 23rd St, Erie, PA 16502.">
 <meta property="og:image" content="https://pacropservices.com/og-image.jpg">
 <meta property="og:url" content="https://pacropservices.com/about">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"AboutPage","name":"About PA CROP Services","description":"PA CROP Services is a licensed Pennsylvania Commercial Registered Office Provider, founded by PA CROP Services Team.","url":"https://pacropservices.com/about","mainEntity":{"@type":"Person","name":"PA CROP Services","jobTitle":"Founder & President, PA CROP Services","worksFor":{"@type":"Organization","name":"PA Registered Office Services, LLC"}}}
 </script>
@@ -19,15 +20,15 @@
 </script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#1B4F8A;--accent:#534AB7;--dark:#1E2333;--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--radius:12px}
-body{font-family:'DM Sans',sans-serif;color:var(--dark);background:var(--white);line-height:1.8}
+:root{--primary:var(--slate);--accent:var(--gold-muted);--dark:var(--slate);--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--radius:12px}
+body{font-family:var(--font);color:var(--dark);background:var(--white);line-height:1.8}
 .container{max-width:780px;margin:0 auto;padding:0 24px}
-h1,h2,h3{font-family:'DM Serif Display',serif;line-height:1.3}
+h1,h2,h3{font-family:var(--serif);line-height:1.3}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 nav{padding:16px 0;border-bottom:1px solid #eee;position:sticky;top:0;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);z-index:100}
 nav .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--dark)}.logo span{color:var(--accent)}
+.logo{font-family:var(--serif);font-size:20px;color:var(--dark)}.logo span{color:var(--accent)}
 .nav-cta{background:var(--accent);color:#fff!important;padding:8px 20px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none!important}
 .hero{padding:60px 0 40px;border-bottom:1px solid #eee}
 .hero h1{font-size:clamp(28px,4vw,42px);margin-bottom:12px;color:var(--dark)}
@@ -39,16 +40,16 @@ nav .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;justif
 @media(max-width:600px){.cred-grid{grid-template-columns:1fr}}
 .cred-card{background:var(--light);border-radius:var(--radius);padding:20px}
 .cred-card .icon{font-size:24px;margin-bottom:10px}
-.cred-card h4{font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px;color:var(--dark)}
+.cred-card h4{font-family:var(--serif);font-size:16px;margin-bottom:4px;color:var(--dark)}
 .cred-card p{font-size:13px;color:var(--gray);line-height:1.5}
 .entity-box{background:var(--dark);color:#fff;border-radius:var(--radius);padding:28px;margin:32px 0}
-.entity-box h3{font-family:'DM Serif Display',serif;margin-bottom:16px;color:var(--white)}
+.entity-box h3{font-family:var(--serif);margin-bottom:16px;color:var(--white)}
 .entity-box table{width:100%;border-collapse:collapse;font-size:14px}
 .entity-box td{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)}
 .entity-box td:first-child{color:rgba(255,255,255,.6);width:180px}
 .entity-box td:last-child{color:var(--white);font-weight:500}
 .cta-box{background:var(--light);border-radius:var(--radius);padding:32px;text-align:center;margin:48px 0}
-.cta-box h3{font-family:'DM Serif Display',serif;margin-bottom:8px}
+.cta-box h3{font-family:var(--serif);margin-bottom:8px}
 .cta-box p{color:var(--gray);margin-bottom:20px}
 .cta-btn{display:inline-block;background:var(--accent);color:#fff!important;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none!important}
 footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-size:13px;text-align:center;margin-top:60px}
@@ -63,12 +64,12 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
 </script>
 </head>
 <body>
-<nav>
-  <div class="nav-inner">
-    <a href="/" class="logo">PA <span>CROP</span> Services</a>
-    <a href="#contact" class="nav-cta">Get started</a>
-  </div>
-</nav>
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
 
 <div class="container">
   <div style="padding:16px 0;font-size:13px;color:var(--gray)">
@@ -152,13 +153,11 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
   </div>
 </div>
 
-<footer style="background:#0F1E3D;color:rgba(255,255,255,.7);padding:40px 0;font-size:13px;text-align:center">
-<div style="max-width:720px;margin:0 auto;padding:0 24px">
-<p>&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</p>
-<p style="margin-top:8px"><a href="/" style="color:rgba(255,255,255,.85)">Home</a> &bull; <a href="/#pricing" style="color:rgba(255,255,255,.85)">Pricing</a> &bull; <a href="/terms" style="color:rgba(255,255,255,.85)">Terms</a> &bull; <a href="/privacy" style="color:rgba(255,255,255,.85)">Privacy</a> &bull; <a href="/portal" style="color:rgba(255,255,255,.85)">Client Login</a></p>
-<p style="font-size:11px;color:rgba(255,255,255,.4);margin-top:12px">Licensed Pennsylvania CROP &bull; 924 W 23rd St, Erie, PA 16502 &bull; 814-228-2822</p>
-</div>
-</footer>
+<footer class="site-footer"><div class="footer-inner">
+  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
+  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
+</div></footer>
 <script src="/embed/chatbot.js" defer></script>
+<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 </body>
 </html>

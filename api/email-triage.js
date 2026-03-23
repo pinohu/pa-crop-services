@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   const { from, subject, body, messageId } = req.body || {};
   if (!body && !subject) return res.status(400).json({ error: 'subject or body required' });
 
-  const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+  const GROQ_KEY = process.env.GROQ_API_KEY;
 
   const classifyPrompt = `Classify this email and draft a response.
 

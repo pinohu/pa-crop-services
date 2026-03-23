@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
     // Strategy 2: Use AI to reason about entity status based on known data
     // For entities we manage, we know their filing status from SuiteDash
-    const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+    const GROQ_KEY = process.env.GROQ_API_KEY;
     
     // Try fetching the PA DOS search results page
     const searchUrl2 = `https://www.corporations.pa.gov/Search/GetResults?searchValue=${encodeURIComponent(searchParam)}&searchType=1`;

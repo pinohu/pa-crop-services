@@ -17,7 +17,7 @@ export default async function handler(req) {
   const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });
 
-  const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+  const GROQ_KEY = process.env.GROQ_API_KEY;
 
   const ctx = clientContext || {};
   const eName = ctx.entityName || entityName || '';

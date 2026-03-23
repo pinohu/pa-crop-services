@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   // Rate limit: Voice recording — 20/min
   if (_rateLimit(req, res, 20, 60000)) return;
 
+  res.setHeader('Access-Control-Allow-Origin', '*');
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
   // Log voicemail and notify via n8n

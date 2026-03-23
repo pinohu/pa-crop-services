@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   const { keyword, angle, targetWordCount = 1500 } = req.body || {};
   if (!keyword) return res.status(400).json({ error: 'keyword required' });
 
-  const GROQ_KEY = process.env.GROQ_API_KEY || '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';
+  const GROQ_KEY = process.env.GROQ_API_KEY;
 
   const prompt = `Write an SEO article for PA CROP Services (pacropservices.com).
 
