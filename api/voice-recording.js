@@ -2,7 +2,6 @@
 
 // ── Rate Limiter (in-memory, per-instance) ──
 const _rl = new Map();
-setInterval(() => { const n = Date.now(); for (const [k,v] of _rl) { if (n - v.s > v.w*2) _rl.delete(k); } }, 60000);
 function _rateLimit(req, res, max, win) {
   const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
   const k = ip + ':' + (req.url||'').split('?')[0];
