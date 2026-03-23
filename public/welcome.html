@@ -168,6 +168,51 @@ async function submitEntity() {
 
 <a href="/portal" class="btn btn-accent" style="margin-bottom:20px">Go to your portal &rarr;</a>
 
+<!-- Domain Collection (for Starter/Pro/Empire tiers) -->
+<div style="background:#fff;border:1.5px solid #EBE8E2;border-radius:12px;padding:24px;margin-bottom:24px" id="domain-section">
+<h2 style="font-size:18px;margin-bottom:4px">🌐 Choose your domain name</h2>
+<p style="font-size:14px;color:var(--gray);margin-bottom:16px">If your plan includes hosting, tell us your preferred domain and we'll register and set it up for you.</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:8px">
+  <input type="text" id="dom-name" placeholder="yourbusiness" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+  <select id="dom-ext" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff;width:100px">
+    <option value=".com">.com</option>
+    <option value=".net">.net</option>
+    <option value=".org">.org</option>
+    <option value=".us">.us</option>
+  </select>
+</div>
+<input type="email" id="dom-email" placeholder="Your email (same as checkout)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<button onclick="submitDomain()" style="background:#0C1220;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Request this domain →</button>
+<p id="dom-msg" style="font-size:13px;display:none"></p>
+<p style="font-size:12px;color:var(--gray)">We'll check availability and register it within 1 business day. Domain registration is included in your plan at no extra cost.</p>
+</div>
+</div>
+
+<script>
+async function submitDomain() {
+  const name = document.getElementById('dom-name').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  const ext = document.getElementById('dom-ext').value;
+  const email = document.getElementById('dom-email').value.trim();
+  const msg = document.getElementById('dom-msg');
+  if (!name || !email) { msg.textContent = 'Please enter a domain name and your email.'; msg.style.display = 'block'; msg.style.color = '#dc2626'; return; }
+  const domain = name + ext;
+  try {
+    const res = await fetch('/api/entity-intake', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, entityName: domain, entityType: 'domain-request', notes: 'Domain registration request: ' + domain })
+    });
+    msg.textContent = '✓ Domain request submitted! We\'ll register ' + domain + ' and email you when it\'s ready.';
+    msg.style.display = 'block';
+    msg.style.color = '#059669';
+  } catch(e) {
+    msg.textContent = 'Error — please email hello@pacropservices.com with your preferred domain.';
+    msg.style.display = 'block';
+    msg.style.color = '#dc2626';
+  }
+}
+</script>
+
 <div class="footer">
   <p>Questions? <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or <a href="tel:8142282822" style="color:var(--accent)">814-228-2822</a></p>
   <p style="margin-top:8px">PA Registered Office Services, LLC &bull; Licensed PA CROP &bull; 15 Pa. C.S. &sect;109</p>
