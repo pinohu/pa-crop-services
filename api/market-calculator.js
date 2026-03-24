@@ -25,6 +25,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  try {
+
   const county = req.query?.county;
   const all = req.query?.all === 'true';
   const CROP_ADOPTION_RATE = 0.02; // ~2% of entities use CROP services
@@ -62,4 +64,8 @@ export default async function handler(req, res) {
     top10Markets: top10,
     note: 'Based on PA DOS filing patterns. Philadelphia alone represents ~15% of the addressable market.'
   });
+  } catch (err) {
+    console.error("market-calculator error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }

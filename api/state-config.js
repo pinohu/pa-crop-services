@@ -16,6 +16,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  try {
+
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
   if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -41,4 +43,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ success: true, available: Object.keys(STATES), implemented: Object.entries(STATES).filter(([k,v]) => v.implemented).map(([k]) => k) });
+  } catch (err) {
+    console.error("state-config error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }

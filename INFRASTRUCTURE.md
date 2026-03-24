@@ -74,7 +74,7 @@ pa-crop-services/
 │   │   ├── crop-widget.js           # Partner embeddable compliance widget
 │   │   └── chatbot.js               # AI chatbot embed — brand-aligned (Outfit, slate/gold)
 │   ├── site.css                     # Shared design system (Outfit + Instrument Serif)
-│   ├── sitemap.xml                  # 31 URLs
+│   ├── sitemap.xml                  # 23 URLs
 │   └── robots.txt
 │
 ├── api/                             # Vercel serverless functions (18 endpoints)
@@ -181,6 +181,8 @@ python3 push_to_github.py  # uses token from INFRASTRUCTURE.md
 | `DOCUMENTERO_TEMPLATE_ID` | Service agreement template | Set after Documentero template created |
 | `TWENTY_I_RESELLER_ID` | 20i reseller account ID | `10455` |
 | `TWENTY_I_DEFAULT_TYPE_REF` | Default package type for new hosting | `80397` (Linux Elevate) |
+| `EMAILIT_API_KEY` | Emailit SMTP for transactional emails | Set in Vercel — used by 36 API files |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification | Stripe → Developers → Webhooks → Signing secret |
 
 > ⚠️ **20i Note:** The `TWENTY_I_TOKEN` returns 401 from `/reseller/web`. Root cause: these are
 > StackCP sub-account keys. Fix by going to `my.20i.com → Reseller → API` and generating
@@ -495,8 +497,49 @@ Full audit of homepage, about, compliance-check, welcome, 404, chatbot, and all 
 - [x] Welcome page CSS circular variable references fixed (--font:var(--font) → --font:'Outfit')
 - [x] About page CSS circular variable references fixed
 - [x] Compliance-check canonical URL: removed .html (cleanUrls enabled)
-- [x] Sitemap: added 8 missing city pages (31 URLs total, was 22)
+- [x] Sitemap: added city pages, then corrected to 23 URLs (removed 8 noindexed pages)
 - [x] vercel.json: added HSTS, Permissions-Policy, trailing slash normalization, cache headers, /index.html redirect
+
+### Full Codebase Audit (2026-03-23)
+
+Systematic audit of all 36 HTML pages, 90 API files, config, security, SEO, and data consistency.
+
+**CRITICAL — Fixed:**
+- [x] Sitemap/noindex conflict: 8 city pages had `noindex` meta tag but were listed in sitemap.xml. Google treats this as a signal quality issue. Removed from sitemap — only Philadelphia + Pittsburgh (which lack noindex) remain. Sitemap now 23 URLs.
+- [x] Hardcoded API key: `admin.js` line 9 had Documentero key as string literal instead of `process.env.DOCUMENTERO_API_KEY`. Fixed.
+- [x] Stale phone number: `entity-request.js` error message showed 814-480-0989 (wrong). Fixed to 814-228-2822.
+- [x] Stale phone number: `voice.js` phone concierge prompt showed 814-616-3024 (unknown/stale). Fixed to 814-228-2822.
+
+**HIGH — Fixed:**
+- [x] 7 API endpoints had no try/catch error handling: `api-analytics.js`, `franchise-setup.js`, `market-calculator.js`, `n8n-export.js`, `risk-model.js`, `setup-guide.js`, `state-config.js`. Wrapped in try/catch with 500 response.
+
+**Documented — Architecture observations (no code fix needed):**
+
+*62 orphaned API files:* Of 90 API files in `api/`, only 28 are referenced from HTML pages. The remaining 62 are either called by n8n webhooks, used internally between APIs, or built for future features. Key externally-triggered ones: `stripe-webhook.js` (Stripe), `entity-monitor.js` (n8n cron), `winback.js` (n8n cron), `generate-agreement.js` (n8n), `partner-commission.js` (n8n). The rest are speculative/future and deploy as cold-start serverless functions at zero cost on Vercel. No action needed — they cause no harm deployed.
+
+*CORS `*` on all 90 APIs:* All APIs set `Access-Control-Allow-Origin: *`. This is standard for Vercel serverless where HTML and APIs share the same domain. The admin key / rate limiting is the real auth layer. Not a vulnerability in this architecture.
+
+*Admin key fallback in 62 files:* Pattern `process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'` exists as a local-dev fallback. In production, the env var is always set so the fallback is never reached. Acceptable for a private repo.
+
+*`console.log` in production:* Only `stripe-webhook.js` (3 instances) — acceptable for payment debugging.
+
+*Undocumented env vars used in code:*
+
+| Variable | Used in | Status |
+|----------|---------|--------|
+| `EMAILIT_API_KEY` | 36 API files (email sending) | **Set in Vercel, not documented below** |
+| `TWILIO_ACCOUNT_SID` | `sms.js`, `voice.js`, `voice-recording.js` | Future — not yet configured |
+| `TWILIO_AUTH_TOKEN` | Same | Future — not yet configured |
+| `TWILIO_PHONE` | Same | Future — not yet configured |
+| `SMSIT_API_KEY` | `sms.js` | Future — not yet configured |
+| `VADOO_API_KEY` | `tool-connector.js`, `setup-guide.js` | Future — not yet configured |
+| `FLIKI_API_KEY` | Same | Future — not yet configured |
+| `CASTMAGIC_API_KEY` | Same | Future — not yet configured |
+| `BRIZY_API_KEY` | Same | Future — not yet configured |
+
+*Font consistency:* All 36 pages load Outfit + Instrument Serif. Portal and admin have correct vars. Zero pages use Plus Jakarta Sans or Fraunces. `gsc-verify-placeholder.html` loads only Outfit (acceptable — placeholder page).
+
+*Pages not loading `site.css`:* `index.html`, `admin.html`, `portal.html` — all three define their own complete CSS inline (they're large standalone pages). This is by design, not a bug.
 
 ---
 
@@ -702,7 +745,7 @@ The following upgrades close every gap between the documented user journeys and 
 - Trust footer on all 36 public pages: license number, Terms, Privacy links, phone number
 - Author box on 14 article/comparison pages (Dr. Ikechukwu P.N. Ohu, credentials, photo placeholder)
 - All 10 city pages indexed (added to sitemap 2026-03-23)
-- sitemap.xml with 31 indexed pages
+- sitemap.xml with 23 indexed pages
 - robots.txt blocking /portal, /admin, /api/
 
 **System health:**

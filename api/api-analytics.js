@@ -11,6 +11,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  try {
+
   // POST: Log a request (called by other APIs or middleware)
   if (req.method === 'POST') {
     const { endpoint, method, status, latency } = req.body || {};
@@ -38,4 +40,8 @@ export default async function handler(req, res) {
     endpoints: Object.entries(STATS.endpoints).sort((a,b) => b[1].calls - a[1].calls).map(([name, data]) => ({ endpoint: name, ...data })),
     note: 'In-memory stats — resets on cold start. For persistent analytics, use Vercel Analytics or external service.'
   });
+  } catch (err) {
+    console.error("api-analytics error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }

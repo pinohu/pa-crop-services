@@ -94,6 +94,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('Entity request error:', err);
-    return res.status(500).json({ error: 'Internal error. Please call 814-480-0989.' });
+    return res.status(500).json({ error: 'Internal error. Please call 814-228-2822.' });
   }
 }

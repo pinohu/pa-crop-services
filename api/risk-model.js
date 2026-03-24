@@ -20,6 +20,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   const { entityName, entityType, age, county, hasFiledRecently, hasCROP, hasPortalActivity, missedBefore } = req.body || {};
@@ -65,4 +67,8 @@ export default async function handler(req, res) {
         : 'Low risk. Keep up the good work monitoring your entity.',
     apiNote: 'This scoring model improves over time with real client data. Current weights are based on PA DOS dissolution patterns.'
   });
+  } catch (err) {
+    console.error("risk-model error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }

@@ -7,6 +7,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   const adminKey = req.headers['x-admin-key'];
@@ -69,4 +71,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ success: true, ...setup });
+  } catch (err) {
+    console.error("franchise-setup error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }

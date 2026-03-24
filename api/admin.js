@@ -6,7 +6,7 @@ const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
 const SD_BASE = 'https://app.suitedash.com/secure-api';
 const TWENTY_I_BASE = 'https://api.20i.com';
 const ACUMBA_TOKEN = process.env.ACUMBAMAIL_API_KEY;
-const DOCUMENTERO_KEY = 'R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A';
+const DOCUMENTERO_KEY = process.env.DOCUMENTERO_API_KEY;
 
 async function sdFetch(path, opts = {}) {
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
