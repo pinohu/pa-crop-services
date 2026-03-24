@@ -1287,7 +1287,7 @@ function savePref(cb) {
     fetch('/api/notification-preferences', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT.email, prefs })
-    }).catch(() => {});
+    }).then(r => { if(r.ok) showToast('Preferences saved'); }).catch(() => showToast('Could not save preferences. Please try again.'));
   }
 }
 
@@ -1415,6 +1415,7 @@ async function loadEntities() {
       (!e.primary ? '<button class="btn btn-ghost btn-sm" style="font-size:12px" onclick="removeEntity(\'' + e.name.replace(/'/g,"\\'") + '\')">Remove</button>' : '') +
       '</div>'
     ).join('');
+    } catch(e) { lessonsEl.innerHTML = '<p style="color:var(--ink3);padding:16px">Unable to load course. Please refresh the page.</p>'; }
     list.innerHTML += '<p style="font-size:12px;color:var(--ink3);margin-top:8px">' + data.count + ' of ' + data.maxEntities + ' entities</p>';
   } catch(e) {}
 }
@@ -1570,6 +1571,7 @@ async function loadCertification() {
     }
 
     // Load course lessons
+    try {
     const courseR = await fetch('/api/onboarding-course');
     const courseData = await courseR.json();
     const lessons = courseData?.course?.lessons || [];
@@ -1583,6 +1585,7 @@ async function loadCertification() {
       (l.id <= completedCount ? '<span style="font-size:12px;color:var(--green,#6B8F71);font-weight:600">Complete</span>' : '') +
       '</div>'
     ).join('');
+    } catch(e) { lessonsEl.innerHTML = '<p style="color:var(--ink3);padding:16px">Unable to load course. Please refresh the page.</p>'; }
   } catch(e) {}
 }
 

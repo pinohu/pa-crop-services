@@ -44,6 +44,14 @@ export default async function handler(req) {
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_KEY) {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      reply: "I'm temporarily unavailable. You can reach our team directly at 814-228-2822 or hello@pacropservices.com — we respond within one business day." 
+    }), {
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+    });
+  }
 
   const ctx = clientContext || {};
   const eName = ctx.entityName || entityName || '';

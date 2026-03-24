@@ -27,12 +27,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-
-  // Rate limit: 10/min
-  if (_rateLimit(req, res, 10, 60000)) return;
-
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+
+  // Rate limit: 10 attempts/min (MUST be after method check, before auth logic)
+  if (_rateLimit(req, res, 10, 60000)) return;
 
   const { email, code } = req.body || {};
 
@@ -168,6 +167,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Auth error:', err);
-    return res.status(500).json({ success: false, error: 'Internal error. Please try again.' });
+    return res.status(500).json({ success: false, error: 'Something went wrong. Please try again or call 814-228-2822.' });
   }
 }
