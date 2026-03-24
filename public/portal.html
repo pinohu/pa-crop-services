@@ -412,6 +412,14 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
   <div class="shell">
     <!-- ─── SIDEBAR ─── -->
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Portal navigation">
+      <!-- Entity Switcher (Pro/Empire plans) -->
+      <div id="entity-switcher" style="display:none;padding:0 12px 12px;border-bottom:1px solid var(--border);margin-bottom:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 8px">Entity</div>
+        <select id="entity-select" onchange="switchEntity(this.value)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font);background:var(--bg2);cursor:pointer">
+          <option value="">Loading entities...</option>
+        </select>
+      </div>
+
       <div class="nav-group">
         <div class="nav-label">Overview</div>
         <div class="nav-item active" tabindex="0" role="button" onclick="setTab('dashboard',this)">
@@ -1957,6 +1965,77 @@ async function loadNotificationHistory() {
     }).join('');
   } catch (e) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Notification history requires compliance engine.</div>'; }
 }
+
+// ═══ MULTI-ENTITY SWITCHER (Feature 8) ═══
+
+async function loadEntitySwitcher() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) return;
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT?.email || ''), {
+      method: 'GET', headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var d = await r.json();
+    var entities = d.entities || [];
+    if (entities.length <= 1) return; // Only show switcher for multi-entity
+    var switcher = document.getElementById('entity-switcher');
+    var select = document.getElementById('entity-select');
+    if (!switcher || !select) return;
+    switcher.style.display = 'block';
+    select.innerHTML = entities.map(function(e) {
+      var selected = (e.id === orgId || e.name === window._ctx?.entityName) ? ' selected' : '';
+      return '<option value="' + (e.id || e.name) + '"' + selected + '>' + (e.name || e.entityType || 'Entity') + '</option>';
+    }).join('');
+  } catch (e) { /* single entity, no switcher needed */ }
+}
+
+function switchEntity(entityId) {
+  if (!entityId) return;
+  window._orgId = entityId;
+  // Reload all tabs with new entity context
+  showToast('Switched to entity: ' + entityId.slice(0, 12));
+  if (typeof loadComplianceTimeline === 'function') loadComplianceTimeline();
+  if (typeof loadDocumentsFromAPI === 'function') loadDocumentsFromAPI();
+  if (typeof loadNotificationHistory === 'function') loadNotificationHistory();
+  // Update dashboard header
+  var nameEl = document.getElementById('entity-display-name');
+  if (nameEl) nameEl.textContent = document.getElementById('entity-select')?.selectedOptions?.[0]?.textContent || entityId;
+}
+
+// Load switcher after login
+setTimeout(function() { if (window.CLIENT) loadEntitySwitcher(); }, 2000);
+
+// ═══ DASHBOARD RISK BADGE UPDATE (Feature 2) ═══
+
+async function updateDashboardRisk() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) return;
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success || !d.risk) return;
+
+    var hero = document.getElementById('entity-hero');
+    var riskColors = { low: 'good', medium: 'warn', high: 'danger', critical: 'danger' };
+    if (hero && d.risk.level !== 'low') {
+      hero.className = 'entity-hero ' + (riskColors[d.risk.level] || 'good') + ' fade-up';
+    }
+
+    // Update KPI health score
+    var kpiHealth = document.getElementById('kpi-health');
+    var kpiRisk = document.getElementById('kpi-health-risk');
+    if (kpiHealth) {
+      var scores = { low: '95', medium: '70', high: '40', critical: '15' };
+      var labels = { low: 'On Track', medium: 'Attention Needed', high: 'At Risk', critical: 'Critical' };
+      kpiHealth.textContent = scores[d.risk.level] || '—';
+      if (kpiRisk) kpiRisk.textContent = labels[d.risk.level] || '';
+    }
+  } catch (e) { /* non-critical */ }
+}
+
+setTimeout(function() { if (window._orgId || window._ctx?.organization_id) updateDashboardRisk(); }, 3000);
 
 </script>
 </body>

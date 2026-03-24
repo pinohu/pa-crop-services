@@ -172,3 +172,37 @@ export async function notifyAdmin(subject, body) {
     });
   } catch (e) { console.error('Admin notification failed:', e.message); }
 }
+
+// ── SMS Alerts (Feature 12) ────────────────────────────────
+
+const SMSIT_KEY = process.env.SMSIT_API_KEY || '';
+const SMSIT_BASE = 'https://aicpanel.smsit.ai/api/v2';
+
+export async function sendSMS(phone, message) {
+  if (!SMSIT_KEY || !phone) return { success: false, error: 'sms_not_configured' };
+  try {
+    const resp = await fetch(SMSIT_BASE + '/send', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + SMSIT_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: phone, message, from: 'PACROP' })
+    });
+    const data = await resp.json();
+    return { success: resp.ok, provider_message_id: data?.id };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function sendDeadlineAlert(phone, orgName, daysUntil, dueDate) {
+  const msg = daysUntil <= 0
+    ? `PA CROP Alert: ${orgName} annual report is OVERDUE (due ${dueDate}). File now at file.dos.pa.gov. Questions? 814-228-2822`
+    : `PA CROP Reminder: ${orgName} annual report due ${dueDate} (${daysUntil} days). File at file.dos.pa.gov or log in to your portal. 814-228-2822`;
+  return sendSMS(phone, msg);
+}
+
+export async function sendDocumentAlert(phone, orgName, docType, urgency) {
+  const msg = urgency === 'critical'
+    ? `PA CROP URGENT: ${docType.replace(/_/g, ' ')} received for ${orgName}. Log in to your portal immediately or call 814-228-2822.`
+    : `PA CROP: New ${docType.replace(/_/g, ' ')} received for ${orgName}. View in your portal at pacropservices.com/portal`;
+  return sendSMS(phone, msg);
+}
