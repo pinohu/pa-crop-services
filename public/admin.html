@@ -247,6 +247,27 @@ tr:hover td{background:#fafafa}
           <div class="stat-card"><div class="label">Subscriptions</div><div class="value" id="stat-subs">—</div><div class="sub">Active Stripe subs</div></div>
           <div class="stat-card"><div class="label">Hosting Pkgs</div><div class="value" id="stat-hosting">—</div><div class="sub">20i packages</div></div>
         </div>
+
+        <!-- Compliance Command Center -->
+        <div class="panel" style="margin-bottom:16px;border-left:4px solid #C9982A">
+          <div class="panel-header"><div class="panel-title">⚡ Compliance Command Center</div><button class="btn-sm" onclick="loadCommandCenter()" style="font-size:11px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer">⟳ Refresh</button></div>
+          <div class="panel-body" id="command-center-body">
+            <div class="loading"><div class="spinner"></div>Loading compliance posture...</div>
+          </div>
+        </div>
+
+        <!-- AI Review + Document Review side by side -->
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">🤖 AI Review Queue</div></div>
+            <div class="panel-body" id="ai-review-body" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">📄 Document Review Queue</div></div>
+            <div class="panel-body" id="doc-review-body" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+        </div>
+
         <div class="two-col">
           <div class="panel">
             <div class="panel-header"><div class="panel-title">Recent Clients</div></div>
@@ -256,6 +277,12 @@ tr:hover td{background:#fafafa}
             <div class="panel-header"><div class="panel-title">Plan Breakdown</div></div>
             <div class="panel-body" id="plan-breakdown-body"><div class="loading"><div class="spinner"></div>Loading...</div></div>
           </div>
+        </div>
+
+        <!-- Workflow Failures -->
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-header"><div class="panel-title">⚠️ Workflow Failures</div></div>
+          <div class="panel-body" id="workflow-failures-body" style="max-height:200px;overflow-y:auto"><div style="font-size:13px;color:#6b7280;padding:8px 0">Loading...</div></div>
         </div>
       </div>
 
@@ -741,9 +768,95 @@ async function loadDashboard() {
     }
     
     document.getElementById('last-refresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    // Load command center panels
+    loadCommandCenter();
+    loadAIReviewQueue();
+    loadDocReviewQueue();
+    loadWorkflowFailures();
   } catch(e) {
     toast('Failed to load dashboard: ' + e.message, 'error');
   }
+}
+
+// ── Compliance Command Center ──────────────────────────────────────────
+async function loadCommandCenter() {
+  const el = document.getElementById('command-center-body');
+  try {
+    const r = await fetch('/api/admin/command-center', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center requires Supabase. Using legacy dashboard.</div>'; return; }
+    const c = d.compliance;
+    const riskColor = c.overdue + c.escalated > 0 ? '#dc2626' : c.due_soon > 0 ? '#f59e0b' : '#15803d';
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
+        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.current}</div><div style="font-size:11px;color:#6b7280">Current</div></div>
+        <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#92400e">${c.due_soon}</div><div style="font-size:11px;color:#6b7280">Due Soon</div></div>
+        <div style="text-align:center;padding:12px;background:${c.overdue>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.overdue>0?'#dc2626':'#6b7280'}">${c.overdue}</div><div style="font-size:11px;color:#6b7280">Overdue</div></div>
+        <div style="text-align:center;padding:12px;background:${c.escalated>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.escalated>0?'#7f1d1d':'#6b7280'}">${c.escalated}</div><div style="font-size:11px;color:#6b7280">Escalated</div></div>
+        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.filed}</div><div style="font-size:11px;color:#6b7280">Filed</div></div>
+        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:20px;font-weight:700">${c.total}</div><div style="font-size:11px;color:#6b7280">Total</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
+        <div style="padding:10px;background:#f8fafc;border-radius:6px"><span style="font-weight:600">AI (24h):</span> ${d.ai.conversations_24h} convos · ${d.ai.low_confidence} low conf · ${d.ai.escalated} escalated</div>
+        <div style="padding:10px;background:${d.notifications.failed>0?'#fef2f2':'#f8fafc'};border-radius:6px"><span style="font-weight:600">Notifs:</span> ${d.notifications.failed} failed</div>
+        <div style="padding:10px;background:${d.workflow.failed_jobs>0?'#fef2f2':'#f8fafc'};border-radius:6px"><span style="font-weight:600">Workflows:</span> ${d.workflow.failed_jobs} failed jobs</div>
+      </div>
+      ${d.high_risk_entities?.length ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb"><div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px">⚠️ High-Risk Entities</div>${d.high_risk_entities.map(e => `<div style="font-size:12px;padding:4px 0;color:#374151">${e.name} (${e.type}) — ${e.status}</div>`).join('')}</div>` : ''}`;
+  } catch (e) {
+    el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center loading... (connect Supabase to activate)</div>';
+  }
+}
+
+async function loadAIReviewQueue() {
+  const el = document.getElementById('ai-review-body');
+  try {
+    const r = await fetch('/api/admin/ai-review?limit=10', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No conversations need review</div>'; return; }
+    el.innerHTML = d.items.map(c => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:600;color:${c.escalation_flag?'#dc2626':c.confidence_score<0.8?'#f59e0b':'#374151'}">${c.escalation_flag?'🚨 ESCALATED':'⚠️ Low confidence'} (${(c.confidence_score*100).toFixed(0)}%)</span>
+        <span style="color:#9ca3af">${new Date(c.created_at).toLocaleString()}</span>
+      </div>
+      <div style="color:#6b7280;margin-bottom:2px"><strong>Q:</strong> ${(c.user_message||'').slice(0,120)}</div>
+      <div style="color:#374151"><strong>A:</strong> ${(c.assistant_answer||'').slice(0,150)}</div>
+    </div>`).join('');
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">AI review requires Supabase</div>'; }
+}
+
+async function loadDocReviewQueue() {
+  const el = document.getElementById('doc-review-body');
+  try {
+    const r = await fetch('/api/admin/document-review?urgency=high', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No documents need review</div>'; return; }
+    el.innerHTML = d.items.map(doc => {
+      const uc = { critical:'#dc2626', high:'#f59e0b', normal:'#6b7280' };
+      return `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-weight:600">${doc.filename || 'Document'}</span>
+            <span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${uc[doc.urgency]||'#6b7280'}15;color:${uc[doc.urgency]||'#6b7280'};margin-left:6px">${doc.urgency}</span>
+          </div>
+          <span style="color:#9ca3af">${new Date(doc.received_at).toLocaleDateString()}</span>
+        </div>
+        <div style="color:#6b7280;margin-top:2px">${doc.organizations?.legal_name || 'Unknown entity'} · ${doc.document_type || 'Unclassified'}</div>
+      </div>`;
+    }).join('');
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Document review requires Supabase</div>'; }
+}
+
+async function loadWorkflowFailures() {
+  const el = document.getElementById('workflow-failures-body');
+  try {
+    const r = await fetch('/api/admin/workflow-failures', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#15803d;padding:8px 0">✅ No workflow failures</div>'; return; }
+    el.innerHTML = d.items.map(j => `<div style="padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:#dc2626">${j.job_type}</span><span style="color:#9ca3af">${new Date(j.created_at).toLocaleString()}</span></div>
+      <div style="color:#6b7280;margin-top:2px">Attempt ${j.attempts}/${j.max_attempts} — ${j.last_error || 'No error details'}</div>
+    </div>`).join('');
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Workflow monitoring requires Supabase</div>'; }
 }
 
 // ── Clients ────────────────────────────────────────────────────────────

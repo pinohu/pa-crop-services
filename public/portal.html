@@ -618,15 +618,78 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <!-- ══ COMPLIANCE TAB ══ -->
       <div id="tab-compliance" class="hidden">
-        <div class="page-header"><h1>Compliance checklist</h1><p>Track your PA entity compliance requirements</p></div>
-        <div class="card"><div class="card-body">
+        <div class="page-header"><h1>Compliance Center</h1><p>Real-time obligation tracking and filing status</p></div>
+
+        <!-- Action Center -->
+        <div id="action-center" class="card" style="border-left:4px solid var(--accent);margin-bottom:16px">
+          <div class="card-body" id="action-items">
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+              <div style="font-size:14px;color:var(--ink2)">Loading your compliance status...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Obligation Timeline -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Obligation Timeline</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadComplianceTimeline()" style="font-size:12px">⟳ Refresh</button>
+          </div>
+          <div class="card-body" id="obligation-timeline">
+            <div style="color:var(--ink3);font-size:13px;padding:12px 0">Loading timeline...</div>
+          </div>
+        </div>
+
+        <!-- Filing Tracker (for managed plans) -->
+        <div class="card" id="filing-tracker-card" style="display:none;margin-top:16px">
+          <div class="card-header"><span class="card-title">Filing Progress</span></div>
+          <div class="card-body" id="filing-tracker"></div>
+        </div>
+
+        <!-- Calendar + Prefill -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+          <div class="card">
+            <div class="card-body" style="text-align:center;padding:20px">
+              <div style="font-size:24px;margin-bottom:8px">📅</div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px">Compliance Calendar</div>
+              <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Subscribe to get all deadlines in your calendar app</p>
+              <button class="btn btn-ghost btn-sm" onclick="subscribeCalendar()">Subscribe to Calendar</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="text-align:center;padding:20px">
+              <div style="font-size:24px;margin-bottom:8px">📋</div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px">Pre-Fill Filing</div>
+              <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Get your entity details pre-filled for the PA DOS filing form</p>
+              <button class="btn btn-ghost btn-sm" onclick="showPrefill()">Get Filing Details</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health Report -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-weight:600;font-size:14px">Compliance Health Report</div>
+              <p style="font-size:12px;color:var(--ink3)">Download a PDF-ready compliance summary for your records or accountant</p>
+            </div>
+            <button class="btn btn-accent btn-sm" onclick="showHealthReport()">View Report</button>
+          </div>
+        </div>
+
+        <!-- Legacy Checklist (collapsed) -->
+        <details style="margin-top:16px">
+          <summary style="font-size:13px;color:var(--ink3);cursor:pointer;padding:8px 0">Compliance Checklist</summary>
+          <div class="card"><div class="card-body">
           <div class="check-item" id="cl-ro"><div class="check-box done">✓</div><div class="check-text done">Registered office address on file with PA DOS</div></div>
           <div class="check-item" id="cl-report"><div class="check-box"></div><div class="check-text">Annual report filed for current year</div></div>
           <div class="check-item" id="cl-crop"><div class="check-box done">✓</div><div class="check-text done">CROP provider license verified (15 Pa. C.S. §109)</div></div>
           <div class="check-item" id="cl-entity"><div class="check-box"></div><div class="check-text">Entity status verified with PA DOS</div></div>
           <div class="check-item" id="cl-agreement"><div class="check-box"></div><div class="check-text">Service agreement signed and on file</div></div>
           <div class="check-item" id="cl-reminders"><div class="check-box done">✓</div><div class="check-text done">Annual report reminders active (90/60/30/14/7 days)</div></div>
-        </div></div>
+          </div></div>
+        </details>
       </div>
 
       <!-- ══ ENTITY STATUS TAB ══ -->
@@ -1718,6 +1781,88 @@ function showToast(msg) {
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:fadeUp .3s ease both;max-width:400px;text-align:center';
   document.body.appendChild(toast);
   setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(function() { toast.remove(); }, 300); }, 4000);
+}
+
+// ═══ COMPLIANCE CENTER (Features 1-11) ═══
+
+async function loadComplianceTimeline() {
+  const orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) {
+    document.getElementById('obligation-timeline').innerHTML = '<p style="font-size:13px;color:var(--ink3)">Your compliance timeline will appear here once your entity is connected to the compliance engine.</p>';
+    document.getElementById('action-items').innerHTML = '<div style="padding:8px 0;font-size:14px;color:var(--ink2)">✅ Review the Compliance Checklist below to get started.</div>';
+    return;
+  }
+  try {
+    const token = localStorage.getItem('crop_token') || '';
+    const r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error);
+
+    // Actions
+    var ac = document.getElementById('action-items');
+    ac.innerHTML = (d.actions||[]).map(function(a) {
+      var colors = { critical:'var(--red)', high:'#f59e0b', warning:'#f59e0b', medium:'#3b82f6', info:'var(--green)', success:'var(--green)' };
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:' + (colors[a.priority]||'var(--ink3)') + ';flex-shrink:0"></div>' +
+        '<div style="flex:1;font-size:14px">' + a.label + '</div>' +
+        (a.url ? '<a href="' + a.url + '" target="_blank" class="btn btn-accent btn-sm" style="font-size:12px">Go →</a>' : '') +
+        '</div>';
+    }).join('');
+
+    // Timeline
+    var tl = document.getElementById('obligation-timeline');
+    tl.innerHTML = (d.obligations||[]).map(function(o) {
+      var sc = { upcoming:'#3b82f6', reminder_sent:'#f59e0b', overdue:'var(--red)', escalated:'#7f1d1d', filed_confirmed:'var(--green)', closed:'var(--green)' };
+      var c = sc[o.status] || 'var(--ink3)';
+      var dl = o.days_until < 0 ? Math.abs(o.days_until) + ' days overdue' : o.days_until + ' days left';
+      return '<div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="width:40px;height:40px;border-radius:10px;background:' + c + '15;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:12px;height:12px;border-radius:50%;background:' + c + '"></div></div>' +
+        '<div style="flex:1"><div style="font-weight:600;font-size:14px">' + (o.type||'').replace(/_/g,' ') + '</div>' +
+        '<div style="font-size:13px;color:var(--ink3);margin-top:2px">Due: ' + o.due_date + ' · ' + dl + ' · $' + o.fee + '</div>' +
+        '<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;background:' + c + '15;color:' + c + ';text-transform:uppercase;margin-top:4px">' + (o.status||'').replace(/_/g,' ') + '</span></div></div>';
+    }).join('') || '<p style="font-size:13px;color:var(--ink3);padding:12px 0">No obligations yet.</p>';
+  } catch (e) {
+    document.getElementById('obligation-timeline').innerHTML = '<p style="font-size:13px;color:var(--ink3);padding:12px 0">Timeline available once compliance engine is active.</p>';
+    document.getElementById('action-items').innerHTML = '<div style="padding:8px 0;font-size:14px;color:var(--ink2)">Check the Compliance Checklist below.</div>';
+  }
+}
+
+function subscribeCalendar() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  var token = localStorage.getItem('crop_token') || '';
+  if (!orgId) { showToast('Connect your entity first'); return; }
+  var url = location.origin + '/api/compliance-calendar?org=' + orgId + '&token=' + token;
+  window.open(url.replace('https://','webcal://').replace('http://','webcal://'));
+  setTimeout(function() { if (navigator.clipboard) navigator.clipboard.writeText(url).then(function() { showToast('Calendar URL copied!'); }); }, 500);
+}
+
+async function showPrefill() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) { showToast('Connect your entity first'); return; }
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/organizations/' + orgId + '/prefill', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success) throw new Error('');
+    var p = d.prefill;
+    var w = window.open('', '_blank', 'width=500,height=500');
+    w.document.write('<html><head><title>Filing Details</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"></head><body style="padding:24px;font-family:Outfit,sans-serif"><h2>Your Filing Details</h2><div style="background:#f8f8f5;padding:16px;border-radius:8px;font-size:14px;line-height:2"><b>Entity:</b> '+p.entity_name+'<br><b>DOS#:</b> '+(p.entity_number||'N/A')+'<br><b>Type:</b> '+p.entity_type+'<br><b>Office:</b> '+p.registered_office.street+', '+p.registered_office.city+', '+p.registered_office.state+' '+p.registered_office.postal_code+'<br><b>Fee:</b> $'+p.fee+'<br><b>Form:</b> '+p.form_number+'</div><div style="text-align:center;margin-top:20px"><a href="'+p.filing_url+'" target="_blank" style="display:inline-block;padding:14px 28px;background:#C9982A;color:#0C1220;font-weight:700;border-radius:8px;text-decoration:none">File at PA DOS →</a></div></body></html>');
+  } catch (e) { showToast('Could not load filing details'); }
+}
+
+async function showHealthReport() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) { showToast('Connect your entity first'); return; }
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/organizations/' + orgId + '/health-report', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success) throw new Error('');
+    var rpt = d.report;
+    var gc = { A:'#15803d', B:'#3b82f6', C:'#f59e0b', D:'#ea580c', F:'#dc2626' };
+    var w = window.open('', '_blank', 'width=700,height=700');
+    w.document.write('<html><head><title>Health Report — '+rpt.organization.legal_name+'</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet"></head><body style="padding:32px;font-family:Outfit,sans-serif;max-width:600px;margin:0 auto"><h1 style="text-align:center;font-size:22px">Compliance Health Report</h1><p style="text-align:center;color:#888;font-size:13px">'+rpt.organization.legal_name+' · '+new Date(rpt.generated_at).toLocaleDateString()+'</p><div style="display:flex;justify-content:center;gap:40px;margin:24px 0"><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.grade+'</div><div style="font-size:12px;color:#888">Grade</div></div><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.risk_level.toUpperCase()+'</div><div style="font-size:12px;color:#888">Risk</div></div></div><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Entity</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.organization.entity_type+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Status</td><td style="padding:10px;border-bottom:1px solid #eee">'+(rpt.organization.verified?'✅ Verified':'⏳ Pending')+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Obligations</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.compliance.total_obligations+' total · '+rpt.compliance.filed+' filed · '+rpt.compliance.overdue+' overdue</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Documents</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.documents.total+' received</td></tr></table>'+(rpt.verification_badge?'<div style="text-align:center;margin:24px 0"><img src="'+rpt.verification_badge.embed_url+'" alt="Verified Badge"><p style="font-size:10px;color:#888;margin-top:8px">Embed: &lt;img src=&quot;'+rpt.verification_badge.embed_url+'&quot;&gt;</p></div>':'')+'<div style="text-align:center;margin:24px 0;font-size:11px;color:#888">PA CROP Services · pacropservices.com</div></body></html>');
+  } catch (e) { showToast('Health report requires compliance engine connection'); }
 }
 
 </script>
