@@ -6,6 +6,8 @@ export const config = { runtime: 'edge' };
 
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { buildChatbotKnowledge, getEntityDeadline, computeDaysUntil } from './_compliance.js';
+import { classifyIntent, shouldRefuse, tryDeterministicAnswer, buildRefusalResponse, buildGuardrailInstructions } from './_guardrails.js';
+import { logConversation } from './_log.js';
 
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
@@ -36,6 +38,32 @@ export default async function handler(req) {
   const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });
 
+  // ── Intent Classification + Guardrails ──
+  const intent = classifyIntent(message);
+  const ctx = clientContext || {};
+  const sessionId = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+  // LEGAL_QUESTION: refuse without calling LLM
+  if (shouldRefuse(intent)) {
+    const refusal = buildRefusalResponse();
+    logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: message, response: refusal.answer, intent, sources: [], confidence: 1.0, escalated: false });
+    return new Response(JSON.stringify({ success: true, reply: refusal.answer, intent, sources: refusal.sources }), {
+      headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+    });
+  }
+
+  // COMPLIANCE_FACT: try deterministic answer first (no LLM, no hallucination risk)
+  if (intent === 'COMPLIANCE_FACT') {
+    const deterministic = tryDeterministicAnswer(message, ctx);
+    if (deterministic) {
+      logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: message, response: deterministic.answer, intent, sources: deterministic.sources, confidence: deterministic.confidence, escalated: false });
+      return new Response(JSON.stringify({ success: true, reply: deterministic.answer, intent, sources: deterministic.sources, confidence: deterministic.confidence }), {
+        headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+      });
+    }
+    // If deterministic can't answer, fall through to LLM with extra guardrails
+  }
+
   const GROQ_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_KEY) {
     return new Response(JSON.stringify({ 
@@ -46,7 +74,6 @@ export default async function handler(req) {
     });
   }
 
-  const ctx = clientContext || {};
   const eName = ctx.entityName || entityName || '';
   const tier = ctx.plan || clientTier || '';
   const tierLabel = ctx.planLabel || '';
@@ -82,6 +109,7 @@ ${buildChatbotKnowledge()}
 - Plans: Compliance Only $99/yr, Starter $199/yr (hosting), Pro $349/yr (hosting + filing), Empire $699/yr (multi-entity)
 - Pro/Empire include annual report filing
 - All plans: same-day document scanning, portal, AI assistant, reminders at 90/60/30/14/7 days
+${buildGuardrailInstructions()}
 
 RULES:
 - Never give legal or tax advice. Say "that's a question for your attorney/CPA" and offer to connect them with a partner
