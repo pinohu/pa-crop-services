@@ -138,9 +138,10 @@ pa-crop-services/
 │
 ├── package.json                     # Dependencies: @upstash/ratelimit, @upstash/redis, pdf-lib
 ├── vercel.json                      # outputDirectory: public, cleanUrls: true
-├── INFRASTRUCTURE.md                # This file
-├── COMPLIANCE-ENGINE-ARCHITECTURE.md # Full system design document
-├── MANUAL-ACTIONS.md                # ★ All human-required implementation steps (single checklist)
+├── INFRASTRUCTURE.md                # Operations reference — credentials, env vars, deployment
+├── MASTER-ARCHITECTURE.md           # ★ Canonical system specification — layers, domain model, APIs, agents
+├── COMPLIANCE-ENGINE-ARCHITECTURE.md # v1.0 architecture (superseded by MASTER-ARCHITECTURE.md)
+├── MANUAL-ACTIONS.md                # All human-required implementation steps (single checklist)
 ├── AUDIT-REMEDIATION-2026-03-24.md  # Audit findings and fixes
 └── MASTER_BUILD_PLAN_V2.md          # Original build plan
 ```
