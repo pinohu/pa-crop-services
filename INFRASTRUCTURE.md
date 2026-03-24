@@ -760,7 +760,7 @@ Applied 2026-03-23 across 12 commits. Every public page now complies with Nielse
 - 20 active, 0 inactive CROP workflows remain
 
 **Remaining (Ike action):**
-See "Ike action items (cannot be automated)" under Phase 0 Deployment below — prioritized as CRITICAL / HIGH / MEDIUM.
+See "Ike action items (cannot be automated)" under Phase 0 Deployment — prioritized CRITICAL / HIGH / MEDIUM / LOW with step-by-step instructions.
 
 
 ### Seamless Experience Layer (2026-03-22)
@@ -833,29 +833,82 @@ The following upgrades close every gap between the documented user journeys and 
 
 **Ike action items (cannot be automated):**
 
-*CRITICAL — Blocking all indexing and organic traffic:*
-- [ ] **Fix SSL certificate on bare domain `pacropservices.com`** — Currently throws cert mismatch error. In Vercel → Settings → Domains: ensure both `pacropservices.com` and `www.pacropservices.com` are added. Bare domain needs A record → `76.76.21.21` (or CNAME `www` → `cname.vercel-dns.com`). Wait for green "Valid Configuration" in Vercel. Test: `curl -I https://pacropservices.com` should return 200.
-- [ ] **Google Search Console verification** — Site has zero Google presence. Go to search.google.com/search-console → Add property `https://pacropservices.com` → HTML file verification → download file → place in `public/` → push → verify → submit sitemap `https://pacropservices.com/sitemap.xml`. See `docs/GOOGLE_SEARCH_CONSOLE.md`.
+*CRITICAL — Blocking organic traffic and SEO:*
+
+- [ ] **Add bare domain `pacropservices.com` to Vercel project** — `www.pacropservices.com` works (returns 200 from Vercel). But `pacropservices.com` (bare/apex) returns **503 Service Unavailable**. This means anyone typing the domain without `www` gets an error page, and Google may index only the www version (or neither). **Steps:**
+  1. Go to Vercel → Project `pa-crop-services` → Settings → Domains
+  2. Add `pacropservices.com` (bare domain) if not already listed
+  3. Vercel will tell you to add an A record at your DNS registrar:
+     - **A record:** `@` → `76.76.21.21`
+     - Or if already set, check that it points to Vercel (not another host)
+  4. Set one domain as primary (recommend `pacropservices.com`) — the other auto-redirects
+  5. Wait for green "Valid Configuration" in Vercel dashboard
+  6. **Test:** `curl -I https://pacropservices.com` should return 200, not 503
+
+- [ ] **Google Search Console verification** — Site has zero Google search presence despite `www` being live. **Steps:**
+  1. Go to https://search.google.com/search-console
+  2. Click "Add property" → URL prefix → enter `https://www.pacropservices.com`
+  3. Choose "HTML file" verification method
+  4. Download the file (e.g., `google1234abcd.html`)
+  5. Place it in the `public/` folder in the repo (delete or rename `gsc-verify-placeholder.html`)
+  6. `git add . && git commit -m "GSC verification" && git push origin main`
+  7. Wait 1–2 minutes for Vercel deploy, then click "Verify" in GSC
+  8. Go to Sitemaps → Submit `https://www.pacropservices.com/sitemap.xml`
+  9. Also add the bare domain variant once it's working: `https://pacropservices.com`
 
 *HIGH — Revenue and credibility:*
-- [ ] Confirm CROP license with PA DOS (717-787-1057) — verify entity appears on official CROP directory at pa.gov
-- [ ] CROP mail filing with PA DOS ($70 Statement of CROP)
-- [ ] Apply for EIN (irs.gov)
-- [ ] Open business bank account + connect to Stripe
-- [ ] Bind E&O insurance ($1M/$2M)
-- [ ] Google Business Profile: create listing for "PA CROP Services" at 924 W 23rd St, Erie, PA 16502. See `docs/GOOGLE_BUSINESS_PROFILE.md`
-- [ ] Recruit founding client
+
+- [ ] **Confirm CROP license on PA DOS directory** — The official CROP directory at `pa.gov/agencies/dos/programs/business/information-services/commercial-registered-office-providers` should list "PA Registered Office Services, LLC." If not listed, contact PA DOS Corporation Bureau: 717-787-1057 or RA-corps@pa.gov. This is the single most important credibility check — competitors and attorneys will verify this.
+
+- [ ] **CROP mail filing with PA DOS ($70 Statement of CROP)** — PA DOS File #0015295203 was filed but the $70 CROP Statement of Commercial Registered Office Provider needs to be confirmed as processed. This is what makes the CROP license active.
+
+- [ ] **Apply for EIN** — Go to irs.gov → Apply for EIN Online. Entity: PA Registered Office Services, LLC. Needed for bank account.
+
+- [ ] **Open business bank account + connect to Stripe** — Need EIN first. Connect to Stripe for payment processing. Currently Stripe is in live mode with 4 products.
+
+- [ ] **Bind E&O insurance ($1M/$2M)** — Professional liability coverage for registered office services. Required before accepting clients to protect against service-of-process delivery failures.
+
+- [ ] **Google Business Profile** — Create listing at business.google.com:
+  - Business name: PA CROP Services
+  - Category: Legal Services / Business Consulting
+  - Address: 924 W 23rd St, Erie, PA 16502
+  - Phone: 814-228-2822
+  - Website: https://www.pacropservices.com
+  - Hours: Mon-Fri 9:00 AM - 5:00 PM
+  - Verify via postcard (~5 days) or phone
+  - See `docs/GOOGLE_BUSINESS_PROFILE.md` for full guide
+
+- [ ] **Recruit founding client** — The trust section on the homepage uses verifiable credentials (CROP license, PA Notary, physical address) instead of testimonials. Once a real client exists, request a testimonial to add.
 
 *MEDIUM — Polish and completeness:*
-- [ ] Add `GROQ_API_KEY` to Vercel env vars: `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` (Production + Preview + Development)
-- [ ] Add STRIPE_WEBHOOK_SECRET to Vercel env vars
-- [ ] Wire n8n lead nurture email (workflow `ndDWaSmPO4290CgK`) to include `guideUrl` field in first welcome email — link: `https://pacropservices.com/pa-annual-report-compliance-checklist.pdf`
-- [ ] Generate polished og-image.jpg in Canva (1200×630, brand fonts) to replace programmatically generated version
-- [ ] Add SPF/DKIM/DMARC DNS records for email deliverability
-- [ ] Test physical mail pipeline at 924 W 23rd St
-- [ ] Attorney review of Terms + Privacy
-- [ ] LinkedIn profile slug → add to author schema `sameAs` in all articles
-- [ ] Documentero: upload `docs/CROP_Service_Agreement_Template.docx` → copy template ID → set `DOCUMENTERO_TEMPLATE_ID` in Vercel
+
+- [ ] **Add `GROQ_API_KEY` to Vercel env vars** — Key: `GROQ_API_KEY`, Value: `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`. Set for Production + Preview + Development. Required for AI chatbot, email triage, and lead scoring to function.
+
+- [ ] **Add `STRIPE_WEBHOOK_SECRET` to Vercel env vars** — Get from Stripe → Developers → Webhooks → Signing secret. Without this, `api/stripe-webhook.js` logs a warning and skips signature verification.
+
+- [ ] **Wire n8n lead nurture email to deliver PDF guide** — Workflow `ndDWaSmPO4290CgK` (Lead Nurture Start) receives a `guideUrl` field from the subscribe API. Add this link to the first welcome email template: `https://www.pacropservices.com/pa-annual-report-compliance-checklist.pdf`
+
+- [ ] **Generate polished og-image.jpg in Canva** — Current og-image was generated programmatically with system fonts (DejaVu Sans). Create a proper version in Canva at 1200×630px using Outfit + Instrument Serif fonts, brand colors (slate #0C1220, gold #C9982A). Replace `public/og-image.jpg` and push.
+
+- [ ] **Add SPF/DKIM/DMARC DNS records** — Required for email deliverability. Emailit (SMTP provider) should provide the records. Without these, welcome emails and nurture sequences may land in spam.
+
+- [ ] **Test physical mail pipeline at 924 W 23rd St** — Send a test letter to the registered office address. Verify it gets received, scanned, and uploaded to the portal within the same business day.
+
+- [ ] **Attorney review of Terms + Privacy** — Pages at `/terms` and `/privacy` are live. They reference PA statutory obligations and third-party data processors. Should be reviewed by a licensed attorney before accepting paying clients.
+
+- [ ] **LinkedIn profile slug** — Add your LinkedIn URL to the `sameAs` field in the author schema markup on all 14 article/comparison pages. Currently blank.
+
+- [ ] **Documentero template** — Upload `docs/CROP_Service_Agreement_Template.docx` to app.documentero.com → copy the template ID → set `DOCUMENTERO_TEMPLATE_ID` in Vercel env vars. (Note: native PDF generation via pdf-lib is also available as a fallback.)
+
+- [ ] **Connect Vercel integration in Claude** — The Vercel MCP tools (list deployments, deploy, fetch protected URLs) require OAuth authentication. In Claude → Settings → Integrations → connect Vercel. This enables deployment monitoring and protected URL fetching from within Claude conversations.
+
+*LOW — Future improvements (no urgency):*
+
+- [ ] Replace admin sidebar emoji (~30 remaining in JS-generated status indicators) with SVGs — all customer-facing pages are clean, these are internal-only operational indicators
+- [ ] Remove 8 noindexed city pages entirely or expand them to 300+ words and remove noindex — currently they exist but are hidden from Google
+- [ ] PA Compliance Cost Calculator (interactive tool for homepage)
+- [ ] Activate renewal + win-back n8n sequences for paying clients
+- [ ] Replace trust section with real testimonials when founding clients provide them
 
 ### Previously completed (Ike action)
 - [x] Fix 20i API: Reseller env vars added (TWENTY_I_RESELLER_ID=10455, TWENTY_I_DEFAULT_TYPE_REF=80397)
@@ -866,14 +919,13 @@ The following upgrades close every gap between the documented user journeys and 
 ### Future development
 - [x] Comparison pages: vs Northwest, CT Corp, ZenBusiness, Incfile (added 2026-03-22)
 - [x] 5 more city pages: Reading, Bethlehem, Scranton, Lancaster, Wilkes-Barre (added 2026-03-22)
-- [x] UX/UI/Conversion audit + fixes (2026-03-23, 3 commits, 40+ files)
+- [x] UX/UI/Conversion audit + fixes (2026-03-23, 19 commits, 80+ files)
 - [x] Lead magnet PDF created (2026-03-23)
 - [x] og-image.jpg generated (2026-03-23)
 - [x] Brand consistency audit: fonts, colors, emoji→SVG, chatbot (2026-03-23)
-- [ ] PA Compliance Cost Calculator (interactive tool)
-- [ ] Expand city pages to 300+ words each with local business references
-- [ ] Activate renewal + win-back n8n sequences
-- [ ] Replace trust section with real testimonials (when clients exist)
+- [x] Full Nielsen heuristic + WCAG accessibility compliance (2026-03-23, all 36 pages)
+- [x] Full codebase audit: security, SEO, data consistency (2026-03-23, all 90 APIs)
+- See "LOW — Future improvements" in Ike action items for remaining roadmap
 
 ---
 
