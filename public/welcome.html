@@ -59,10 +59,10 @@ nav .container{display:flex;align-items:center;gap:10px}
 <a href="#main-content" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
 <nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
-  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
-<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822">Call 814-228-2822</a><a href="/compliance-check">Check my entity →</a></div>
 
 <section id="main-content" class="hero">
 <div class="container">
@@ -80,7 +80,7 @@ nav .container{display:flex;align-items:center;gap:10px}
   <div class="card-body">
     <div class="field">
       <label>Entity name (as registered with PA DOS)</label>
-      <input type="text" id="ei-name" placeholder="Acme Consulting LLC">
+      <input type="text" id="ei-name" placeholder="Acme Consulting LLC" aria-label="Entity name">
     </div>
     <div class="field-row">
       <div class="field">
@@ -97,12 +97,12 @@ nav .container{display:flex;align-items:center;gap:10px}
       </div>
       <div class="field">
         <label>PA DOS file number (if known)</label>
-        <input type="text" id="ei-number" placeholder="e.g. 7654321">
+        <input type="text" id="ei-number" placeholder="e.g. 7654321" aria-label="PA DOS file number">
       </div>
     </div>
     <div class="field">
       <label>Your email (used for checkout)</label>
-      <input type="email" id="ei-email" placeholder="you@business.com">
+      <input type="email" id="ei-email" placeholder="you@business.com" aria-label="Email address" autocomplete="email">
     </div>
     <button class="btn btn-primary" onclick="submitEntityIntake()" id="ei-btn">Save and continue</button>
     <div class="success-msg" id="ei-success">
@@ -128,7 +128,7 @@ nav .container{display:flex;align-items:center;gap:10px}
 <h2 style="font-size:18px;margin-bottom:4px">Tell us about your entity</h2>
 <p style="font-size:14px;color:var(--gray);margin-bottom:16px">So we can start monitoring your compliance immediately.</p>
 <div style="display:flex;flex-direction:column;gap:12px">
-<input type="text" id="ei-name" placeholder="Entity name (e.g. Acme LLC)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<input type="text" id="ei-name2" placeholder="Entity name (e.g. Acme LLC)" aria-label="Entity name" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
 <select id="ei-type" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff">
   <option value="">Entity type...</option>
   <option value="LLC">LLC</option>
@@ -138,7 +138,7 @@ nav .container{display:flex;align-items:center;gap:10px}
   <option value="Foreign LLC">Foreign LLC</option>
   <option value="Foreign Corp">Foreign Corporation</option>
 </select>
-<input type="text" id="ei-dos" placeholder="PA DOS file number (optional)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<input type="text" id="ei-dos" placeholder="PA DOS file number (optional)" aria-label="PA DOS file number" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
 <input type="email" id="ei-email" placeholder="Your email" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
 <button onclick="submitEntity()" style="background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Submit entity details</button>
 <p id="ei-msg" style="font-size:13px;color:var(--green);display:none"></p>
@@ -235,7 +235,7 @@ async function submitEntityIntake() {
   const number = document.getElementById('ei-number').value.trim();
   const email = document.getElementById('ei-email').value.trim();
   
-  if (!name || !email) { alert('Please enter your entity name and email.'); return; }
+  if (!name || !email) { var we=document.getElementById('welcome-error');if(we){we.textContent='Please enter your entity name and email.';we.style.display='block';}return; }
   
   const btn = document.getElementById('ei-btn');
   btn.textContent = 'Saving...'; btn.disabled = true;
@@ -254,7 +254,7 @@ async function submitEntityIntake() {
     document.getElementById('ei-success').style.display = 'block';
   } catch(e) {
     btn.textContent = 'Save and continue'; btn.disabled = false;
-    alert('Connection error. Please try again.');
+    var we=document.getElementById('welcome-error');if(we){we.textContent='Connection error. Please try again.';we.style.display='block';};
   }
 }
 </script>
