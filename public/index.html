@@ -25,6 +25,33 @@
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");function trackEvent(n,p){if(window.plausible)plausible(n,{props:p||{}});}</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+/* ACCESSIBILITY */
+.skip-link{position:absolute;top:-100px;left:16px;z-index:10000;background:var(--slate);color:var(--white);padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s}.skip-link:focus{top:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+*:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+.nav-cta:focus-visible,.btn-p:focus-visible,.btn-g:focus-visible,.price-cta:focus-visible{outline-offset:3px}
+
+/* STICKY CTA BAR */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(12,18,32,.97);backdrop-filter:blur(12px);padding:12px 28px;transform:translateY(100%);transition:transform .35s var(--ease);display:flex;align-items:center;justify-content:center;gap:16px;border-top:1px solid rgba(201,152,42,.15)}.sticky-cta.show{transform:translateY(0)}.sticky-cta p{color:rgba(255,255,255,.7);font-size:14px;font-weight:500;margin:0}.sticky-cta .btn-p{padding:10px 24px;font-size:13px;white-space:nowrap}
+@media(max-width:768px){.sticky-cta{flex-direction:column;gap:8px;padding:14px 20px}.sticky-cta p{font-size:13px;text-align:center}}
+
+/* BACK TO TOP */
+.back-top{position:fixed;bottom:80px;right:24px;z-index:89;width:40px;height:40px;border-radius:50%;background:var(--white);border:1.5px solid var(--cream3);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:all .25s var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.08)}.back-top.show{opacity:1;pointer-events:auto}.back-top:hover{background:var(--cream);color:var(--slate);transform:translateY(-2px)}
+
+/* PRICING COMPARISON TABLE */
+.compare-table{max-width:900px;margin:48px auto 0;border:1.5px solid var(--cream3);border-radius:16px;overflow:hidden;background:var(--white)}.compare-table table{width:100%;border-collapse:collapse;font-size:13px}.compare-table th{background:var(--cream);font-weight:600;color:var(--slate);padding:14px 12px;text-align:center;border-bottom:1px solid var(--cream3);font-size:12px;text-transform:uppercase;letter-spacing:.5px}.compare-table th:first-child{text-align:left;padding-left:20px;width:40%}.compare-table th.featured-col{background:var(--gold-light);color:var(--gold-muted)}.compare-table td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--cream2);color:var(--ink2)}.compare-table td:first-child{text-align:left;padding-left:20px;font-weight:500;color:var(--slate)}.compare-table td.featured-col{background:rgba(245,237,218,.25)}.compare-table .check{color:var(--sage);font-weight:700}.compare-table .dash{color:var(--ink4)}
+.compare-toggle{text-align:center;margin-top:20px}.compare-toggle button{background:none;border:1.5px solid var(--cream3);color:var(--ink3);padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .2s}.compare-toggle button:hover{border-color:var(--ink4);color:var(--ink)}
+.compare-wrap{max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}.compare-wrap.open{max-height:600px}
+@media(max-width:768px){.compare-table{font-size:11px;margin:32px -12px 0;border-radius:12px;width:calc(100% + 24px)}.compare-table th,.compare-table td{padding:8px 6px}.compare-table td:first-child,.compare-table th:first-child{padding-left:10px}}
+
+/* FORM VALIDATION */
+.nl-form input.error{border-color:var(--red);animation:shake .4s}.nl-form .form-error{color:var(--red);font-size:12px;margin-top:6px;display:none}.nl-form .form-error.show{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+
+/* FAQ KEYBOARD */
+.faq-item:focus-within{background:var(--white)}.faq-q[role="button"]{outline:none}.faq-q[role="button"]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;border-radius:4px}
+
 :root{--slate:#0C1220;--slate2:#1A2332;--gold:#C9982A;--gold-light:#F5EDDA;--gold-muted:#A68A3E;--sage:#6B8F71;--sage-light:#E8F0E9;--cream:#FAF9F6;--cream2:#F3F1EC;--cream3:#EBE8E2;--ink:#1C1C1C;--ink2:#4A4A4A;--ink3:#7A7A7A;--ink4:#A8A8A8;--white:#fff;--red:#FF6B5B;--radius:10px;--font:'Outfit',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--ease:cubic-bezier(.22,.61,.36,1)}
 html{scroll-behavior:smooth}body{font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 ::selection{background:var(--gold-light);color:var(--slate)}
@@ -80,16 +107,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 </head>
 <body>
 
-<nav class="nav" id="nav"><div class="nav-inner">
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<nav class="nav" id="nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
 <div class="mobile-menu" id="mobile-menu"><a href="#features" onclick="closeMobileMenu()">Features</a><a href="#pricing" onclick="closeMobileMenu()">Pricing</a><a href="#partners" onclick="closeMobileMenu()">Partners</a><a href="#faq" onclick="closeMobileMenu()">FAQ</a><a href="/portal" onclick="closeMobileMenu()">Client Login</a><a href="tel:8142282822" onclick="closeMobileMenu()">Call 814-228-2822</a><a href="/compliance-check" onclick="closeMobileMenu()">Check my entity →</a></div>
 
-<section class="hero"><div class="container"><div class="hero-inner">
+<main id="main-content">
+<section class="hero" aria-label="Introduction"><div class="container"><div class="hero-inner">
   <div>
     <div class="hero-badge">Licensed Pennsylvania CROP</div>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:20px;animation:fadeUp .6s var(--ease) .05s both">CROP = Commercial Registered Office Provider — Pennsylvania's version of a registered agent</p>
     <h1>Your PA entity<br>deserves someone<br><em>watching out for it</em></h1>
     <p class="hero-sub">We're a licensed Pennsylvania CROP — your registered office address, compliance monitoring, and annual report filing handled by a real team in Erie. From <strong style="color:var(--slate)">$8.25/month</strong>.</p>
     <div class="hero-actions">
@@ -115,13 +146,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   <div class="marquee-item"><strong>3.8M+</strong> PA business entities</div><div class="marquee-item">·</div><div class="marquee-item"><strong>~65</strong> licensed CROPs statewide</div><div class="marquee-item">·</div><div class="marquee-item"><strong>5 min</strong> setup time</div><div class="marquee-item">·</div><div class="marquee-item"><strong>$99</strong> per year</div><div class="marquee-item">·</div><div class="marquee-item"><strong>Same-day</strong> document scanning</div><div class="marquee-item">·</div><div class="marquee-item"><strong>5 reminders</strong> before every deadline</div><div class="marquee-item">·</div>
 </div></div>
 
-<section class="urgency"><div class="container"><div class="urgency-inner reveal">
+<section class="urgency" aria-label="Compliance deadline warning"><div class="container"><div class="urgency-inner reveal">
   <h2>A quiet deadline most PA business owners don't know about</h2>
   <p>Starting in 2027, Pennsylvania will <em>dissolve entities</em> that haven't filed their annual reports. For foreign entities, there's no coming back. We started this company because no business owner should lose what they've built over a $7 filing they forgot about.</p>
   <a href="/compliance-check" style="display:inline-block;margin-top:20px;background:var(--gold);color:var(--slate);padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;font-family:var(--font);transition:all .2s">Check if my entity is at risk →</a>
 </div></div></section>
 
-<section class="how-it-works" style="padding:80px 0"><div class="container">
+<section class="how-it-works" aria-label="How it works" style="padding:80px 0"><div class="container">
   <div style="text-align:center;max-width:600px;margin:0 auto 56px" class="reveal"><div class="section-tag">How it works</div><h2 style="font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:var(--slate);line-height:1.15;margin-bottom:16px">Three steps. Five minutes. Done.</h2></div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:0 auto" class="reveal">
     <div style="text-align:center;padding:32px 24px">
@@ -142,7 +173,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   </div>
 </div></section>
 
-<section class="features" id="features"><div class="container">
+<section class="features" id="features" aria-label="Features"><div class="container">
   <div class="features-header reveal"><div class="section-tag">How we take care of you</div><h2>The things you shouldn't have to worry about</h2><p>We handle the compliance work so you can focus on what actually grows your business.</p></div>
   <div class="feature-grid">
     <div class="feature-card feature-hero reveal"><div class="feature-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5.1 3.8 9.8 9 11 5.2-1.2 9-5.9 9-11V7l-9-5z" stroke="#C9982A" stroke-width="1.8" fill="none"/><path d="M9 12l2 2 4-4" stroke="#C9982A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>Your address stays private</h3><p>Our Erie, PA address goes on your state filing. Your home address never appears in public records. Service of process, government notices, tax documents — they all come to us first.</p></div>
@@ -153,7 +184,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   </div>
 </div></section>
 
-<section class="pricing" id="pricing"><div class="container">
+<section class="pricing" id="pricing" aria-label="Pricing plans"><div class="container">
   <div class="pricing-header reveal">
     <div class="section-tag">Pricing</div>
     <h2>Everything your PA entity needs.<br>One flat annual price.</h2>
@@ -280,6 +311,32 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
     <span>Licensed PA CROP under 15 Pa. C.S. § 109</span> · <span>Real team in Erie, PA</span> · <span>Same-day document scanning</span> · <span>814-228-2822</span>
   </div>
 
+  <!-- PLAN COMPARISON TABLE -->
+  <div class="compare-toggle reveal"><button onclick="document.getElementById('compare-wrap').classList.toggle('open');this.textContent=this.textContent.includes('Compare')?'Hide comparison':'Compare all plans side by side'" aria-expanded="false">Compare all plans side by side</button></div>
+  <div class="compare-wrap" id="compare-wrap">
+  <div class="compare-table reveal">
+    <table role="table" aria-label="Plan comparison">
+      <thead><tr><th scope="col">Feature</th><th scope="col">Compliance<br><span style="font-weight:400;color:var(--ink3)">$99/yr</span></th><th scope="col" class="featured-col">Starter<br><span style="font-weight:400;color:var(--gold-muted)">$199/yr</span></th><th scope="col">Pro<br><span style="font-weight:400;color:var(--ink3)">$349/yr</span></th><th scope="col">Empire<br><span style="font-weight:400;color:var(--ink3)">$699/yr</span></th></tr></thead>
+      <tbody>
+        <tr><td>Registered office address</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Mail &amp; process forwarding</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>5 deadline reminders</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Entity status monitoring</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Compliance dashboard</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>AI compliance assistant</td><td class="check">✓</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Domain name</td><td class="dash">—</td><td class="check featured-col">1</td><td class="check">3</td><td class="check">10</td></tr>
+        <tr><td>Email mailboxes</td><td class="dash">—</td><td class="check featured-col">5</td><td class="check">Unlimited</td><td class="check">Unlimited</td></tr>
+        <tr><td>Website hosting + SSL</td><td class="dash">—</td><td class="check featured-col">✓</td><td class="check">✓</td><td class="check">Dedicated VPS</td></tr>
+        <tr><td>Business website</td><td class="dash">—</td><td class="check featured-col">1 page</td><td class="check">5 pages</td><td class="check">3 websites</td></tr>
+        <tr><td>Annual report filing</td><td class="dash">—</td><td class="dash featured-col">—</td><td class="check">Included</td><td class="check">Included</td></tr>
+        <tr><td>Direct phone line</td><td class="dash">—</td><td class="dash featured-col">—</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Multi-entity dashboard</td><td class="dash">—</td><td class="dash featured-col">—</td><td class="dash">—</td><td class="check">✓</td></tr>
+        <tr><td>Free notarizations</td><td class="dash">—</td><td class="dash featured-col">—</td><td class="dash">—</td><td class="check">2/year</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
 </div></section>
 
 <section class="social-proof" style="padding:80px 0;background:var(--white);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)">
@@ -313,53 +370,122 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 </div>
 </section>
 
-<section class="faq" id="faq"><div class="container">
+<section class="faq" id="faq" aria-label="Frequently asked questions"><div class="container">
   <div class="faq-header reveal"><div class="section-tag">Common Questions</div><h2>Questions we hear a lot</h2></div>
-  <div class="faq-grid">
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">What is a CROP?<span class="faq-arrow">▾</span></div><div class="faq-a">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Is a CROP the same as a registered agent?<span class="faq-arrow">▾</span></div><div class="faq-a">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">What happens if I don't have a CROP?<span class="faq-arrow">▾</span></div><div class="faq-a">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">What is the PA annual report requirement?<span class="faq-arrow">▾</span></div><div class="faq-a">Starting 2025, all PA entities must file annually. The fee is $7. Starting 2027, failure to file results in administrative dissolution, termination, or cancellation.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">How quickly do you forward documents?<span class="faq-arrow">▾</span></div><div class="faq-a">Same-day scanning and portal upload with immediate email notification.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Can I switch from another CROP?<span class="faq-arrow">▾</span></div><div class="faq-a">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
-    <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Do you file my annual report?<span class="faq-arrow">▾</span></div><div class="faq-a">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
+  <div class="faq-grid" role="list">
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Is a CROP the same as a registered agent?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What happens if I don't have a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is the PA annual report requirement?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Starting 2025, all PA entities must file annually. The fee is $7. Starting 2027, failure to file results in administrative dissolution, termination, or cancellation.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">How quickly do you forward documents?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Same-day scanning and portal upload with immediate email notification.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Can I switch from another CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Do you file my annual report?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
   </div>
 </div></section>
 
 <section class="newsletter"><div class="container reveal">
   <h2>Written for PA business owners like you</h2>
   <p>A clear guide to PA's new annual report requirement. No legalese, no scare tactics.</p>
-  <form class="nl-form" id="nl-form" onsubmit="subscribeNewsletter(event)"><input type="email" id="nl-email" placeholder="your@email.com" required><button type="submit">Send me the guide</button></form>
+  <form class="nl-form" id="nl-form" onsubmit="subscribeNewsletter(event)" role="form" aria-label="Download compliance guide"><input type="email" id="nl-email" placeholder="your@email.com" required aria-label="Email address" autocomplete="email"><button type="submit" aria-label="Submit email for guide">Send me the guide</button></form>
+  <p class="form-error" id="nl-error" role="alert" aria-live="polite"></p>
   <p id="nl-success" style="display:none;color:var(--sage);font-weight:600;margin-top:12px">✓ Here's your guide — <a href="/pa-annual-report-compliance-checklist.pdf" target="_blank" style="color:var(--gold-muted);text-decoration:underline">download the checklist (PDF)</a></p>
   <p style="font-size:12px;color:var(--ink4);margin-top:12px">No spam. Unsubscribe anytime.</p>
 </div></section>
 
-<section class="partners" id="partners"><div class="container"><div class="partner-grid">
+<section class="partners" id="partners" aria-label="Partner program"><div class="container"><div class="partner-grid">
   <div class="reveal"><div class="section-tag">For CPAs &amp; Attorneys</div><h2 style="font-family:var(--serif);font-size:32px;color:var(--slate);line-height:1.2;margin-bottom:24px">Your clients need this. We'll do the work.</h2><p style="font-size:15px;color:var(--ink2);line-height:1.8;margin-bottom:16px">If you serve PA business clients, they probably need a registered office. We handle everything behind the scenes — under your brand. Your clients get taken care of, you earn recurring revenue.</p><a href="/partners" class="btn-p" style="margin-top:16px">Learn about partnering</a></div>
   <div class="partner-stats reveal"><div class="partner-stat"><div class="num">$99</div><div class="label">Per client/year</div></div><div class="partner-stat"><div class="num">0 min</div><div class="label">Your time per client</div></div><div class="partner-stat"><div class="num">100%</div><div class="label">White-label branding</div></div><div class="partner-stat"><div class="num">3 days</div><div class="label">Onboarding time</div></div></div>
 </div></div></section>
 
-<section class="final-cta" id="signup"><div class="container reveal">
+<section class="final-cta" id="signup" aria-label="Get started"><div class="container reveal">
   <h2>Your business has enough to worry about. Compliance shouldn't be one of them.</h2>
   <p>Start with a free checkup. We'll show you exactly where your entity stands.</p>
   <a href="/compliance-check" class="btn-p">See where my entity stands →</a>
   <p style="margin-top:20px;font-size:14px;color:rgba(255,255,255,.45);position:relative;z-index:1">Or call: <a href="tel:8142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:hello@pacropservices.com" style="color:rgba(255,255,255,.7)">hello@pacropservices.com</a></p>
 </div></section>
 
-<footer class="footer"><div class="container"><div class="footer-inner">
+</main>
+
+<footer class="footer" role="contentinfo"><div class="container"><div class="footer-inner">
   <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></div></footer>
 
+<!-- STICKY CTA BAR -->
+<div class="sticky-cta" id="sticky-cta" role="complementary" aria-label="Quick action">
+  <p>Plans from <strong style="color:var(--white)">$99/year</strong> — 30-day money-back guarantee</p>
+  <a href="/compliance-check" class="btn-p">Check my entity <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.3 8h9.4M8.5 3.8L12.7 8l-4.2 4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+</div>
+
+<!-- BACK TO TOP -->
+<button class="back-top" id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+
 <script>
-window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40)});
+// NAV SCROLL
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+  // Sticky CTA: show after scrolling past hero
+  document.getElementById('sticky-cta').classList.toggle('show',window.scrollY>600);
+  // Back to top
+  document.getElementById('back-top').classList.toggle('show',window.scrollY>1200);
+});
+
+// MOBILE MENU
 function toggleMobileMenu(){document.getElementById('mobile-menu').classList.toggle('open')}
 function closeMobileMenu(){document.getElementById('mobile-menu').classList.remove('open')}
 document.addEventListener('click',e=>{var m=document.getElementById('mobile-menu'),b=document.getElementById('hamburger-btn');if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove('open')});
+
+// REVEAL ON SCROLL
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-async function subscribeNewsletter(e){e.preventDefault();var email=document.getElementById('nl-email').value.trim();if(!email)return;var btn=e.target.querySelector('button[type=submit]');btn.textContent='Sending...';btn.disabled=true;try{var res=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'homepage-checklist',tag:'lead-checklist-download'})});if(res.ok){document.getElementById('nl-form').style.display='none';document.getElementById('nl-success').style.display='block';trackEvent('Newsletter Subscribe',{source:'homepage'});}else{btn.textContent='Send me the guide';btn.disabled=false;}}catch(err){btn.textContent='Send me the guide';btn.disabled=false;}}
-document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.price-cta,.btn-p,.nav-cta').forEach(el=>{el.addEventListener('click',()=>{trackEvent('CTA Click',{label:el.textContent.trim().slice(0,50),page:location.pathname})});});});
+
+// FAQ TOGGLE (keyboard accessible)
+function toggleFaq(el){
+  var item=el.closest('.faq-item');
+  var isOpen=item.classList.contains('open');
+  item.classList.toggle('open');
+  el.setAttribute('aria-expanded',!isOpen);
+}
+
+// NEWSLETTER with validation
+async function subscribeNewsletter(e){
+  e.preventDefault();
+  var email=document.getElementById('nl-email').value.trim();
+  var input=document.getElementById('nl-email');
+  var errEl=document.getElementById('nl-error');
+  // Validate
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    input.classList.add('error');
+    if(errEl){errEl.textContent='Please enter a valid email address';errEl.classList.add('show');}
+    setTimeout(()=>{input.classList.remove('error')},600);
+    return;
+  }
+  input.classList.remove('error');
+  if(errEl)errEl.classList.remove('show');
+  var btn=e.target.querySelector('button[type=submit]');
+  btn.textContent='Sending...';btn.disabled=true;btn.setAttribute('aria-busy','true');
+  try{
+    var res=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'homepage-checklist',tag:'lead-checklist-download'})});
+    if(res.ok){
+      document.getElementById('nl-form').style.display='none';
+      document.getElementById('nl-success').style.display='block';
+      trackEvent('Newsletter Subscribe',{source:'homepage'});
+    }else{
+      btn.textContent='Send me the guide';btn.disabled=false;btn.setAttribute('aria-busy','false');
+      if(errEl){errEl.textContent='Something went wrong. Please try again.';errEl.classList.add('show');}
+    }
+  }catch(err){
+    btn.textContent='Send me the guide';btn.disabled=false;btn.setAttribute('aria-busy','false');
+    if(errEl){errEl.textContent='Connection error. Please check your internet and try again.';errEl.classList.add('show');}
+  }
+}
+
+// CTA TRACKING
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.price-cta,.btn-p,.nav-cta').forEach(el=>{
+    el.addEventListener('click',()=>{trackEvent('CTA Click',{label:el.textContent.trim().slice(0,50),page:location.pathname})});
+  });
+});
 </script>
 <script src="/embed/chatbot.js" defer></script>
 </body>
