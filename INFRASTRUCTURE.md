@@ -131,6 +131,7 @@ pa-crop-services/
 ├── vercel.json                      # outputDirectory: public, cleanUrls: true
 ├── INFRASTRUCTURE.md                # This file
 ├── COMPLIANCE-ENGINE-ARCHITECTURE.md # Full system design document
+├── MANUAL-ACTIONS.md                # ★ All human-required implementation steps (single checklist)
 ├── AUDIT-REMEDIATION-2026-03-24.md  # Audit findings and fixes
 └── MASTER_BUILD_PLAN_V2.md          # Original build plan
 ```
@@ -607,7 +608,7 @@ Files fixed (30+ files, 60+ individual changes):
 - [x] `api/chat.js` — replaced old `_rlMap` / `_edgeRateLimit` with shared `checkRateLimit('chat', 15, '60s')`
 - [x] `api/subscribe.js` — replaced old `_rl` / `_rateLimit` with shared `checkRateLimit('subscribe', 5, '60s')`
 - [x] `package.json` — added `@upstash/ratelimit` and `@upstash/redis` dependencies
-- [ ] **Action required:** Provision Upstash Redis (free tier) and add `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` to Vercel env vars. System works immediately without them (in-memory fallback) but goes durable once configured.
+- [ ] **Action required:** Provision Upstash Redis — see `MANUAL-ACTIONS.md` #1 for steps.
 
 **SEVERITY 5 — MEDIUM: Privacy Disclosure (FIXED)**
 
@@ -663,7 +664,7 @@ Full design documented in `COMPLIANCE-ENGINE-ARCHITECTURE.md`.
   - **Notification** — Scheduled/sent reminders with delivery tracking
   - **Conversation** — Full chatbot audit trail with intent classification, source refs, confidence scores, escalation flags
   - **AuditEvent** — Immutable event log: actor, event type, before/after state, reason
-- [ ] **Action required:** Provision Supabase Postgres (free tier) and set `DATABASE_URL` in Vercel env vars. Run `npx prisma db push` to create tables.
+- [ ] **Action required:** Provision Supabase Postgres — see `MANUAL-ACTIONS.md` #8 for steps.
 
 **Phase 2: Operational Endpoints (COMPLETE — pending Upstash provisioning)**
 
@@ -1009,31 +1010,22 @@ The following upgrades close every gap between the documented user journeys and 
 
 *HIGH — Revenue and credibility:*
 
-- [ ] **Confirm CROP license on PA DOS directory** — The official CROP directory at `pa.gov/agencies/dos/programs/business/information-services/commercial-registered-office-providers` should list "PA Registered Office Services, LLC." If not listed, contact PA DOS Corporation Bureau: 717-787-1057 or RA-corps@pa.gov. This is the single most important credibility check — competitors and attorneys will verify this.
+> **All manual implementation actions are now centralized in `MANUAL-ACTIONS.md`.**
+> That file contains the definitive, prioritized checklist with exact steps, dependencies,
+> and time estimates. The items below are kept as context but the authoritative list is there.
 
-- [ ] **CROP mail filing with PA DOS ($70 Statement of CROP)** — PA DOS File #0015295203 was filed but the $70 CROP Statement of Commercial Registered Office Provider needs to be confirmed as processed. This is what makes the CROP license active.
-
-- [ ] **Apply for EIN** — Go to irs.gov → Apply for EIN Online. Entity: PA Registered Office Services, LLC. Needed for bank account.
-
-- [ ] **Open business bank account + connect to Stripe** — Need EIN first. Connect to Stripe for payment processing. Currently Stripe is in live mode with 4 products.
-
-- [ ] **Bind E&O insurance ($1M/$2M)** — Professional liability coverage for registered office services. Required before accepting clients to protect against service-of-process delivery failures.
-
-- [ ] **Google Business Profile** — Create listing at business.google.com:
-  - Business name: PA CROP Services
-  - Category: Legal Services / Business Consulting
-  - Address: 924 W 23rd St, Erie, PA 16502
-  - Phone: 814-228-2822
-  - Website: https://www.pacropservices.com
-  - Hours: Mon-Fri 9:00 AM - 5:00 PM
-  - Verify via postcard (~5 days) or phone
-  - See `docs/GOOGLE_BUSINESS_PROFILE.md` for full guide
+- [ ] Confirm CROP license active (#2 in MANUAL-ACTIONS.md)
+- [ ] CROP mail filing confirmation (#10 in MANUAL-ACTIONS.md)
+- [ ] Apply for EIN (#3 in MANUAL-ACTIONS.md)
+- [ ] Open business bank account + connect to Stripe (#4 in MANUAL-ACTIONS.md)
+- [ ] Bind E&O insurance (#5 in MANUAL-ACTIONS.md)
+- [ ] Google Business Profile (#13 in MANUAL-ACTIONS.md)
 
 - [ ] **Recruit founding client** — The trust section on the homepage uses verifiable credentials (CROP license, PA Notary, physical address) instead of testimonials. Once a real client exists, request a testimonial to add.
 
 *MEDIUM — Polish and completeness:*
 
-- [ ] **Add `GROQ_API_KEY` to Vercel env vars** — Key: `GROQ_API_KEY`, Value: `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`. Set for Production + Preview + Development. Required for AI chatbot, email triage, and lead scoring to function.
+- [ ] Verify GROQ_API_KEY in Vercel (#11 in MANUAL-ACTIONS.md)
 
 - [ ] **Add `STRIPE_WEBHOOK_SECRET` to Vercel env vars** — Get from Stripe → Developers → Webhooks → Signing secret. Without this, `api/stripe-webhook.js` logs a warning and skips signature verification.
 
