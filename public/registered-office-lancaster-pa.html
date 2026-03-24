@@ -37,6 +37,7 @@ nav .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;justif
 .cta-box h3{font-size:20px;margin-bottom:8px}.cta-box p{color:var(--gray);margin-bottom:20px}
 .cta-btn{display:inline-block;background:var(--accent);color:#fff!important;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;text-decoration:none!important}
 footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-size:13px;text-align:center;margin-top:60px}footer a{color:rgba(255,255,255,.8)}
+*:focus-visible{outline:2px solid #C9982A;outline-offset:2px;border-radius:4px}
 </style>
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
@@ -47,7 +48,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
 </script>
 </head>
 <body>
-<nav class="site-nav"><div class="nav-inner">
+<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -104,7 +105,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
   </p>
 </div>
 </div>
-<footer class="site-footer"><div class="footer-inner">
+<footer class="site-footer" role="contentinfo"><div class="footer-inner">
   <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></footer>

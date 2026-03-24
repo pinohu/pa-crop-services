@@ -25,6 +25,7 @@ p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:au
 .btn:hover{background:var(--slate)}
 .links{margin-top:32px;font-size:14px;color:#6B7280}
 .links a{margin:0 12px}
+*:focus-visible{outline:2px solid #C9982A;outline-offset:2px;border-radius:4px}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">
@@ -39,7 +40,7 @@ p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:au
 <link rel="canonical" href="https://pacropservices.com/404">
 </head>
 <body>
-<nav class="site-nav"><div class="nav-inner">
+<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
