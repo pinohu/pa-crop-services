@@ -488,7 +488,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             </div>
           </div>
           <div class="deadline-block">
-            <div class="deadline-label">Days until Sept 30</div>
+            <div class="deadline-label">Days until deadline</div>
             <div class="deadline-number" id="days-to-deadline">—</div>
             <div style="font-size:11px;color:var(--ink3)">Annual report deadline</div>
           </div>
@@ -581,7 +581,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div class="card-body" id="activity-feed">
               <div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Portal accessed</div><div class="activity-time">Just now</div></div></div>
               <div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Registered office address verified</div><div class="activity-time">Ongoing</div></div></div>
-              <div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report reminders active</div><div class="activity-time">Next: 90 days before Sept 30</div></div></div>
+              <div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report reminders active</div><div class="activity-time">Next: 90 days before your deadline</div></div></div>
             </div>
           </div>
         </div>
@@ -853,7 +853,7 @@ function updateActivityFeed(ctx) {
     items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Entity status: Active — Good Standing</div><div class="activity-time">Last checked today</div></div></div>';
   }
 
-  items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: Sept 30 (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : 'Self-file at file.dos.pa.gov') + '</div></div></div>';
+  items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: ' + (ctx.entityDeadline || 'varies by entity type') + ' (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : 'Self-file at file.dos.pa.gov') + '</div></div></div>';
 
   if (ctx.referralCount > 0) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">' + ctx.referralCount + ' referral(s) active</div><div class="activity-time">Earning credits</div></div></div>';
@@ -1136,7 +1136,7 @@ function loadEntityTab(ctx) {
     el('ed-status').innerHTML = '<span class="badge ' + (s==='active'?'badge-green':'badge-gold') + '"><span class="dot"></span> ' + s.charAt(0).toUpperCase()+s.slice(1) + '</span>';
   }
   if (el('ed-report')) el('ed-report').textContent = ctx.annualReportStatus === 'filed' ? 'Filed for ' + new Date().getFullYear() : (ctx.includesFiling ? 'We will file for you' : 'Not yet filed — file at file.dos.pa.gov ($7)');
-  if (el('ed-deadline')) el('ed-deadline').textContent = 'September 30 (' + (ctx.daysUntilDeadline || '—') + ' days away)';
+  if (el('ed-deadline')) el('ed-deadline').textContent = (ctx.entityDeadline || 'Varies by entity type') + ' (' + (ctx.daysUntilDeadline || '—') + ' days away)';
 }
 
 // ─── DOCUMENTS TAB ───
@@ -1415,7 +1415,6 @@ async function loadEntities() {
       (!e.primary ? '<button class="btn btn-ghost btn-sm" style="font-size:12px" onclick="removeEntity(\'' + e.name.replace(/'/g,"\\'") + '\')">Remove</button>' : '') +
       '</div>'
     ).join('');
-    } catch(e) { lessonsEl.innerHTML = '<p style="color:var(--ink3);padding:16px">Unable to load course. Please refresh the page.</p>'; }
     list.innerHTML += '<p style="font-size:12px;color:var(--ink3);margin-top:8px">' + data.count + ' of ' + data.maxEntities + ' entities</p>';
   } catch(e) {}
 }

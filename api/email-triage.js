@@ -37,7 +37,7 @@ Respond in JSON format only:
   "routeTo": "hello@pacropservices.com|partners@pacropservices.com|ike_direct"
 }
 
-CONTEXT: PA CROP Services provides PA registered office services. Plans: $99-$699/year. Address: 924 W 23rd St, Erie, PA 16502. Annual reports due Sept 30.`;
+CONTEXT: PA CROP Services provides PA registered office services. Plans: $99-$699/year. Address: 924 W 23rd St, Erie, PA 16502. Annual report deadlines: corps June 30, LLCs Sept 30, others Dec 31.`;
 
   try {
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

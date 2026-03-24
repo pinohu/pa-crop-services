@@ -4,6 +4,13 @@
 
 export const config = { runtime: 'edge' };
 
+const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
+
+function corsOrigin(req) {
+  const origin = req.headers.get('origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
+
 
 
 
@@ -23,7 +30,7 @@ function _edgeRateLimit(req) {
       headers: {
         'Content-Type':'application/json',
         'Retry-After': String(Math.ceil((d.s+win-now)/1000)),
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': corsOrigin(req)
       }
     });
   }
@@ -32,7 +39,7 @@ function _edgeRateLimit(req) {
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
+    return new Response(null, { headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
   }
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 });
 
@@ -49,7 +56,7 @@ export default async function handler(req) {
       success: true, 
       reply: "I'm temporarily unavailable. You can reach our team directly at 814-228-2822 or hello@pacropservices.com — we respond within one business day." 
     }), {
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+      headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
     });
   }
 
@@ -86,8 +93,8 @@ VOICE & TONE:
 KNOWLEDGE BASE:
 - PA LLC/corp/LP must maintain registered office (15 Pa. C.S. § 108)
 - CROP licensed under 15 Pa. C.S. § 109
-- Annual reports due September 30, $7 online at file.dos.pa.gov
-- Late reports → dissolution after Dec 31, 2027
+- Annual report deadlines vary by entity type: Corporations (business + nonprofit) due June 30; LLCs due September 30; All others (LPs, LLPs, business trusts, professional associations) due December 31. Fee is $7 online at file.dos.pa.gov ($0 for nonprofits)
+- 2025-2026 are a grace period (no dissolution for missed reports). Starting with 2027 reports, entities that fail to file face administrative dissolution/termination/cancellation six months after their entity-type due date (e.g., corps by ~Jan 1 2028, LLCs by ~Apr 1 2028, others by ~Jul 1 2028)
 - Foreign entities dissolved in PA cannot reinstate
 - Change RO: file DSCB:15-108 ($5)
 - Our address: 924 W 23rd St, Erie, PA 16502
@@ -166,13 +173,13 @@ RULES:
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': corsOrigin(req)
         }
       });
     } catch(err) {
       return new Response(JSON.stringify({ error: 'Stream failed' }), {
         status: 502,
-        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+        headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
       });
     }
   }
@@ -187,12 +194,12 @@ RULES:
     const data = await groqRes.json();
     const reply = data.choices?.[0]?.message?.content || 'I apologize — please try again.';
     return new Response(JSON.stringify({ success: true, reply }), {
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+      headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
     });
   } catch(err) {
     return new Response(JSON.stringify({ error: 'Service unavailable' }), {
       status: 502,
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+      headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
     });
   }
 }

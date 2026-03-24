@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-23 — COMPLETE: 36 pages, 90 APIs, 20 active workflows, full Nielsen + WCAG heuristic compliance, design system codified
+> **Auto-updated on every commit.** Last updated: 2026-03-24 — Compliance audit remediation: legal accuracy, portal bug, subscribe error handling, CORS restriction, privacy disclosure
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -518,7 +518,7 @@ Extended to full Nielsen heuristic + WCAG accessibility compliance across 12 com
 
 *62 orphaned API files:* Of 90 API files in `api/`, only 28 are referenced from HTML pages. The remaining 62 are either called by n8n webhooks, used internally between APIs, or built for future features. Key externally-triggered ones: `stripe-webhook.js` (Stripe), `entity-monitor.js` (n8n cron), `winback.js` (n8n cron), `generate-agreement.js` (n8n), `partner-commission.js` (n8n). The rest are speculative/future and deploy as cold-start serverless functions at zero cost on Vercel. No action needed — they cause no harm deployed.
 
-*CORS `*` on all 90 APIs:* All APIs set `Access-Control-Allow-Origin: *`. This is standard for Vercel serverless where HTML and APIs share the same domain. The admin key / rate limiting is the real auth layer. Not a vulnerability in this architecture.
+*CORS restricted on `chat.js` and `subscribe.js` (2026-03-24):* Previously all APIs set `Access-Control-Allow-Origin: *`. The compliance audit identified this as an abuse vector when combined with in-memory rate limiting. `chat.js` and `subscribe.js` (the two public-facing endpoints) now restrict CORS to `pacropservices.com` and `www.pacropservices.com` with dynamic origin checking. The remaining 88 API files still use `*` — acceptable since they are all authenticated (admin key) or internal-only (n8n webhooks).
 
 *Admin key fallback in 62 files:* Pattern `process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'` exists as a local-dev fallback. In production, the env var is always set so the fallback is never reached. Acceptable for a private repo.
 
@@ -541,6 +541,61 @@ Extended to full Nielsen heuristic + WCAG accessibility compliance across 12 com
 *Font consistency:* All 36 pages load Outfit + Instrument Serif. Portal and admin have correct vars. Zero pages use Plus Jakarta Sans or Fraunces. `gsc-verify-placeholder.html` loads only Outfit (acceptable — placeholder page).
 
 *Pages not loading `site.css`:* `index.html`, `admin.html`, `portal.html` — all three define their own complete CSS inline (they're large standalone pages). This is by design, not a bug.
+
+### Compliance & Security Audit Remediation (2026-03-24)
+
+Owner audit of legal accuracy, code integrity, security, and privacy compliance.
+Full findings documented in `AUDIT-REMEDIATION-2026-03-24.md`.
+
+**SEVERITY 1 — CRITICAL: Legal/Compliance Accuracy (FIXED)**
+
+PA annual report deadlines were hardcoded as "September 30" for all entity types across the entire site. The PA Department of State (Act 122 of 2022) specifies different deadlines by entity type:
+- Corporations (business + nonprofit, domestic + foreign): **June 30**
+- LLCs (domestic + foreign): **September 30**
+- All others (LPs, LLPs, business trusts, professional associations): **December 31**
+
+Dissolution was stated as a universal "December 31, 2027" cutoff. The actual rule: starting with 2027 reports, dissolution/termination/cancellation occurs **six months after the entity-type-specific due date** (corps ~Jan 2028, LLCs ~Apr 2028, others ~Jul 2028).
+
+Files fixed (30+ files, 60+ individual changes):
+- [x] `api/chat.js` — Knowledge base: entity-type deadlines + 6-month dissolution rule
+- [x] `api/email-triage.js` — Context prompt: entity-type deadlines
+- [x] `api/voice.js` — Phone concierge prompt: entity-type deadlines + dissolution rule
+- [x] `public/index.html` — Health check card, FAQ schema (JSON-LD), visible FAQ answer
+- [x] `public/portal.html` — 4 hardcoded "Sept 30" references → entity-type-aware
+- [x] `public/admin.html` — Compliance tracker header, enforcement warning, countdown timer
+- [x] `public/pa-annual-report-requirement-guide.html` — **Deadline table was completely wrong** (listed Sept 30 for corps and LPs). Fixed to correct 11-row entity-type table. Also fixed: callout box, 2027 section, CROP reminders section, missed deadline timeline, FAQ schema (JSON-LD), visible FAQ, meta description, og:description
+- [x] `public/pa-2027-dissolution-deadline.html` — Warning box, intro paragraph, grace period paragraph, reminder schedule, FAQ schema (JSON-LD), visible FAQ (2 answers)
+- [x] `public/pa-2027-compliance-checklist.html` — Badge, subtitle, meta description, 3 checklist items
+- [x] `public/pennsylvania-foreign-entity-annual-report.html` — Meta description, og:description, JSON-LD FAQ, body text, checklist item, CROP pitch, visible FAQ
+- [x] `public/pennsylvania-business-glossary.html` — JSON-LD DefinedTerm + visible definition for "Annual Report"
+- [x] `public/how-to-file-pa-annual-report-2026.html` — Meta description, og:description, common mistakes section
+- [x] `public/reinstate-dissolved-pennsylvania-llc.html` — Compliance setup step (clarified Sept 30 is LLC-specific)
+- [x] `public/registered-office-*.html` (10 city pages) — Reminder deadline text + dissolution timeline text
+- [x] `public/pennsylvania-llc-registered-office-requirements.html` — Already correct (LLC-specific page, Sept 30 appropriate)
+
+**SEVERITY 2 — HIGH: Portal Code Integrity Bug (FIXED)**
+
+- [x] `public/portal.html` `loadEntities()` — Stray `catch(e) { lessonsEl.innerHTML = ... }` block from bad merge/copy-paste. `lessonsEl` was undefined in `loadEntities` scope (belongs to `loadCourse()`). Also caused entity count line (line 1419) to execute outside try block. Fixed: removed stray catch, folded count line back into main try block.
+
+**SEVERITY 3 — HIGH: Silent Subscription Failures (FIXED)**
+
+- [x] `api/subscribe.js` — Both Acumbamail and n8n webhook calls were wrapped in `.catch(() => {})`, swallowing all errors while returning `{ success: true }`. Rewritten: each call has individual try/catch with `console.error` logging including email and HTTP status. Response now returns `{ success: true, warnings: [...], partial: true }` when either downstream call fails. Operators can now see failures in Vercel function logs.
+
+**SEVERITY 4 — MEDIUM: CORS Restriction (FIXED)**
+
+- [x] `api/subscribe.js` — `Access-Control-Allow-Origin: *` → dynamic origin check restricted to `pacropservices.com` / `www.pacropservices.com` with `Vary: Origin` header
+- [x] `api/chat.js` — Same fix (7 response paths updated). Added `corsOrigin(req)` helper using `ALLOWED_ORIGINS` array.
+- [ ] **Roadmap:** Replace in-memory `Map()` rate limiting with Upstash Redis or Vercel KV for durable cross-instance limiting. Current in-memory rate limiters reset on cold starts.
+
+**SEVERITY 5 — MEDIUM: Privacy Disclosure (FIXED)**
+
+- [x] `public/privacy.html` — Microsoft Clarity disclosure strengthened in two places:
+  - "Automatically collected" section: now explicitly states Clarity records mouse movements, clicks, scrolls, and page interactions as session replays; sensitive fields masked by default; may use first-party cookies/local storage; links to Microsoft privacy statement
+  - "Third-party services" section: same expanded disclosure with data processing details
+
+**SEVERITY 6 — LOW: Portal API Audit (DEFERRED)**
+
+- [ ] Portal references ~20+ API endpoints. Need systematic audit of which return real data vs. mock/demo responses. Deferred to next sprint.
 
 ---
 
@@ -773,7 +828,7 @@ The following upgrades close every gap between the documented user journeys and 
 - AI chatbot receives this context and gives SPECIFIC answers:
   "Your annual report for Acme LLC is due September 30, 192 days from now.
    Since you're on the Business Pro plan, we'll file it for you."
-- Not generic: "Annual reports are due September 30" — but personalized with their entity and plan
+- Not generic: "Annual reports are due by your deadline" — but personalized with their entity type, deadline, and plan
 
 **Onboarding Progress Tracker:**
 - Shows for new clients (onboardingComplete=false), hidden once all steps done
@@ -943,4 +998,4 @@ curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c0
 ---
 
 *This file is automatically updated with every commit to this repository.*
-*Last updated by automated push — see commit history for change log.*
+*Last updated: 2026-03-24 — Compliance audit remediation (see Outstanding Items → Compliance & Security Audit Remediation).*

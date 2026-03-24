@@ -297,11 +297,11 @@ tr:hover td{background:#fafafa}
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">📋 Annual Report Compliance Tracker</div>
-            <div style="font-size:13px;color:var(--gray)">September 30, 2026 deadline · 2027 enforcement deadline: Dec 31</div>
+            <div style="font-size:13px;color:var(--gray)">Deadlines: Corps June 30 · LLCs Sept 30 · All others Dec 31 · 2027 enforcement: dissolution 6 months after missed deadline</div>
           </div>
           <div class="panel-body">
             <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px">
-              <strong>⚠️ 2027 Deadline:</strong> Clients who have not filed any PA annual report by Dec 31, 2027 face administrative dissolution. Foreign entities cannot reinstate.
+              <strong>⚠️ 2027 Enforcement:</strong> Starting with 2027 reports, entities that fail to file face administrative dissolution/termination/cancellation six months after their entity-type due date (corps ~Jan 2028, LLCs ~Apr 2028, others ~Jul 2028). Foreign entities cannot reinstate — they must re-register.
             </div>
             <div id="compliance-table"><div class="loading"><div class="spinner"></div>Loading compliance data...</div></div>
           </div>
@@ -873,12 +873,12 @@ async function loadCompliance() {
     const data = await callAPI('clients', {});
     const clients = data.clients || [];
     const today = new Date();
-    const deadline2027 = new Date('2027-12-31');
-    const daysTo2027 = Math.floor((deadline2027 - today) / (1000*60*60*24));
+    const deadlineCorps2027 = new Date('2027-06-30');
+    const daysToCorpDeadline = Math.floor((deadlineCorps2027 - today) / (1000*60*60*24));
 
     el.innerHTML = `
       <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px">
-        <strong>2027 Deadline:</strong> ${daysTo2027} days away (December 31, 2027)
+        <strong>2027 Enforcement:</strong> Corps due June 30 (${daysToCorpDeadline} days) · LLCs due Sept 30 · Others due Dec 31 — dissolution 6 months after missed deadline
       </div>
       <div class="table-wrap"><table>
       <thead><tr><th>Client</th><th>Plan</th><th>Entity Type</th><th>CROP Since</th><th>Annual Report Status</th><th>2027 Risk</th></tr></thead>

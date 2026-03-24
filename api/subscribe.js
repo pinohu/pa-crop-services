@@ -2,8 +2,9 @@
 // Newsletter / lead magnet email capture
 // POST { email, source, tag }
 
+const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
-// ── Rate Limiter (in-memory, per-instance) ──
+// ── Rate Limiter (in-memory, per-instance — upgrade to Upstash Redis for durable limiting) ──
 const _rl = new Map();
 function _rateLimit(req, res, max, win) {
   const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
@@ -16,10 +17,20 @@ function _rateLimit(req, res, max, win) {
   return false;
 }
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+function setCors(req, res) {
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
+}
+
+export default async function handler(req, res) {
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -35,33 +46,63 @@ export default async function handler(req, res) {
   const ACUMBAMAIL_KEY = process.env.ACUMBAMAIL_API_KEY;
   const LIST_ID = '1267324';
 
+  const warnings = [];
+
   try {
+    // ── Acumbamail subscription ──
     if (ACUMBAMAIL_KEY) {
-      await fetch(`https://acumbamail.com/api/1/addSubscriber/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          auth_token: ACUMBAMAIL_KEY,
-          list_id: LIST_ID,
-          email: cleanEmail,
-          extra_fields: {
-            SOURCE: source || 'website',
-            TAG: tag || 'newsletter'
-          }
-        })
-      }).catch(() => {});
+      try {
+        const acumbaRes = await fetch('https://acumbamail.com/api/1/addSubscriber/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auth_token: ACUMBAMAIL_KEY,
+            list_id: LIST_ID,
+            email: cleanEmail,
+            extra_fields: {
+              SOURCE: source || 'website',
+              TAG: tag || 'newsletter'
+            }
+          })
+        });
+        if (!acumbaRes.ok) {
+          const errText = await acumbaRes.text().catch(() => 'unknown');
+          console.error('[subscribe] Acumbamail failed (' + acumbaRes.status + '): ' + errText + ' | email=' + cleanEmail);
+          warnings.push('email_list');
+        }
+      } catch (acumbaErr) {
+        console.error('[subscribe] Acumbamail error: ' + acumbaErr.message + ' | email=' + cleanEmail);
+        warnings.push('email_list');
+      }
+    } else {
+      console.warn('[subscribe] ACUMBAMAIL_API_KEY not set — skipping list subscription');
+      warnings.push('email_list_config');
     }
 
-    // Fire n8n nurture sequence webhook
-    await fetch('https://n8n.audreysplace.place/webhook/crop-lead-nurture-start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: cleanEmail, source: source || 'newsletter', tag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
-    }).catch(() => {});
+    // ── n8n nurture sequence webhook ──
+    try {
+      const n8nRes = await fetch('https://n8n.audreysplace.place/webhook/crop-lead-nurture-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, source: source || 'newsletter', tag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
+      });
+      if (!n8nRes.ok) {
+        const errText = await n8nRes.text().catch(() => 'unknown');
+        console.error('[subscribe] n8n webhook failed (' + n8nRes.status + '): ' + errText + ' | email=' + cleanEmail);
+        warnings.push('nurture_sequence');
+      }
+    } catch (n8nErr) {
+      console.error('[subscribe] n8n webhook error: ' + n8nErr.message + ' | email=' + cleanEmail);
+      warnings.push('nurture_sequence');
+    }
 
-    return res.status(200).json({ success: true });
+    // Return success with visibility into partial failures
+    return res.status(200).json({
+      success: true,
+      ...(warnings.length > 0 && { warnings, partial: true })
+    });
   } catch (err) {
-    console.error('Subscribe error:', err);
+    console.error('[subscribe] Unexpected error:', err);
     return res.status(500).json({ error: 'Something went wrong processing your request. Please try again or call 814-228-2822.' });
   }
 }
