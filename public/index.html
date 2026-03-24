@@ -54,9 +54,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 /* FEATURES */
 .features{padding:100px 0}.features-header{text-align:center;max-width:600px;margin:0 auto 64px}.section-tag{font-size:12px;font-weight:700;color:var(--gold-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}.features-header h2{font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:var(--slate);line-height:1.15;margin-bottom:16px}.features-header p{font-size:16px;color:var(--ink3)}.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto;gap:16px}.feature-card{background:var(--white);border:1px solid var(--cream3);border-radius:16px;padding:28px 24px;transition:all .35s var(--ease);position:relative;overflow:hidden}.feature-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--sage));opacity:0;transition:opacity .35s}.feature-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.06);border-color:transparent}.feature-card:hover::after{opacity:1}.feature-hero{grid-row:span 2;background:linear-gradient(135deg,var(--slate) 0%,var(--slate2) 100%);border:none;border-radius:16px;padding:36px 32px;display:flex;flex-direction:column;justify-content:flex-end;min-height:340px;position:relative;overflow:hidden}.feature-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(201,152,42,.15) 0%,transparent 70%)}.feature-hero::after{display:none}.feature-hero h3{color:#fff;font-size:22px}.feature-hero p{color:rgba(255,255,255,.6);font-size:15px}.feature-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px;background:var(--cream)}.feature-hero .feature-icon{background:rgba(255,255,255,.1);font-size:32px;margin-bottom:20px}.feature-card h3{font-size:16px;font-weight:700;color:var(--slate);margin-bottom:8px}.feature-card p{font-size:14px;color:var(--ink3);line-height:1.6}
 
-/* STORY */
-.story{padding:80px 0;background:var(--white);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)}.story-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}.story h2{font-family:var(--serif);font-size:32px;color:var(--slate);line-height:1.2;margin-bottom:24px}.story p{font-size:15px;color:var(--ink2);line-height:1.8;margin-bottom:16px}.story-sig{margin-top:24px;font-weight:600;color:var(--slate)}.story-sig span{display:block;font-size:13px;font-weight:400;color:var(--ink3);margin-top:2px}.story-quote{background:var(--cream);border-radius:16px;padding:40px;position:relative}.story-quote::before{content:'\201C';font-family:var(--serif);font-size:80px;color:var(--gold);line-height:1;position:absolute;top:16px;left:28px;opacity:.3}.story-quote blockquote{font-family:var(--serif);font-size:22px;font-style:italic;color:var(--slate);line-height:1.5;padding-top:32px}
-
 /* NEWSLETTER */
 .newsletter{padding:56px 0;background:linear-gradient(180deg,var(--cream),var(--gold-light));text-align:center}.newsletter h2{font-family:var(--serif);font-size:26px;color:var(--slate);margin-bottom:8px}.newsletter>p,.newsletter .container>p{color:var(--ink3);font-size:15px;margin-bottom:24px}.nl-form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:480px;margin:0 auto}.nl-form input{flex:1;min-width:240px;padding:14px 18px;border:1.5px solid var(--cream3);border-radius:10px;font-family:var(--font);font-size:15px;background:var(--white);outline:none;transition:border-color .2s}.nl-form input:focus{border-color:var(--gold)}.nl-form button{background:var(--slate);color:var(--white);padding:14px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .2s}.nl-form button:hover{background:var(--slate2)}
 
@@ -76,7 +73,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 .footer{background:var(--slate);padding:40px 0;border-top:1px solid rgba(255,255,255,.06)}.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}.footer-left{font-size:13px;color:rgba(255,255,255,.4)}.footer-legal{font-size:11px;color:rgba(255,255,255,.25);margin-top:4px}.footer-links{display:flex;gap:24px}.footer-links a{font-size:13px;color:rgba(255,255,255,.5);transition:color .2s}.footer-links a:hover{color:rgba(255,255,255,.85)}
 
 /* MOBILE */
-@media(max-width:1024px){.hero-inner{grid-template-columns:1fr;gap:48px}.hero-card{max-width:440px}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature-hero{grid-row:span 1;min-height:200px}.pricing-grid{grid-template-columns:repeat(2,1fr)}.story-inner,.partner-grid{grid-template-columns:1fr;gap:48px}.social-proof [style*="grid-template-columns:260px"]{grid-template-columns:1fr!important}.social-proof [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}}
+@media(max-width:1024px){.hero-inner{grid-template-columns:1fr;gap:48px}.hero-card{max-width:440px}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature-hero{grid-row:span 1;min-height:200px}.pricing-grid{grid-template-columns:repeat(2,1fr)}.partner-grid{grid-template-columns:1fr;gap:48px}.social-proof [style*="grid-template-columns:260px"]{grid-template-columns:1fr!important}.social-proof [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}}
 @media(max-width:768px){.nav-links{display:none}.nav-mobile{display:flex}.hero{padding:120px 0 60px}.hero h1{font-size:36px}.feature-grid,.pricing-grid{grid-template-columns:1fr}.feature-hero{min-height:180px}.pricing-grid{max-width:400px;margin:0 auto}.hero-actions{flex-direction:column}.btn-p,.btn-g{text-align:center;justify-content:center;width:100%}.footer-inner{flex-direction:column;text-align:center}.social-proof [style*="grid-template-columns"]{grid-template-columns:1fr!important}[style*="grid-template-columns:1fr 1fr;gap:20px"]{grid-template-columns:1fr!important}[style*="grid-template-columns:1fr auto"]{grid-template-columns:1fr!important}.how-it-works [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}}
 .mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--cream3);padding:12px 24px;z-index:99;box-shadow:0 8px 32px rgba(0,0,0,.08)}.mobile-menu.open{display:block}.mobile-menu a{display:block;padding:14px 0;font-size:15px;color:var(--ink2);border-bottom:1px solid var(--cream2);font-weight:500}.mobile-menu a:last-child{border:none;color:var(--gold-muted);font-weight:700}
 </style>
@@ -88,13 +85,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   <div class="nav-links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
-<div class="mobile-menu" id="mobile-menu"><a href="#features" onclick="closeMobileMenu()">Features</a><a href="#pricing" onclick="closeMobileMenu()">Pricing</a><a href="#partners" onclick="closeMobileMenu()">Partners</a><a href="#faq" onclick="closeMobileMenu()">FAQ</a><a href="/portal" onclick="closeMobileMenu()">Client Login</a><a href="/compliance-check" onclick="closeMobileMenu()">Check my entity →</a></div>
+<div class="mobile-menu" id="mobile-menu"><a href="#features" onclick="closeMobileMenu()">Features</a><a href="#pricing" onclick="closeMobileMenu()">Pricing</a><a href="#partners" onclick="closeMobileMenu()">Partners</a><a href="#faq" onclick="closeMobileMenu()">FAQ</a><a href="/portal" onclick="closeMobileMenu()">Client Login</a><a href="tel:8142282822" onclick="closeMobileMenu()">Call 814-228-2822</a><a href="/compliance-check" onclick="closeMobileMenu()">Check my entity →</a></div>
 
 <section class="hero"><div class="container"><div class="hero-inner">
   <div>
     <div class="hero-badge">Licensed Pennsylvania CROP</div>
     <h1>Your PA entity<br>deserves someone<br><em>watching out for it</em></h1>
-    <p class="hero-sub">Licensed CROP. Dedicated compliance team. Registered office, deadline monitoring, document scanning, annual report filing. From <strong style="color:var(--slate)">$8.25/month</strong>.</p>
+    <p class="hero-sub">We're a licensed Pennsylvania CROP — your registered office address, compliance monitoring, and annual report filing handled by a real team in Erie. From <strong style="color:var(--slate)">$8.25/month</strong>.</p>
     <div class="hero-actions">
       <a href="/compliance-check" class="btn-p">See where you stand <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.3 8h9.4M8.5 3.8L12.7 8l-4.2 4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       <a href="#pricing" class="btn-g">View pricing</a>
@@ -121,7 +118,29 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 <section class="urgency"><div class="container"><div class="urgency-inner reveal">
   <h2>A quiet deadline most PA business owners don't know about</h2>
   <p>Starting in 2027, Pennsylvania will <em>dissolve entities</em> that haven't filed their annual reports. For foreign entities, there's no coming back. We started this company because no business owner should lose what they've built over a $7 filing they forgot about.</p>
+  <a href="/compliance-check" style="display:inline-block;margin-top:20px;background:var(--gold);color:var(--slate);padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;font-family:var(--font);transition:all .2s">Check if my entity is at risk →</a>
 </div></div></section>
+
+<section class="how-it-works" style="padding:80px 0"><div class="container">
+  <div style="text-align:center;max-width:600px;margin:0 auto 56px" class="reveal"><div class="section-tag">How it works</div><h2 style="font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:var(--slate);line-height:1.15;margin-bottom:16px">Three steps. Five minutes. Done.</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:0 auto" class="reveal">
+    <div style="text-align:center;padding:32px 24px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--gold-light);color:var(--gold-muted);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">1</div>
+      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">Check your entity</h3>
+      <p style="font-size:14px;color:var(--ink3);line-height:1.6">Run our <a href="/compliance-check" style="color:var(--gold-muted);font-weight:600">free compliance check</a>. We'll show you your entity's status, upcoming deadlines, and risk level.</p>
+    </div>
+    <div style="text-align:center;padding:32px 24px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--gold-light);color:var(--gold-muted);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">2</div>
+      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">Pick a plan</h3>
+      <p style="font-size:14px;color:var(--ink3);line-height:1.6"><a href="#pricing" style="color:var(--gold-muted);font-weight:600">Choose the coverage</a> that fits. Every plan includes a registered office address and deadline monitoring.</p>
+    </div>
+    <div style="text-align:center;padding:32px 24px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--sage-light);color:var(--sage);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">3</div>
+      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">We handle the rest</h3>
+      <p style="font-size:14px;color:var(--ink3);line-height:1.6">We update your filing with the PA Dept. of State. From that point on, deadlines, documents, and compliance are on us.</p>
+    </div>
+  </div>
+</div></section>
 
 <section class="features" id="features"><div class="container">
   <div class="features-header reveal"><div class="section-tag">How we take care of you</div><h2>The things you shouldn't have to worry about</h2><p>We handle the compliance work so you can focus on what actually grows your business.</p></div>
@@ -134,71 +153,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   </div>
 </div></section>
 
-<section class="social-proof" style="padding:80px 0;background:var(--white);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)">
-<div class="container">
-  <div style="display:grid;grid-template-columns:260px 1fr;gap:60px;align-items:center" class="reveal">
-    <div>
-      <div class="section-tag">Why trust us</div>
-      <div style="font-family:var(--serif);font-size:56px;color:var(--slate);line-height:1;margin-top:12px;letter-spacing:-2px">~65</div>
-      <p style="font-size:15px;color:var(--ink3);margin-top:8px">licensed CROPs statewide — serving 3.8M entities</p>
-      <div style="width:48px;height:3px;background:linear-gradient(90deg,var(--gold),var(--sage));border-radius:2px;margin-top:24px"></div>
-      <p style="margin-top:24px;font-size:14px;color:var(--ink2);line-height:1.7">Most PA business owners don't even know what a CROP is yet. We're building the standard for how it should work.</p>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
-        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5.1 3.8 9.8 9 11 5.2-1.2 9-5.9 9-11V7l-9-5z" stroke="var(--gold)" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">Licensed PA CROP</div>
-        <p style="font-size:13px;color:var(--ink3);line-height:1.5">Registered with the PA Dept. of State under 15 Pa. C.S. § 109. Filing fee paid. Fully compliant.</p>
-      </div>
-      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
-        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="var(--sage)" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="var(--sage)" stroke-width="2" stroke-linecap="round"/></svg></div>
-        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">PA Notary Public</div>
-        <p style="font-size:13px;color:var(--ink3);line-height:1.5">Commissioned by the Commonwealth. Available for business document notarization.</p>
-      </div>
-      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
-        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#4A8FE7" stroke-width="1.5"/><circle cx="12" cy="10" r="3" stroke="#4A8FE7" stroke-width="1.5"/></svg></div>
-        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">Real office in Erie, PA</div>
-        <p style="font-size:13px;color:var(--ink3);line-height:1.5">924 W 23rd St, Erie, PA 16502. Your documents are received and scanned here — not a virtual mailbox.</p>
-      </div>
-    </div>
-  </div>
-</div>
-</section>
-
-<section class="story"><div class="container"><div class="story-inner">
-  <div class="reveal"><div class="section-tag">Why this exists</div><h2>Built for PA business owners<br>who have better things to do</h2><p>Pennsylvania's compliance system is thorough — but it has zero tolerance for missed deadlines. Starting in 2027, a single missed annual report can dissolve your business entity. For foreign entities, there's no reinstatement.</p><p>PA CROP Services was built to make sure no business owner loses what they've built over a $7 filing they forgot about. Every alert, every scan, every reminder is designed around one goal: keeping your entity in good standing so you can focus on running your business.</p><div class="story-sig">— The PA CROP Services Team<span>Licensed PA CROP Provider · Erie, PA</span></div></div>
-  <div class="story-quote reveal"><blockquote>Compliance shouldn't require a legal team. That's why we built this.</blockquote></div>
-</div></div></section>
-
-<section class="newsletter"><div class="container reveal">
-  <h2>Written for PA business owners like you</h2>
-  <p>A clear guide to PA's new annual report requirement. No legalese, no scare tactics.</p>
-  <form class="nl-form" id="nl-form" onsubmit="subscribeNewsletter(event)"><input type="email" id="nl-email" placeholder="your@email.com" required><button type="submit">Send me the guide</button></form>
-  <p id="nl-success" style="display:none;color:var(--sage);font-weight:600;margin-top:12px">✓ Here's your guide — <a href="/pa-annual-report-compliance-checklist.pdf" target="_blank" style="color:var(--gold-muted);text-decoration:underline">download the checklist (PDF)</a></p>
-  <p style="font-size:12px;color:var(--ink4);margin-top:12px">No spam. Unsubscribe anytime.</p>
-</div></section>
-
-<section class="how-it-works" style="padding:80px 0"><div class="container">
-  <div style="text-align:center;max-width:600px;margin:0 auto 56px" class="reveal"><div class="section-tag">How it works</div><h2 style="font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:var(--slate);line-height:1.15;margin-bottom:16px">Three steps. Five minutes. Done.</h2></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:0 auto" class="reveal">
-    <div style="text-align:center;padding:32px 24px">
-      <div style="width:48px;height:48px;border-radius:50%;background:var(--gold-light);color:var(--gold-muted);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">1</div>
-      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">Check your entity</h3>
-      <p style="font-size:14px;color:var(--ink3);line-height:1.6">Run our free compliance check. We'll show you your entity's status, upcoming deadlines, and risk level.</p>
-    </div>
-    <div style="text-align:center;padding:32px 24px">
-      <div style="width:48px;height:48px;border-radius:50%;background:var(--gold-light);color:var(--gold-muted);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">2</div>
-      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">Pick a plan</h3>
-      <p style="font-size:14px;color:var(--ink3);line-height:1.6">Choose the coverage that fits. Every plan includes a registered office address and deadline monitoring.</p>
-    </div>
-    <div style="text-align:center;padding:32px 24px">
-      <div style="width:48px;height:48px;border-radius:50%;background:var(--sage-light);color:var(--sage);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;margin:0 auto 18px">3</div>
-      <h3 style="font-size:17px;font-weight:700;color:var(--slate);margin-bottom:8px">We handle the rest</h3>
-      <p style="font-size:14px;color:var(--ink3);line-height:1.6">We update your filing with the PA Dept. of State. From that point on, deadlines, documents, and compliance are on us.</p>
-    </div>
-  </div>
-</div></section>
-
 <section class="pricing" id="pricing"><div class="container">
   <div class="pricing-header reveal">
     <div class="section-tag">Pricing</div>
@@ -208,7 +162,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 
   <!-- VALUE ANCHOR — What this stuff costs elsewhere -->
   <div class="reveal" style="max-width:680px;margin:32px auto 48px;background:var(--white);border:1.5px solid var(--cream3);border-radius:16px;padding:28px 32px">
-    <div style="font-size:13px;font-weight:700;color:var(--gold-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">What you'd pay separately</div>
+    <div style="font-size:13px;font-weight:700;color:var(--gold-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">What you'd pay separately <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink4)">(Business Starter includes all of these)</span></div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px 24px;font-size:14px;color:var(--ink2)">
       <span>Registered office service</span><span style="font-weight:600;color:var(--slate)">$125–299/yr</span>
       <span>Business email (5 accounts)</span><span style="font-weight:600;color:var(--slate)">$432/yr</span>
@@ -328,10 +282,36 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 
 </div></section>
 
-<section class="partners" id="partners"><div class="container"><div class="partner-grid">
-  <div class="reveal"><div class="section-tag">For CPAs &amp; Attorneys</div><h2 style="font-family:var(--serif);font-size:32px;color:var(--slate);line-height:1.2;margin-bottom:24px">Your clients need this. We'll do the work.</h2><p style="font-size:15px;color:var(--ink2);line-height:1.8;margin-bottom:16px">If you serve PA business clients, they probably need a registered office. We handle everything behind the scenes — under your brand. Your clients get taken care of, you earn recurring revenue.</p><a href="/partners" class="btn-p" style="margin-top:16px">Learn about partnering</a></div>
-  <div class="partner-stats reveal"><div class="partner-stat"><div class="num">$99</div><div class="label">Per client/year</div></div><div class="partner-stat"><div class="num">0 min</div><div class="label">Your time per client</div></div><div class="partner-stat"><div class="num">100%</div><div class="label">White-label branding</div></div><div class="partner-stat"><div class="num">3 days</div><div class="label">Onboarding time</div></div></div>
-</div></div></section>
+<section class="social-proof" style="padding:80px 0;background:var(--white);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)">
+<div class="container">
+  <div style="display:grid;grid-template-columns:260px 1fr;gap:60px;align-items:center" class="reveal">
+    <div>
+      <div class="section-tag">Why trust us</div>
+      <div style="font-family:var(--serif);font-size:56px;color:var(--slate);line-height:1;margin-top:12px;letter-spacing:-2px">~65</div>
+      <p style="font-size:15px;color:var(--ink3);margin-top:8px">licensed CROPs statewide — serving 3.8M entities</p>
+      <div style="width:48px;height:3px;background:linear-gradient(90deg,var(--gold),var(--sage));border-radius:2px;margin-top:24px"></div>
+      <p style="margin-top:24px;font-size:14px;color:var(--ink2);line-height:1.7">Most PA business owners don't even know what a CROP is yet. We're building the standard for how it should work.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
+        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5.1 3.8 9.8 9 11 5.2-1.2 9-5.9 9-11V7l-9-5z" stroke="var(--gold)" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">Licensed PA CROP</div>
+        <p style="font-size:13px;color:var(--ink3);line-height:1.5">Registered with the PA Dept. of State under 15 Pa. C.S. § 109. Filing fee paid. Fully compliant.</p>
+      </div>
+      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
+        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="var(--sage)" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="var(--sage)" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">PA Notary Public</div>
+        <p style="font-size:13px;color:var(--ink3);line-height:1.5">Commissioned by the Commonwealth. Available for business document notarization.</p>
+      </div>
+      <div style="background:var(--cream);border-radius:16px;padding:28px;border:1px solid var(--cream3)">
+        <div style="margin-bottom:14px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#4A8FE7" stroke-width="1.5"/><circle cx="12" cy="10" r="3" stroke="#4A8FE7" stroke-width="1.5"/></svg></div>
+        <div style="font-weight:700;font-size:15px;color:var(--slate);margin-bottom:6px">Real office in Erie, PA</div>
+        <p style="font-size:13px;color:var(--ink3);line-height:1.5">924 W 23rd St, Erie, PA 16502. Your documents are received and scanned here — not a virtual mailbox.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
 
 <section class="faq" id="faq"><div class="container">
   <div class="faq-header reveal"><div class="section-tag">Common Questions</div><h2>Questions we hear a lot</h2></div>
@@ -345,6 +325,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
     <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Do you file my annual report?<span class="faq-arrow">▾</span></div><div class="faq-a">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
   </div>
 </div></section>
+
+<section class="newsletter"><div class="container reveal">
+  <h2>Written for PA business owners like you</h2>
+  <p>A clear guide to PA's new annual report requirement. No legalese, no scare tactics.</p>
+  <form class="nl-form" id="nl-form" onsubmit="subscribeNewsletter(event)"><input type="email" id="nl-email" placeholder="your@email.com" required><button type="submit">Send me the guide</button></form>
+  <p id="nl-success" style="display:none;color:var(--sage);font-weight:600;margin-top:12px">✓ Here's your guide — <a href="/pa-annual-report-compliance-checklist.pdf" target="_blank" style="color:var(--gold-muted);text-decoration:underline">download the checklist (PDF)</a></p>
+  <p style="font-size:12px;color:var(--ink4);margin-top:12px">No spam. Unsubscribe anytime.</p>
+</div></section>
+
+<section class="partners" id="partners"><div class="container"><div class="partner-grid">
+  <div class="reveal"><div class="section-tag">For CPAs &amp; Attorneys</div><h2 style="font-family:var(--serif);font-size:32px;color:var(--slate);line-height:1.2;margin-bottom:24px">Your clients need this. We'll do the work.</h2><p style="font-size:15px;color:var(--ink2);line-height:1.8;margin-bottom:16px">If you serve PA business clients, they probably need a registered office. We handle everything behind the scenes — under your brand. Your clients get taken care of, you earn recurring revenue.</p><a href="/partners" class="btn-p" style="margin-top:16px">Learn about partnering</a></div>
+  <div class="partner-stats reveal"><div class="partner-stat"><div class="num">$99</div><div class="label">Per client/year</div></div><div class="partner-stat"><div class="num">0 min</div><div class="label">Your time per client</div></div><div class="partner-stat"><div class="num">100%</div><div class="label">White-label branding</div></div><div class="partner-stat"><div class="num">3 days</div><div class="label">Onboarding time</div></div></div>
+</div></div></section>
 
 <section class="final-cta" id="signup"><div class="container reveal">
   <h2>Your business has enough to worry about. Compliance shouldn't be one of them.</h2>
