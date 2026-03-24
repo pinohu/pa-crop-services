@@ -861,7 +861,7 @@ async function loadEmailStats() {
       <div class="panel"><div class="panel-header"><div class="panel-title">⚙️ Acumbamail</div></div>
         <div class="panel-body"><div style="font-size:13px;color:var(--gray)">
           <div>Auth token: <code style="font-size:11px">0cdbad...f780</code></div>
-          <div style="margin-top:8px"><a href="https://dashboard.acumbamail.com" target="_blank" class="btn btn-outline btn-sm">Open Dashboard →</a></div>
+          <div style="margin-top:8px"><a href="https://dashboard.acumbamail.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open Dashboard →</a></div>
         </div></div></div>`;
   } catch(e) { toast('Email stats error: ' + e.message, 'error'); }
 }
@@ -938,7 +938,7 @@ async function generateAgreement() {
       const url = data.document?.url || data.document?.downloadUrl || '';
       el.innerHTML = url ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:8px;padding:16px">
         <strong>✅ Agreement generated!</strong>
-        <div style="margin-top:10px"><a href="${url}" target="_blank" class="btn btn-gold btn-sm">Download PDF →</a></div>
+        <div style="margin-top:10px"><a href="${url}" target="_blank" rel="noopener noreferrer" class="btn btn-gold btn-sm">Download PDF →</a></div>
       </div>` : `<pre style="font-size:11px;background:#f8f9fa;padding:12px;border-radius:6px">${JSON.stringify(data.document,null,2)}</pre>`;
     } else {
       el.innerHTML = `<div style="color:var(--red);font-size:13px">Generation failed: ${JSON.stringify(data.document || data)}</div>`;
@@ -1463,7 +1463,7 @@ async function loadWebhookStatus() {
     html += '</tr>';
   }
   html += '</table>';
-  html += '<p style="margin-top:16px;color:var(--gray);font-size:12px">n8n base: <a href="https://n8n.audreysplace.place" target="_blank">https://n8n.audreysplace.place</a></p>';
+  html += '<p style="margin-top:16px;color:var(--gray);font-size:12px">n8n base: <a href="https://n8n.audreysplace.place" target="_blank" rel="noopener noreferrer">https://n8n.audreysplace.place</a></p>';
   body.innerHTML = html;
 }
 

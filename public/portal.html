@@ -643,7 +643,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div style="font-weight:600;color:var(--ink3)">Next deadline</div><div id="ed-deadline">—</div>
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-            <p style="font-size:13px;color:var(--ink3)">Entity status is verified daily against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" style="color:var(--accent)">Verify on PA DOS</a></p>
+            <p style="font-size:13px;color:var(--ink3)">Entity status is verified daily against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Verify on PA DOS</a></p>
           </div>
           <!-- Entity update form -->
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
@@ -687,7 +687,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="card">
           <div class="card-header">
             <span class="card-title">Hosting dashboard</span>
-            <a href="https://my.20i.com" target="_blank" class="btn btn-ghost btn-sm">Open 20i panel</a>
+            <a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open 20i panel</a>
           </div>
           <div class="card-body" id="hosting-content">
             <p style="color:var(--ink3);font-size:13px">Loading hosting status...</p>
@@ -1181,10 +1181,10 @@ async function loadHostingTab(c) {
         '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">' +
         '<div class="kpi"><div class="kpi-label">SSL</div><div style="font-size:16px;font-weight:600">' + (data.package.ssl ? 'Active' : 'Pending') + '</div></div>' +
         '<div class="kpi"><div class="kpi-label">Backups</div><div style="font-size:16px;font-weight:600">' + (data.package.backups ? 'Daily' : 'Not included') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Control panel</div><div><a href="https://my.20i.com" target="_blank" style="color:var(--accent);font-weight:600;font-size:14px">my.20i.com</a></div></div>' +
+        '<div class="kpi"><div class="kpi-label">Control panel</div><div><a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-weight:600;font-size:14px">my.20i.com</a></div></div>' +
         '</div>';
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up. Check back shortly.</p><p style="margin-top:8px"><a href="https://my.20i.com" target="_blank" style="color:var(--accent)">my.20i.com</a></p></div>';
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up. Check back shortly.</p><p style="margin-top:8px"><a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">my.20i.com</a></p></div>';
     }
   } catch(e) {
     showError('hosting-content', 'Could not load hosting status.', 'loadHostingTab(CLIENT)');
