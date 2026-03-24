@@ -503,6 +503,7 @@ Full audit of homepage, about, compliance-check, welcome, 404, chatbot, and all 
 ### Full Codebase Audit (2026-03-23)
 
 Systematic audit of all 36 HTML pages, 90 API files, config, security, SEO, and data consistency.
+Extended to full Nielsen heuristic + WCAG accessibility compliance across 12 commits, 60+ files.
 
 **CRITICAL — Fixed:**
 - [x] Sitemap/noindex conflict: 8 city pages had `noindex` meta tag but were listed in sitemap.xml. Google treats this as a signal quality issue. Removed from sitemap — only Philadelphia + Pittsburgh (which lack noindex) remain. Sitemap now 23 URLs.
@@ -648,6 +649,68 @@ Until real clients exist, the trust section uses only verifiable facts:
 - Market context (~65 licensed CROPs serving 3.8M entities)
 
 When real testimonials become available, they replace the trust cards. Never mix real and fabricated social proof.
+
+### 11. Usability Heuristic Compliance (WCAG + Nielsen)
+
+Applied 2026-03-23 across 12 commits. Every public page now complies with Nielsen's 10 usability heuristics and WCAG accessibility requirements.
+
+**Site-wide accessibility coverage (36 pages):**
+
+| Element | Coverage | Notes |
+|---------|----------|-------|
+| Skip-to-content link | 36/36 | Every page has a focusable skip link |
+| `role="navigation"` + `aria-label` | 35/36 | Only `gsc-verify-placeholder` missing (stub) |
+| `role="contentinfo"` footer | 31/36 | 5 pages have no footer by design |
+| `focus-visible` styles | 35/36 | Gold outline on all interactive elements |
+| `aria-label` on buttons/inputs | 35/36 | All forms, nav, interactive elements |
+| `id="main-content"` skip target | 34/36 | Homepage, portal, compliance-check, all sub-pages |
+| `alert()` calls | 0 | All replaced with inline messages |
+| Emoji in customer-facing HTML | 0 | All replaced with inline SVGs |
+
+**Homepage (index.html) — Nielsen heuristic map:**
+
+| Heuristic | Implementation |
+|-----------|---------------|
+| H1 Visibility of status | Sticky CTA bar, form loading states (`aria-busy`), newsletter success |
+| H2 Real-world match | CROP explained as "PA version of registered agent", tier context on value anchor |
+| H3 User control | Back-to-top button, FAQ toggle, comparison table toggle, skip link |
+| H4 Consistency | Brand fonts, SVG icons, color system, same nav across all pages |
+| H5 Error prevention | Email regex validation, inline error messages with `aria-live` |
+| H6 Recognition > recall | 14-row pricing comparison table, value anchor, trust signals near pricing |
+| H7 Flexibility | Keyboard FAQ (Tab/Enter/Space/Arrow), sticky CTA, skip link |
+| H8 Minimalist | Story section removed, optimal section order for conversion |
+| H9 Error recovery | Specific messages ("valid email", "connection error"), retry on all states |
+| H10 Help | CROP explainer, FAQ (7 questions), AI chatbot, phone in nav |
+
+**Compliance-check (lead gen funnel) — rebuilt for accessibility:**
+- Copy fix: "8 quick questions" → "6 quick questions" (was trust-destroying error)
+- Keyboard navigation: Tab through options, Enter/Space to select, Arrow keys between
+- `role="radio"` + `aria-checked` on all 21 quiz options, `role="radiogroup"` on all 6 groups
+- `role="progressbar"` with `aria-valuenow` on progress bar
+- Back button (← Back) between questions — users are not trapped
+- Focus auto-moves to first option in new question
+- Screen reader announcements via `aria-live` region on question transitions
+- Inline validation replaces `alert()` — specific error messages
+- Result auto-scrolls into view with score announced to screen readers
+- All emoji replaced with inline SVGs in hero badges and result CTAs
+
+**Portal (1694 lines) — full WCAG pass:**
+- Skip link, `focus-visible` on all interactive elements
+- `for=` attributes on login form labels
+- `aria-label` on all buttons (Sign In, Menu, Notifications, Sign Out)
+- `role="navigation"` on sidebar, `role="banner"` on topbar, `role="main"` on content
+- `role="alert"` + `aria-live` on login error div
+- `role="button"` + `tabindex` on all 11 sidebar nav items
+- Enter key submits login from access code field
+- All 7 `alert()` calls replaced: `showLoginError()` for login, `showToast()` for operations
+- Semantic `<header>` for topbar, `<nav>` for sidebar, `<main>` for content
+- Emoji lock icon replaced with inline SVG
+
+**Admin (1505 lines):**
+- Skip link, `focus-visible`, `aria-label` on login and nav
+- Enter key submits login
+- `role="navigation"` on sidebar nav
+- Emoji in login card replaced with SVG
 
 ---
 

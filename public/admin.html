@@ -14,6 +14,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#0C1220;--gold:#C9982A;--accent:#C9982A;--dark:#1E2333;--light:#f8f7f4;--white:#fff;--gray:#6B7280;--green:#059669;--red:#dc2626;--yellow:#d97706;--radius:10px;--sidebar:240px}
+*:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
 body{font-family:'Outfit',system-ui,sans-serif;background:#f0f2f5;color:var(--dark);min-height:100vh;display:flex;flex-direction:column}
 
 /* Login */
@@ -162,18 +163,20 @@ tr:hover td{background:#fafafa}
 <body>
 
 <!-- LOGIN -->
+<a href="#admin-main" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to dashboard</a>
 <div id="login-screen">
   <div class="login-card">
-    <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px">🏛️</div>
+    <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>
     <h1>PA CROP Admin</h1>
     <p>Operations Dashboard — Dynasty Empire</p>
-    <input type="password" id="admin-key-input" placeholder="Admin key" autocomplete="off">
-    <button onclick="doAdminLogin()">Sign In →</button>
+    <input type="password" id="admin-key-input" placeholder="Admin key" autocomplete="off" aria-label="Admin key" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button onclick="doAdminLogin()" aria-label="Sign in to admin dashboard">Sign In →</button>
     <p style="font-size:11px;color:var(--gray);margin-top:16px">Secured · Dynasty Empire LLC</p>
   </div>
 </div>
 
 <!-- ADMIN APP -->
+<main id="admin-main">
 <div id="admin-app">
   <!-- Sidebar -->
   <div class="sidebar">
@@ -181,7 +184,7 @@ tr:hover td{background:#fafafa}
       <div class="brand">PA <span>CROP</span> Admin</div>
       <div class="sub">Dynasty Empire Operations</div>
     </div>
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" role="navigation" aria-label="Admin navigation">
       <div class="nav-group">
         <div class="nav-group-label">Overview</div>
         <button class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>Dashboard</button>
@@ -1194,7 +1197,8 @@ function previewEmail() {
   const subject = document.getElementById('email-subject').value;
   const body = document.getElementById('email-body').value;
   const w = window.open('', '_blank', 'width=600,height=500');
-  w.document.write('<html><head><title>Email Preview</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:600px;margin:0 auto}</style><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
+  w.document.write('<html><head><title>Email Preview</title><style>*:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+body{font-family:Arial,sans-serif;padding:24px;max-width:600px;margin:0 auto}</style><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
 </head><body>');
   w.document.write('<h2 style="border-bottom:2px solid #C9982A;padding-bottom:8px">' + subject + '</h2>');
   w.document.write('<pre style="white-space:pre-wrap;font-family:inherit;line-height:1.6">' + body + '</pre>');
