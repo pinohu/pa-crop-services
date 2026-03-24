@@ -5,4 +5,4 @@ Disallow: /admin
 Disallow: /welcome
 Disallow: /api/
 
-Sitemap: https://pacropservices.com/sitemap.xml
+Sitemap: https://www.pacropservices.com/sitemap.xml
