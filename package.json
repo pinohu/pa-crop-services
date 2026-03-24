@@ -8,8 +8,10 @@
     "precommit": "node scripts/validate-content.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.100.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
+    "jose": "^6.2.2",
     "pdf-lib": "^1.17.1"
   }
 }
