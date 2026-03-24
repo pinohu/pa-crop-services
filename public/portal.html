@@ -37,6 +37,8 @@
 body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 ::selection{background:var(--accent-bg);color:var(--ink)}
+*:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.btn:focus-visible,.nav-item:focus-visible{outline-offset:3px}
 
 /* ─── ANIMATIONS ─── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -347,6 +349,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Client Portal","provider":{"@type":"Organization","name":"PA CROP Services","url":"https://pacropservices.com"}}</script>
 </head>
 <body>
+<a href="#main-content" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
 <div class="loading-bar" id="loading-bar"></div>
 
 <!-- ═══ LOGIN ═══ -->
@@ -357,16 +360,16 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <h1>PA CROP Services</h1>
       <p>Client compliance portal</p>
     </div>
-    <div class="login-error" id="login-error"></div>
+    <div class="login-error" id="login-error" role="alert" aria-live="polite"></div>
     <div class="field">
-      <label>Email address</label>
-      <input type="email" id="login-email" placeholder="you@business.com" autocomplete="email">
+      <label for="login-email">Email address</label>
+      <input type="email" id="login-email" aria-label="Email address" placeholder="you@business.com" autocomplete="email">
     </div>
     <div class="field">
-      <label>Access code</label>
-      <input type="text" id="login-code" placeholder="Enter your 6-character code" autocomplete="off" style="font-family:var(--mono);letter-spacing:2px">
+      <label for="login-code">Access code</label>
+      <input type="text" id="login-code" aria-label="Access code" placeholder="Enter your 6-character code" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()" style="font-family:var(--mono);letter-spacing:2px">
     </div>
-    <button class="btn btn-primary" onclick="doLogin()" id="login-btn">Sign in</button>
+    <button class="btn btn-primary" onclick="doLogin()" id="login-btn" aria-label="Sign in to portal">Sign in</button>
     <div class="login-footer">
       <a href="#" onclick="resetCode();return false;" style="cursor:pointer">Forgot your access code?</a>
       <span style="margin:0 8px;color:var(--border2)">|</span>
@@ -374,7 +377,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     </div>
     <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
       <div style="display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--ink3)">
-        <span>🔒 Encrypted</span><span>·</span><span>Licensed PA CROP</span><span>·</span><span>814-228-2822</span>
+        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Encrypted</span><span>·</span><span>Licensed PA CROP</span><span>·</span><span>814-228-2822</span>
       </div>
     </div>
   </div>
@@ -382,75 +385,75 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
 <!-- ═══ PORTAL ═══ -->
 <div id="portal">
-  <div class="topbar">
+  <header class="topbar" role="banner">
     <div class="topbar-left">
-      <button class="menu-btn" onclick="toggleSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <button class="menu-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
       <div class="topbar-mark"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>
       <span class="topbar-title">PA CROP Services</span>
     </div>
     <div class="topbar-right">
       <span class="badge badge-accent" id="tier-badge"><span class="dot"></span> Plan</span>
       <div class="topbar-divider"></div>
-      <div style="position:relative;cursor:pointer" onclick="toggleNotifications()" id="notif-bell">
+      <button style="position:relative;cursor:pointer;background:none;border:none;padding:4px" onclick="toggleNotifications()" id="notif-bell" aria-label="Notifications">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span id="notif-count" style="display:none;position:absolute;top:-4px;right:-4px;background:#C44536;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center">0</span>
-      </div>
+      </button>
       <div id="notif-panel" style="display:none;position:absolute;top:50px;right:80px;width:320px;max-height:400px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12);z-index:100;padding:8px">
         <div style="padding:8px 12px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border)">Notifications</div>
         <div id="notif-list" style="padding:4px"></div>
       </div>
       <div class="avatar" id="user-avatar" data-tooltip="Account">?</div>
-      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()" aria-label="Sign out">Sign out</button>
     </div>
-  </div>
+  </header>
 
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
   <div class="shell">
     <!-- ─── SIDEBAR ─── -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Portal navigation">
       <div class="nav-group">
         <div class="nav-label">Overview</div>
-        <div class="nav-item active" onclick="setTab('dashboard',this)">
+        <div class="nav-item active" tabindex="0" role="button" onclick="setTab('dashboard',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           Dashboard<kbd>D</kbd></div>
-        <div class="nav-item" onclick="setTab('documents',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('documents',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
           Documents</div>
-        <div class="nav-item" onclick="setTab('compliance',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('compliance',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           Compliance</div>
       </div>
       <div class="nav-group">
         <div class="nav-label">Services</div>
-        <div class="nav-item" onclick="setTab('entity',this)" id="entity-nav">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity',this)" id="entity-nav">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
           Entity Status</div>
-        <div class="nav-item" onclick="setTab('hosting',this)" id="hosting-nav" style="display:none">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('hosting',this)" id="hosting-nav" style="display:none">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
           Hosting</div>
-        <div class="nav-item" onclick="setTab('ai',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('ai',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           AI Assistant<kbd>A</kbd></div>
       </div>
       <div class="nav-group">
         <div class="nav-label">Learn & Grow</div>
-        <div class="nav-item" onclick="setTab('knowledge',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('knowledge',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
           Knowledge Base</div>
-        <div class="nav-item" onclick="setTab('certification',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('certification',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88"/></svg>
           Certification</div>
-        <div class="nav-item" onclick="setTab('multistate',this)" id="nav-multistate" style="display:none">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('multistate',this)" id="nav-multistate" style="display:none">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           Multi-State</div>
       </div>
       <div class="nav-group">
         <div class="nav-label">Account</div>
-        <div class="nav-item" onclick="setTab('referral',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('referral',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           Referral</div>
-        <div class="nav-item" onclick="setTab('settings',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('settings',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           Settings</div>
       </div>
@@ -461,7 +464,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     </nav>
 
     <!-- ─── MAIN CONTENT ─── -->
-    <main class="main" id="main-content">
+    <main class="main" id="main-content" role="main">
 
       <!-- ══ DASHBOARD ══ -->
       <div id="tab-dashboard">
@@ -871,15 +874,15 @@ const chatHistory = [];
 async function doLogin() {
   var email = document.getElementById('login-email')?.value?.trim();
   var code = document.getElementById('login-code')?.value?.trim();
-  if (!email || !code) { alert('Please enter your email and access code.'); return; }
+  if (!email || !code) { showLoginError('Please enter your email and access code.'); return; }
   var btn = document.getElementById('login-btn');
   btn.textContent = 'Signing in...'; btn.disabled = true;
   try {
     var res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
     var data = await res.json();
     if (data.success && data.client) { mountClient(data.client); }
-    else { alert(data.error || 'Invalid email or access code.'); btn.textContent = 'Sign in'; btn.disabled = false; }
-  } catch(e) { alert('Connection error. Please try again.'); btn.textContent = 'Sign in'; btn.disabled = false; }
+    else { showLoginError(data.error || 'Invalid email or access code.'); btn.textContent = 'Sign in'; btn.disabled = false; }
+  } catch(e) { showLoginError('Connection error. Please try again.'); btn.textContent = 'Sign in'; btn.disabled = false; }
 }
 function demoLogin() {
   document.getElementById('login-email').value = 'demo@pacropservices.com';
@@ -1110,9 +1113,9 @@ function formatDate(d) {
 
 async function resetCode() {
   const email = document.getElementById('login-email')?.value?.trim();
-  if (!email) { alert('Enter your email address first.'); return; }
+  if (!email) { showLoginError('Enter your email address first.'); return; }
   await fetch('/api/reset-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) }).catch(()=>{});
-  alert('If an account exists with that email, we sent a code reset. Check your inbox.');
+  showLoginError('If an account exists, we sent a code reset. Check your inbox.', 'success');
 }
 
 // Enter key on login
@@ -1325,9 +1328,9 @@ async function doUpgrade(targetTier) {
     if (data.checkoutUrl) {
       window.open(data.checkoutUrl, '_blank');
     } else {
-      alert(data.message || 'Please contact us at 814-228-2822 to upgrade.');
+      showToast(data.message || 'Please contact us at 814-228-2822 to upgrade.');
     }
-  } catch(e) { alert('Error — please call 814-228-2822 to upgrade.'); }
+  } catch(e) { showToast('Error — please call 814-228-2822 to upgrade.'); }
 }
 
 // Show upgrade button if not on Empire
@@ -1688,6 +1691,31 @@ async function askAIWithFallback(msg) {
       }
     }
   }
+}
+
+
+// Inline error/success messages instead of alert()
+function showLoginError(msg, type) {
+  var el = document.getElementById('login-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.color = type === 'success' ? 'var(--green)' : 'var(--red)';
+  el.style.background = type === 'success' ? 'var(--green-bg)' : 'var(--red-bg)';
+  el.style.border = '1px solid ' + (type === 'success' ? 'var(--green-border)' : 'var(--red-border)');
+  el.style.padding = '10px 14px';
+  el.style.borderRadius = '8px';
+  el.style.fontSize = '13px';
+  el.style.fontWeight = '500';
+  el.style.marginBottom = '12px';
+}
+
+function showToast(msg) {
+  var toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:fadeUp .3s ease both;max-width:400px;text-align:center';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(function() { toast.remove(); }, 300); }, 4000);
 }
 
 </script>
