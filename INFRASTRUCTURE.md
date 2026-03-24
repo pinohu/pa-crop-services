@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-24 — Compliance audit remediation: legal accuracy, portal bug, subscribe error handling, CORS restriction, privacy disclosure
+> **Auto-updated on every commit.** Last updated: 2026-03-24 (2) — Durable rate limiting (Upstash), portal API audit complete, client-context entity-type deadlines fixed
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -585,7 +585,14 @@ Files fixed (30+ files, 60+ individual changes):
 
 - [x] `api/subscribe.js` — `Access-Control-Allow-Origin: *` → dynamic origin check restricted to `pacropservices.com` / `www.pacropservices.com` with `Vary: Origin` header
 - [x] `api/chat.js` — Same fix (7 response paths updated). Added `corsOrigin(req)` helper using `ALLOWED_ORIGINS` array.
-- [ ] **Roadmap:** Replace in-memory `Map()` rate limiting with Upstash Redis or Vercel KV for durable cross-instance limiting. Current in-memory rate limiters reset on cold starts.
+
+**SEVERITY 4A — MEDIUM: Durable Rate Limiting (FIXED)**
+
+- [x] Created `api/_ratelimit.js` — shared module with Upstash Redis sliding window + in-memory fallback. Exports `checkRateLimit(ip, prefix, max, window)` and `getClientIp(req)`. Works with both Edge (Request) and Node (IncomingMessage) runtimes.
+- [x] `api/chat.js` — replaced old `_rlMap` / `_edgeRateLimit` with shared `checkRateLimit('chat', 15, '60s')`
+- [x] `api/subscribe.js` — replaced old `_rl` / `_rateLimit` with shared `checkRateLimit('subscribe', 5, '60s')`
+- [x] `package.json` — added `@upstash/ratelimit` and `@upstash/redis` dependencies
+- [ ] **Action required:** Provision Upstash Redis (free tier) and add `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` to Vercel env vars. System works immediately without them (in-memory fallback) but goes durable once configured.
 
 **SEVERITY 5 — MEDIUM: Privacy Disclosure (FIXED)**
 
@@ -593,9 +600,28 @@ Files fixed (30+ files, 60+ individual changes):
   - "Automatically collected" section: now explicitly states Clarity records mouse movements, clicks, scrolls, and page interactions as session replays; sensitive fields masked by default; may use first-party cookies/local storage; links to Microsoft privacy statement
   - "Third-party services" section: same expanded disclosure with data processing details
 
-**SEVERITY 6 — LOW: Portal API Audit (DEFERRED)**
+**SEVERITY 6 — Portal API Endpoint Audit (COMPLETE)**
 
-- [ ] Portal references ~20+ API endpoints. Need systematic audit of which return real data vs. mock/demo responses. Deferred to next sprint.
+All 14 API endpoints referenced by `portal.html` exist and have real SuiteDash-backed implementations (not mocks). Three files (`auth.js`, `client-context.js`, `portal-health.js`) include a demo account bypass for `demo@pacropservices.com`.
+
+| Endpoint | Lines | Data Source | Behavior |
+|----------|-------|-------------|----------|
+| `/api/auth` | 172 | SuiteDash contacts | Real auth + demo bypass |
+| `/api/client-context` | 169 | SuiteDash custom fields | Real context + entity-type deadline calc |
+| `/api/portal-health` | 90 | SuiteDash verification | Health score calculator |
+| `/api/chat` | 190 | Groq Llama 3.3 | Real AI chatbot (streaming) |
+| `/api/certification` | 93 | SuiteDash custom fields | Real progress tracking |
+| `/api/onboarding-course` | 74 | SuiteDash + Groq | Real course with AI quiz gen |
+| `/api/client-hosting` | 88 | 20i API | Real hosting status check |
+| `/api/client-upgrade` | 65 | Stripe payment links | Real upgrade path |
+| `/api/document-upload` | 125 | SuiteDash + Groq | Real upload with AI classification |
+| `/api/entity-update` | 75 | SuiteDash | Real entity data updates |
+| `/api/multi-entity` | 98 | SuiteDash | Real multi-entity management |
+| `/api/multi-state` | 73 | SuiteDash | Real multi-state tracking |
+| `/api/notification-preferences` | 70 | SuiteDash custom fields | Real preference storage |
+| `/api/reset-code` | 69 | SuiteDash + Emailit | Real access code reset |
+
+**Bug found during audit:** `client-context.js` had hardcoded `annualReportDeadline: '2026-09-30'` for ALL entity types (both demo and real accounts). Fixed: added `getDeadlineForEntityType()` helper that computes correct deadline based on entity type from SuiteDash `entity_type` custom field. Context now returns `entityDeadline` (label) alongside `annualReportDeadline` (date) and `daysUntilDeadline` (computed).
 
 ---
 
@@ -998,4 +1024,4 @@ curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c0
 ---
 
 *This file is automatically updated with every commit to this repository.*
-*Last updated: 2026-03-24 — Compliance audit remediation (see Outstanding Items → Compliance & Security Audit Remediation).*
+*Last updated: 2026-03-24 (commit 2) — Durable rate limiting, portal API audit, client-context entity-type deadlines.*

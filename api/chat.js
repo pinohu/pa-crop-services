@@ -4,37 +4,13 @@
 
 export const config = { runtime: 'edge' };
 
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
 function corsOrigin(req) {
   const origin = req.headers.get('origin') || '';
   return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-}
-
-
-
-
-// ── Edge Rate Limiter (works within same isolate) ──
-const _rlMap = new Map();
-function _edgeRateLimit(req) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const now = Date.now();
-  const win = 60000; // 1 minute
-  const max = 15; // 15 requests per minute
-  let d = _rlMap.get(ip);
-  if (!d || now - d.s > win) { _rlMap.set(ip, {c:1,s:now}); return null; }
-  d.c++;
-  if (d.c > max) {
-    return new Response(JSON.stringify({error:'Too many requests. Please slow down.'}), {
-      status: 429,
-      headers: {
-        'Content-Type':'application/json',
-        'Retry-After': String(Math.ceil((d.s+win-now)/1000)),
-        'Access-Control-Allow-Origin': corsOrigin(req)
-      }
-    });
-  }
-  return null;
 }
 
 export default async function handler(req) {
@@ -43,9 +19,18 @@ export default async function handler(req) {
   }
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 });
 
-  // Rate limit: AI chatbot — 15/min (Edge-compatible)
-  const rlResponse = _edgeRateLimit(req);
-  if (rlResponse) return rlResponse;
+  // Rate limit: AI chatbot — 15/min (Upstash Redis with in-memory fallback)
+  const rlResult = await checkRateLimit(getClientIp(req), 'chat', 15, '60s');
+  if (rlResult) {
+    return new Response(JSON.stringify({ error: 'Too many requests. Please slow down.' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': String(rlResult.retryAfter),
+        'Access-Control-Allow-Origin': corsOrigin(req)
+      }
+    });
+  }
 
   const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });

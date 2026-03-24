@@ -2,20 +2,9 @@
 // Newsletter / lead magnet email capture
 // POST { email, source, tag }
 
-const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
 
-// ── Rate Limiter (in-memory, per-instance — upgrade to Upstash Redis for durable limiting) ──
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
+const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
 function setCors(req, res) {
   const origin = req.headers.origin || '';
@@ -34,8 +23,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Rate limit: Newsletter — 5/min
-  if (_rateLimit(req, res, 5, 60000)) return;
+  // Rate limit: Newsletter — 5/min (Upstash Redis with in-memory fallback)
+  const rlResult = await checkRateLimit(getClientIp(req), 'subscribe', 5, '60s');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ error: 'Too many requests' });
+  }
 
   const { email, source, tag } = req.body || {};
   if (!email) return res.status(400).json({ error: 'Email required' });
