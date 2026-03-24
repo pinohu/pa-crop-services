@@ -306,3 +306,36 @@ Items 9–11 are operational improvements.
 
 *This file is the definitive list. If something needs human hands, it belongs here.*
 *Last updated: 2026-03-24*
+
+---
+
+## 🔴🔴 URGENT DNS FIX NEEDED (2026-03-24)
+
+During automated DNS updates via the 20i API, the old SPF and DMARC records were
+successfully deleted but the replacement records failed to create. **The domain currently
+has NO root SPF record and NO DMARC record.**
+
+### Fix immediately in 20i dashboard:
+
+1. Log in to [my.20i.com](https://my.20i.com)
+2. Go to Manage Hosting → pacropservices.com → Options → Manage → Manage DNS
+3. **Add TXT record #1 (SPF):**
+   - Name: `pacropservices.com` (or `@`)
+   - Type: `TXT`
+   - Value: `v=spf1 include:spf.stackmail.com include:_spf.emailit.com a mx ~all`
+4. **Add TXT record #2 (DMARC):**
+   - Name: `_dmarc.pacropservices.com` (or `_dmarc`)
+   - Type: `TXT`
+   - Value: `v=DMARC1; p=quarantine; rua=mailto:polycarpohu@gmail.com; pct=100; adkim=r; aspf=r;`
+5. Click "Update DNS" / Save
+
+**Why this matters:** Without SPF, every email sent from @pacropservices.com via Emailit
+will fail sender authentication and likely land in spam. Without DMARC, you have no
+policy enforcement or reporting.
+
+**What was already correct (don't touch):**
+- DKIM: `emailit._domainkey.pacropservices.com` ✅ (Emailit public key present)
+- Emailit SPF subdomain: `emailit.pacropservices.com` TXT ✅
+- Emailit MX: `emailit.pacropservices.com` → `feedback-smtp.ffdc-1.emailit.com` ✅
+- Inbound MX: `inbound.pacropservices.com` → `inbound.emailitmail.com` ✅
+- Root MX: `pacropservices.com` → `mx.stackmail.com` ✅

@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-24 (5) — Compliance engine operational: entity-status API, scheduler webhook, dashboard, structured logging wired across system
+> **Auto-updated on every commit.** Last updated: 2026-03-24 (6) — n8n workflow JSONs, bulk registration script, og-image, DNS audit (URGENT: SPF/DMARC need manual re-add in 20i)
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -111,7 +111,16 @@ pa-crop-services/
 │                                    #   Notification, Conversation, AuditEvent
 │
 ├── scripts/                         # CI / tooling
-│   └── validate-content.js          # Content validation — checks HTML/JS against rules file
+│   ├── validate-content.js          # Content validation — checks HTML/JS against rules file
+│   └── bulk-register.js             # Bulk entity registration from SuiteDash → compliance engine
+│
+├── n8n-workflows/                   # ★ Ready-to-import n8n workflow JSONs
+│   ├── README.md                    # Import guide with credential setup instructions
+│   ├── corp-reminder-cycle.json     # Daily 8am — corps (June 30 deadline)
+│   ├── llc-reminder-cycle.json      # Daily 8am — LLCs (Sept 30 deadline)
+│   ├── other-reminder-cycle.json    # Daily 8am — LPs/LLPs/trusts (Dec 31 deadline)
+│   ├── overdue-escalation.json      # Daily 8am — auto-escalate + alert Ike
+│   └── weekly-compliance-digest.json # Monday 9am — portfolio summary email
 │
 ├── context/                         # dynasty-seomachine brand voice
 │   ├── brand-voice.md
@@ -1086,4 +1095,5 @@ curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c0
 ---
 
 *This file is automatically updated with every commit to this repository.*
-*Last updated: 2026-03-24 (commit 3) — Compliance engine foundation: rules file, shared module, validation CI, domain model, architecture doc.*
+*Last updated: 2026-03-24 (commit 6) — n8n workflows, bulk registration, og-image, DNS audit.*
+*URGENT: Root SPF and DMARC records were deleted during API update but replacements failed to create. See MANUAL-ACTIONS.md for immediate fix.*
