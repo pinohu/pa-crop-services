@@ -1,798 +1,647 @@
-# PA CROP Services — Master System Architecture
+# Master Architecture Document
 
-> **Version:** 2.0 — 2026-03-24
-> **Status:** Canonical specification. All development references this document.
-> **Supersedes:** `COMPLIANCE-ENGINE-ARCHITECTURE.md` (v1.0, retained for history)
+## PA CROP Services → Compliance Operating System
 
----
-
-## 1. System Layers
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         EXPERIENCE LAYER                                │
-│  Public Website  │  Client Portal  │  Partner Portal  │  Admin Console  │
-│  Chat Assistant  │  Partner Widget │  Email Templates │  PDF Reports    │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                        APPLICATION LAYER                                │
-│  Auth+Identity │ Billing │ CRM/Client Mgmt │ Doc Intake+Classification │
-│  Notification Orchestration │ Referral Program │ Knowledge Base │ Reports│
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                        COMPLIANCE ENGINE                                │
-│  Entity Registry │ Jurisdiction Rules │ Deadline Calculator             │
-│  Obligation State Machine │ Reminder Scheduler │ Filing Workflow Mgr    │
-│  Risk Scoring │ Audit Log                                               │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                       INTELLIGENCE LAYER                                │
-│  Retrieval-Based Assistant │ Knowledge Validation │ Templated Workflows │
-│  Ops Copilots │ Triage/Classification Models                            │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                           DATA LAYER                                    │
-│  Postgres (relational) │ Redis (state/cache/queue) │ Object Storage     │
-│  Search Index / Vector Store │ Event Log │ Analytics Warehouse          │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                       INTEGRATION LAYER                                 │
-│  Stripe │ Emailit/SMS │ SuiteDash CRM │ PA DOS │ n8n │ Plausible       │
-│  e-sign / forms / notarization │ 20i Hosting │ Upstash Redis            │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-**Why this matters:** The current repo duplicates business truth across homepage, FAQ, chatbot, and portal UI. That duplication is why deadline drift already appeared. This architecture eliminates it — every layer reads from the compliance engine, never from hardcoded content.
+This turns the current repo from a marketing-led shell into a real compliance platform. The need for this is visible in the current codebase: legal/compliance truth is duplicated across the homepage, chatbot, portal, and supporting pages, and parts of the portal are monolithic and fragile.
 
 ---
 
-## 2. Domain Model
+## 1. Executive summary
 
-Seven core objects. Every feature in the system reads from or writes to these.
+### Target outcome
 
-### 2.1 Organization
+Build a production-grade compliance platform that:
+- tracks entity obligations correctly
+- personalizes deadlines by entity type and jurisdiction
+- ingests and classifies documents
+- triggers reminders and actions reliably
+- gives safe, source-backed AI assistance
+- creates an auditable trail for every important system action
 
-The business entity. The core compliance subject.
+### Core shift
 
-```
-Organization
-├── id                  CUID
-├── legal_name          String        "Acme LLC"
-├── entity_type         Enum          domestic_llc | foreign_business_corp | ...
-├── jurisdiction        String        "PA"
-├── dos_number          String?       PA DOS entity number (unique)
-├── formation_date      DateTime?
-├── status              Enum          ACTIVE | DUE_SOON | OVERDUE | AT_RISK | DISSOLVED | ...
-├── risk_level          Enum          LOW | MEDIUM | HIGH | CRITICAL
-├── registered_office   String?       Physical PA address
-├── principal_office    String?
-├── created_at          DateTime
-├── updated_at          DateTime
-│
-├── → clients[]         Client
-├── → obligations[]     Obligation
-├── → documents[]       Document
-├── → notifications[]   Notification
-├── → conversations[]   Conversation
-└── → audit_events[]    AuditEvent
-```
+Move from:
 
-### 2.2 Client
+> website + chatbot + portal UI
 
-A person who owns/manages an Organization. Billing and communication target.
+to:
 
-```
-Client
-├── id                  CUID
-├── org_id              FK → Organization
-├── owner_name          String
-├── email               String (unique)
-├── phone               String?
-├── plan                Enum          COMPLIANCE_ONLY | BUSINESS_STARTER | BUSINESS_PRO | BUSINESS_EMPIRE
-├── billing_status      Enum          ACTIVE | PAST_DUE | CANCELLED | TRIAL
-├── onboarding_status   Enum          PENDING | IN_PROGRESS | COMPLETE
-├── stripe_customer_id  String?
-├── suitedash_id        String?
-├── referral_code       String? (unique)
-├── referred_by         String?       referral_code of referrer
-├── created_at          DateTime
-└── updated_at          DateTime
-```
+> compliance engine + workflow system + trusted client experience
 
-### 2.3 Obligation
+### Strategic product identity
 
-A compliance obligation for an Organization. **This is the state machine.**
+The platform should become:
 
-```
-Obligation
-├── id                  CUID
-├── org_id              FK → Organization
-├── obligation_type     Enum          ANNUAL_REPORT | REINSTATEMENT | CHANGE_RO | FOREIGN_REG
-├── jurisdiction        String        "PA"
-├── year                Int           The compliance year (2026)
-├── due_date            DateTime
-├── status              Enum          DETECTED | UPCOMING | REMINDER_SENT | AWAITING_CLIENT |
-│                                     READY_TO_FILE | FILED | CONFIRMED | OVERDUE |
-│                                     ESCALATED | RESOLVED
-├── filing_method       Enum          SELF | MANAGED | AUTO
-├── fee                 Int           7 (dollars)
-├── confirmation_num    String?
-├── filed_at            DateTime?
-├── filed_by            String?       "system" | "client" | "admin:ike"
-├── source_rule_version String        "2026.1" from compliance-rules.json
-├── reminders_sent      Int[]         [90, 60, 30, 14, 7]
-├── escalation_level    Int           0, 1, 2, ...
-├── created_at          DateTime
-└── updated_at          DateTime
+> A compliance operating system for small entities, firms, and partner channels
 
-Unique constraint: (org_id, obligation_type, year)
-```
+not just:
 
-### 2.4 Document
+> A Pennsylvania registered office website
 
-Received mail, uploads, or system-generated documents.
+---
 
-```
-Document
-├── id                  CUID
-├── org_id              FK → Organization
-├── document_type       Enum          SERVICE_OF_PROCESS | GOVT_CORRESPONDENCE | ANNUAL_REPORT_NOTICE |
-│                                     TAX_NOTICE | FILING_CONFIRMATION | LEGAL_NOTICE | GENERAL_MAIL |
-│                                     CLIENT_UPLOAD | GENERATED_AGREEMENT | OTHER
-├── file_name           String
-├── storage_url         String?       S3/R2/Supabase Storage
-├── received_at         DateTime
-├── source              Enum          MAIL | EMAIL | UPLOAD | SCAN | SYSTEM
-├── urgency             Enum          CRITICAL | HIGH | NORMAL | LOW
-├── extracted_entities  JSON?         AI-extracted metadata
-├── review_status       Enum          PENDING | REVIEWED | ESCALATED | ARCHIVED
-├── reviewed_by         String?
-├── reviewed_at         DateTime?
-├── notes               String?
-└── created_at          DateTime
-```
+## 2. Current-state diagnosis
 
-### 2.5 Notification
+### What exists now
 
-Sent or scheduled communications about obligations or events.
+The repo shows:
+- a polished static marketing site with plan/pricing structure and SEO basics
+- Vercel configuration and basic security headers
+- a newsletter capture endpoint and workflow handoff path
+- a streaming chatbot endpoint driven by prompt instructions
+- a large portal page simulating dashboard, documents, settings, referrals, hosting, AI assistant, and more
+
+### Primary weaknesses
+- duplicated business truth across multiple surfaces
+- legal deadline logic currently overgeneralized
+- AI answers not source-enforced
+- portal state partly simulated and front-end heavy
+- silent failure patterns in automation
+- no evident durable compliance engine
+- no audit-grade system-of-record model
+
+---
+
+## 3. Design principles
+
+### 3.1 Single source of truth
+
+All compliance facts must originate from a canonical rules store.
+No hardcoded deadlines in:
+- homepage copy
+- chatbot prompts
+- portal UI
+- article text snippets
+
+### 3.2 State over prose
+
+Compliance is a state machine, not a content problem.
+
+### 3.3 AI must be bounded
+
+AI explains and assists. It does not define law or invent compliance obligations.
+
+### 3.4 Every important action must be auditable
+
+You must be able to answer:
+- what happened
+- why it happened
+- what the system knew at the time
+- what the AI told the client
+- which rule version drove the decision
+
+### 3.5 Events drive automation
+
+Notifications, reminders, escalations, and ops tasks should be event-driven.
+
+### 3.6 Client experience must read from real state
+
+The portal cannot continue to behave like a simulation layer.
+
+---
+
+## 4. Target architecture overview
 
 ```
-Notification
-├── id                  CUID
-├── org_id              FK → Organization
-├── obligation_id       FK → Obligation?
-├── channel             Enum          EMAIL | SMS | PORTAL | PUSH
-├── template_id         String        "reminder_90" | "overdue_escalation" | ...
-├── scheduled_for       DateTime
-├── sent_at             DateTime?
-├── delivery_status     Enum          PENDING | SENT | DELIVERED | FAILED | BOUNCED
-├── delivery_error      String?
-├── recipient_email     String?
-├── recipient_phone     String?
-└── created_at          DateTime
-```
-
-### 2.6 Conversation
-
-Full audit trail of every AI assistant interaction.
-
-```
-Conversation
-├── id                  CUID
-├── org_id              FK → Organization?
-├── client_id           FK → Client?
-├── session_id          String        Groups messages in a chat session
-├── user_message        String
-├── assistant_response  String
-├── intent              Enum          COMPLIANCE_FACT | GENERAL_QUESTION | LEGAL_QUESTION |
-│                                     ACTION_REQUEST | ONBOARDING_HELP | BILLING_QUESTION | ESCALATION
-├── answer_source_refs  String[]      ["compliance-rules.json#entityTypes.domestic_llc"]
-├── confidence          Float?        0.0 – 1.0
-├── escalated           Boolean
-├── escalation_reason   String?
-└── created_at          DateTime
-```
-
-### 2.7 Audit Event
-
-Immutable log. Answers: who changed what, when, why, before/after.
-
-```
-AuditEvent
-├── id                  CUID
-├── actor               String        "system" | "client:abc" | "admin:ike" | "agent:filing_ops"
-├── event_type          String        "obligation_state_change" | "filing_completed" | "ai_response"
-├── target_type         String        "organization" | "obligation" | "document" | "conversation"
-├── target_id           String
-├── org_id              FK → Organization?
-├── before_state        JSON?
-├── after_state         JSON?
-├── reason              String?
-├── metadata            JSON?
-└── created_at          DateTime
-```
-
-### 2.8 Relationships
-
-```
-Organization 1──∞ Client
-Organization 1──∞ Obligation
-Organization 1──∞ Document
-Organization 1──∞ Notification
-Organization 1──∞ Conversation
-Organization 1──∞ AuditEvent
-Obligation    1──∞ Notification
-Client        1──∞ Conversation
+                    ┌──────────────────────────────┐
+                    │      Experience Layer        │
+                    │ public site / portal / admin │
+                    │ partner portal / AI chat     │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │      Application Layer       │
+                    │ auth / billing / CRM / docs  │
+                    │ notifications / referrals    │
+                    │ KB / reporting / APIs        │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │      Compliance Engine       │
+                    │ rules / obligations / risk   │
+                    │ deadlines / filing states    │
+                    │ scheduler / audit            │
+                    └──────────────┬───────────────┘
+                                   │
+             ┌─────────────────────┼─────────────────────┐
+             │                     │                     │
+┌────────────▼────────────┐ ┌──────▼─────────┐ ┌────────▼──────────┐
+│       Data Layer        │ │ Intelligence   │ │ Integration Layer │
+│ postgres / object store │ │ retrieval / AI │ │ stripe / email /  │
+│ vector index / analytics│ │ guardrails     │ │ sms / n8n / CRM   │
+└─────────────────────────┘ └────────────────┘ └───────────────────┘
 ```
 
 ---
 
-## 3. Compliance Engine Design
+## 5. Logical service boundaries
 
-### 3.1 Rules Service
+### 5.1 Experience layer
 
-Canonical source: `data/compliance-rules.json` (version-tracked, PA DOS source-linked).
-Runtime module: `api/_compliance.js` — all consumers import from here.
+**Public website**
 
-**What the rules contain:**
-- 12 entity types with deadlines, fees, dissolution terms, reinstatement rules
-- 3 deadline groups (corps June 30, LLCs Sept 30, others Dec 31)
-- Enforcement mechanics (6-month delay, 2027 start, domestic vs foreign consequences)
-- Reminder schedule (90/60/30/14/7 days)
-- Registered office requirements (statute refs, forms, fees)
-- Exemption list
-- Filing URL and form number
+Responsibilities:
+- acquisition
+- education
+- plan selection
+- legal/FAQ content
+- partner landing pages
+- conversion flows
 
-**Drift prevention:** `scripts/validate-content.js` scans all 138+ files on every commit. Catches unqualified deadline claims, universal 2027 cutoff language, wrong fee amounts.
+Must not own compliance truth directly.
 
-**Already built:** `data/compliance-rules.json`, `api/_compliance.js`, `api/compliance-rules.js` (public endpoint), `scripts/validate-content.js`.
+**Client portal**
 
-### 3.2 Deadline Calculator
+Responsibilities:
+- show obligations
+- show documents
+- show reminders
+- show account/billing/plan state
+- invoke AI assistant
+- expose audit-relevant history
 
+**Admin console**
+
+Responsibilities:
+- review escalations
+- manage rules
+- review AI responses
+- monitor workflow failures
+- override entity states
+- manage partner and ops workflows
+
+**Partner portal**
+
+Responsibilities:
+- referral tracking
+- white-label/CPA-attorney partner workflows
+- portfolio-level view for referred clients
+
+### 5.2 Application layer
+
+**Auth service** — login, session management, RBAC, reset/access code, client/admin/partner role separation
+
+**Client service** — client profile, plan, onboarding state, partner attribution, communication preferences
+
+**Entity service** — legal entity profile, jurisdiction, entity type, state status, registration metadata, registered office relationship
+
+**Obligation service** — annual reports, filings, state deadlines, due dates, statuses, recalculation based on rule versions
+
+**Document service** — upload, intake, storage, classification, metadata extraction, linkage to entities and obligations
+
+**Notification service** — email/SMS reminders, delivery state, template selection, retries, escalation triggers
+
+**Billing service** — plan checkout, renewals, upgrades, dunning, entitlement mapping
+
+**Referral service** — referral code generation, partner attribution, conversion linkage, payout/credit logic
+
+**Knowledge service** — approved articles, FAQs, policy snippets, versioned answer sources
+
+**Reporting service** — funnel analytics, delivery metrics, compliance outcomes, client risk trends, AI accuracy monitoring
+
+### 5.3 Compliance engine
+
+This is the core platform.
+
+**Rules service**
+
+Stores structured rules, versioned. Example object:
+
+```json
+{
+  "jurisdiction": "PA",
+  "entity_type": "LLC",
+  "obligation_type": "annual_report",
+  "due_date_rule": "yearly:09-30",
+  "fee_usd": 7,
+  "penalty_rule": "administrative action six months after missed due date",
+  "authority_source": "PA Department of State annual reports guidance",
+  "version": "2026-03-24",
+  "is_active": true
+}
 ```
-Input:
-  entity_type     "domestic_llc"
-  jurisdiction    "PA"
-  formation_date  "2024-06-15"
-  current_status  "ACTIVE"
 
-Output:
-  next_due_date       "2026-09-30"
-  days_remaining      190
-  deadline_label      "September 30"
-  escalation_level    0 (none)
-  filing_available    true
-  enforcement_year    false (2026 < 2027)
-  reinstatement       true (domestic)
-  fee                 7
-```
+**Deadline engine** — computes due date, days to deadline, grace/escalation windows, next action, filing requirements, special handling by entity type and jurisdiction
 
-**Already built:** `getEntityDeadline()`, `computeDaysUntil()`, `getEntityConfig()` in `api/_compliance.js`.
+**Obligation state machine** — canonical states: created, upcoming, reminder_scheduled, reminder_sent, awaiting_client_input, ready_to_file, filed_pending_confirmation, filed_confirmed, overdue, escalated, closed
 
-### 3.3 Obligation State Machine
+**Risk engine** — scores each entity/client using: overdue obligations, entity verification completeness, document urgency, onboarding completeness, missed notifications, payment issues, support signals
 
-```
-                    ┌──────────┐
-          ┌────────►│  ACTIVE  │◄──────────────────────┐
-          │         └────┬─────┘                        │
-          │              │ within reminder window        │ filed
-          │              ▼                               │
-          │         ┌──────────┐                   ┌────┴─────┐
-          │         │ UPCOMING │──────────────────►│  FILED   │
-          │         └────┬─────┘                   └────┬─────┘
-          │              │ reminder sent                 │ confirmed
-          │              ▼                               ▼
-          │         ┌──────────────┐              ┌──────────┐
-          │         │REMINDER_SENT │              │CONFIRMED │──► RESOLVED
-          │         └────┬─────────┘              └──────────┘
-          │              │ client action needed
-          │              ▼
-          │         ┌──────────────────┐
-          │         │ AWAITING_CLIENT  │
-          │         └────┬─────────────┘
-          │              │ ready
-          │              ▼
-          │         ┌──────────────┐
-          │         │READY_TO_FILE │──────────────────► FILED
-          │         └──────────────┘
-          │
-          │    (if deadline passes without filing at any above state)
-          │              │
-          │              ▼
-          │         ┌──────────┐
-    reinstate       │ OVERDUE  │
-    (domestic)      └────┬─────┘
-          │              │ enforcement year + 6 months
-          │              ▼
-          │         ┌──────────┐
-          └─────────┤ESCALATED │──────► FILED (if cured)
-                    └────┬─────┘
-                         │ no action
-                         ▼
-                    ┌──────────┐
-                    │DISSOLVED │  (terminal for foreign entities)
-                    └──────────┘
-```
-
-**Valid transitions:**
-
-| From | To |
-|------|----|
-| DETECTED | UPCOMING |
-| UPCOMING | REMINDER_SENT, FILED, OVERDUE |
-| REMINDER_SENT | AWAITING_CLIENT, FILED, OVERDUE |
-| AWAITING_CLIENT | READY_TO_FILE, FILED, OVERDUE |
-| READY_TO_FILE | FILED, OVERDUE |
-| FILED | CONFIRMED, RESOLVED |
-| CONFIRMED | RESOLVED |
-| OVERDUE | ESCALATED, FILED, RESOLVED |
-| ESCALATED | FILED, RESOLVED |
-| RESOLVED | *(terminal)* |
-
-**Already built:** `api/_obligations.js` — `computeForEntity()`, `transition()`, `evaluate()`, `computeRisk()`.
-
-### 3.4 Scheduler
-
-**Architecture:** n8n cron workflows call `api/scheduler.js`, which evaluates entity batches and returns action recommendations. n8n executes the actions (send emails, log deliveries).
-
-| Workflow | Schedule | Endpoint Call | Purpose |
-|----------|----------|---------------|---------|
-| Corp Reminder | Daily 8am ET | `scheduler { action: 'process_reminders', deadlineGroup: 'corporations' }` | June 30 entities |
-| LLC Reminder | Daily 8am ET | `scheduler { action: 'process_reminders', deadlineGroup: 'llcs' }` | Sept 30 entities |
-| Other Reminder | Daily 8am ET | `scheduler { action: 'process_reminders', deadlineGroup: 'others' }` | Dec 31 entities |
-| Overdue Escalation | Daily 8am ET | `scheduler { action: 'overdue_check' }` | Auto-escalate |
-| Compliance Digest | Monday 9am ET | `scheduler { action: 'evaluate_all' }` | Summary to Ike |
-
-**Already built:** `api/scheduler.js`, `api/entity-status.js`, 5 n8n workflow JSONs in `n8n-workflows/`.
+**Audit engine** — writes durable events for: obligation creation, rule recalculation, notification scheduling/sending, AI answers, manual overrides, document classification, billing changes
 
 ---
 
-## 4. AI Architecture
+## 6. Data architecture
 
-### The Problem
+### 6.1 Core relational schema
 
-`api/chat.js` uses a prompt-based approach: static knowledge block injected, then LLM responds freely. This means it can override the knowledge, confidently give wrong compliance answers, and there's no citation trail.
+**organizations** — id, legal_name, display_name, entity_type, jurisdiction, dos_number, formation_date, status, principal_address, registered_office_address, created_at, updated_at
 
-### 3-Layer Stack
+**clients** — id, organization_id, owner_name, email, phone, plan_code, billing_status, onboarding_status, partner_id, referral_code, created_at, updated_at
 
-```
-User message
-    │
-    ▼
-┌──────────────────────────────────────────────────┐
-│ Layer 1: RETRIEVAL                                │
-│                                                   │
-│ Pull only from:                                   │
-│ • compliance-rules.json (canonical rules)         │
-│ • client/org context (SuiteDash + Redis)          │
-│ • approved knowledge base (articles, glossary)    │
-│ • relevant documents (entity-specific)            │
-└───────────────────────┬──────────────────────────┘
-                        │
-┌───────────────────────▼──────────────────────────┐
-│ Layer 2: GUARDRAILS                               │
-│                                                   │
-│ • Classify intent (6 types)                       │
-│ • COMPLIANCE_FACT → deterministic answer (no LLM) │
-│ • LEGAL_QUESTION → refuse, offer attorney referral│
-│ • Cite exact rule or source for every claim       │
-│ • Escalate uncertain answers                      │
-│ • Never invent compliance facts                   │
-└───────────────────────┬──────────────────────────┘
-                        │
-┌───────────────────────▼──────────────────────────┐
-│ Layer 3: ACTION ORCHESTRATION                     │
-│                                                   │
-│ AI can:                                           │
-│ • Summarize a document                            │
-│ • Explain a deadline                              │
-│ • Prepare a reminder                              │
-│ • Draft an email                                  │
-│ • Suggest an upgrade                              │
-│ • Escalate to human ops                           │
-│                                                   │
-│ AI cannot:                                        │
-│ • Invent compliance facts                         │
-│ • Give legal or tax advice                        │
-│ • Make filing decisions without confirmation      │
-└──────────────────────────────────────────────────┘
-```
+**obligations** — id, organization_id, obligation_type, jurisdiction, rule_version, due_date, fee_usd, status, escalation_level, filing_method, created_at, updated_at
 
-**Intent types and routing:**
+**documents** — id, organization_id, obligation_id (nullable), document_type, source_channel, filename, mime_type, storage_url, extracted_text, urgency, classifier_version, received_at, processed_at, review_status
 
-| Intent | Route | LLM? | Citation? |
-|--------|-------|------|-----------|
-| COMPLIANCE_FACT | Rules engine lookup → deterministic | No | Auto (rule ref) |
-| GENERAL_QUESTION | RAG over KB → LLM with guardrails | Yes | Required |
-| LEGAL_QUESTION | Refuse → attorney referral | No | N/A |
-| ACTION_REQUEST | Route to portal action | No | N/A |
-| BILLING_QUESTION | Plan comparison / Stripe link | Maybe | N/A |
-| ONBOARDING_HELP | Guided flow | Maybe | N/A |
+**notifications** — id, organization_id, obligation_id (nullable), notification_type, channel, template_id, scheduled_for, sent_at, delivery_status, retry_count
 
-**Already built:** `api/_guardrails.js` — `classifyIntent()`, `tryDeterministicAnswer()`, `shouldRefuse()`, `buildRefusalResponse()`, `buildGuardrailInstructions()`. Wired into `api/chat.js`.
+**ai_conversations** — id, organization_id (nullable), client_id (nullable), channel, user_message, answer_text, source_refs_json, confidence_score, escalation_flag, created_at
 
-**Every conversation logged:** `api/_log.js` → `logConversation()` with sessionId, intent, sources, confidence, escalated flag.
+**audit_events** — id, actor_type, actor_id, event_type, target_type, target_id, before_json, after_json, reason, created_at
+
+**rules** — id, jurisdiction, entity_type, obligation_type, rule_json, authority_source, version, effective_date, superseded_at (nullable), is_active
+
+**referrals** — id, referrer_client_id, referred_email, status, conversion_date, credit_amount, created_at
+
+**partners** — id, partner_type, name, email, payout_terms, white_label_settings_json, created_at
+
+### 6.2 Object storage
+
+Use for: scanned legal documents, uploaded files, PDFs, signed agreements, generated certificates, exported reports.
+
+Rules: immutable file objects, versioned keys, malware scan before final persistence, signed URLs only for client access.
+
+### 6.3 Search / vector layer
+
+Use for: knowledge base search, policy/article retrieval, document semantic lookup, conversation grounding.
+
+Do not use it as the legal source of truth. It is for retrieval, not authority.
+
+### 6.4 Analytics layer
+
+Capture: page conversion, lead funnel, subscription success/failure, AI usage, document intake volumes, notification delivery performance, overdue rates, upgrade triggers.
 
 ---
 
-## 5. Agent Map
+## 7. Event architecture
 
-Six specialized agents, not one monolith.
+### 7.1 Core events
 
-### 5.1 Compliance Rules Agent
+client.created, client.onboarding_completed, entity.created, entity.updated, entity.verified, obligation.created, obligation.updated, obligation.overdue, document.received, document.classified, notification.scheduled, notification.sent, billing.payment_succeeded, billing.payment_failed, referral.converted, ai.answer_generated, ai.answer_escalated
 
-| | |
-|-|-|
-| **Purpose** | Monitor regulatory updates, propose rule changes, flag human review |
-| **Inputs** | PA DOS official sources, internal rules store |
-| **Outputs** | Candidate rule updates, change explanations, risk alerts |
-| **Trigger** | Weekly cron + manual |
-| **Tool access** | Web scraper (PA DOS), `data/compliance-rules.json` read/write |
+### 7.2 Event routing
 
-### 5.2 Client Risk Agent
+Each event should: be written to the audit/event log, update system state if needed, trigger workflows, generate ops tasks if exceptions occur.
 
-| | |
-|-|-|
-| **Purpose** | Score each entity daily, flag at-risk, prioritize intervention |
-| **Inputs** | Obligation states, missed reminders, document urgency, onboarding completeness, billing status |
-| **Outputs** | Risk score (LOW/MED/HIGH/CRITICAL), escalation queue, retention suggestions |
-| **Trigger** | Daily via scheduler, on-demand via admin |
-| **Tool access** | Redis entity state, obligation state machine |
-
-**Already built (partial):** `computeRisk()` in `api/_obligations.js`, risk scoring in `api/entity-status.js`.
-
-### 5.3 Document Intake Agent
-
-| | |
-|-|-|
-| **Purpose** | Classify incoming mail/docs, extract key facts, assign urgency, create tasks |
-| **Inputs** | Uploaded docs, scanned mail, email attachments |
-| **Outputs** | Document type, extracted metadata, compliance implications, queue assignment |
-| **Trigger** | On document_received event |
-| **Tool access** | Groq LLM (classification), OCR, Redis, entity context |
-
-**Already built (partial):** `api/classify-document.js`, `api/document-upload.js`.
-
-### 5.4 Client Concierge Agent
-
-| | |
-|-|-|
-| **Purpose** | Answer questions safely, guide onboarding, explain deadlines, escalate edge cases |
-| **Inputs** | Rules DB, client context, approved KB, org obligations |
-| **Outputs** | Cited answers, next best actions, handoff tickets |
-| **Trigger** | On user message in chat |
-| **Tool access** | `_compliance.js`, `_guardrails.js`, client context API, Redis |
-
-**Already built:** `api/chat.js` with guardrails, `api/_guardrails.js`, `api/_compliance.js`.
-
-### 5.5 Filing Ops Agent
-
-| | |
-|-|-|
-| **Purpose** | Prepare filing packages, gather missing info, assemble tasks for human review |
-| **Inputs** | Org profile, obligations, document set, form templates |
-| **Outputs** | Filing-ready checklist, missing data requests, filing task bundles |
-| **Trigger** | When obligation reaches READY_TO_FILE state |
-| **Tool access** | Entity status API, document store, PA DOS filing portal |
-
-### 5.6 Revenue/Retention Agent
-
-| | |
-|-|-|
-| **Purpose** | Spot upgrade moments, trigger save campaigns, optimize lifecycle nudges |
-| **Inputs** | Client usage, plan gaps, entity complexity, support interactions |
-| **Outputs** | Upgrade prompts, churn risk actions, referral asks |
-| **Trigger** | Daily via scheduler, on billing events |
-| **Tool access** | Client context, obligation state, Stripe data, conversation audit |
-
-**Already built (partial):** `api/client-health.js`, `api/churn-check.js`, `api/upsell.js`, `api/winback.js`.
-
----
-
-## 6. Event-Driven Automation
-
-### 6.1 Key Events
-
-Every event is logged, triggers eligible workflows, updates state, and notifies interested services.
-
-| Event | Source | Triggers |
-|-------|--------|----------|
-| `client_created` | Stripe webhook | CRM record, portal access, onboarding email, compliance profile init, first obligation, reminder schedule, audit log |
-| `payment_succeeded` | Stripe webhook | Plan activation/renewal, receipt email |
-| `payment_failed` | Stripe webhook | Dunning email, billing status update, risk score bump |
-| `onboarding_completed` | Portal | Status update, welcome complete email |
-| `entity_verified` | Admin/agent | Status update, obligation recompute |
-| `document_received` | Mail scan / upload | Classify, extract, urgency check, entity timeline update, risk score update |
-| `obligation_created` | Compliance engine | Reminder schedule generation |
-| `reminder_due` | Scheduler | Email/SMS send, delivery tracking |
-| `filing_overdue` | Scheduler | Escalation, urgent email, admin alert |
-| `ai_conversation_escalated` | Chat guardrails | Human ops notification, ticket creation |
-| `referral_converted` | Stripe webhook | Commission calculation, thank-you email |
-
-### 6.2 Example Flow: New Client
+### 7.3 Example: new client event flow
 
 ```
-1. Stripe checkout completes
-2. POST /api/stripe-webhook → payment_succeeded
-3. → client_created event
-4. → SuiteDash contact created (CRM)
-5. → Portal access code generated + emailed (Emailit)
-6. → Entity registered in compliance engine (Redis)
-7. → First obligation computed (annual report for entity type)
-8. → Reminder schedule generated (90/60/30/14/7 before deadline)
-9. → Audit event: "entity_registered" with full state snapshot
+billing.payment_succeeded
+  → client.created
+  → entity.initialized
+  → onboarding.checklist_created
+  → obligation.created
+  → reminder.schedule_generated
+  → welcome.email_sent
+  → audit.event_written
 ```
 
-### 6.3 Example Flow: Document Received
+### 7.4 Example: document flow
 
 ```
-1. Mail scanned at registered office
-2. POST /api/document-upload → document_received
-3. → Document Intake Agent classifies (SERVICE_OF_PROCESS? TAX_NOTICE?)
-4. → Urgency assigned (CRITICAL if service of process)
-5. → If CRITICAL: immediate email + SMS to client + admin alert
-6. → Document attached to entity timeline in Redis
-7. → Portal notification created
-8. → Risk score updated
-9. → Audit event: "document_received" with classification metadata
+document.received
+  → file.stored
+  → document.classified
+  → urgency.assessed
+  → linked_to_org
+  → risk.recomputed
+  → client.notified
+  → audit.event_written
 ```
 
 ---
 
-## 7. API Blueprint
+## 8. AI architecture
 
-### 7.1 Auth
+### 8.1 AI roles
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/auth/login` | Email + access code → session token |
-| POST | `/auth/logout` | Invalidate session |
-| POST | `/auth/reset-code` | Email access code recovery |
+AI should perform: explanation, summarization, triage, drafting, escalation support, next-step guidance.
 
-### 7.2 Clients / Organizations
+AI should not: invent deadlines, override rules, provide legal advice, independently define filing consequences.
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/clients/:id` | Client profile |
-| GET | `/orgs/:id` | Organization profile + status |
-| PATCH | `/orgs/:id` | Update org details |
-| POST | `/orgs/:id/register` | Register entity in compliance engine |
+### 8.2 AI pipeline
 
-### 7.3 Obligations
+**Step 1: Intent classification** — deadline question, document question, plan question, filing status question, legal advice boundary case, support escalation
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/orgs/:id/obligations` | All obligations for org |
-| POST | `/orgs/:id/obligations/recompute` | Recalculate from rules engine |
-| POST | `/obligations/:id/acknowledge` | Client acknowledges obligation |
-| POST | `/obligations/:id/filed` | Record filing + confirmation number |
-| GET | `/obligations/:id/history` | State change history |
+**Step 2: Retrieval** — pull from: rules table, organization context, obligations table, approved KB articles, document metadata/summaries
 
-### 7.4 Documents
+**Step 3: Policy check** — decide: answer directly, answer with disclaimer, defer to attorney/CPA, escalate to human ops
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/documents/upload` | Upload + auto-classify |
-| GET | `/orgs/:id/documents` | All documents for org |
-| POST | `/documents/:id/classify` | Re-classify a document |
-| POST | `/documents/:id/escalate` | Mark urgent + notify |
+**Step 4: Response generation** — generate: answer text, cited source refs, confidence score, next best action
 
-### 7.5 Notifications
+**Step 5: Logging** — write: prompt class, sources used, answer text, confidence, escalation flag
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/orgs/:id/notifications` | Notification history |
-| POST | `/notifications/test` | Send test notification |
-| POST | `/notifications/preferences` | Update notification preferences |
+### 8.3 AI answer contract
 
-### 7.6 Assistant
+```json
+{
+  "answer": "For your Pennsylvania LLC, the annual report is due on September 30.",
+  "sources": [
+    {"type": "rule", "id": "pa-llc-annual-report-v2026-03-24"},
+    {"type": "organization_context", "id": "org_123"}
+  ],
+  "confidence": 0.98,
+  "escalate": false,
+  "next_action": "Would you like me to show your current filing status?"
+}
+```
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/assistant/query` | Chat with guardrails + audit |
-| POST | `/assistant/explain-obligation` | Explain a specific obligation |
-| POST | `/assistant/summarize-document` | Summarize a document |
-| POST | `/assistant/escalate` | Hand off to human ops |
+### 8.4 Agent layer
 
-### 7.7 Billing
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/billing/upgrade` | Generate upgrade Stripe link |
-| POST | `/billing/cancel` | Cancel subscription |
-| GET | `/billing/plan` | Current plan details |
-
-### 7.8 Referral
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/referrals/me` | My referral stats |
-| POST | `/referrals/share` | Generate referral link |
-| GET | `/referrals/status` | Referral conversion status |
-
-### 7.9 Compliance Engine (internal)
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/compliance-rules` | Canonical rules (public) |
-| GET/POST | `/entity-status` | Entity + obligation state CRUD |
-| POST | `/scheduler` | Batch compliance processing (n8n) |
-| GET | `/compliance-dashboard` | Real-time posture (admin) |
+Recommended specialized agents: rules-watch, document-intake, client-risk, concierge, filing-ops, retention/revenue.
 
 ---
 
-## 8. Implementation Stack
+## 9. API design
 
-### Frontend (Phase 4+)
-- **Next.js** — server-rendered public pages, authenticated portal/admin
-- **Componentized design system** — Outfit + Instrument Serif, slate/gold palette
-- **Typed API client** — generated from API contracts
-- **Loading/error states** — real status from compliance engine
-- **Feature flags** — progressive rollout
+### 9.1 Auth
+- POST /api/auth/login
+- POST /api/auth/logout
+- POST /api/auth/reset-code
+- GET /api/auth/session
 
-### Backend (current + evolution)
-- **Node.js / ESM** — Vercel serverless (current)
-- **Postgres** — Supabase (domain model) via **Prisma**
-- **Redis** — Upstash (state/cache/queue/rate-limiting)
-- **Object storage** — Supabase Storage or Cloudflare R2 (documents)
-- **n8n** — workflow orchestration (scheduler, event processing)
+### 9.2 Client + organization
+- GET /api/clients/me
+- GET /api/organizations/:id
+- PATCH /api/organizations/:id
+- POST /api/organizations/:id/verify
 
-### AI
-- **Groq Llama 3.3** — LLM for general questions (current)
-- **Rules engine** — deterministic answers for compliance facts (no LLM)
-- **Guardrails** — intent classification, citation enforcement, legal boundary
-- **Audit table** — every AI answer logged with sources + confidence
+### 9.3 Obligations
+- GET /api/organizations/:id/obligations
+- POST /api/organizations/:id/obligations/recompute
+- POST /api/obligations/:id/acknowledge
+- POST /api/obligations/:id/mark-filed
 
-### Ops
-- **Structured JSON logs** — `api/_log.js` → Vercel log drain → Axiom/Betterstack
-- **Upstash Redis metrics** — daily counters for chat, subscriptions, escalations
-- **Compliance dashboard** — `api/compliance-dashboard.js` (admin)
-- **Alerting** — overdue escalation emails to Ike, n8n failure notifications
+### 9.4 Documents
+- POST /api/documents/upload
+- GET /api/organizations/:id/documents
+- GET /api/documents/:id
+- POST /api/documents/:id/classify
+- POST /api/documents/:id/escalate
 
----
+### 9.5 Notifications
+- GET /api/organizations/:id/notifications
+- POST /api/notifications/preferences
+- POST /api/notifications/test
 
-## 9. Security & Trust
+### 9.6 Assistant
+- POST /api/assistant/query
+- POST /api/assistant/explain-obligation
+- POST /api/assistant/summarize-document
+- POST /api/assistant/escalate
 
-### Already implemented
-- [x] CORS restricted to `pacropservices.com` on chat + subscribe endpoints
-- [x] Durable rate limiting via Upstash Redis (`api/_ratelimit.js`)
-- [x] Admin key authentication on all write endpoints
-- [x] HSTS, X-Frame-Options: DENY, nosniff, Permissions-Policy in `vercel.json`
-- [x] Structured logging with actor tracking
-- [x] Immutable audit events (append-only in Redis)
-- [x] Chatbot guardrails (intent classification, legal boundary, citation requirement)
+### 9.7 Billing
+- POST /api/billing/checkout
+- POST /api/billing/upgrade
+- POST /api/billing/cancel
+- GET /api/billing/plan
 
-### Needed for production
-- [ ] Signed session auth (JWT or cookie-based, replace access code + localStorage)
-- [ ] RBAC: admin / partner / client role separation
-- [ ] Stripe webhook signature verification (`STRIPE_WEBHOOK_SECRET` env var)
-- [ ] Encrypted secret storage (Vercel env vars are sufficient for now)
-- [ ] Incident alerting (Slack/email on error spikes)
-- [ ] SPF + DMARC on root domain (URGENT — see MANUAL-ACTIONS.md)
+### 9.8 Referral / partner
+- GET /api/referrals/me
+- POST /api/referrals/share
+- GET /api/partners/me/clients
 
----
-
-## 10. Build Sequence
-
-### Phase 1 — Stabilize Truth ✅ COMPLETE
-
-- [x] `data/compliance-rules.json` — canonical rules store
-- [x] `api/_compliance.js` — shared rules engine
-- [x] Fix all legal/date copy (60+ changes across 30+ files)
-- [x] `scripts/validate-content.js` — CI drift prevention
-- [x] Chatbot reads from rules engine, not hardcoded KB
-- [x] Citation requirement in LLM system prompt
-- [x] Deterministic answers for compliance facts (no LLM)
-
-### Phase 2 — Build the Engine ✅ COMPLETE
-
-- [x] `schema/schema.prisma` — 7-model domain schema
-- [x] `api/_obligations.js` — state machine with 10 states
-- [x] `api/_db.js` — Redis persistence layer
-- [x] `api/entity-status.js` — entity + obligation CRUD
-- [x] `api/scheduler.js` — batch compliance processing
-- [x] `api/compliance-dashboard.js` — real-time posture
-- [x] 5 n8n workflow JSONs ready for import
-- [x] `scripts/bulk-register.js` — SuiteDash → engine migration
-- [ ] **Activate:** Provision Upstash Redis + import n8n workflows
-
-### Phase 3 — Harden Operations ✅ MOSTLY COMPLETE
-
-- [x] Durable rate limiting (`api/_ratelimit.js`)
-- [x] Structured logging (`api/_log.js`)
-- [x] Subscribe error visibility (no more `.catch(() => {})`)
-- [x] CORS restriction on public endpoints
-- [x] Chatbot guardrails + audit trail
-- [ ] SPF + DMARC DNS fix (URGENT — manual, see MANUAL-ACTIONS.md)
-- [ ] Stripe webhook signature verification
-- [ ] Log drain setup (Axiom/Betterstack)
-
-### Phase 4 — Rebuild Portal on Real State
-
-- [ ] Portal reads entity status from compliance engine API
-- [ ] Obligation feed (real state, not mock)
-- [ ] Document timeline (real uploads, not localStorage)
-- [ ] Audit trail visible to client ("what happened and when")
-- [ ] Action center ("file now", "confirm details", "upgrade plan")
-- [ ] Split `portal.html` into React/Next.js component system
-
-### Phase 5 — Agentify
-
-- [ ] Document Intake Agent (classify + extract + urgency + task creation)
-- [ ] Client Risk Agent (daily scoring, escalation queue)
-- [ ] Filing Ops Agent (prepare packages, gather missing info)
-- [ ] Revenue/Retention Agent (upgrade moments, save campaigns)
-- [ ] Compliance Rules Agent (monitor PA DOS for changes)
-
-### Phase 6 — Scale
-
-- [ ] Partner portal (white-label CPA/attorney dashboard)
-- [ ] Multi-state rules engine (NJ, DE, NY — same architecture)
-- [ ] White-label mode (partner branding)
-- [ ] Compliance command center (aggregate view across all entities)
+### 9.9 Admin / rules
+- GET /api/admin/rules
+- POST /api/admin/rules
+- POST /api/admin/rules/publish
+- GET /api/admin/audit
+- GET /api/admin/workflow-failures
 
 ---
 
-## 11. What This Becomes
+## 10. Frontend architecture
 
-If built correctly, this stops being a Pennsylvania CROP website and becomes a **compliance operating system for small entities**.
+### 10.1 Public site
 
-The long-term value is not just serving as a CROP. It is owning:
+Replace hardcoded truth with: CMS-backed or rules-backed content blocks, reusable pricing/legal components, source-aware FAQ rendering.
 
-| Capability | Current State | Target State |
-|-----------|---------------|-------------|
-| Deadline intelligence | Hardcoded in HTML | Rules engine + state machine |
-| Entity health | Unknown | Real-time risk scoring |
-| Compliance workflow | Marketing copy | Event-driven automation |
-| Partner distribution | Static page | API-backed partner portal |
-| Multi-state expansion | PA only | Jurisdiction-agnostic rules engine |
+Modules: marketing pages, article pages, compliance checker, partner pages, checkout flows.
 
-**The compliance engine is the product.** The website is just one of its interfaces.
+### 10.2 Client portal
 
----
+Refactor portal.html into a modular app.
 
-## 12. Current Module Inventory
+Modules: dashboard, obligations center, document timeline, notifications center, assistant panel, account/billing, referrals, settings, audit/history.
 
-### Compliance Engine Core (`api/`)
-
-| Module | Purpose | Status |
-|--------|---------|--------|
-| `_compliance.js` | Rules engine — all deadline/fee/penalty logic | ✅ Live |
-| `_obligations.js` | State machine — 10 states, transitions, risk | ✅ Live |
-| `_guardrails.js` | Chatbot control — intent, citations, legal boundary | ✅ Live |
-| `_db.js` | Redis — entity/obligation CRUD, events, metrics | ✅ Live (needs Upstash) |
-| `_log.js` | Structured JSON logging | ✅ Live |
-| `_ratelimit.js` | Upstash Redis + in-memory fallback | ✅ Live |
-| `compliance-rules.js` | Public rules API | ✅ Live |
-| `entity-status.js` | Entity + obligation management | ✅ Live |
-| `scheduler.js` | Batch compliance processing | ✅ Live |
-| `compliance-dashboard.js` | Admin dashboard API | ✅ Live |
-| `chat.js` | Chatbot with guardrails pipeline | ✅ Live |
-| `client-context.js` | Client data aggregator | ✅ Live |
-
-### Data
-
-| File | Purpose | Status |
-|------|---------|--------|
-| `data/compliance-rules.json` | Canonical PA compliance rules | ✅ Source of truth |
-| `data/compliance-rules.js` | JS module export (Edge compatible) | ✅ Runtime import |
-| `schema/schema.prisma` | 7-model domain schema | ✅ Ready (needs DB) |
-
-### Tooling
-
-| File | Purpose | Status |
-|------|---------|--------|
-| `scripts/validate-content.js` | CI content validation (138 files) | ✅ Passing |
-| `scripts/bulk-register.js` | SuiteDash → engine migration | ✅ Ready |
-| `n8n-workflows/*.json` | 5 scheduler workflows | ✅ Ready for import |
+**UI state model:** The front end should read only from APIs and local transient state, not simulate business truth.
 
 ---
 
-*This document is the single specification for PA CROP Services system architecture.
-All development, agent work, and infrastructure decisions reference this document.
-Updated: 2026-03-24*
+## 11. Security architecture
+
+### 11.1 Required controls
+
+Signed session tokens, RBAC for client/admin/partner, origin-restricted CORS, durable rate limiting, CSRF protection, webhook signature verification, secret rotation and vault storage, malware scanning for uploaded documents, signed document URLs, structured security logging.
+
+### 11.2 Data protection
+
+Encrypt sensitive data at rest, minimal PII storage, retention policy enforcement, access audit trail, role-based document visibility, human escalation and override logging.
+
+---
+
+## 12. Reliability architecture
+
+### 12.1 Required controls
+
+No silent catch for business-critical actions. Retry policies for webhooks and outbound notifications. Dead-letter queue for failed jobs. Workflow failure dashboard. Alerting for: failed payment webhooks, failed email sends, failed reminder scheduling, failed document classification, failed AI escalation routes.
+
+### 12.2 Logging
+
+Each service should emit: request id, actor, organization id, outcome, latency, error class, retry state.
+
+---
+
+## 13. Integration architecture
+
+**Stripe** — checkout, subscriptions, upgrades, dunning, webhook-driven entitlement updates.
+
+**CRM** — SuiteDash can remain an integration, but should not be the system of record for compliance state.
+
+**Workflow engine** — n8n can orchestrate onboarding, reminder sequencing, renewal campaigns, escalation emails, partner workflows. But the compliance state itself should live in the app DB, not only in n8n.
+
+**Email/SMS** — use providers with delivery status callbacks, bounce tracking, retry support, templating.
+
+**Hosting** — hosting integrations should be entitlement-aware and isolated from core compliance logic.
+
+---
+
+## 14. Service responsibility matrix
+
+| Service | Owns truth? | Reads truth? | Writes audit? |
+|---------|------------|-------------|--------------|
+| Rules service | Yes | Yes | Yes |
+| Entity service | Yes | Yes | Yes |
+| Obligation service | Yes | Yes | Yes |
+| Document service | Yes | Yes | Yes |
+| Notification service | No | Yes | Yes |
+| Billing service | Yes (billing) | Yes | Yes |
+| Assistant service | No | Yes | Yes |
+| Portal frontend | No | Yes | No |
+| Public website | No | Yes | No |
+
+---
+
+## 15. Recommended implementation stack
+
+**Frontend** — Next.js, TypeScript, component library, shared typed API contracts, SSR for public site, authenticated SPA-like portal modules.
+
+**Backend** — Node.js/TypeScript, Postgres, Prisma, Redis for rate limits/queues/caching, S3-compatible object storage, n8n and/or queue workers.
+
+**AI** — retrieval layer over rules + KB + org context, guarded answer composer, embeddings only for search and retrieval, conversation/audit storage.
+
+**Observability** — Sentry, structured log pipeline, analytics event ingestion, uptime/queue monitors, workflow alerts.
+
+---
+
+## 16. Build roadmap
+
+**Phase 1 — Truth stabilization** — rules schema/DB, fix all compliance copy, remove duplicated logic, centralize FAQs
+
+**Phase 2 — Compliance engine** — organizations, obligations, deadline calculator, state machine, audit engine
+
+**Phase 3 — API and portal rebuild** — modular portal, API-backed dashboard, obligations/document views, notification center, plan entitlements
+
+**Phase 4 — Reliability + security** — durable rate limiting, structured logs, no silent failures, retries, dead-letter queues, restricted CORS, webhook verification
+
+**Phase 5 — AI hardening** — retrieval-backed assistant, source citations, answer confidence, escalation routing, AI audit review tools
+
+**Phase 6 — Partner and scale** — partner portal, multistate rules, white-label mode, portfolio dashboards, advanced retention/upgrade automation
+
+---
+
+## 17. Immediate repo remediation tasks
+
+**High priority** — correct annual report logic, fix portal script integrity, remove silent failures from subscribe, replace in-memory rate limiting, lock down CORS on public APIs.
+
+**Medium priority** — move chatbot knowledge into managed KB/rules source, separate analytics/tracking policy, add workflow failure monitoring, verify every portal API endpoint.
+
+---
+
+## 18. Final target state
+
+When complete, the system should be able to do this reliably:
+
+1. A client signs up.
+2. The system identifies entity type and jurisdiction.
+3. The engine computes obligations from versioned rules.
+4. Reminders are scheduled automatically.
+5. Documents are ingested and classified.
+6. The portal shows real status, not simulated status.
+7. The assistant answers from approved sources and client context.
+8. Every action is logged and reviewable.
+9. Ops can intervene cleanly.
+10. Partner channels and multistate expansion plug into the same engine.
+
+That is the architecture that turns this from a promising repo into a durable business platform.
+
+---
+---
+
+## Appendix A: Implementation Status
+
+> Maps the architecture above to what currently exists in the repo.
+> Updated: 2026-03-24
+
+### Phase 1 — Truth stabilization: ✅ COMPLETE
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Canonical rules store | `data/compliance-rules.json` — 12 entity types, 3 deadline groups, enforcement, fees, reminders, exemptions | ✅ Live |
+| Rules runtime module | `api/_compliance.js` — getRules, resolveEntityType, getEntityConfig, getEntityDeadline, computeDaysUntil, buildChatbotKnowledge | ✅ Live |
+| Rules public API | `api/compliance-rules.js` — entity lookups, full rules, field queries | ✅ Live |
+| Fix duplicated deadline logic | 60+ changes across 30+ files | ✅ Done |
+| Content drift prevention | `scripts/validate-content.js` — 138 files scanned against rules | ✅ Passing |
+| Chatbot reads from rules | `api/chat.js` — KB generated by buildChatbotKnowledge() | ✅ Live |
+| Client context reads from rules | `api/client-context.js` — imports from _compliance.js | ✅ Live |
+
+### Phase 2 — Compliance engine: ✅ MOSTLY COMPLETE
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Obligation state machine | `api/_obligations.js` — 10 states, validated transitions, risk scoring | ✅ Live |
+| Deadline calculator | getEntityDeadline(), computeDaysUntil() in _compliance.js | ✅ Live |
+| Redis persistence | `api/_db.js` — entity/obligation CRUD, event log, metrics | ✅ Live (needs Upstash) |
+| Entity status API | `api/entity-status.js` — register, transition, file, evaluate | ✅ Live |
+| Scheduler webhook | `api/scheduler.js` — process_reminders, evaluate_all, overdue_check | ✅ Live |
+| Dashboard | `api/compliance-dashboard.js` — posture, metrics, events | ✅ Live |
+| n8n workflows | `n8n-workflows/` — 5 JSONs ready for import | ✅ Ready |
+| Bulk registration | `scripts/bulk-register.js` | ✅ Ready |
+| Domain model | `schema/schema.prisma` — 7 models | ✅ Schema ready |
+| **Activate Upstash** | Set UPSTASH_REDIS_REST_URL + TOKEN in Vercel | ❌ Manual |
+| **Import n8n workflows** | Import JSONs, set credentials, activate | ❌ Manual |
+
+### Phase 3/4 — Reliability + security: ✅ PARTIALLY COMPLETE
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Durable rate limiting | `api/_ratelimit.js` — Upstash + fallback | ✅ Live |
+| Structured logging | `api/_log.js` — JSON, scoped loggers, audit | ✅ Live |
+| No silent failures | `api/subscribe.js` rewritten with error visibility | ✅ Fixed |
+| CORS restriction | chat.js + subscribe.js → pacropservices.com only | ✅ Live |
+| Chatbot guardrails | `api/_guardrails.js` — 6 intents, deterministic answers, legal boundary | ✅ Live |
+| Privacy disclosure | Clarity session replay explicitly disclosed | ✅ Fixed |
+| Portal bug | loadEntities() stray catch removed | ✅ Fixed |
+| **SPF + DMARC** | Deleted via API, need manual re-add in 20i | 🔴 URGENT |
+| Signed session auth | Not yet — currently access code + localStorage | ❌ Phase 4 |
+| RBAC | Not yet — currently admin-key only | ❌ Phase 4 |
+
+### Phase 5 — AI: ✅ PARTIALLY COMPLETE
+
+| Requirement | Implementation | Status |
+|-------------|---------------|--------|
+| Intent classification | classifyIntent() — 6 intents, 40+ patterns | ✅ Live |
+| Deterministic compliance answers | tryDeterministicAnswer() — rules engine, 1.0 confidence | ✅ Live |
+| Legal boundary | shouldRefuse() + buildRefusalResponse() | ✅ Live |
+| LLM guardrail injection | buildGuardrailInstructions() — citation, uncertainty, deference | ✅ Live |
+| AI answer contract (8.3) | Partial — deterministic path returns {answer, sources, confidence} | ⚠️ Partial |
+| KB article retrieval | Not yet — rules retrieval done, article retrieval not yet | ⚠️ Partial |
+
+### Phase 6 — Partner/scale: NOT STARTED
+
+---
+
+## Appendix B: Module Inventory
+
+| Module | Arch section | Purpose | Status |
+|--------|-------------|---------|--------|
+| `_compliance.js` | 5.3 | Rules engine | ✅ |
+| `_obligations.js` | 5.3 | State machine | ✅ |
+| `_guardrails.js` | 8.2 | AI pipeline control | ✅ |
+| `_db.js` | 6.1 | Redis persistence | ✅ |
+| `_log.js` | 12.2 | Structured logging | ✅ |
+| `_ratelimit.js` | 11.1 | Rate limiting | ✅ |
+| `compliance-rules.js` | 5.3 | Public rules API | ✅ |
+| `entity-status.js` | 5.2 | Entity + obligation API | ✅ |
+| `scheduler.js` | 5.3 | Batch processing | ✅ |
+| `compliance-dashboard.js` | 5.2 | Admin dashboard | ✅ |
+| `chat.js` | 8.2 | Chatbot with guardrails | ✅ |
+| `client-context.js` | 5.2 | Client data aggregator | ✅ |
+| `data/compliance-rules.json` | 5.3 | Canonical rules | ✅ |
+| `schema/schema.prisma` | 6.1 | Domain model | ✅ schema |
+| `scripts/validate-content.js` | 3.1 | Content validation CI | ✅ |
+| `scripts/bulk-register.js` | 5.2 | Migration script | ✅ |
+| `n8n-workflows/*.json` | 5.3 | 5 scheduler workflows | ✅ |
+
+---
+
+## Appendix C: Activation Checklist
+
+| # | Action | Time | Blocks |
+|---|--------|------|--------|
+| 1 | Add SPF + DMARC in 20i dashboard | 2 min | Email deliverability |
+| 2 | Provision Upstash Redis + set Vercel env vars | 5 min | Engine persistence |
+| 3 | Import 5 n8n workflows + configure | 30 min | Live reminders |
+| 4 | Run bulk-register script | 5 min | Scheduler entities |
+| 5 | Confirm CROP license (call 717-787-1057) | 5 min | Legal authority |
+| 6 | Apply for EIN at irs.gov | 10 min | Bank account |
+| 7 | Open bank account + connect Stripe | 30 min–days | Revenue |
+| 8 | Bind E&O insurance | 1–3 days | Before clients |
+
+Full details: `MANUAL-ACTIONS.md`
+
+---
+
+*Canonical specification for PA CROP Services system architecture.*
+*Sections 1–18: target architecture (Ike). Appendices A–C: implementation status (Claude).*
+*All development references this document. Last updated: 2026-03-24.*
