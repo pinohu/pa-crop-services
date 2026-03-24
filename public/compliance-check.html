@@ -64,6 +64,9 @@ a{color:var(--gold-muted,#A68A3E);text-decoration:none}
 footer{background:var(--slate,#0C1220);color:rgba(255,255,255,0.6);padding:40px 0;font-size:13px;text-align:center;margin-top:0}
 footer a{color:rgba(255,255,255,0.8)}
 @media(max-width:768px){.hero h1{font-size:32px}.question{padding:24px}.container{padding:0 20px}}
+*:focus-visible{outline:2px solid var(--gold,#C9982A);outline-offset:2px;border-radius:4px}
+.opt:focus-visible{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);transform:translateY(-1px)}
+.opt[aria-checked="true"]{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);color:var(--slate,#0C1220);font-weight:500}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">
@@ -75,93 +78,95 @@ footer a{color:rgba(255,255,255,0.8)}
 </script>
 </head>
 <body>
-<nav class="site-nav"><div class="nav-inner">
+<a href="#quiz-start" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:var(--slate,#0C1220);color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to quiz</a>
+<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
-  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
-<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="/compliance-check">Check my entity →</a></div>
+<div class="mobile-menu" id="mm"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822">Call 814-228-2822</a><a href="/compliance-check">Check my entity →</a></div>
 
 <section class="hero">
 <div class="container">
 <div class="section-tag">Free Compliance Check</div>
 <h1>Find out where your<br>PA entity stands</h1>
-<p>Answer 8 quick questions. We'll show you exactly what's at risk — and what to do about it. Takes about 2 minutes.</p>
+<p>Answer 6 quick questions. We'll show you exactly what's at risk — and what to do about it. Takes about 2 minutes.</p>
 <div style="margin-top:20px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink3,#7A7A7A)">
-  <span>🔒 No data stored</span><span>·</span><span>⚡ Instant results</span><span>·</span><span>🎯 Personalized plan</span>
+  <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M12 2L3 7v6c0 5.1 3.8 9.8 9 11 5.2-1.2 9-5.9 9-11V7l-9-5z" stroke="currentColor" stroke-width="2"/></svg> No data stored</span><span>·</span><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Instant results</span><span>·</span><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Personalized plan</span>
 </div>
 </div>
 </section>
 
-<section class="quiz">
+<section class="quiz" id="quiz-start" aria-label="Compliance assessment">
 <div class="container">
-<div class="progress"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+<div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Quiz progress"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
 
 <div class="question active" data-q="0">
 <div class="num">Question 1 of 6</div>
 <h3>What type of Pennsylvania entity do you have?</h3>
-<div class="options">
-<div class="opt" data-val="corp" data-risk="1">Corporation (business or nonprofit)</div>
-<div class="opt" data-val="llc" data-risk="1">LLC</div>
-<div class="opt" data-val="lp" data-risk="1">Limited Partnership or LLP</div>
-<div class="opt" data-val="foreign" data-risk="2">Foreign entity registered in PA</div>
-<div class="opt" data-val="unsure" data-risk="2">I'm not sure</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="corp" data-risk="1">Corporation (business or nonprofit)</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="llc" data-risk="1">LLC</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="lp" data-risk="1">Limited Partnership or LLP</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="foreign" data-risk="2">Foreign entity registered in PA</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="unsure" data-risk="2">I'm not sure</div>
 </div>
 </div>
 
 <div class="question" data-q="1">
 <div class="num">Question 2 of 6</div>
 <h3>Have you filed your 2025 Pennsylvania annual report?</h3>
-<div class="options">
-<div class="opt" data-val="yes" data-risk="0">Yes, already filed</div>
-<div class="opt" data-val="no" data-risk="2">No, haven't filed yet</div>
-<div class="opt" data-val="what" data-risk="3">I didn't know there was an annual report</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, already filed</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="2">No, haven't filed yet</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="what" data-risk="3">I didn't know there was an annual report</div>
 </div>
 </div>
 
 <div class="question" data-q="2">
 <div class="num">Question 3 of 6</div>
 <h3>Is your registered office address current and accurate?</h3>
-<div class="options">
-<div class="opt" data-val="yes" data-risk="0">Yes, it's current</div>
-<div class="opt" data-val="moved" data-risk="2">I've moved since filing but haven't updated it</div>
-<div class="opt" data-val="home" data-risk="1">I'm using my home address and want to change it</div>
-<div class="opt" data-val="unsure" data-risk="2">I don't remember what address is on file</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, it's current</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="moved" data-risk="2">I've moved since filing but haven't updated it</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="home" data-risk="1">I'm using my home address and want to change it</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="unsure" data-risk="2">I don't remember what address is on file</div>
 </div>
 </div>
 
 <div class="question" data-q="3">
 <div class="num">Question 4 of 6</div>
 <h3>Do you have someone available at your registered office during business hours (9-5 weekdays)?</h3>
-<div class="options">
-<div class="opt" data-val="yes" data-risk="0">Yes, always</div>
-<div class="opt" data-val="sometimes" data-risk="1">Sometimes, but not always</div>
-<div class="opt" data-val="no" data-risk="2">No — I work remotely, travel, or the office is often empty</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, always</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="sometimes" data-risk="1">Sometimes, but not always</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="2">No — I work remotely, travel, or the office is often empty</div>
 </div>
 </div>
 
 <div class="question" data-q="4">
 <div class="num">Question 5 of 6</div>
 <h3>Are you aware of the 2027 dissolution deadline for entities that miss annual reports?</h3>
-<div class="options">
-<div class="opt" data-val="yes" data-risk="0">Yes, I'm aware and prepared</div>
-<div class="opt" data-val="heard" data-risk="1">I've heard about it but don't know the details</div>
-<div class="opt" data-val="no" data-risk="3">No, what dissolution deadline?</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, I'm aware and prepared</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="heard" data-risk="1">I've heard about it but don't know the details</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="3">No, what dissolution deadline?</div>
 </div>
 </div>
 
 <div class="question" data-q="5">
 <div class="num">Question 6 of 6</div>
 <h3>Do you currently use a Commercial Registered Office Provider (CROP)?</h3>
-<div class="options">
-<div class="opt" data-val="yes" data-risk="0">Yes, I have a CROP</div>
-<div class="opt" data-val="self" data-risk="1">No, I use my own address</div>
-<div class="opt" data-val="what" data-risk="2">I don't know what a CROP is</div>
+<div class="options" role="radiogroup">
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, I have a CROP</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="self" data-risk="1">No, I use my own address</div>
+<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="what" data-risk="2">I don't know what a CROP is</div>
 </div>
 </div>
 
 <div class="nav-btns">
-<button class="btn btn-next" id="nextBtn" disabled onclick="nextQuestion()">Next →</button>
+<button class="btn" id="backBtn" onclick="prevQuestion()" style="display:none;background:transparent;border:1.5px solid var(--cream3,#EBE8E2);color:var(--ink2,#4A4A4A)" aria-label="Go to previous question">← Back</button>
+<button class="btn btn-next" id="nextBtn" disabled onclick="nextQuestion()" aria-label="Go to next question">Next →</button>
 </div>
 
 <div class="result" id="result">
@@ -173,17 +178,18 @@ footer a{color:rgba(255,255,255,0.8)}
   <p style="font-size:15px;font-weight:600;color:var(--dark);margin-bottom:8px">Want us to take a closer look?</p>
   <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Drop your email and we'll send you a personalized breakdown — what's good, what needs attention, and what we'd recommend.</p>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <input type="email" id="lead-email" placeholder="your@email.com" required style="flex:1;min-width:200px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none">
-    <input type="text" id="lead-name" placeholder="Your name" style="flex:1;min-width:150px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none">
-    <button onclick="submitLead()" id="lead-btn" style="background:var(--accent);color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Get my report →</button>
+    <input type="email" id="lead-email" placeholder="your@email.com" required aria-label="Email address" autocomplete="email" style="flex:1;min-width:200px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s">
+    <input type="text" id="lead-name" placeholder="Your name" aria-label="Your name" autocomplete="name" style="flex:1;min-width:150px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none">
+    <button onclick="submitLead()" id="lead-btn" aria-label="Get personalized compliance report" style="background:var(--accent);color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Get my report →</button>
   </div>
+  <p id="lead-error" role="alert" aria-live="polite" style="display:none;color:#DC2626;font-size:13px;margin-top:8px"></p>
   <p id="lead-success" style="display:none;color:var(--green,#059669);margin-top:12px;font-weight:600">✓ On its way! We'll have your personalized report in your inbox shortly.</p>
 </div>
 <a href="/#pricing" class="cta-btn" style="margin-top:16px">View plans from $8.25/month →</a>
 <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-  <a href="tel:8142282822" style="display:inline-flex;align-items:center;gap:6px;background:var(--gold-muted,#A68A3E);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s">📞 Call us now: 814-228-2822</a>
-  <a href="https://app.trafft.com/booking" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--slate,#0C1220);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s">📅 Book a free compliance review</a>
-  <a href="mailto:hello@pacropservices.com?subject=Compliance%20Check%20-%20Want%20to%20discuss" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1.5px solid #d1d5db;color:var(--dark,#1E2333);padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none">✉️ Email our team</a>
+  <a href="tel:8142282822" style="display:inline-flex;align-items:center;gap:6px;background:var(--gold-muted,#A68A3E);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> Call us now: 814-228-2822</a>
+  <a href="https://app.trafft.com/booking" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--slate,#0C1220);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Book a free compliance review</a>
+  <a href="mailto:hello@pacropservices.com?subject=Compliance%20Check%20-%20Want%20to%20discuss" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1.5px solid #d1d5db;color:var(--dark,#1E2333);padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg> Email our team</a>
 </div>
 <p style="font-size:12px;color:var(--gray,#6B7280);margin-top:12px">30-day money-back guarantee · No contracts · Cancel anytime</p>
 <div id="plan-recs" style="display:none;margin-top:20px;text-align:left">
@@ -195,7 +201,7 @@ footer a{color:rgba(255,255,255,0.8)}
 </div>
 </section>
 
-<footer class="site-footer"><div class="footer-inner">
+<footer class="site-footer" role="contentinfo"><div class="footer-inner">
   <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></footer>
@@ -206,54 +212,110 @@ let totalRisk = 0;
 const total = 6;
 const answers = {};
 
+// OPTION SELECTION — click + keyboard
 document.querySelectorAll('.opt').forEach(opt => {
-  opt.addEventListener('click', function() {
-    this.parentElement.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
-    this.classList.add('selected');
-    const q = this.closest('.question').dataset.q;
-    answers[q] = { val: this.dataset.val, risk: parseInt(this.dataset.risk) };
+  function selectOpt(el) {
+    el.parentElement.querySelectorAll('.opt').forEach(o => {
+      o.classList.remove('selected');
+      o.setAttribute('aria-checked', 'false');
+    });
+    el.classList.add('selected');
+    el.setAttribute('aria-checked', 'true');
+    const q = el.closest('.question').dataset.q;
+    answers[q] = { val: el.dataset.val, risk: parseInt(el.dataset.risk) };
     document.getElementById('nextBtn').disabled = false;
+    document.getElementById('nextBtn').focus();
+  }
+  opt.addEventListener('click', function() { selectOpt(this); });
+  opt.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectOpt(this); }
+    // Arrow key navigation within option group
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      var next = this.nextElementSibling;
+      if (next && next.classList.contains('opt')) next.focus();
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      var prev = this.previousElementSibling;
+      if (prev && prev.classList.contains('opt')) prev.focus();
+    }
   });
 });
 
-function trackAnswer(q, a) { quizAnswers[q] = a; }
+function updateProgress() {
+  var pct = ((current / total) * 100);
+  var pbar = document.getElementById('pbar');
+  pbar.style.width = pct + '%';
+  pbar.parentElement.setAttribute('aria-valuenow', Math.round(pct));
+}
+
 function nextQuestion() {
-  const questions = document.querySelectorAll('.question');
+  var questions = document.querySelectorAll('.question');
   questions[current].classList.remove('active');
   current++;
-
   if (current < total) {
     questions[current].classList.add('active');
-    document.getElementById('pbar').style.width = ((current / total) * 100) + '%';
+    updateProgress();
     document.getElementById('nextBtn').disabled = true;
+    document.getElementById('backBtn').style.display = current > 0 ? '' : 'none';
     if (current === total - 1) document.getElementById('nextBtn').textContent = 'See results';
+    // Focus first option in new question
+    var firstOpt = questions[current].querySelector('.opt');
+    if (firstOpt) setTimeout(function() { firstOpt.focus(); }, 200);
+    // Announce to screen readers
+    var qNum = questions[current].querySelector('.num');
+    if (qNum) announceToSR(qNum.textContent);
   } else {
     showResult();
   }
 }
 
+function prevQuestion() {
+  if (current <= 0) return;
+  var questions = document.querySelectorAll('.question');
+  questions[current].classList.remove('active');
+  current--;
+  questions[current].classList.add('active');
+  updateProgress();
+  document.getElementById('nextBtn').disabled = !answers[current];
+  document.getElementById('nextBtn').textContent = 'Next →';
+  document.getElementById('backBtn').style.display = current > 0 ? '' : 'none';
+}
+
+// Screen reader announcements
+function announceToSR(text) {
+  var el = document.getElementById('sr-announce');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sr-announce';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+}
+
 function showResult() {
   document.querySelector('.nav-btns').style.display = 'none';
   document.querySelector('.progress').style.display = 'none';
-  document.getElementById('pbar').style.width = '100%';
 
-  totalRisk = Object.values(answers).reduce((sum, a) => sum + a.risk, 0);
-  const maxRisk = 15;
-  const pct = Math.round((totalRisk / maxRisk) * 100);
+  totalRisk = Object.values(answers).reduce(function(sum, a) { return sum + a.risk; }, 0);
+  var maxRisk = 15;
 
-  const circle = document.getElementById('scoreCircle');
-  const title = document.getElementById('resultTitle');
-  const desc = document.getElementById('resultDesc');
-  const items = document.getElementById('riskItems');
+  var circle = document.getElementById('scoreCircle');
+  var title = document.getElementById('resultTitle');
+  var desc = document.getElementById('resultDesc');
+  var items = document.getElementById('riskItems');
 
-  let risks = [];
-
-  if (answers['1']?.risk >= 2) risks.push({ icon: '🚨', text: 'You haven\'t filed your PA annual report. Starting in 2027, this could lead to administrative dissolution.' });
-  if (answers['2']?.risk >= 2) risks.push({ icon: '📍', text: 'Your registered office address may be outdated. Legal documents could be going to the wrong address.' });
-  if (answers['3']?.risk >= 2) risks.push({ icon: '🚪', text: 'Nobody is reliably available at your registered office during business hours. This means missed legal service.' });
-  if (answers['4']?.risk >= 2) risks.push({ icon: '⏰', text: 'The 2027 dissolution deadline could catch you off guard. Foreign entities cannot reinstate after termination.' });
-  if (answers['0']?.val === 'foreign') risks.push({ icon: '🌐', text: 'As a foreign entity, you cannot reinstate if dissolved. You would need to re-register, possibly under a new name.' });
-  if (answers['5']?.risk >= 1) risks.push({ icon: '🛡️', text: 'Without a CROP, your personal address is public record and you\'re responsible for being available during business hours.' });
+  var risks = [];
+  if (answers['1'] && answers['1'].risk >= 2) risks.push({ text: 'You haven\'t filed your PA annual report. Starting in 2027, this could lead to administrative dissolution.' });
+  if (answers['2'] && answers['2'].risk >= 2) risks.push({ text: 'Your registered office address may be outdated. Legal documents could be going to the wrong address.' });
+  if (answers['3'] && answers['3'].risk >= 2) risks.push({ text: 'Nobody is reliably available at your registered office during business hours. This means missed legal service.' });
+  if (answers['4'] && answers['4'].risk >= 2) risks.push({ text: 'The 2027 dissolution deadline could catch you off guard. Foreign entities cannot reinstate after termination.' });
+  if (answers['0'] && answers['0'].val === 'foreign') risks.push({ text: 'As a foreign entity, you cannot reinstate if dissolved. You would need to re-register, possibly under a new name.' });
+  if (answers['5'] && answers['5'].risk >= 1) risks.push({ text: 'Without a CROP, your personal address is public record and you\'re responsible for being available during business hours.' });
 
   if (totalRisk <= 3) {
     circle.className = 'score-circle score-low';
@@ -273,14 +335,17 @@ function showResult() {
   }
 
   if (risks.length > 0) {
-    items.innerHTML = risks.map(r => `<div class="risk-item"><span class="risk-icon">${r.icon}</span><span>${r.text}</span></div>`).join('');
+    items.innerHTML = risks.map(function(r) {
+      return '<div class="risk-item"><span class="risk-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C44536" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span><span>' + r.text + '</span></div>';
+    }).join('');
   } else {
-    items.innerHTML = '<div class="risk-item"><span class="risk-icon">✅</span><span>No major compliance risks detected. Consider a CROP for added protection and convenience.</span></div>';
+    items.innerHTML = '<div class="risk-item"><span class="risk-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></span><span>No major compliance risks detected. Consider a CROP for added protection and convenience.</span></div>';
   }
 
   document.getElementById('result').classList.add('show');
+  announceToSR('Your compliance score is ' + circle.textContent + '. ' + title.textContent);
 
-  // Show plan recommendation based on risk score
+  // Show plan recommendation
   var recDiv = document.getElementById('plan-recs');
   var recCards = document.getElementById('rec-cards');
   recDiv.style.display = 'block';
@@ -297,114 +362,59 @@ function showResult() {
       + '<div style="font-size:13px;color:#F59E0B;font-weight:700;margin-bottom:4px">RECOMMENDED</div>'
       + '<div style="font-size:18px;font-weight:700;color:#111">Business Starter</div>'
       + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$199<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Everything in Compliance + hosting, email, and annual filing</div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Everything in Compliance + hosting, email, and website</div>'
       + '<div style="background:#F59E0B;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Fix My Compliance →</div></a>';
   } else {
     cards = '<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #EF4444;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
       + '<div style="font-size:13px;color:#EF4444;font-weight:700;margin-bottom:4px">URGENT — RECOMMENDED</div>'
       + '<div style="font-size:18px;font-weight:700;color:#111">Business Pro</div>'
       + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$349<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Full compliance management + entity monitoring + priority support</div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Full compliance management + we file your annual report</div>'
       + '<div style="background:#EF4444;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Protect My Business →</div></a>';
   }
   recCards.innerHTML = cards;
+
+  // Scroll result into view
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function submitLead() {
   var email = document.getElementById('lead-email').value.trim();
   var name = document.getElementById('lead-name').value.trim();
-  if (!email) { alert('Please enter your email'); return; }
   var btn = document.getElementById('lead-btn');
-  btn.textContent = 'Analyzing...'; btn.disabled = true;
-  
-  // Collect quiz answers for AI scoring
-  var answers = {
-    entity_type: window.quizAnswers ? window.quizAnswers[0] : 'unknown',
-    has_registered_office: window.quizAnswers ? window.quizAnswers[1] === 0 : false,
-    annual_report_filed: window.quizAnswers ? window.quizAnswers[2] === 0 : false,
-    risk_score: totalRisk,
-    source: 'compliance_check',
-    state: 'PA'
-  };
-  
+  var errEl = document.getElementById('lead-error');
+
+  // Inline validation instead of alert()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('lead-email').style.borderColor = '#DC2626';
+    if (errEl) { errEl.textContent = 'Please enter a valid email address'; errEl.style.display = 'block'; }
+    setTimeout(function() { document.getElementById('lead-email').style.borderColor = '#d1d5db'; }, 2000);
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+
+  btn.textContent = 'Analyzing...'; btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+
   try {
-    // Call AI lead qualifier
     var qualRes = await fetch('/api/qualify-lead', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ email: email, name: name, answers: answers })
+      body: JSON.stringify({ email: email, name: name, answers: { risk_score: totalRisk, source: 'compliance_check', state: 'PA' } })
     });
     var qualData = await qualRes.json();
-    
-    // Also submit to intake for n8n nurture
+
     await fetch('/api/intake', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        email: email, name: name,
-        entityType: answers.entity_type,
-        source: 'compliance_check',
-        score: qualData.totalScore || totalRisk,
-        tier: qualData.tier || 'warm',
-        recommendedPlan: qualData.recommendedPlan || 'compliance_only'
-      })
+      body: JSON.stringify({ email: email, name: name, source: 'compliance_check', score: qualData.totalScore || totalRisk, tier: qualData.tier || 'warm' })
     });
-    
-    document.getElementById('lead-capture').querySelector('div').style.display = 'none';
+
+    document.getElementById('lead-capture').querySelector('div[style]').style.display = 'none';
     document.getElementById('lead-success').style.display = 'block';
-    if (window.trackEvent) trackEvent('Lead Captured', { source: 'compliance_check', score: qualData.totalScore });
+    if (window.plausible) plausible('Lead Captured', { props: { source: 'compliance_check', score: totalRisk } });
   } catch(e) {
-    btn.textContent = 'Get my report →'; btn.disabled = false;
-    alert('Something went wrong. Please try again.');
+    btn.textContent = 'Get my report →'; btn.disabled = false; btn.setAttribute('aria-busy', 'false');
+    if (errEl) { errEl.textContent = 'Something went wrong. Please try again.'; errEl.style.display = 'block'; }
   }
 }
-var quizAnswers = [];
-var origNext = window.nextQuestion;
-
-
-async function captureLead() {
-  const email = document.getElementById('lead-email').value;
-  if (!email || !email.includes('@')) { document.getElementById('lead-msg').textContent = 'Please enter a valid email'; document.getElementById('lead-msg').style.display = 'block'; return; }
-  
-  const btn = document.querySelector('#lead-capture button');
-  btn.textContent = 'Sending...'; btn.disabled = true;
-  
-  try {
-    // Score the lead with AI
-    const answers = {};
-    document.querySelectorAll('.question').forEach((q, i) => {
-      const selected = q.querySelector('.selected');
-      if (selected) answers['q' + i] = selected.textContent;
-    });
-    
-    await fetch('/api/qualify-lead', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, name: '', answers: { ...answers, riskScore: totalRisk, entity_type: answers.q0 || 'LLC', state: 'PA', timeline: totalRisk > 15 ? 'urgent' : 'normal' } })
-    });
-    
-    // Also send to intake for n8n nurture
-    await fetch('/api/intake', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, source: 'compliance-check', riskScore: totalRisk, answers })
-    });
-    
-    document.getElementById('lead-msg').textContent = 'Check your email! We sent your personalized compliance report.';
-    document.getElementById('lead-msg').style.display = 'block';
-    document.getElementById('lead-msg').style.color = 'var(--green)';
-    btn.textContent = 'Sent!';
-  } catch(e) {
-    btn.textContent = 'Send report'; btn.disabled = false;
-    document.getElementById('lead-msg').textContent = 'Something went wrong. Please try again.';
-    document.getElementById('lead-msg').style.display = 'block';
-    document.getElementById('lead-msg').style.color = '#dc2626';
-  }
-}
-
-// Show lead capture when result is displayed
-const origShowResult = showResult;
-showResult = function() {
-  origShowResult();
-  document.getElementById('lead-capture').style.display = 'block';
-};
-
 </script>
 <script src="/embed/chatbot.js" defer></script>
 <script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
