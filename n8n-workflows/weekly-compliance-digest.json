@@ -1,0 +1,121 @@
+{
+  "name": "CROP — Weekly Compliance Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Monday 9am ET",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://app.suitedash.com/secure-api/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "limit", "value": "500" }]
+        },
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "get-clients",
+      "name": "Get All Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": { "httpHeaderAuth": { "id": "SUITEDASH_CRED_ID", "name": "SuiteDash API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const contacts = $input.first().json.data || $input.first().json || [];\nconst ids = [];\nfor (const c of (Array.isArray(contacts) ? contacts : [contacts])) {\n  const id = c.id || (c.custom_fields || {}).dos_number || `email:${c.email}`;\n  ids.push(id);\n}\nreturn [{ json: { entityIds: ids, count: ids.length } }];"
+      },
+      "id": "extract-ids",
+      "name": "Extract All Entity IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://pacropservices.com/api/scheduler",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'evaluate_all', entityIds: $json.entityIds, year: new Date().getFullYear() }) }}",
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "call-evaluate",
+      "name": "Call Scheduler — Evaluate All",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://pacropservices.com/api/compliance-dashboard",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "adminKey", "value": "CROP-ADMIN-2026-IKE" }]
+        },
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "get-dashboard",
+      "name": "Get Dashboard Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = $('Call Scheduler — Evaluate All').first().json.summary || {};\nconst dashboard = $('Get Dashboard Metrics').first().json || {};\nconst now = new Date();\nconst weekStart = new Date(now); weekStart.setDate(now.getDate() - 7);\n\nconst overdueList = (summary.overdue || []).map(e => `• ${e.name} (${e.entityType}) — ${e.daysOverdue} days overdue`).join('\\n') || 'None';\nconst atRiskList = (summary.atRisk || []).map(e => `• ${e.name} — ${e.risk} risk (${e.status})`).join('\\n') || 'None';\nconst upcomingList = (summary.upcomingDeadlines || []).map(e => `• ${e.name} — ${e.daysUntilDeadline} days (${e.deadline})`).join('\\n') || 'None';\n\nconst html = `\n<div style=\"font-family:Outfit,sans-serif;max-width:700px;margin:0 auto\">\n<h1 style=\"color:#0C1220\">PA CROP — Weekly Compliance Digest</h1>\n<p style=\"color:#666\">Week of ${weekStart.toLocaleDateString()} — ${now.toLocaleDateString()}</p>\n\n<div style=\"background:#f8fafc;padding:20px;border-radius:12px;margin:16px 0\">\n<h3>Portfolio Summary</h3>\n<table style=\"width:100%;border-collapse:collapse\">\n<tr><td>Total entities:</td><td><strong>${summary.total || 0}</strong></td></tr>\n<tr><td>Status distribution:</td><td>${JSON.stringify(summary.byStatus || {})}</td></tr>\n<tr><td>Risk distribution:</td><td>LOW: ${(summary.byRisk||{}).LOW||0} · MED: ${(summary.byRisk||{}).MEDIUM||0} · HIGH: ${(summary.byRisk||{}).HIGH||0} · CRIT: ${(summary.byRisk||{}).CRITICAL||0}</td></tr>\n</table>\n</div>\n\n<div style=\"background:${(summary.overdue||[]).length > 0 ? '#fef2f2' : '#ecfdf5'};padding:20px;border-radius:12px;margin:16px 0\">\n<h3>${(summary.overdue||[]).length > 0 ? '🚨' : '✅'} Overdue Entities</h3>\n<pre>${overdueList}</pre>\n</div>\n\n<div style=\"background:#fffbeb;padding:20px;border-radius:12px;margin:16px 0\">\n<h3>⚠️ At-Risk Entities</h3>\n<pre>${atRiskList}</pre>\n</div>\n\n<div style=\"background:#f0f9ff;padding:20px;border-radius:12px;margin:16px 0\">\n<h3>📅 Upcoming Deadlines (30 days)</h3>\n<pre>${upcomingList}</pre>\n</div>\n\n<div style=\"background:#f8fafc;padding:20px;border-radius:12px;margin:16px 0\">\n<h3>System Health</h3>\n<p>Upstash: ${dashboard.systemHealth?.upstashConnected ? '✅' : '❌'} · Rules: v${dashboard.rulesVersion || '?'} · Engine: ${dashboard.systemHealth?.complianceEngine ? '✅' : '❌'}</p>\n<p>Chat questions today: ${dashboard.metrics?.chatQuestions || 0} · Escalations: ${dashboard.metrics?.chatEscalations || 0}</p>\n</div>\n\n<p style=\"color:#666;font-size:13px\">— PA CROP Compliance Engine · <a href=\"https://pacropservices.com/admin\">Admin Dashboard</a></p>\n</div>`;\n\nreturn [{ json: { html, subject: `PA CROP Weekly Digest: ${summary.total || 0} entities · ${(summary.overdue||[]).length} overdue · ${(summary.atRisk||[]).length} at-risk` } }];"
+      },
+      "id": "build-digest",
+      "name": "Build Digest Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://api.emailit.com/v1/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.EMAILIT_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'PA CROP Services <ops@pacropservices.com>', to: 'polycarpohu@gmail.com', subject: $json.subject, html: $json.html }) }}"
+      },
+      "id": "send-digest",
+      "name": "Send Digest to Ike",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 400]
+    }
+  ],
+  "connections": {
+    "Monday 9am ET": { "main": [[{ "node": "Get All Clients", "type": "main", "index": 0 }]] },
+    "Get All Clients": { "main": [[{ "node": "Extract All Entity IDs", "type": "main", "index": 0 }]] },
+    "Extract All Entity IDs": { "main": [[{ "node": "Call Scheduler — Evaluate All", "type": "main", "index": 0 }, { "node": "Get Dashboard Metrics", "type": "main", "index": 0 }]] },
+    "Call Scheduler — Evaluate All": { "main": [[{ "node": "Build Digest Email", "type": "main", "index": 0 }]] },
+    "Get Dashboard Metrics": { "main": [[{ "node": "Build Digest Email", "type": "main", "index": 0 }]] },
+    "Build Digest Email": { "main": [[{ "node": "Send Digest to Ike", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York" },
+  "tags": [{ "name": "CROP Compliance Engine" }]
+}

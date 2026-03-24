@@ -1,0 +1,146 @@
+{
+  "name": "CROP — Overdue Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 8am ET",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://app.suitedash.com/secure-api/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "limit", "value": "500" }]
+        },
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "get-clients",
+      "name": "Get All Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": { "httpHeaderAuth": { "id": "SUITEDASH_CRED_ID", "name": "SuiteDash API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const contacts = $input.first().json.data || $input.first().json || [];\nconst ids = [];\nfor (const c of (Array.isArray(contacts) ? contacts : [contacts])) {\n  const id = c.id || (c.custom_fields || {}).dos_number || `email:${c.email}`;\n  ids.push(id);\n}\nreturn [{ json: { entityIds: ids, count: ids.length } }];"
+      },
+      "id": "extract-ids",
+      "name": "Extract All Entity IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://pacropservices.com/api/scheduler",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'overdue_check', entityIds: $json.entityIds, year: new Date().getFullYear() }) }}",
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "call-overdue-check",
+      "name": "Call Scheduler — Overdue Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.escalations.length }}", "operation": "larger", "value2": 0 }]
+        }
+      },
+      "id": "has-escalations",
+      "name": "Any Escalations?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escalations = $input.first().json.escalations || [];\nreturn escalations.map(e => ({ json: e }));"
+      },
+      "id": "split-escalations",
+      "name": "Split Escalations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.emailit.com/v1/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.EMAILIT_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'PA CROP Services <urgent@pacropservices.com>', to: $json.email, subject: '🚨 URGENT: ' + $json.name + ' — Annual Report OVERDUE (' + $json.daysOverdue + ' days)', html: '<div style=\"font-family:Outfit,sans-serif;max-width:600px;margin:0 auto\"><div style=\"background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:20px;margin-bottom:20px\"><h2 style=\"color:#dc2626;margin:0\">⚠️ Your Annual Report is Overdue</h2></div><p><strong>' + $json.name + '</strong> missed its annual report deadline <strong>' + $json.daysOverdue + ' days ago</strong>.</p>' + (!$json.canReinstate ? '<div style=\"background:#fef3c7;border:1px solid #f59e0b;padding:16px;border-radius:8px;margin:16px 0\"><strong>⚠️ Critical for foreign entities:</strong> If your entity is administratively terminated, you <strong>cannot reinstate</strong>. You would need to re-register as a new foreign entity. Act now.</div>' : '') + '<p><strong>What you need to do:</strong></p><ol><li>File your annual report immediately at <a href=\"https://file.dos.pa.gov\">file.dos.pa.gov</a></li><li>The filing fee is $7 by credit card</li><li>After filing, reply to this email with your confirmation number</li></ol><p>Need help? Call us directly at <strong>814-228-2822</strong> or reply to this email.</p><p>— PA CROP Services</p></div>' }) }}"
+      },
+      "id": "send-urgent-email",
+      "name": "Send Urgent Overdue Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.emailit.com/v1/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.EMAILIT_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'PA CROP Services <ops@pacropservices.com>', to: 'polycarpohu@gmail.com', subject: '🚨 OPS ALERT: ' + $json.escalations.length + ' entities escalated to overdue', html: '<h2>Overdue Escalation Report</h2><p>' + $json.escalations.length + ' entities were escalated today.</p><pre>' + JSON.stringify($json.escalations, null, 2) + '</pre>' }) }}"
+      },
+      "id": "notify-admin",
+      "name": "Notify Ike — Escalation Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {},
+      "id": "no-escalations",
+      "name": "No Escalations Today",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1340, 500]
+    }
+  ],
+  "connections": {
+    "Daily 8am ET": { "main": [[{ "node": "Get All Clients", "type": "main", "index": 0 }]] },
+    "Get All Clients": { "main": [[{ "node": "Extract All Entity IDs", "type": "main", "index": 0 }]] },
+    "Extract All Entity IDs": { "main": [[{ "node": "Call Scheduler — Overdue Check", "type": "main", "index": 0 }]] },
+    "Call Scheduler — Overdue Check": { "main": [[{ "node": "Any Escalations?", "type": "main", "index": 0 }]] },
+    "Any Escalations?": { "main": [[{ "node": "Split Escalations", "type": "main", "index": 0 }, { "node": "Notify Ike — Escalation Alert", "type": "main", "index": 0 }], [{ "node": "No Escalations Today", "type": "main", "index": 0 }]] },
+    "Split Escalations": { "main": [[{ "node": "Send Urgent Overdue Email", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York" },
+  "tags": [{ "name": "CROP Compliance Engine" }]
+}

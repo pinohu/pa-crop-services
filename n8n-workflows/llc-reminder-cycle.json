@@ -1,0 +1,160 @@
+{
+  "name": "CROP — LLC Reminder Cycle",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 8am ET",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://app.suitedash.com/secure-api/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "500" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json" } }
+        }
+      },
+      "id": "get-clients",
+      "name": "Get All Clients from SuiteDash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUITEDASH_CRED_ID",
+          "name": "SuiteDash API"
+        }
+      },
+      "notes": "SETUP: Create HTTP Header Auth credential with headers X-Public-ID and X-Secret-Key from SuiteDash"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract entity IDs from SuiteDash contacts\n// Filter to llcs only (entity_type contains 'corp')\nconst contacts = $input.first().json.data || $input.first().json || [];\nconst llcEntityIds = [];\n\nfor (const contact of (Array.isArray(contacts) ? contacts : [contacts])) {\n  const cf = contact.custom_fields || {};\n  const entityType = (cf.entity_type || '').toLowerCase();\n  if (entityType.includes('llc') || entityType.includes('limited liability company')) {\n    const id = contact.id || cf.dos_number || `email:${contact.email}`;\n    llcEntityIds.push(id);\n  }\n}\n\nreturn [{ json: { entityIds: llcEntityIds, count: llcEntityIds.length, deadlineGroup: 'llcs' } }];"
+      },
+      "id": "filter-corps",
+      "name": "Filter to LLCs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://pacropservices.com/api/scheduler",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'process_reminders', deadlineGroup: 'llcs', entityIds: $json.entityIds, year: new Date().getFullYear() }) }}",
+        "options": {
+          "response": { "response": { "responseFormat": "json" } }
+        }
+      },
+      "id": "call-scheduler",
+      "name": "Call Scheduler — Process LLC Reminders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.remindersNeeded }}", "operation": "larger", "value2": 0 }]
+        }
+      },
+      "id": "has-reminders",
+      "name": "Any Reminders Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split reminder batch into individual send items\nconst reminders = $input.first().json.reminders || [];\nconst items = [];\n\nfor (const r of reminders) {\n  for (const rem of r.reminders) {\n    items.push({\n      json: {\n        entityId: r.entityId,\n        entityName: r.entityName,\n        entityType: r.entityType,\n        email: r.email,\n        plan: r.plan,\n        deadline: r.deadline,\n        daysUntilDeadline: r.daysUntilDeadline,\n        daysBeforeDeadline: rem.daysBeforeDeadline,\n        priority: rem.priority,\n        filingMethod: r.filingMethod,\n        riskLevel: r.riskLevel\n      }\n    });\n  }\n}\n\nreturn items;"
+      },
+      "id": "split-reminders",
+      "name": "Split into Individual Reminders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.emailit.com/v1/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.EMAILIT_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'PA CROP Services <reminders@pacropservices.com>', to: $json.email, subject: '⚠️ ' + $json.entityName + ' — Annual Report Due in ' + $json.daysBeforeDeadline + ' Days', html: '<div style=\"font-family:Outfit,sans-serif;max-width:600px;margin:0 auto\"><h2 style=\"color:#0C1220\">Annual Report Reminder</h2><p>Hi,</p><p>Your <strong>' + $json.entityName + '</strong> (' + $json.entityType + ') annual report is due <strong>' + $json.deadline + '</strong> — that\\'s <strong>' + $json.daysUntilDeadline + ' days</strong> from now.</p>' + ($json.filingMethod === 'MANAGED' ? '<p style=\"background:#ecfdf5;padding:12px;border-radius:8px\">✅ <strong>Good news:</strong> Your plan includes filing. We\\'ll handle it — just make sure your entity details are current in <a href=\"https://pacropservices.com/portal\">your portal</a>.</p>' : '<p>File online at <a href=\"https://file.dos.pa.gov\">file.dos.pa.gov</a> using your PA DOS entity number. The fee is $7.</p>') + '<p>Missing this deadline could eventually lead to administrative action. <a href=\"https://pacropservices.com/pa-2027-dissolution-deadline\">Learn about the 2027 enforcement timeline</a>.</p><p style=\"margin-top:24px\">— PA CROP Services<br><a href=\"https://pacropservices.com\">pacropservices.com</a> · 814-228-2822</p></div>' }) }}"
+      },
+      "id": "send-email",
+      "name": "Send Reminder Email via Emailit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "notes": "SETUP: Set EMAILIT_API_KEY in n8n environment variables"
+    },
+    {
+      "parameters": {
+        "url": "https://pacropservices.com/api/entity-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'reminder_sent', entityId: $json.entityId, year: new Date().getFullYear(), daysBeforeDeadline: $json.daysBeforeDeadline, channel: 'email' }) }}"
+      },
+      "id": "log-reminder",
+      "name": "Log Reminder to Compliance Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {},
+      "id": "no-reminders",
+      "name": "No Reminders Needed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1340, 400]
+    }
+  ],
+  "connections": {
+    "Daily 8am ET": { "main": [[{ "node": "Get All Clients from SuiteDash", "type": "main", "index": 0 }]] },
+    "Get All Clients from SuiteDash": { "main": [[{ "node": "Filter to LLCs", "type": "main", "index": 0 }]] },
+    "Filter to LLCs": { "main": [[{ "node": "Call Scheduler — Process LLC Reminders", "type": "main", "index": 0 }]] },
+    "Call Scheduler — Process LLC Reminders": { "main": [[{ "node": "Any Reminders Needed?", "type": "main", "index": 0 }]] },
+    "Any Reminders Needed?": { "main": [[{ "node": "Split into Individual Reminders", "type": "main", "index": 0 }], [{ "node": "No Reminders Needed", "type": "main", "index": 0 }]] },
+    "Split into Individual Reminders": { "main": [[{ "node": "Send Reminder Email via Emailit", "type": "main", "index": 0 }]] },
+    "Send Reminder Email via Emailit": { "main": [[{ "node": "Log Reminder to Compliance Engine", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/New_York" },
+  "tags": [{ "name": "CROP Compliance Engine" }]
+}

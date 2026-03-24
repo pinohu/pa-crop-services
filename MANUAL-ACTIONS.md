@@ -100,33 +100,38 @@ Protects against service-of-process delivery failures — the core liability ris
 to call it daily with entity ID batches. The scheduler evaluates each entity and returns
 which reminders need to be sent — n8n then executes the sends via Emailit.
 
-**Workflows to create:**
+**✅ Workflow JSONs are ready for import** — see `n8n-workflows/` directory:
 
-| Workflow | Cron | Calls | Purpose |
-|----------|------|-------|---------|
-| Corp Reminder Cycle | Daily 8am ET | `POST /api/scheduler { action: 'process_reminders', deadlineGroup: 'corporations', entityIds: [...] }` | Process June 30 deadline entities |
-| LLC Reminder Cycle | Daily 8am ET | `POST /api/scheduler { action: 'process_reminders', deadlineGroup: 'llcs', entityIds: [...] }` | Process Sept 30 deadline entities |
-| Other Reminder Cycle | Daily 8am ET | `POST /api/scheduler { action: 'process_reminders', deadlineGroup: 'others', entityIds: [...] }` | Process Dec 31 deadline entities |
-| Overdue Escalation | Daily 8am ET | `POST /api/scheduler { action: 'overdue_check', entityIds: [...] }` | Auto-escalate overdue entities |
-| Compliance Digest | Weekly Mon 9am ET | `POST /api/scheduler { action: 'evaluate_all', entityIds: [...] }` | Summary email to Ike |
+| File | Purpose | Schedule |
+|------|---------|----------|
+| `corp-reminder-cycle.json` | Corps (June 30 deadline) | Daily 8am ET |
+| `llc-reminder-cycle.json` | LLCs (Sept 30 deadline) | Daily 8am ET |
+| `other-reminder-cycle.json` | LPs/LLPs/trusts (Dec 31 deadline) | Daily 8am ET |
+| `overdue-escalation.json` | Auto-escalate + alert Ike | Daily 8am ET |
+| `weekly-compliance-digest.json` | Portfolio summary to Ike | Monday 9am ET |
 
-**Each workflow pattern:**
-1. HTTP Request node → SuiteDash API to get all client entity IDs
-2. HTTP Request node → `POST https://pacropservices.com/api/scheduler` with admin key header `X-Admin-Key: CROP-ADMIN-2026-IKE`
-3. IF node → filter entities that need reminders from scheduler response
-4. For-each → Emailit send node for each reminder
-5. HTTP Request node → `POST /api/entity-status` with `action: 'reminder_sent'` to log delivery
-
-**n8n base URL:** `https://n8n.audreysplace.place`
-**Depends on:** Upstash Redis provisioned (#1), at least one entity registered in the engine
-**Time:** ~3 hours for all 5 workflows
+**Steps:**
+1. Read `n8n-workflows/README.md` for full import instructions
+2. Create SuiteDash credential in n8n (Header Auth with X-Public-ID + X-Secret-Key)
+3. Set `EMAILIT_API_KEY` in n8n environment variables
+4. Import each JSON file → update credential reference → test → activate
 
 ---
 
 ### 7. Register first entities in the compliance engine
 **What:** The engine is built but empty. Existing SuiteDash clients need to be registered.
 
-**For each existing client, call:**
+**✅ Bulk registration script is ready** — see `scripts/bulk-register.js`:
+
+```bash
+# Dry run first (shows what would be registered, no changes):
+SUITEDASH_PUBLIC_ID=xxx SUITEDASH_SECRET_KEY=yyy node scripts/bulk-register.js --dry-run
+
+# Live run:
+SUITEDASH_PUBLIC_ID=xxx SUITEDASH_SECRET_KEY=yyy node scripts/bulk-register.js
+```
+
+Or register a single entity manually:
 ```bash
 curl -X POST https://pacropservices.com/api/entity-status \
   -H "Content-Type: application/json" \
@@ -197,14 +202,9 @@ Commercial Registered Office Provider. Filed but needs confirmation of processin
 
 ---
 
-### 11. Set GROQ_API_KEY in Vercel (if not already set)
-**What:** Required for AI chatbot, email triage, document classification, and lead scoring.
-Without it, chatbot returns a "temporarily unavailable" fallback message.
-
-**Value:** `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`
-**Set for:** Production + Preview + Development
-
-**Check if already set:** Vercel → pa-crop-services → Settings → Environment Variables → search `GROQ`
+### 11. ~~Set GROQ_API_KEY in Vercel~~ ✅ DONE
+**Verified 2026-03-24:** GROQ_API_KEY is set and working. Chatbot returns compliance-engine-backed
+answers with guardrail citations. Deterministic answers for compliance facts bypass LLM entirely.
 
 ---
 
@@ -258,13 +258,13 @@ SUITEDASH_PUBLIC_ID        ✅
 SUITEDASH_SECRET_KEY       ✅
 EMAILIT_API_KEY            ✅ (documented in INFRASTRUCTURE.md as set but not listed)
 STRIPE_WEBHOOK_SECRET      ✅ (from Stripe webhook config)
+GROQ_API_KEY               ✅ (verified working 2026-03-24)
 ```
 
 ### Need to add
 ```
 UPSTASH_REDIS_REST_URL     ❌ BLOCKING — provision first (#1)
 UPSTASH_REDIS_REST_TOKEN   ❌ BLOCKING — provision first (#1)
-GROQ_API_KEY               ❓ Check if set (#11)
 ```
 
 ### Future (not needed yet)
@@ -291,9 +291,9 @@ BRIZY_API_KEY              🔲
 | 3 | Apply for EIN | 10 min | Yes — needed for bank account |
 | 4 | Open bank account + connect Stripe | 30 min–days | Yes — needed for revenue |
 | 5 | Bind E&O insurance | 1–3 days | Yes — needed before clients |
-| 6 | Verify GROQ_API_KEY in Vercel | 2 min | Yes — chatbot depends on it |
-| 7 | Register first entities in engine | 5 min each | Needed for scheduler |
-| 8 | Create n8n scheduler workflows | 3 hours | Needed for live reminders |
+| 6 | ~~Verify GROQ_API_KEY~~ | ~~2 min~~ | ✅ Done |
+| 7 | Import n8n workflows (JSONs ready) | 30 min | Needed for live reminders |
+| 8 | Run bulk-register script | 5 min | Needed for scheduler |
 | 9 | Set up log drain (Axiom/Betterstack) | 15 min | Improves ops visibility |
 | 10 | Google Business Profile | 30 min | Improves local SEO |
 | 11 | Google Search Console | 15 min | Improves search indexing |
