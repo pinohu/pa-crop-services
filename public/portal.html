@@ -1473,9 +1473,9 @@ function renderNotifications() {
 // Generate notifications from client data
 function generateNotifications(c) {
   if (!c) return;
-  if (c.entityStatus === 'active') addNotification('✅ Your entity status: Active — all clear', 'success');
+  if (c.entityStatus === 'active') addNotification('Your entity status: Active — all clear', 'success');
   if (c.tier) addNotification('Your ' + (c.tierLabel || c.tier) + ' plan is active', 'info');
-  if (c.nextDeadline) addNotification('📅 Next deadline: ' + c.nextDeadline, 'warning');
+  if (c.nextDeadline) addNotification('Next deadline: ' + c.nextDeadline, 'warning');
 }
 // Close notifications on outside click
 document.addEventListener('click', function(e) {

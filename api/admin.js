@@ -405,6 +405,6 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('Admin API error:', err);
-    return res.status(500).json({ error: err.message || 'Internal error' });
+    return res.status(500).json({ error: 'Something went wrong. Please try again or contact hello@pacropservices.com.' });
   }
 }
