@@ -2170,6 +2170,310 @@ async function updateDashboardRisk() {
 
 setTimeout(function() { if (window._orgId || window._ctx?.organization_id) updateDashboardRisk(); }, 3000);
 
+// ═══ KNOWLEDGE BASE (25 articles) ═══
+
+var _kbData = null;
+var _kbFilter = '';
+
+async function loadKnowledgeBase() {
+  try {
+    var r = await fetch('/api/portal/knowledge-base');
+    var d = await r.json();
+    if (!d.success) return;
+    _kbData = d;
+    // Render categories
+    var cats = document.getElementById('kb-categories');
+    if (cats && d.categories) {
+      cats.innerHTML = '<button class="btn btn-ghost btn-sm" onclick="filterKBCategory(\'\')" style="font-size:12px;font-weight:700">All</button>' +
+        Object.entries(d.categories).map(function(e) {
+          return '<button class="btn btn-ghost btn-sm" onclick="filterKBCategory(\'' + e[0] + '\')" style="font-size:12px">' + e[1].icon + ' ' + e[1].label + '</button>';
+        }).join('');
+    }
+    renderKBArticles(d.articles);
+  } catch (e) { console.error('KB load error:', e); }
+}
+
+function renderKBArticles(articles) {
+  var el = document.getElementById('kb-articles');
+  if (!articles || !articles.length) { el.innerHTML = '<div class="card-body" style="padding:20px;text-align:center;color:var(--ink3)">No articles found.</div>'; return; }
+  el.innerHTML = '<div class="card-body" style="padding:0">' + articles.map(function(a) {
+    return '<div onclick="openKBArticle(\'' + a.id + '\')" style="display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseenter="this.style.background=\'var(--bg)\'" onmouseleave="this.style.background=\'\'">' +
+      '<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--ink)">' + a.title + '</div>' +
+      '<div style="font-size:12px;color:var(--ink3);margin-top:3px">' + a.summary + '</div>' +
+      '<div style="margin-top:4px">' + (a.tags || []).slice(0, 3).map(function(t) { return '<span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;background:var(--bg3);color:var(--ink3);margin-right:4px">' + t + '</span>'; }).join('') + '</div></div>' +
+      '<div style="color:var(--ink3);font-size:18px;align-self:center">→</div></div>';
+  }).join('') + '</div>';
+}
+
+function searchKB(q) {
+  if (!_kbData) { loadKnowledgeBase(); return; }
+  if (!q || q.length < 2) { renderKBArticles(_kbData.articles); return; }
+  fetch('/api/portal/knowledge-base?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(d) { if (d.success) renderKBArticles(d.articles); });
+}
+
+function filterKBCategory(cat) {
+  if (!_kbData) return;
+  if (!cat) { renderKBArticles(_kbData.articles); return; }
+  var filtered = _kbData.articles.filter(function(a) { return a.category === cat; });
+  renderKBArticles(filtered);
+}
+
+async function openKBArticle(id) {
+  try {
+    var r = await fetch('/api/portal/knowledge-base?id=' + id);
+    var d = await r.json();
+    if (!d.success || !d.article) return;
+    document.getElementById('kb-articles').style.display = 'none';
+    document.getElementById('kb-categories').style.display = 'none';
+    var reader = document.getElementById('kb-reader');
+    reader.style.display = 'block';
+    document.getElementById('kb-reader-title').textContent = d.article.title;
+    document.getElementById('kb-reader-meta').textContent = (d.article.tags || []).join(' · ');
+    document.getElementById('kb-reader-content').innerHTML = d.article.content.replace(/\n/g, '<br>');
+  } catch (e) { showToast('Could not load article'); }
+}
+
+function closeKBReader() {
+  document.getElementById('kb-reader').style.display = 'none';
+  document.getElementById('kb-articles').style.display = '';
+  document.getElementById('kb-categories').style.display = '';
+}
+
+// ═══ ENTITY HEALTH (7 components) ═══
+
+async function loadEntityHealth() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) { document.getElementById('eh-score-label').textContent = 'Connect your entity to see health score'; return; }
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/portal/value?action=health&org=' + orgId, { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success || !d.health) throw new Error('');
+    var h = d.health;
+    var gc = { A: 'var(--green)', B: '#3b82f6', C: '#f59e0b', D: '#ea580c', F: 'var(--red)' };
+    document.getElementById('eh-grade').textContent = h.grade;
+    document.getElementById('eh-grade').style.color = gc[h.grade] || 'var(--ink)';
+    document.getElementById('eh-score-label').textContent = h.overall + '/100 — ' + (h.risk_level === 'low' ? 'On Track' : h.risk_level === 'medium' ? 'Attention Needed' : h.risk_level === 'high' ? 'At Risk' : 'Critical');
+    document.getElementById('eh-score-bar').style.width = h.overall + '%';
+    document.getElementById('eh-score-bar').style.background = gc[h.grade] || 'var(--accent)';
+    document.getElementById('eh-risk-label').textContent = 'Risk level: ' + h.risk_level;
+
+    // Components
+    var labels = { filing_readiness: 'Filing Readiness', document_responsiveness: 'Doc Responsiveness', entity_verification: 'Entity Verification', billing_continuity: 'Billing Continuity', contact_accuracy: 'Contact Data', multi_entity_exposure: 'Multi-Entity', jurisdiction_complexity: 'Jurisdiction' };
+    var weights = { filing_readiness: 30, document_responsiveness: 20, entity_verification: 20, billing_continuity: 15, contact_accuracy: 10, multi_entity_exposure: 3, jurisdiction_complexity: 2 };
+    var compEl = document.getElementById('eh-components');
+    compEl.innerHTML = Object.entries(h.components).map(function(e) {
+      var c = e[1] >= 80 ? 'var(--green)' : e[1] >= 50 ? '#f59e0b' : 'var(--red)';
+      return '<div style="padding:12px;background:var(--bg);border-radius:8px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="font-weight:600">' + (labels[e[0]] || e[0]) + '</span><span style="color:' + c + ';font-weight:600">' + e[1] + '%</span></div>' +
+        '<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + e[1] + '%;background:' + c + ';border-radius:3px"></div></div>' +
+        '<div style="font-size:10px;color:var(--ink3);margin-top:4px">Weight: ' + (weights[e[0]] || 0) + '%</div></div>';
+    }).join('');
+
+    // Drivers
+    var drEl = document.getElementById('eh-drivers');
+    drEl.innerHTML = (h.drivers || []).length ? h.drivers.map(function(d) { return '<div style="padding:6px 0;font-size:13px;color:var(--ink2);border-bottom:1px solid var(--border)">⚠️ ' + d + '</div>'; }).join('') : '<div style="font-size:13px;color:var(--green)">✅ No risk drivers detected</div>';
+
+    // Fixes
+    var fxEl = document.getElementById('eh-fixes');
+    fxEl.innerHTML = (h.recommended_fixes || []).length ? h.recommended_fixes.map(function(f) {
+      var ic = { critical: '🔴', high: '🟡', medium: '🔵', low: '⚪' };
+      return '<div style="padding:6px 0;font-size:13px;color:var(--ink2);border-bottom:1px solid var(--border)">' + (ic[f.impact] || '📌') + ' ' + f.action + '</div>';
+    }).join('') : '<div style="font-size:13px;color:var(--green)">✅ No actions needed</div>';
+  } catch (e) { document.getElementById('eh-score-label').textContent = 'Health score available when compliance engine is connected'; }
+}
+
+// ═══ BUSINESS STACK (savings + services) ═══
+
+async function loadBusinessStack() {
+  var plan = window._ctx?.plan || CLIENT?.tier || 'compliance_only';
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/portal/value?action=business-stack', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success) { r = await fetch('/api/portal/value?action=savings&plan=' + plan); d = await r.json(); }
+
+    // Savings banner
+    var sav = d.savings || d;
+    if (sav.plan_price) {
+      document.getElementById('bs-savings-content').innerHTML =
+        '<div><div style="font-weight:600;font-size:16px;color:var(--ink)">You\'re saving $' + sav.savings_low + '–$' + sav.savings_high + '/year</div>' +
+        '<div style="font-size:13px;color:var(--ink3)">' + sav.savings_pct + '% less than buying these services separately</div></div>' +
+        '<div style="text-align:right"><div style="font-size:11px;color:var(--ink3)">Your plan</div><div style="font-size:22px;font-weight:700;color:var(--accent)">$' + sav.plan_price + '<span style="font-size:13px;font-weight:400;color:var(--ink3)">/yr</span></div></div>';
+    }
+
+    // Services grid
+    var services = d.services || [];
+    if (services.length) {
+      document.getElementById('bs-services').innerHTML = services.filter(function(s) { return s.status === 'active'; }).map(function(s) {
+        return '<div style="display:flex;gap:10px;padding:12px;background:var(--bg);border-radius:8px;align-items:flex-start">' +
+          '<div style="color:var(--green);font-size:16px;flex-shrink:0">✓</div>' +
+          '<div><div style="font-weight:600;font-size:13px">' + s.label + '</div><div style="font-size:11px;color:var(--ink3)">' + s.detail + '</div></div></div>';
+      }).join('');
+    }
+
+    // Available to activate
+    var avail = services.filter(function(s) { return s.status === 'available'; });
+    if (avail.length) {
+      document.getElementById('bs-available').innerHTML = avail.map(function(s) {
+        return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">' +
+          '<div style="color:var(--ink3);font-size:14px">+</div>' +
+          '<div style="flex:1"><div style="font-size:13px;font-weight:500">' + s.label + '</div><div style="font-size:11px;color:var(--ink3)">' + s.detail + '</div></div></div>';
+      }).join('') + '<div style="margin-top:12px"><button class="btn btn-accent btn-sm" onclick="showUpgrade()">Upgrade to unlock →</button></div>';
+    } else {
+      document.getElementById('bs-available-card').style.display = 'none';
+    }
+
+    // Show hosting panel if plan includes it
+    if (services.some(function(s) { return s.key === 'hosting' && s.status === 'active'; })) {
+      document.getElementById('bs-hosting-card').style.display = '';
+    }
+  } catch (e) { console.error('Business stack load error:', e); }
+}
+
+// ═══ REFERRAL TRACKING ═══
+
+async function loadReferralTracking() {
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/referrals/me', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    document.getElementById('ref-total').textContent = d.total_referrals || 0;
+    document.getElementById('ref-converted').textContent = d.converted || 0;
+    document.getElementById('ref-credit').textContent = '$' + (d.total_credit || 0);
+    var next = d.total_referrals < 5 ? (5 - (d.total_referrals || 0)) + ' to free month' : d.total_referrals < 10 ? (10 - d.total_referrals) + ' to 3 months' : d.total_referrals < 25 ? (25 - d.total_referrals) + ' to free year' : '🏆 Achieved!';
+    document.getElementById('ref-next-milestone').textContent = next;
+    if (d.referral_code) document.getElementById('ref-code').textContent = d.referral_code;
+  } catch (e) { /* auth required — will show defaults */ }
+}
+
+// ═══ CERTIFICATION ACADEMY ═══
+
+var _certLessons = {
+  1: { title: 'What is a CROP?', content: 'A Commercial Registered Office Provider (CROP) is a licensed entity under 15 Pa. C.S. § 109 that provides registered office addresses for Pennsylvania business entities. Think of it as Pennsylvania\'s version of a registered agent — but with specific state licensing requirements.\n\nEvery PA business entity must maintain a registered office address where it can receive legal documents (like lawsuits), government notices, and official correspondence. The registered office does NOT have to be where you physically work — it just needs to be an address where documents can be reliably received and forwarded.\n\nCROPs exist because the state wants to ensure that every business entity can be contacted through official channels. If you operate from home, use a virtual office, or simply want professional document handling, a CROP is the solution.\n\nPA CROP Services is licensed by the PA Department of State to serve as your registered office at 924 W 23rd St, Erie, PA 16502.' },
+  2: { title: 'Annual Reports by Entity Type', content: 'Starting in 2025, Act 122 of 2022 requires all PA business entities to file an annual report.\n\nThe deadlines are based on your entity type:\n\n• Corporations (domestic + foreign, business + nonprofit): June 30\n• LLCs (domestic + foreign): September 30\n• All others (LPs, LLPs, professional associations, business trusts): December 31\n\nThe filing fee is $7 for most entities. Nonprofits are exempt from the fee but must still file.\n\nFile online at file.dos.pa.gov using form DSCB:15-146. The process takes about 5 minutes.\n\nThese deadlines apply EVERY YEAR — there is no extension process. The deadline is based on your entity type, not your formation date or fiscal year.' },
+  3: { title: 'Enforcement & Dissolution', content: 'For the 2025 and 2026 reporting years, PA DOS has indicated there will be a grace period — no enforcement for late filing.\n\nStarting with 2027 reports, here\'s what happens if you miss the deadline:\n\n• DOMESTIC entities face administrative dissolution approximately 6 months after the entity-type deadline. However, you CAN reinstate by filing the reports and paying outstanding fees.\n\n• FOREIGN entities face administrative termination. You CANNOT reinstate. You would need to re-register as a new foreign entity, which means a new registration date, potential gaps in authority, and possible legal complications.\n\nThis distinction is critical: if you have a foreign LLC or foreign corporation registered in PA, missing the deadline has permanent consequences that cannot be undone through reinstatement.\n\nThe dissolution timeline for 2027: Corps ~January 2028, LLCs ~April 2028, others ~July 2028.' },
+  4: { title: 'Service of Process & Legal Documents', content: 'Service of process is the formal legal delivery of court documents — typically a lawsuit complaint and summons.\n\nWhen someone sues your business entity, the documents are delivered to your registered office address. This is why having a reliable CROP matters so much.\n\nIf you miss a service of process:\n• You may not know you\'re being sued\n• The court can enter a DEFAULT JUDGMENT against you\n• You lose without ever getting to present your defense\n• Reversing a default judgment is expensive and difficult\n\nWith PA CROP Services:\n1. We receive the documents at our office\n2. We immediately classify them as CRITICAL urgency\n3. You get notified by email (and SMS on Pro/Empire plans)\n4. Documents are scanned and uploaded to your portal within hours\n5. Your dashboard shows a red alert with response deadline\n\nWe do NOT provide legal advice. Our job is to ensure you know immediately so you can engage your attorney.' },
+  5: { title: 'Your Compliance Toolkit', content: 'Your PA CROP portal gives you several tools to stay compliant:\n\n• COMPLIANCE CENTER: Shows your obligation timeline, filing progress, and action items. If you\'re on a managed plan, you can see exactly where your filing stands.\n\n• DOCUMENT CENTER: Every piece of mail we receive is scanned, AI-classified by urgency, and uploaded here. Critical items trigger immediate alerts.\n\n• AI ASSISTANT: Ask any compliance question and get a source-backed answer. The assistant knows PA compliance rules and won\'t give legal advice — it\'ll point you to an attorney for legal questions.\n\n• HEALTH SCORE: Seven components measure your compliance posture, from filing readiness to billing continuity. Each component shows what\'s working and what needs attention.\n\n• KNOWLEDGE BASE: 25 articles covering every aspect of PA business compliance, searchable and browsable.\n\n• COMPLIANCE CALENDAR: Subscribe to get all your deadlines in Google Calendar or Apple Calendar.\n\n• FILING READINESS: See exactly what information is needed to file, what\'s missing, and your readiness percentage.\n\nLog in regularly. The system works best when you respond to action items promptly.' }
+};
+var _certCompleted = JSON.parse(localStorage.getItem('crop_cert') || '[]');
+
+function renderCertProgress() {
+  var done = _certCompleted.length;
+  document.getElementById('cert-progress-label').textContent = done + ' of 5 lessons completed';
+  document.getElementById('cert-progress-bar').style.width = (done / 5 * 100) + '%';
+  if (done >= 5) { document.getElementById('cert-badge').textContent = '🏆'; document.getElementById('cert-badge-earned').style.display = ''; }
+  for (var i = 1; i <= 5; i++) {
+    var el = document.getElementById('cert-check-' + i);
+    if (el && _certCompleted.includes(i)) { el.style.background = 'var(--green)'; el.style.borderColor = 'var(--green)'; el.style.color = '#fff'; el.textContent = '✓'; }
+  }
+}
+
+var _currentLesson = 0;
+function openLesson(num) {
+  _currentLesson = num;
+  var lesson = _certLessons[num];
+  if (!lesson) return;
+  document.querySelector('#cert-lessons').parentElement.style.display = 'none';
+  document.querySelector('#cert-lessons').parentElement.previousElementSibling.style.display = 'none';
+  var reader = document.getElementById('cert-reader');
+  reader.style.display = 'block';
+  reader.style.marginTop = '16px';
+  document.getElementById('cert-reader-title').textContent = 'Lesson ' + num + ': ' + lesson.title;
+  document.getElementById('cert-reader-content').innerHTML = lesson.content.replace(/\n/g, '<br>');
+  var btn = document.getElementById('cert-complete-btn');
+  if (_certCompleted.includes(num)) { btn.textContent = '✓ Completed'; btn.disabled = true; btn.style.opacity = '.5'; }
+  else { btn.textContent = '✓ Mark as Complete'; btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function closeLessonReader() {
+  document.getElementById('cert-reader').style.display = 'none';
+  document.querySelector('#cert-lessons').parentElement.style.display = '';
+  document.querySelector('#cert-lessons').parentElement.previousElementSibling.style.display = '';
+}
+
+function completeLesson() {
+  if (_currentLesson && !_certCompleted.includes(_currentLesson)) {
+    _certCompleted.push(_currentLesson);
+    localStorage.setItem('crop_cert', JSON.stringify(_certCompleted));
+    renderCertProgress();
+    var btn = document.getElementById('cert-complete-btn');
+    btn.textContent = '✓ Completed'; btn.disabled = true; btn.style.opacity = '.5';
+    if (_certCompleted.length >= 5) { showToast('🏆 Congratulations! You earned your PA Compliance Certified badge!'); }
+    else { showToast('Lesson ' + _currentLesson + ' completed!'); }
+  }
+}
+
+// ═══ DASHBOARD SAVINGS WIDGET ═══
+
+async function loadDashboardSavings() {
+  var plan = window._ctx?.plan || CLIENT?.tier || 'compliance_only';
+  try {
+    var r = await fetch('/api/portal/value?action=savings&plan=' + plan);
+    var d = await r.json();
+    if (!d.success || !d.plan_price) return;
+    var widget = document.getElementById('savings-widget');
+    if (!widget) {
+      // Inject savings widget after KPI grid
+      var kpiGrid = document.querySelector('.kpi-grid');
+      if (kpiGrid) {
+        var div = document.createElement('div');
+        div.id = 'savings-widget';
+        div.className = 'card fade-up';
+        div.style.cssText = 'margin-top:16px;border-left:4px solid var(--accent)';
+        div.innerHTML = '<div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div style="font-size:14px;font-weight:600">You\'re saving $' + d.savings_low + '–$' + d.savings_high + '/year</div><div style="font-size:12px;color:var(--ink3)">' + d.savings_pct + '% less than buying ' + d.included.length + ' services separately</div></div><button class="btn btn-ghost btn-sm" onclick="setTab(\'hosting\',document.getElementById(\'hosting-nav\'))" style="font-size:12px">See my services →</button></div>';
+        kpiGrid.after(div);
+      }
+    }
+  } catch (e) { /* non-critical */ }
+}
+
+// ═══ REAL ACTIVITY FEED ═══
+
+async function loadRealActivityFeed() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) return;
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/portal/value?action=activity&org=' + orgId, { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.success || !d.activities?.length) return;
+    var feed = document.getElementById('activity-feed');
+    if (!feed) return;
+    feed.innerHTML = d.activities.slice(0, 8).map(function(a) {
+      var time = a.timestamp ? new Date(a.timestamp).toLocaleDateString() : '';
+      return '<div class="activity-item"><div class="activity-dot ' + (a.type === 'notification' ? 'blue' : 'green') + '"></div><div><div class="activity-text">' + a.icon + ' ' + a.text + '</div>' + (a.detail ? '<div style="font-size:11px;color:var(--ink3)">' + a.detail + '</div>' : '') + '<div class="activity-time">' + time + '</div></div></div>';
+    }).join('');
+  } catch (e) { /* keep static feed */ }
+}
+
+// ═══ TAB LOAD TRIGGERS ═══
+// Override setTab to trigger data loading when tabs are shown
+
+var _origSetTab2 = typeof setTab === 'function' ? setTab : null;
+if (_origSetTab2) {
+  var _wrappedSetTab = setTab;
+  setTab = function(tab, el) {
+    _wrappedSetTab(tab, el);
+    if (tab === 'knowledge') loadKnowledgeBase();
+    if (tab === 'entity') loadEntityHealth();
+    if (tab === 'hosting') loadBusinessStack();
+    if (tab === 'referral') loadReferralTracking();
+    if (tab === 'certification') renderCertProgress();
+    if (tab === 'compliance') loadComplianceTimeline();
+    if (tab === 'settings') loadNotificationHistory();
+    if (tab === 'documents') loadDocumentsFromAPI();
+  };
+}
+
+// Load dashboard extras after login
+setTimeout(function() {
+  if (window.CLIENT || window._ctx) {
+    loadDashboardSavings();
+    loadRealActivityFeed();
+    renderCertProgress();
+  }
+}, 2500);
+
 </script>
 </body>
 </html>
