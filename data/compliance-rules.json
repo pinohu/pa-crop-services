@@ -1,0 +1,84 @@
+{
+  "version": "2026.1",
+  "lastVerified": "2026-03-24",
+  "verifiedSource": "https://www.pa.gov/agencies/dos/programs/business/types-of-filings-and-registrations/annual-reports",
+  "act": "Act 122 of 2022",
+  "statute": "15 Pa.C.S. § 146",
+
+  "annualReport": {
+    "startYear": 2025,
+    "gracePeriodEndYear": 2026,
+    "enforcementStartYear": 2027,
+    "filingUrl": "https://file.dos.pa.gov",
+    "form": "DSCB:15-146",
+    "filingMethod": "Online strongly recommended"
+  },
+
+  "entityTypes": {
+    "domestic_business_corp":    { "label": "Domestic Business Corporation",    "shortLabel": "Corporation",     "deadline": "06-30", "fee": 7,  "category": "corporations", "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "foreign_business_corp":     { "label": "Foreign Business Corporation",     "shortLabel": "Corporation",     "deadline": "06-30", "fee": 7,  "category": "corporations", "dissolutionTerm": "administrative termination",   "canReinstate": false },
+    "domestic_nonprofit_corp":   { "label": "Domestic Nonprofit Corporation",   "shortLabel": "Nonprofit Corp",  "deadline": "06-30", "fee": 0,  "category": "corporations", "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "foreign_nonprofit_corp":    { "label": "Foreign Nonprofit Corporation",    "shortLabel": "Nonprofit Corp",  "deadline": "06-30", "fee": 0,  "category": "corporations", "dissolutionTerm": "administrative termination",   "canReinstate": false },
+    "domestic_llc":              { "label": "Domestic LLC",                     "shortLabel": "LLC",             "deadline": "09-30", "fee": 7,  "category": "llcs",         "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "foreign_llc":               { "label": "Foreign LLC",                      "shortLabel": "LLC",             "deadline": "09-30", "fee": 7,  "category": "llcs",         "dissolutionTerm": "administrative termination",   "canReinstate": false },
+    "domestic_lp":               { "label": "Domestic Limited Partnership",     "shortLabel": "LP",              "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "foreign_lp":                { "label": "Foreign Limited Partnership",      "shortLabel": "LP",              "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative termination",   "canReinstate": false },
+    "domestic_llp":              { "label": "Domestic LLP",                     "shortLabel": "LLP",             "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "foreign_llp":               { "label": "Foreign LLP",                      "shortLabel": "LLP",             "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative termination",   "canReinstate": false },
+    "business_trust":            { "label": "Business Trust",                   "shortLabel": "Trust",           "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative dissolution",   "canReinstate": true  },
+    "professional_association":  { "label": "Professional Association",         "shortLabel": "Prof. Assoc.",    "deadline": "12-31", "fee": 7,  "category": "others",       "dissolutionTerm": "administrative dissolution",   "canReinstate": true  }
+  },
+
+  "deadlineGroups": {
+    "corporations": { "deadline": "06-30", "label": "June 30",      "shortLabel": "Jun 30",  "month": 5, "day": 30 },
+    "llcs":         { "deadline": "09-30", "label": "September 30", "shortLabel": "Sept 30", "month": 8, "day": 30 },
+    "others":       { "deadline": "12-31", "label": "December 31",  "shortLabel": "Dec 31",  "month": 11, "day": 31 }
+  },
+
+  "enforcement": {
+    "description": "Starting with 2027 reports, entities that fail to file face dissolution/termination/cancellation six months after their entity-type due date.",
+    "dissolutionDelayMonths": 6,
+    "domesticCanReinstate": true,
+    "domesticReinstatementFeeOnline": 35,
+    "domesticReinstatementFeePaper": 40,
+    "delinquentReportFee": 15,
+    "domesticReinstatementNoTimeLimit": true,
+    "foreignCanReinstate": false,
+    "foreignMustReregister": true,
+    "nameProtectionLostDuringDissolution": true,
+    "dissolvedEntityCannotConductBusiness": true
+  },
+
+  "reminderSchedule": {
+    "daysBeforeDeadline": [90, 60, 30, 14, 7],
+    "channels": ["email", "portal_notification"],
+    "proEmpireIncludesFiling": true
+  },
+
+  "registeredOffice": {
+    "requirement": "15 Pa.C.S. § 108",
+    "cropLicense": "15 Pa.C.S. § 109",
+    "changeForm": "DSCB:15-108",
+    "changeFee": 5,
+    "mustBePhysicalPA": true,
+    "noPOBoxes": true,
+    "mustBeAvailableBusinessHours": true
+  },
+
+  "exempt": [
+    "Sole proprietors",
+    "Fictitious names (DBAs)",
+    "General partnerships (not LLPs)",
+    "Financial institutions",
+    "Credit unions",
+    "Authorities (all subtypes)",
+    "Name reservations and registrations",
+    "Land banks",
+    "Trademarks, insignias, marks"
+  ],
+
+  "notRequired": {
+    "description": "Entities with status Inactive (Dissolved, Terminated, Merged Out, Withdrawn, Cancelled) do not need to file.",
+    "checkUrl": "https://file.dos.pa.gov/search/business"
+  }
+}

@@ -1,0 +1,345 @@
+// PA CROP Services — Domain Model
+// Prisma schema for the compliance engine.
+// Deploy target: Supabase Postgres (or any Prisma-compatible DB)
+//
+// This schema defines: Organization, Client, Obligation, Document,
+// Notification, Conversation, AuditEvent — per Ike's system architecture.
+//
+// Usage:
+//   npx prisma generate  → TypeScript types
+//   npx prisma migrate   → Database migrations
+//   npx prisma db push   → Direct schema push (dev)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organization ──────────────────────────────────────────────────────────────
+// A business entity registered with PA DOS. The core compliance subject.
+
+model Organization {
+  id              String   @id @default(cuid())
+  legalName       String
+  entityType      String   // Maps to compliance-rules.json entityTypes key (e.g., "domestic_llc")
+  jurisdiction    String   @default("PA")
+  dosNumber       String?  @unique // PA DOS entity number
+  formationDate   DateTime?
+  status          OrgStatus @default(ACTIVE)
+  riskLevel       RiskLevel @default(LOW)
+  registeredOffice String?
+  principalOffice  String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  clients         Client[]
+  obligations     Obligation[]
+  documents       Document[]
+  notifications   Notification[]
+  conversations   Conversation[]
+  auditEvents     AuditEvent[]
+
+  @@index([entityType])
+  @@index([status])
+  @@index([dosNumber])
+}
+
+enum OrgStatus {
+  ACTIVE
+  DUE_SOON
+  OVERDUE
+  AT_RISK
+  DISSOLVED
+  TERMINATED
+  REINSTATED
+  WITHDRAWN
+  INACTIVE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ─── Client ────────────────────────────────────────────────────────────────────
+// A person who owns/manages an Organization. Billing + communication target.
+
+model Client {
+  id               String   @id @default(cuid())
+  orgId            String
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  ownerName        String
+  email            String   @unique
+  phone            String?
+  plan             Plan     @default(COMPLIANCE_ONLY)
+  billingStatus    BillingStatus @default(ACTIVE)
+  onboardingStatus OnboardingStatus @default(PENDING)
+  stripeCustomerId String?
+  suitedashId      String?
+  referralCode     String?  @unique
+  referredBy       String?  // referralCode of referrer
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  conversations    Conversation[]
+
+  @@index([orgId])
+  @@index([email])
+  @@index([plan])
+}
+
+enum Plan {
+  COMPLIANCE_ONLY    // $99/yr
+  BUSINESS_STARTER   // $199/yr (+ hosting)
+  BUSINESS_PRO       // $349/yr (+ hosting + filing)
+  BUSINESS_EMPIRE    // $699/yr (+ multi-entity)
+}
+
+enum BillingStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIAL
+}
+
+enum OnboardingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETE
+}
+
+// ─── Obligation ────────────────────────────────────────────────────────────────
+// A compliance obligation (annual report, reinstatement, etc.) for an Organization.
+// This is the core of the state machine.
+
+model Obligation {
+  id               String   @id @default(cuid())
+  orgId            String
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  obligationType   ObligationType
+  jurisdiction     String   @default("PA")
+  year             Int      // The compliance year (e.g., 2026)
+  dueDate          DateTime
+  status           ObligationStatus @default(DETECTED)
+  filingMethod     FilingMethod @default(SELF)
+  fee              Int      @default(7) // cents would be better, but $7 is always $7 here
+  confirmationNum  String?
+  filedAt          DateTime?
+  filedBy          String?  // "system", "client", or operator name
+  sourceRuleVersion String  // e.g., "2026.1" from compliance-rules.json
+
+  remindersSent    Int[]    @default([]) // days-before-deadline values sent (e.g., [90, 60, 30])
+  escalationLevel  Int      @default(0)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  notifications    Notification[]
+
+  @@unique([orgId, obligationType, year])
+  @@index([status])
+  @@index([dueDate])
+  @@index([orgId])
+}
+
+enum ObligationType {
+  ANNUAL_REPORT
+  REINSTATEMENT
+  CHANGE_REGISTERED_OFFICE
+  FOREIGN_REGISTRATION
+}
+
+enum ObligationStatus {
+  DETECTED           // System identified the obligation
+  UPCOMING           // Within reminder window
+  REMINDER_SENT      // At least one reminder delivered
+  AWAITING_CLIENT    // Client action needed (confirm details, provide info)
+  READY_TO_FILE      // All info gathered, ready for filing
+  FILED              // Filed with PA DOS
+  CONFIRMED          // PA DOS confirmation received
+  OVERDUE            // Past due date, not filed
+  ESCALATED          // Overdue + multiple reminders failed
+  RESOLVED           // Completed (filed + confirmed, or no longer applicable)
+}
+
+enum FilingMethod {
+  SELF               // Client files themselves
+  MANAGED            // PA CROP files for client (Pro/Empire)
+  AUTO               // System auto-files (future)
+}
+
+// ─── Document ──────────────────────────────────────────────────────────────────
+// A document received at the registered office, uploaded, or generated.
+
+model Document {
+  id               String   @id @default(cuid())
+  orgId            String
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  documentType     DocumentType
+  fileName         String
+  storageUrl       String?  // S3/R2/Supabase Storage URL
+  receivedAt       DateTime @default(now())
+  source           DocumentSource @default(MAIL)
+  urgency          Urgency  @default(NORMAL)
+  extractedEntities Json?   // AI-extracted metadata
+  reviewStatus     ReviewStatus @default(PENDING)
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  notes            String?
+
+  createdAt        DateTime @default(now())
+
+  @@index([orgId])
+  @@index([documentType])
+  @@index([urgency])
+}
+
+enum DocumentType {
+  SERVICE_OF_PROCESS
+  GOVERNMENT_CORRESPONDENCE
+  ANNUAL_REPORT_NOTICE
+  TAX_NOTICE
+  FILING_CONFIRMATION
+  LEGAL_NOTICE
+  GENERAL_MAIL
+  CLIENT_UPLOAD
+  GENERATED_AGREEMENT
+  OTHER
+}
+
+enum DocumentSource {
+  MAIL        // Physical mail received at registered office
+  EMAIL       // Email attachment
+  UPLOAD      // Client portal upload
+  SCAN        // Scanned document
+  SYSTEM      // System-generated
+}
+
+enum Urgency {
+  CRITICAL    // Service of process, court orders
+  HIGH        // Government deadlines, tax notices
+  NORMAL      // Routine correspondence
+  LOW         // Marketing, informational
+}
+
+enum ReviewStatus {
+  PENDING
+  REVIEWED
+  ESCALATED
+  ARCHIVED
+}
+
+// ─── Notification ──────────────────────────────────────────────────────────────
+// A notification sent or scheduled for a client about an obligation or event.
+
+model Notification {
+  id               String   @id @default(cuid())
+  orgId            String
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  obligationId     String?
+  obligation       Obligation? @relation(fields: [obligationId], references: [id])
+
+  channel          NotificationChannel
+  templateId       String   // e.g., "reminder_90", "reminder_30", "overdue_escalation"
+  scheduledFor     DateTime
+  sentAt           DateTime?
+  deliveryStatus   DeliveryStatus @default(PENDING)
+  deliveryError    String?
+  recipientEmail   String?
+  recipientPhone   String?
+
+  createdAt        DateTime @default(now())
+
+  @@index([orgId])
+  @@index([scheduledFor])
+  @@index([deliveryStatus])
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PORTAL
+  PUSH
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}
+
+// ─── Conversation ──────────────────────────────────────────────────────────────
+// An AI assistant interaction. Full audit trail of what the system told the client.
+
+model Conversation {
+  id               String   @id @default(cuid())
+  orgId            String?
+  org              Organization? @relation(fields: [orgId], references: [id])
+  clientId         String?
+  client           Client?  @relation(fields: [clientId], references: [id])
+
+  sessionId        String   // Groups messages in a chat session
+  userMessage      String
+  assistantResponse String
+  intent           ConversationIntent?
+  answerSourceRefs String[] @default([]) // e.g., ["compliance-rules.json#entityTypes.domestic_llc"]
+  confidence       Float?   // 0.0 - 1.0
+  escalated        Boolean  @default(false)
+  escalationReason String?
+
+  createdAt        DateTime @default(now())
+
+  @@index([orgId])
+  @@index([sessionId])
+  @@index([escalated])
+}
+
+enum ConversationIntent {
+  COMPLIANCE_FACT    // Deterministic answer from rules engine
+  GENERAL_QUESTION   // RAG-assisted answer
+  LEGAL_QUESTION     // Refused — deferred to attorney
+  ACTION_REQUEST     // Route to portal action
+  ONBOARDING_HELP    // Guide through setup
+  BILLING_QUESTION   // Route to billing
+  ESCALATION         // Handed off to human
+}
+
+// ─── Audit Event ───────────────────────────────────────────────────────────────
+// Immutable log of every state change, action, and decision in the system.
+// Answers: who changed what, when, why, and what was the before/after state.
+
+model AuditEvent {
+  id               String   @id @default(cuid())
+  actor            String   // "system", "client:abc123", "admin:ike", "agent:filing_ops"
+  eventType        String   // e.g., "obligation_state_change", "filing_completed", "ai_response"
+  targetType       String   // e.g., "organization", "obligation", "document", "conversation"
+  targetId         String
+
+  orgId            String?
+  org              Organization? @relation(fields: [orgId], references: [id])
+
+  beforeState      Json?    // Snapshot before change
+  afterState       Json?    // Snapshot after change
+  reason           String?  // Why this happened
+  metadata         Json?    // Additional context
+
+  createdAt        DateTime @default(now())
+
+  @@index([orgId])
+  @@index([eventType])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}

@@ -3,32 +3,7 @@
 // Returns enriched client profile for AI chatbot personalization
 // Called by portal before first AI interaction
 
-
-// ── Entity-type-aware deadline computation ──
-// Corps (business + nonprofit): June 30 | LLCs: Sept 30 | All others: Dec 31
-function getDeadlineForEntityType(entityType) {
-  const t = (entityType || '').toLowerCase();
-  const year = new Date().getFullYear();
-  if (t.includes('corp') || t.includes('nonprofit') || t.includes('non-profit') || t === 'c-corp' || t === 's-corp') {
-    return { date: `${year}-06-30`, month: 5, day: 30, label: 'June 30' };
-  }
-  if (t.includes('llc') || t.includes('limited liability company')) {
-    return { date: `${year}-09-30`, month: 8, day: 30, label: 'September 30' };
-  }
-  if (t.includes('lp') || t.includes('llp') || t.includes('limited partnership') || t.includes('trust') || t.includes('professional association')) {
-    return { date: `${year}-12-31`, month: 11, day: 31, label: 'December 31' };
-  }
-  // Default to LLC deadline if unknown (most common entity type in PA CROP client base)
-  return { date: `${year}-09-30`, month: 8, day: 30, label: 'September 30' };
-}
-
-function computeDaysUntilDeadline(deadlineInfo) {
-  const now = new Date();
-  const deadline = new Date(now.getFullYear(), deadlineInfo.month, deadlineInfo.day);
-  // If deadline has passed this year, show next year
-  if (deadline < now) deadline.setFullYear(deadline.getFullYear() + 1);
-  return Math.ceil((deadline - now) / 86400000);
-}
+import { getEntityDeadline, computeDaysUntil, getEntityConfig } from './_compliance.js';
 
 // ── Rate Limiter (in-memory, per-instance) ──
 const _rl = new Map();
@@ -58,7 +33,7 @@ export default async function handler(req, res) {
 
   // Demo client
   if (email === 'demo@pacropservices.com') {
-    const demoDeadline = getDeadlineForEntityType('LLC');
+    const demoDeadline = getEntityDeadline('LLC');
     return res.status(200).json({
       success: true,
       context: {
@@ -78,7 +53,7 @@ export default async function handler(req, res) {
         annualReportStatus: 'not_yet_due',
         annualReportDeadline: demoDeadline.date,
         entityDeadline: demoDeadline.label,
-        daysUntilDeadline: computeDaysUntilDeadline(demoDeadline),
+        daysUntilDeadline: computeDaysUntil("LLC"),
         referralCode: 'CROP-DEMO2026',
         referralCount: 2,
         onboardingComplete: true,
@@ -97,7 +72,7 @@ export default async function handler(req, res) {
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
 
-  const defaultDeadline = getDeadlineForEntityType('LLC'); // default assumption until SuiteDash returns entity type
+  const defaultDeadline = getEntityDeadline('LLC'); // default assumption until SuiteDash returns entity type
   let context = {
     entityName: null, entityType: null, entityNumber: null, entityStatus: 'unknown',
     plan: 'compliance_only', planLabel: 'Compliance Only', price: '$99/yr',
@@ -105,7 +80,7 @@ export default async function handler(req, res) {
     clientSince: null, documentsReceived: 0,
     annualReportStatus: 'unknown', annualReportDeadline: defaultDeadline.date,
     entityDeadline: defaultDeadline.label,
-    daysUntilDeadline: computeDaysUntilDeadline(defaultDeadline),
+    daysUntilDeadline: computeDaysUntil("LLC"),
     onboardingComplete: false,
     onboardingSteps: {
       accountCreated: true, portalAccessed: false, agreementSigned: false,
@@ -137,7 +112,7 @@ export default async function handler(req, res) {
           
           // Recompute deadline based on actual entity type from SuiteDash
           const realEntityType = cf.entity_type || 'LLC';
-          const realDeadline = getDeadlineForEntityType(realEntityType);
+          const realDeadline = getEntityDeadline(realEntityType);
           
           context = {
             ...context,
@@ -145,7 +120,7 @@ export default async function handler(req, res) {
             entityType: realEntityType,
             annualReportDeadline: realDeadline.date,
             entityDeadline: realDeadline.label,
-            daysUntilDeadline: computeDaysUntilDeadline(realDeadline),
+            daysUntilDeadline: computeDaysUntil(realEntityType),
             plan,
             planLabel: pm.label,
             price: pm.price,

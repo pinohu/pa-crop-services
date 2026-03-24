@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-24 (2) — Durable rate limiting (Upstash), portal API audit complete, client-context entity-type deadlines fixed
+> **Auto-updated on every commit.** Last updated: 2026-03-24 (3) — Compliance engine foundation: rules file, _compliance.js, validation CI, domain model (Prisma), chat.js + client-context.js wired to rules engine
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -77,18 +77,22 @@ pa-crop-services/
 │   ├── sitemap.xml                  # 23 URLs
 │   └── robots.txt
 │
-├── api/                             # Vercel serverless functions (18 endpoints)
+├── api/                             # Vercel serverless functions (18+ endpoints)
+│   ├── _compliance.js               # ★ Compliance engine — reads from data/compliance-rules.json
+│   ├── _ratelimit.js                # ★ Shared rate limiter — Upstash Redis + in-memory fallback
+│   ├── compliance-rules.js          # ★ Public rules API — entity lookups, full rules
 │   ├── admin.js                     # Admin API — 12 actions (native PDF gen)
 │   ├── auth.js                      # Portal login — SuiteDash lookup, 4-tier mapping
 │   ├── provision.js                 # Full client provisioning (20i+SuiteDash+email)
 │   ├── client-hosting.js            # 20i package lookup per client
 │   ├── intake.js                    # Lead capture + 5-dimension scoring
-│   ├── subscribe.js                 # Newsletter capture → Acumbamail + n8n + guideUrl delivery
+│   ├── subscribe.js                 # Newsletter capture → Acumbamail + n8n + error logging
 │   ├── reset-code.js                # Portal access code recovery
 │   ├── partner-intake.js            # CPA/attorney partner applications
 │   ├── entity-request.js            # Entity formation leads
 │   ├── generate-agreement.js        # Native PDF service agreement (pdf-lib)
-│   ├── chat.js                      # AI compliance chatbot (Groq llama-3.3-70b)
+│   ├── chat.js                      # AI chatbot — reads knowledge from _compliance.js
+│   ├── client-context.js            # Client data aggregator — deadlines from _compliance.js
 │   ├── entity-monitor.js            # PA DOS entity status checker
 │   ├── email-triage.js              # AI email classifier + draft responder
 │   ├── qualify-lead.js              # AI 5-dimension lead scorer
@@ -97,8 +101,17 @@ pa-crop-services/
 │   ├── generate-article.js          # AI SEO article generator (brand voice)
 │   ├── partner-commission.js        # Referral tracking + commission calculator
 │   ├── portal-health.js             # Session-auth health score (no admin key)
-│   ├── client-context.js            # Client data aggregator (SuiteDash → AI context)
-│   └── chat.js                      # AI chatbot v2 (deep client context, personalized answers)
+│   └── ... (90 total API files)
+│
+├── data/                            # ★ SINGLE SOURCE OF TRUTH
+│   └── compliance-rules.json        # Canonical PA compliance rules (12 entity types, 3 deadline groups)
+│
+├── schema/                          # ★ Domain model
+│   └── schema.prisma                # 7 models: Organization, Client, Obligation, Document,
+│                                    #   Notification, Conversation, AuditEvent
+│
+├── scripts/                         # CI / tooling
+│   └── validate-content.js          # Content validation — checks HTML/JS against rules file
 │
 ├── context/                         # dynasty-seomachine brand voice
 │   ├── brand-voice.md
@@ -114,9 +127,11 @@ pa-crop-services/
 │   ├── WINBACK_EMAIL_SEQUENCE.md
 │   └── CROP_Service_Agreement_Template.docx
 │
-├── package.json                     # Dependencies: pdf-lib
+├── package.json                     # Dependencies: @upstash/ratelimit, @upstash/redis, pdf-lib
 ├── vercel.json                      # outputDirectory: public, cleanUrls: true
 ├── INFRASTRUCTURE.md                # This file
+├── COMPLIANCE-ENGINE-ARCHITECTURE.md # Full system design document
+├── AUDIT-REMEDIATION-2026-03-24.md  # Audit findings and fixes
 └── MASTER_BUILD_PLAN_V2.md          # Original build plan
 ```
 
@@ -623,6 +638,42 @@ All 14 API endpoints referenced by `portal.html` exist and have real SuiteDash-b
 
 **Bug found during audit:** `client-context.js` had hardcoded `annualReportDeadline: '2026-09-30'` for ALL entity types (both demo and real accounts). Fixed: added `getDeadlineForEntityType()` helper that computes correct deadline based on entity type from SuiteDash `entity_type` custom field. Context now returns `entityDeadline` (label) alongside `annualReportDeadline` (date) and `daysUntilDeadline` (computed).
 
+### Compliance Engine Foundation (2026-03-24)
+
+System architecture transformation from marketing shell to compliance platform.
+Full design documented in `COMPLIANCE-ENGINE-ARCHITECTURE.md`.
+
+**Phase 1: Single Source of Truth (COMPLETE)**
+
+- [x] `data/compliance-rules.json` — Canonical compliance rules: 12 entity types, 3 deadline groups, enforcement rules, fees, reminder schedule, registered office requirements, exemptions. Version-tracked with `lastVerified` date and PA DOS source URL.
+- [x] `api/_compliance.js` — Shared compliance engine module. Exports: `getRules()`, `resolveEntityType()`, `getEntityConfig()`, `getEntityDeadline()`, `computeDaysUntil()`, `getDeadlineGroup()`, `buildChatbotKnowledge()`, `buildDeadlineSummary()`. All deadline/fee/penalty logic reads from `compliance-rules.json`.
+- [x] `api/compliance-rules.js` — Public API endpoint. Returns full rules, entity-specific lookups (`?entityType=LLC`), or field-specific queries (`?field=enforcement`). Cached with `s-maxage=3600`.
+- [x] `api/chat.js` — Refactored: knowledge base now generated by `buildChatbotKnowledge()` from rules engine. No more hardcoded compliance facts in system prompt.
+- [x] `api/client-context.js` — Refactored: imports `getEntityDeadline()` and `computeDaysUntil()` from shared compliance module. Old inline deadline helpers removed. Demo account, default context, and SuiteDash real accounts all read from rules engine.
+- [x] `scripts/validate-content.js` — CI content validation. Scans all 131 HTML/JS files for compliance claims and validates against `compliance-rules.json`. Catches: unqualified September 30 (missing LLC qualifier), universal December 31 2027 cutoff, and all-entities-single-deadline patterns. Run via `npm run validate`. Exit code 1 = violations found.
+- [x] `package.json` — Added `"type": "module"`, `validate` and `precommit` scripts.
+
+**Phase 1.5: Domain Model (COMPLETE — schema only, not yet deployed)**
+
+- [x] `schema/schema.prisma` — Complete Prisma schema defining 7 domain models per system architecture:
+  - **Organization** — Business entity with status state machine (ACTIVE → DUE_SOON → OVERDUE → AT_RISK → DISSOLVED)
+  - **Client** — Owner/manager with plan, billing, onboarding status
+  - **Obligation** — Filing state machine (DETECTED → UPCOMING → REMINDER_SENT → READY_TO_FILE → FILED → CONFIRMED | OVERDUE → ESCALATED)
+  - **Document** — Received mail/uploads with AI classification, urgency, review status
+  - **Notification** — Scheduled/sent reminders with delivery tracking
+  - **Conversation** — Full chatbot audit trail with intent classification, source refs, confidence scores, escalation flags
+  - **AuditEvent** — Immutable event log: actor, event type, before/after state, reason
+- [ ] **Action required:** Provision Supabase Postgres (free tier) and set `DATABASE_URL` in Vercel env vars. Run `npx prisma db push` to create tables.
+
+**Phase 2-6: Compliance Engine, AI Guardrails, Portal Rebuild, Agents, Scale**
+
+See `COMPLIANCE-ENGINE-ARCHITECTURE.md` for complete design. Build sequence:
+- Phase 2: State machine + deadline calculator + scheduler (n8n workflows)
+- Phase 3: Controlled chatbot with intent classification + citation requirement + audit log
+- Phase 4: Portal rebuilt on real API-backed state
+- Phase 5: Agent fleet (rules monitor, risk scorer, document intake, concierge, filing ops, retention)
+- Phase 6: Partner portal, multi-state rules engine, white-label mode
+
 ---
 
 ## Development & Design Philosophy
@@ -1024,4 +1075,4 @@ curl -H "Authorization: Bearer 1ed943c21ef9e2f60fe1189241a286d769e4191051ad2c0c0
 ---
 
 *This file is automatically updated with every commit to this repository.*
-*Last updated: 2026-03-24 (commit 2) — Durable rate limiting, portal API audit, client-context entity-type deadlines.*
+*Last updated: 2026-03-24 (commit 3) — Compliance engine foundation: rules file, shared module, validation CI, domain model, architecture doc.*

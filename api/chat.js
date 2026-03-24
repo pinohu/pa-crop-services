@@ -5,6 +5,7 @@
 export const config = { runtime: 'edge' };
 
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { buildChatbotKnowledge, getEntityDeadline, computeDaysUntil } from './_compliance.js';
 
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
@@ -76,12 +77,7 @@ VOICE & TONE:
 - Use contractions naturally: "you'll" not "you will", "we'll" not "we will"
 
 KNOWLEDGE BASE:
-- PA LLC/corp/LP must maintain registered office (15 Pa. C.S. § 108)
-- CROP licensed under 15 Pa. C.S. § 109
-- Annual report deadlines vary by entity type: Corporations (business + nonprofit) due June 30; LLCs due September 30; All others (LPs, LLPs, business trusts, professional associations) due December 31. Fee is $7 online at file.dos.pa.gov ($0 for nonprofits)
-- 2025-2026 are a grace period (no dissolution for missed reports). Starting with 2027 reports, entities that fail to file face administrative dissolution/termination/cancellation six months after their entity-type due date (e.g., corps by ~Jan 1 2028, LLCs by ~Apr 1 2028, others by ~Jul 1 2028)
-- Foreign entities dissolved in PA cannot reinstate
-- Change RO: file DSCB:15-108 ($5)
+${buildChatbotKnowledge()}
 - Our address: 924 W 23rd St, Erie, PA 16502
 - Plans: Compliance Only $99/yr, Starter $199/yr (hosting), Pro $349/yr (hosting + filing), Empire $699/yr (multi-entity)
 - Pro/Empire include annual report filing
