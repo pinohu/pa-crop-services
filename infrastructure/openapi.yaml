@@ -1,0 +1,1211 @@
+openapi: 3.1.0
+info:
+  title: PA CROP Services API
+  description: |
+    Compliance Operating System API for PA CROP Services.
+    Source: TECHNICAL-SPECIFICATION.md sections 7.1–7.7, 9.9
+  version: 1.0.0
+  contact:
+    name: PA CROP Services
+    url: https://pacropservices.com
+    email: ops@pacropservices.com
+
+servers:
+  - url: https://pacropservices.com/api
+    description: Production
+  - url: https://pa-crop-services.vercel.app/api
+    description: Preview
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and session management
+  - name: Organizations
+    description: Entity profile management
+  - name: Obligations
+    description: Compliance obligation tracking and state machine
+  - name: Documents
+    description: Document intake, classification, and retrieval
+  - name: Notifications
+    description: Communication preferences and history
+  - name: Assistant
+    description: AI assistant with grounded answers
+  - name: Billing
+    description: Subscription and plan management
+  - name: Referrals
+    description: Referral program
+  - name: Admin
+    description: Operations and rule management (admin only)
+
+paths:
+  # ── Auth (7.1) ──────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and access code
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, access_code]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: owner@example.com
+                access_code:
+                  type: string
+                  example: ABC123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    $ref: '#/components/schemas/Session'
+                  client:
+                    $ref: '#/components/schemas/ClientSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate current session
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /auth/reset-code:
+    post:
+      tags: [Auth]
+      summary: Request new access code via email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /auth/session:
+    get:
+      tags: [Auth]
+      summary: Get current session info
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    $ref: '#/components/schemas/Session'
+                  client:
+                    $ref: '#/components/schemas/ClientSummary'
+
+  # ── Organizations (7.2) ─────────────────────────────────────
+
+  /clients/me:
+    get:
+      tags: [Organizations]
+      summary: Get current client profile
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+
+  /organizations/{id}:
+    get:
+      tags: [Organizations]
+      summary: Get organization profile
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Organizations]
+      summary: Update organization details
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                principal_address:
+                  $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /organizations/{id}/verify:
+    post:
+      tags: [Organizations]
+      summary: Verify entity with PA DOS
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ── Obligations (7.3) ───────────────────────────────────────
+
+  /organizations/{id}/obligations:
+    get:
+      tags: [Obligations]
+      summary: List all obligations for an organization
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          description: List of obligations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Obligation'
+
+  /organizations/{id}/obligations/recompute:
+    post:
+      tags: [Obligations]
+      summary: Recompute obligations from current rules
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          description: Recomputation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  obligations_created:
+                    type: integer
+                  obligations_updated:
+                    type: integer
+
+  /obligations/{obligationId}/acknowledge:
+    post:
+      tags: [Obligations]
+      summary: Client acknowledges an obligation
+      parameters:
+        - $ref: '#/components/parameters/ObligationId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /obligations/{obligationId}/mark-filed:
+    post:
+      tags: [Obligations]
+      summary: Record that a filing was submitted
+      parameters:
+        - $ref: '#/components/parameters/ObligationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                proof_document_id:
+                  type: string
+                  format: uuid
+                filing_reference:
+                  type: string
+                  description: State filing confirmation number
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ── Documents (7.4) ─────────────────────────────────────────
+
+  /documents/upload:
+    post:
+      tags: [Documents]
+      summary: Upload a document (signed URL flow)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organization_id, filename, mime_type, source_channel]
+              properties:
+                organization_id:
+                  type: string
+                  format: uuid
+                filename:
+                  type: string
+                  example: notice.pdf
+                mime_type:
+                  type: string
+                  example: application/pdf
+                source_channel:
+                  type: string
+                  enum: [portal_upload, mail_scan, email_attachment, system]
+      responses:
+        '200':
+          description: Upload URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  document_id:
+                    type: string
+                    format: uuid
+                  upload_url:
+                    type: string
+                    description: Signed upload URL
+
+  /organizations/{id}/documents:
+    get:
+      tags: [Documents]
+      summary: List documents for an organization
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          description: Document list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+
+  /documents/{documentId}:
+    get:
+      tags: [Documents]
+      summary: Get document details
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+
+  /documents/{documentId}/classify:
+    post:
+      tags: [Documents]
+      summary: Classify or reclassify a document
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Classification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  classification:
+                    type: object
+                    properties:
+                      document_type:
+                        type: string
+                      urgency:
+                        type: string
+                        enum: [normal, high, critical]
+                      extracted_entities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            value:
+                              type: string
+
+  /documents/{documentId}/escalate:
+    post:
+      tags: [Documents]
+      summary: Escalate a document as urgent
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ── Notifications (7.5) ─────────────────────────────────────
+
+  /organizations/{id}/notifications:
+    get:
+      tags: [Notifications]
+      summary: Notification history for an organization
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+      responses:
+        '200':
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+
+  /notifications/preferences:
+    post:
+      tags: [Notifications]
+      summary: Update notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, preferences]
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                preferences:
+                  type: object
+                  properties:
+                    email_notifications:
+                      type: boolean
+                    sms_notifications:
+                      type: boolean
+                    marketing_emails:
+                      type: boolean
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /notifications/test:
+    post:
+      tags: [Notifications]
+      summary: Send a test notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                channel:
+                  type: string
+                  enum: [email, sms]
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ── Assistant (7.6) ─────────────────────────────────────────
+
+  /assistant/query:
+    post:
+      tags: [Assistant]
+      summary: Ask the AI assistant a question
+      description: |
+        Returns a grounded answer with source citations, confidence score,
+        and escalation flag. See TECHNICAL-SPECIFICATION.md section 8 for
+        the full assistant service specification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question, channel]
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                organization_id:
+                  type: string
+                  format: uuid
+                question:
+                  type: string
+                  example: When is my annual report due?
+                channel:
+                  type: string
+                  enum: [portal, public, admin]
+      responses:
+        '200':
+          description: AI answer with sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantAnswer'
+
+  /assistant/explain-obligation:
+    post:
+      tags: [Assistant]
+      summary: Explain a specific obligation in plain language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [obligation_id]
+              properties:
+                obligation_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Explanation with sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantAnswer'
+
+  /assistant/summarize-document:
+    post:
+      tags: [Assistant]
+      summary: Summarize a document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_id]
+              properties:
+                document_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Document summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantAnswer'
+
+  /assistant/escalate:
+    post:
+      tags: [Assistant]
+      summary: Escalate to human ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ── Billing (7.7) ───────────────────────────────────────────
+
+  /billing/checkout:
+    post:
+      tags: [Billing]
+      summary: Create checkout session for new subscription
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan_code, email]
+              properties:
+                plan_code:
+                  type: string
+                  enum: [compliance_only, business_starter, business_pro, business_empire]
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Checkout URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  checkout_url:
+                    type: string
+
+  /billing/upgrade:
+    post:
+      tags: [Billing]
+      summary: Upgrade plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, target_plan_code]
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                target_plan_code:
+                  type: string
+                  enum: [business_starter, business_pro, business_empire]
+      responses:
+        '200':
+          description: Upgrade checkout URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  checkout_url:
+                    type: string
+
+  /billing/cancel:
+    post:
+      tags: [Billing]
+      summary: Cancel subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id]
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /billing/plan:
+    get:
+      tags: [Billing]
+      summary: Get current plan and entitlements
+      responses:
+        '200':
+          description: Plan details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDetails'
+
+  # ── Referrals (7.8) ─────────────────────────────────────────
+
+  /referrals/me:
+    get:
+      tags: [Referrals]
+      summary: Get my referral stats
+      responses:
+        '200':
+          description: Referral summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referral_code:
+                    type: string
+                  total_referrals:
+                    type: integer
+                  converted:
+                    type: integer
+                  total_credit:
+                    type: number
+
+  /referrals/share:
+    post:
+      tags: [Referrals]
+      summary: Generate shareable referral link
+      responses:
+        '200':
+          description: Referral link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  referral_url:
+                    type: string
+
+  /partners/me/clients:
+    get:
+      tags: [Referrals]
+      summary: Partner view of referred clients
+      responses:
+        '200':
+          description: Partner client list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClientSummary'
+
+  # ── Admin (9.9) ─────────────────────────────────────────────
+
+  /admin/rules:
+    get:
+      tags: [Admin]
+      summary: List all rules (active and superseded)
+      security:
+        - adminKey: []
+      responses:
+        '200':
+          description: Rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rule'
+    post:
+      tags: [Admin]
+      summary: Draft a new rule version
+      security:
+        - adminKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/rules/publish:
+    post:
+      tags: [Admin]
+      summary: Publish a drafted rule (supersedes previous active version)
+      security:
+        - adminKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rule_id]
+              properties:
+                rule_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/audit:
+    get:
+      tags: [Admin]
+      summary: Query audit log
+      security:
+        - adminKey: []
+      parameters:
+        - name: target_type
+          in: query
+          schema:
+            type: string
+        - name: target_id
+          in: query
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+
+  /admin/workflow-failures:
+    get:
+      tags: [Admin]
+      summary: List failed workflow jobs
+      security:
+        - adminKey: []
+      responses:
+        '200':
+          description: Failed jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowJob'
+
+# ── Components ────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    adminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+
+  parameters:
+    OrgId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ObligationId:
+      name: obligationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Success:
+      description: Operation successful
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    Unauthorized:
+      description: Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: invalid_credentials
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: not_found
+
+  schemas:
+    Session:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postal_code:
+          type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        legal_name:
+          type: string
+        display_name:
+          type: string
+        entity_type:
+          type: string
+        jurisdiction:
+          type: string
+        dos_number:
+          type: string
+        formation_date:
+          type: string
+          format: date
+        entity_status:
+          type: string
+          enum: [pending_verification, active, due_soon, overdue, at_risk, dissolved]
+        principal_address:
+          $ref: '#/components/schemas/Address'
+        registered_office_address:
+          $ref: '#/components/schemas/Address'
+        created_at:
+          type: string
+          format: date-time
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        owner_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        plan_code:
+          type: string
+          enum: [compliance_only, business_starter, business_pro, business_empire]
+        billing_status:
+          type: string
+          enum: [inactive, active, past_due, cancelled]
+        onboarding_status:
+          type: string
+          enum: [not_started, in_progress, complete]
+        referral_code:
+          type: string
+
+    ClientSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        plan_code:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [client, partner, ops_admin, super_admin]
+
+    Obligation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        obligation_type:
+          type: string
+        jurisdiction:
+          type: string
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [created, upcoming, reminder_scheduled, reminder_sent, awaiting_client_input, ready_to_file, filed_pending_confirmation, filed_confirmed, overdue, escalated, closed]
+        escalation_level:
+          type: string
+          enum: [none, low, medium, high, critical]
+        fee_usd:
+          type: number
+        rule_version:
+          type: string
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        document_type:
+          type: string
+        source_channel:
+          type: string
+        urgency:
+          type: string
+          enum: [normal, high, critical]
+        received_at:
+          type: string
+          format: date-time
+        review_status:
+          type: string
+          enum: [pending, reviewed, escalated, archived]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        notification_type:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, portal, push]
+        scheduled_for:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+        delivery_status:
+          type: string
+          enum: [scheduled, sent, delivered, failed, bounced]
+
+    AssistantAnswer:
+      type: object
+      required: [success, answer, sources, confidence, escalate]
+      properties:
+        success:
+          type: boolean
+        answer:
+          type: string
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [rule, organization_context, kb_article, document, obligation]
+              id:
+                type: string
+              label:
+                type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        escalate:
+          type: boolean
+        next_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              label:
+                type: string
+
+    PlanDetails:
+      type: object
+      properties:
+        plan_code:
+          type: string
+        entitlements:
+          type: object
+          properties:
+            registered_office:
+              type: boolean
+            dashboard:
+              type: boolean
+            ai_assistant:
+              type: boolean
+            hosting:
+              type: boolean
+            annual_report_filing:
+              type: boolean
+            multi_entity_limit:
+              type: integer
+
+    Rule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        jurisdiction:
+          type: string
+        entity_type:
+          type: string
+        obligation_type:
+          type: string
+        version:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+        authority_source:
+          type: string
+        rule_json:
+          type: object
+
+    RuleInput:
+      type: object
+      required: [jurisdiction, entity_type, obligation_type, version, effective_date, authority_source, rule_json]
+      properties:
+        jurisdiction:
+          type: string
+        entity_type:
+          type: string
+        obligation_type:
+          type: string
+        version:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        authority_source:
+          type: string
+        authority_url:
+          type: string
+        rule_json:
+          type: object
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor_type:
+          type: string
+        actor_id:
+          type: string
+        event_type:
+          type: string
+        target_type:
+          type: string
+        target_id:
+          type: string
+        before_json:
+          type: object
+        after_json:
+          type: object
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    WorkflowJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        job_type:
+          type: string
+        job_status:
+          type: string
+          enum: [queued, running, completed, failed, dead_letter]
+        attempts:
+          type: integer
+        max_attempts:
+          type: integer
+        last_error:
+          type: string
+        created_at:
+          type: string
+          format: date-time
