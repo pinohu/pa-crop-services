@@ -352,7 +352,7 @@ tr:hover td{background:#fafafa}
               </select>
             </div>
             <div id="obligation-explorer" style="max-height:400px;overflow-y:auto">
-              <div style="font-size:13px;color:var(--gray);padding:12px 0">Click "Load from Engine" to fetch obligations from the compliance engine. Requires Supabase.</div>
+              <div style="font-size:13px;color:var(--gray);padding:12px 0">Click "Load from Engine" to fetch obligations from the compliance engine. Requires Neon Postgres.</div>
             </div>
           </div>
         </div>
@@ -820,7 +820,7 @@ async function loadCommandCenter() {
   try {
     const r = await fetch('/api/admin/command-center', { headers: { 'X-Admin-Key': adminKey } });
     const d = await r.json();
-    if (!d.success) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center requires Supabase. Using legacy dashboard.</div>'; return; }
+    if (!d.success) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center requires Neon Postgres. Using legacy dashboard.</div>'; return; }
     const c = d.compliance;
     const riskColor = c.overdue + c.escalated > 0 ? '#dc2626' : c.due_soon > 0 ? '#f59e0b' : '#15803d';
     el.innerHTML = `
@@ -839,7 +839,7 @@ async function loadCommandCenter() {
       </div>
       ${d.high_risk_entities?.length ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb"><div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px">⚠️ High-Risk Entities</div>${d.high_risk_entities.map(e => `<div style="font-size:12px;padding:4px 0;color:#374151">${e.name} (${e.type}) — ${e.status}</div>`).join('')}</div>` : ''}`;
   } catch (e) {
-    el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center loading... (connect Supabase to activate)</div>';
+    el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center loading... (connect Neon Postgres to activate)</div>';
   }
 }
 
@@ -857,7 +857,7 @@ async function loadAIReviewQueue() {
       <div style="color:#6b7280;margin-bottom:2px"><strong>Q:</strong> ${(c.user_message||'').slice(0,120)}</div>
       <div style="color:#374151"><strong>A:</strong> ${(c.assistant_answer||'').slice(0,150)}</div>
     </div>`).join('');
-  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">AI review requires Supabase</div>'; }
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">AI review requires Neon Postgres</div>'; }
 }
 
 async function loadDocReviewQueue() {
@@ -879,7 +879,7 @@ async function loadDocReviewQueue() {
         <div style="color:#6b7280;margin-top:2px">${doc.organizations?.legal_name || 'Unknown entity'} · ${doc.document_type || 'Unclassified'}</div>
       </div>`;
     }).join('');
-  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Document review requires Supabase</div>'; }
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Document review requires Neon Postgres</div>'; }
 }
 
 async function loadWorkflowFailures() {
@@ -892,7 +892,7 @@ async function loadWorkflowFailures() {
       <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:#dc2626">${j.job_type}</span><span style="color:#9ca3af">${new Date(j.created_at).toLocaleString()}</span></div>
       <div style="color:#6b7280;margin-top:2px">Attempt ${j.attempts}/${j.max_attempts} — ${j.last_error || 'No error details'}</div>
     </div>`).join('');
-  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Workflow monitoring requires Supabase</div>'; }
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Workflow monitoring requires Neon Postgres</div>'; }
 }
 
 // ── Obligation Explorer (Feature 15) ──────────────────────────────────
@@ -926,7 +926,7 @@ async function loadObligationExplorer() {
       </div>`;
     }).join('');
   } catch (e) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Obligation explorer requires Supabase. Using legacy compliance view.</div>';
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Obligation explorer requires Neon Postgres. Using legacy compliance view.</div>';
   }
 }
 
@@ -944,7 +944,7 @@ async function loadRulesAdmin() {
       const d2 = await r2.json();
       if (d2.rules) {
         const types = Object.entries(d2.rules.entityTypes || {});
-        el.innerHTML = '<div style="margin-bottom:8px;font-size:12px;color:var(--gray)">Showing rules from JSON file (Supabase not connected)</div>' +
+        el.innerHTML = '<div style="margin-bottom:8px;font-size:12px;color:var(--gray)">Showing rules from JSON file (Neon not connected)</div>' +
           types.map(([key, val]) => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
             <span style="font-weight:600">${val.label}</span>
             <span style="color:var(--gray)">Due: ${val.deadline} · Fee: $${val.fee} · ${val.canReinstate ? 'Can reinstate' : '⚠️ Cannot reinstate'}</span>
@@ -971,7 +971,7 @@ async function loadRulesAdmin() {
       </div>`;
     }).join('');
   } catch (e) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Rule management requires Supabase connection.</div>';
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Rule management requires Neon Postgres connection.</div>';
   }
 }
 

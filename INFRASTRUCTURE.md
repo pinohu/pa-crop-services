@@ -674,7 +674,7 @@ Full design documented in `COMPLIANCE-ENGINE-ARCHITECTURE.md`.
   - **Notification** — Scheduled/sent reminders with delivery tracking
   - **Conversation** — Full chatbot audit trail with intent classification, source refs, confidence scores, escalation flags
   - **AuditEvent** — Immutable event log: actor, event type, before/after state, reason
-- [ ] **Action required:** Provision Supabase Postgres — see `MANUAL-ACTIONS.md` #8 for steps.
+- [ ] **Action required:** Provision Neon Postgres — see `MANUAL-ACTIONS.md` #8 for steps.
 
 **Phase 2: Operational Endpoints (COMPLETE — pending Upstash provisioning)**
 
