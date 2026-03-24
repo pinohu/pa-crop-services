@@ -3,424 +3,140 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free PA Business Compliance Risk Assessment | PA CROP Services</title>
-<meta name="description" content="Find out if your Pennsylvania business is at risk of administrative dissolution. Free 2-minute compliance assessment. Check your annual report status.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="PA CROP Services">
-<meta property="og:title" content="Free PA Compliance Check — PA CROP Services">
-<meta property="og:description" content="Check your Pennsylvania business compliance status. Free tool from a licensed CROP provider.">
-<meta property="og:url" content="https://www.pacropservices.com/compliance-check">
-<meta property="og:image" content="https://www.pacropservices.com/og-image.jpg">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Free PA Compliance Check — PA CROP Services">
-
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230C1220'/><path d='M12 4L4 8.5v7L12 20l8-4.5v-7L12 4z' fill='white'/></svg>">
+<title>PA Annual Report Compliance Checker | PA CROP Services</title>
+<meta name="description" content="Check your Pennsylvania annual report deadline by entity type. Free compliance checker for LLCs, corporations, LPs, and more.">
+<meta property="og:title" content="PA Annual Report Compliance Checker">
+<meta property="og:description" content="Enter your entity type to see your exact deadline, fee, and what happens if you miss it.">
+<meta property="og:image" content="https://pacropservices.com/og-image.jpg">
 <link rel="canonical" href="https://www.pacropservices.com/compliance-check">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/site.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PA Business Compliance Risk Assessment","description":"Free compliance risk assessment for Pennsylvania business entities","provider":{"@type":"Organization","name":"PA CROP Services"}}</script>
-
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);color:var(--ink,#1C1C1C);background:var(--cream,#FAF9F6);line-height:1.7}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-::selection{background:var(--gold-light,#F5EDDA);color:var(--slate,#0C1220)}
-h1,h2,h3{font-family:var(--serif);line-height:1.3}
-a{color:var(--gold-muted,#A68A3E);text-decoration:none}
-.container{max-width:680px;margin:0 auto;padding:0 28px}
-.hero{padding:80px 0 40px;text-align:center}
-.hero .section-tag{font-size:12px;font-weight:700;color:var(--gold-muted,#A68A3E);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}
-.hero h1{font-family:var(--serif);font-size:clamp(32px,4.5vw,48px);color:var(--slate,#0C1220);margin-bottom:16px;letter-spacing:-.5px}
-.hero p{font-size:17px;color:var(--ink3,#7A7A7A);max-width:520px;margin:0 auto}
-.quiz{padding:0 0 80px}
-.progress{height:4px;background:var(--cream3,#EBE8E2);border-radius:2px;margin-bottom:36px;overflow:hidden}
-.progress-bar{height:100%;background:linear-gradient(90deg,var(--gold,#C9982A),var(--sage,#6B8F71));border-radius:2px;transition:width .4s cubic-bezier(.22,.61,.36,1)}
-.question{background:var(--white,#fff);border:1.5px solid var(--cream3,#EBE8E2);border-radius:16px;padding:36px;margin-bottom:20px;display:none;box-shadow:0 1px 3px rgba(0,0,0,.03)}
-.question.active{display:block;animation:fadeUp .4s cubic-bezier(.22,.61,.36,1) both}
+:root{--bg:#FAF9F6;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#C9982A;--border:#EBE8E2;--radius:12px;--font:'Outfit',sans-serif;--serif:'Instrument Serif',Georgia,serif}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:720px;margin:0 auto;padding:40px 24px}
+header{text-align:center;margin-bottom:40px}
+header a{color:var(--accent);text-decoration:none;font-weight:600;font-size:14px}
+h1{font-family:var(--serif);font-size:36px;margin:16px 0 8px;letter-spacing:-.5px}
+.subtitle{color:var(--ink3);font-size:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.entity-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+.entity-btn{padding:14px 16px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;text-align:left;font-family:var(--font);font-size:14px;font-weight:500;transition:all .2s}
+.entity-btn:hover{border-color:var(--accent);background:#FFFDF5}
+.entity-btn.selected{border-color:var(--accent);background:#FEF3C7;font-weight:600}
+.entity-btn .dl{font-size:12px;color:var(--ink3);margin-top:2px}
+#result{display:none;animation:fadeUp .4s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.question h3{font-family:var(--serif);font-size:20px;color:var(--slate,#0C1220);margin-bottom:4px}
-.question .num{font-size:12px;color:var(--ink3,#7A7A7A);margin-bottom:20px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.options{display:flex;flex-direction:column;gap:10px}
-.opt{background:var(--cream,#FAF9F6);border:2px solid var(--cream3,#EBE8E2);border-radius:12px;padding:16px 20px;cursor:pointer;font-size:15px;transition:all .2s cubic-bezier(.22,.61,.36,1);text-align:left;font-family:var(--font);color:var(--ink2,#4A4A4A)}
-.opt:hover{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);transform:translateY(-1px)}
-.opt.selected{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);color:var(--slate,#0C1220);font-weight:500}
-.nav-btns{display:flex;justify-content:flex-end;margin-top:24px;gap:12px}
-.btn{padding:13px 28px;border-radius:10px;font-size:15px;font-weight:600;border:none;cursor:pointer;transition:all .25s;font-family:var(--font)}
-.btn-next{background:var(--slate,#0C1220);color:#fff}.btn-next:hover{background:var(--slate2,#1A2332);transform:translateY(-1px);box-shadow:0 4px 16px rgba(12,18,32,.15)}
-.btn-next:disabled{background:var(--cream3,#EBE8E2);color:var(--ink3,#7A7A7A);cursor:not-allowed;transform:none;box-shadow:none}
-.result{display:none;text-align:center;padding:48px 0}
-.result.show{display:block;animation:fadeUp .5s cubic-bezier(.22,.61,.36,1) both}
-.score-circle{width:130px;height:130px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:40px;font-weight:700;font-family:var(--serif);box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.score-low{background:var(--sage-light,#E8F0E9);color:var(--sage,#6B8F71)}
-.score-med{background:var(--gold-light,#F5EDDA);color:var(--gold-muted,#A68A3E)}
-.score-high{background:#FEE2E2;color:#DC2626}
-.result h2{font-family:var(--serif);font-size:32px;color:var(--slate,#0C1220);margin-bottom:12px}
-.result p{font-size:16px;color:var(--ink3,#7A7A7A);margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.7}
-.risk-items{text-align:left;background:var(--white,#fff);border:1.5px solid var(--cream3,#EBE8E2);border-radius:14px;padding:28px;margin:24px 0}
-.risk-item{display:flex;gap:12px;margin-bottom:14px;font-size:14px;align-items:flex-start;color:var(--ink2,#4A4A4A)}
-.risk-item:last-child{margin-bottom:0}
-.risk-icon{min-width:20px;font-size:16px}
-.cta-btn{display:inline-block;background:var(--slate,#0C1220);color:#fff!important;padding:16px 36px;border-radius:12px;font-weight:600;font-size:16px;margin-top:16px;transition:all .25s}
-.cta-btn:hover{background:var(--slate2,#1A2332);transform:translateY(-1px);box-shadow:0 6px 24px rgba(12,18,32,.15)}
-footer{background:var(--slate,#0C1220);color:rgba(255,255,255,0.6);padding:40px 0;font-size:13px;text-align:center;margin-top:0}
-footer a{color:rgba(255,255,255,0.8)}
-@media(max-width:768px){.hero h1{font-size:32px}.question{padding:24px}.container{padding:0 20px}}
-*:focus-visible{outline:2px solid var(--gold,#C9982A);outline-offset:2px;border-radius:4px}
-.opt:focus-visible{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);transform:translateY(-1px)}
-.opt[aria-checked="true"]{border-color:var(--gold,#C9982A);background:var(--gold-light,#F5EDDA);color:var(--slate,#0C1220);font-weight:500}
+.rh{display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.rb{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;text-transform:uppercase}
+.rb-low{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.rb-medium{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+.rb-high,.rb-critical{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+.rb-overdue{background:#450a0a;color:#fff;border:1px solid #dc2626}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0}
+.st{text-align:center;padding:16px;background:var(--bg);border-radius:8px}
+.st .v{font-size:28px;font-weight:700;color:var(--ink)}
+.st .l{font-size:12px;color:var(--ink3);margin-top:2px}
+.cb{padding:16px;border-radius:8px;margin:16px 0;font-size:14px}
+.cb-w{background:#fffbeb;border:1px solid #fcd34d}
+.cb-d{background:#fef2f2;border:1px solid #fca5a5}
+.cb-o{background:#f0fdf4;border:1px solid #86efac}
+.rec{font-size:16px;color:var(--ink2);margin:16px 0;line-height:1.7}
+.cta{text-align:center;margin:32px 0;padding:32px;background:linear-gradient(135deg,#0C1220,#1a2a3e);border-radius:var(--radius);color:#fff}
+.cta h3{font-family:var(--serif);font-size:24px;margin-bottom:8px}
+.cta p{color:#ccc;margin-bottom:20px}
+.cta a{display:inline-block;padding:14px 32px;background:var(--accent);color:#0C1220;font-weight:700;border-radius:8px;text-decoration:none;font-size:15px;transition:transform .2s}
+.cta a:hover{transform:translateY(-2px)}
+.steps{margin:16px 0;padding:0;counter-reset:s}
+.steps li{list-style:none;padding:8px 0 8px 36px;position:relative;font-size:14px;color:var(--ink2)}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+footer{text-align:center;padding:40px 0;color:var(--ink3);font-size:13px}
+footer a{color:var(--accent);text-decoration:none}
+@media(max-width:600px){.entity-grid{grid-template-columns:1fr}h1{font-size:28px}}
 </style>
-<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
-<script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "vzhtq2nted");
-</script>
 </head>
 <body>
-<a href="#quiz-start" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:var(--slate,#0C1220);color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to quiz</a>
-<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
-  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
-  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
-  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
-</div></nav>
-<div class="mobile-menu" id="mm"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a></div>
-
-<section class="hero">
 <div class="container">
-<div class="section-tag">Free Compliance Check</div>
-<h1>Find out where your<br>PA entity stands</h1>
-<p>Answer 6 quick questions. We'll show you exactly what's at risk — and what to do about it. Takes about 2 minutes.</p>
-<div style="margin-top:20px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink3,#7A7A7A)">
-  <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M12 2L3 7v6c0 5.1 3.8 9.8 9 11 5.2-1.2 9-5.9 9-11V7l-9-5z" stroke="currentColor" stroke-width="2"/></svg> No data stored</span><span>·</span><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Instant results</span><span>·</span><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Personalized plan</span>
+<header>
+<a href="/">← PA CROP Services</a>
+<h1>PA Compliance Checker</h1>
+<p class="subtitle">Select your entity type to see your exact deadline, fee, and what happens if you miss it.</p>
+</header>
+<div class="card">
+<p style="font-weight:600;margin-bottom:12px">What type of Pennsylvania entity do you have?</p>
+<div class="entity-grid" id="eg"></div>
+</div>
+<div id="result">
+<div class="card">
+<div class="rh"><div><h2 id="rt" style="font-family:var(--serif);font-size:24px"></h2><p id="rs" style="color:var(--ink3);font-size:14px"></p></div><span id="rb" class="rb"></span></div>
+<div class="sg">
+<div class="st"><div class="v" id="dv">—</div><div class="l">Days Until Deadline</div></div>
+<div class="st"><div class="v" id="dlv">—</div><div class="l">Deadline Date</div></div>
+<div class="st"><div class="v" id="fv">—</div><div class="l">Filing Fee</div></div>
+</div>
+<div id="cbox" class="cb"></div>
+<p class="rec" id="rec"></p>
+<h3 style="font-size:16px;margin:20px 0 8px">How to file:</h3>
+<ol class="steps">
+<li>Go to <a href="https://file.dos.pa.gov" target="_blank" style="color:var(--accent)">file.dos.pa.gov</a></li>
+<li>Search for your entity by name or DOS number</li>
+<li>Select "Annual Report" filing type</li>
+<li>Verify your registered office address</li>
+<li>Pay the filing fee by credit card</li>
+<li>Save your confirmation number</li>
+</ol>
+</div>
+<div class="cta">
+<h3>Let us handle your compliance</h3>
+<p>Never worry about deadlines again. We monitor, remind, and even file for you.</p>
+<a href="/#plans">See Plans — From $99/year</a>
 </div>
 </div>
-</section>
-
-<section class="quiz" id="quiz-start" aria-label="Compliance assessment">
-<div class="container">
-<div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Quiz progress"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
-
-<div class="question active" data-q="0">
-<div class="num">Question 1 of 6</div>
-<h3>What type of Pennsylvania entity do you have?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="corp" data-risk="1">Corporation (business or nonprofit)</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="llc" data-risk="1">LLC</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="lp" data-risk="1">Limited Partnership or LLP</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="foreign" data-risk="2">Foreign entity registered in PA</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="unsure" data-risk="2">I'm not sure</div>
+<div style="text-align:center;margin-top:24px"><a href="/" style="color:var(--ink3);text-decoration:none;font-size:14px">← Back to PA CROP Services</a></div>
+<footer>
+<p>PA CROP Services · Licensed Pennsylvania Commercial Registered Office Provider</p>
+<p style="margin-top:4px">Source: <a href="https://www.pa.gov/agencies/dos/programs/business/types-of-filings-and-registrations/annual-reports" target="_blank">PA Department of State</a> · 15 Pa. C.S. § 146</p>
+</footer>
 </div>
-</div>
-
-<div class="question" data-q="1">
-<div class="num">Question 2 of 6</div>
-<h3>Have you filed your 2025 Pennsylvania annual report?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, already filed</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="2">No, haven't filed yet</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="what" data-risk="3">I didn't know there was an annual report</div>
-</div>
-</div>
-
-<div class="question" data-q="2">
-<div class="num">Question 3 of 6</div>
-<h3>Is your registered office address current and accurate?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, it's current</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="moved" data-risk="2">I've moved since filing but haven't updated it</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="home" data-risk="1">I'm using my home address and want to change it</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="unsure" data-risk="2">I don't remember what address is on file</div>
-</div>
-</div>
-
-<div class="question" data-q="3">
-<div class="num">Question 4 of 6</div>
-<h3>Do you have someone available at your registered office during business hours (9-5 weekdays)?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, always</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="sometimes" data-risk="1">Sometimes, but not always</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="2">No — I work remotely, travel, or the office is often empty</div>
-</div>
-</div>
-
-<div class="question" data-q="4">
-<div class="num">Question 5 of 6</div>
-<h3>Are you aware of the 2027 dissolution deadline for entities that miss annual reports?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, I'm aware and prepared</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="heard" data-risk="1">I've heard about it but don't know the details</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="no" data-risk="3">No, what dissolution deadline?</div>
-</div>
-</div>
-
-<div class="question" data-q="5">
-<div class="num">Question 6 of 6</div>
-<h3>Do you currently use a Commercial Registered Office Provider (CROP)?</h3>
-<div class="options" role="radiogroup">
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="yes" data-risk="0">Yes, I have a CROP</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="self" data-risk="1">No, I use my own address</div>
-<div class="opt" role="radio" tabindex="0" aria-checked="false" data-val="what" data-risk="2">I don't know what a CROP is</div>
-</div>
-</div>
-
-<div class="nav-btns">
-<button class="btn" id="backBtn" onclick="prevQuestion()" style="display:none;background:transparent;border:1.5px solid var(--cream3,#EBE8E2);color:var(--ink2,#4A4A4A)" aria-label="Go to previous question">← Back</button>
-<button class="btn btn-next" id="nextBtn" disabled onclick="nextQuestion()" aria-label="Go to next question">Next →</button>
-</div>
-
-<div class="result" id="result">
-<div class="score-circle" id="scoreCircle"></div>
-<h2 id="resultTitle"></h2>
-<p id="resultDesc"></p>
-<div class="risk-items" id="riskItems"></div>
-<div id="lead-capture" style="margin-top:24px;padding:24px;background:#f0f4ff;border-radius:12px;border:1px solid #d1d5db">
-  <p style="font-size:15px;font-weight:600;color:var(--dark);margin-bottom:8px">Want us to take a closer look?</p>
-  <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Drop your email and we'll send you a personalized breakdown — what's good, what needs attention, and what we'd recommend.</p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <input type="email" id="lead-email" placeholder="your@email.com" required aria-label="Email address" autocomplete="email" style="flex:1;min-width:200px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s">
-    <input type="text" id="lead-name" placeholder="Your name" aria-label="Your name" autocomplete="name" style="flex:1;min-width:150px;padding:12px 16px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none">
-    <button onclick="submitLead()" id="lead-btn" aria-label="Get personalized compliance report" style="background:var(--accent);color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Get my report →</button>
-  </div>
-  <p id="lead-error" role="alert" aria-live="polite" style="display:none;color:#DC2626;font-size:13px;margin-top:8px"></p>
-  <p id="lead-success" style="display:none;color:var(--green,#059669);margin-top:12px;font-weight:600">✓ On its way! We'll have your personalized report in your inbox shortly.</p>
-</div>
-<a href="/#pricing" class="cta-btn" style="margin-top:16px">View plans from $8.25/month →</a>
-<div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-  <a href="tel:8142282822" style="display:inline-flex;align-items:center;gap:6px;background:var(--gold-muted,#A68A3E);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> Call us now: 814-228-2822</a>
-  <a href="https://app.trafft.com/booking" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;background:var(--slate,#0C1220);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Book a free compliance review</a>
-  <a href="mailto:hello@pacropservices.com?subject=Compliance%20Check%20-%20Want%20to%20discuss" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1.5px solid #d1d5db;color:var(--dark,#1E2333);padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg> Email our team</a>
-</div>
-<p style="font-size:12px;color:var(--gray,#6B7280);margin-top:12px">30-day money-back guarantee · No contracts · Cancel anytime</p>
-<div id="plan-recs" style="display:none;margin-top:20px;text-align:left">
-  <p style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:12px">Recommended for you:</p>
-  <div id="rec-cards" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-  </div>
-</div>
-</div>
-</div>
-</section>
-
-<footer class="site-footer" role="contentinfo"><div class="footer-inner">
-  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
-  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
-</div></footer>
-
 <script>
-let current = 0;
-let totalRisk = 0;
-const total = 6;
-const answers = {};
-
-// OPTION SELECTION — click + keyboard
-document.querySelectorAll('.opt').forEach(opt => {
-  function selectOpt(el) {
-    el.parentElement.querySelectorAll('.opt').forEach(o => {
-      o.classList.remove('selected');
-      o.setAttribute('aria-checked', 'false');
-    });
-    el.classList.add('selected');
-    el.setAttribute('aria-checked', 'true');
-    const q = el.closest('.question').dataset.q;
-    answers[q] = { val: el.dataset.val, risk: parseInt(el.dataset.risk) };
-    document.getElementById('nextBtn').disabled = false;
-    document.getElementById('nextBtn').focus();
-  }
-  opt.addEventListener('click', function() { selectOpt(this); });
-  opt.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectOpt(this); }
-    // Arrow key navigation within option group
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-      e.preventDefault();
-      var next = this.nextElementSibling;
-      if (next && next.classList.contains('opt')) next.focus();
-    }
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-      e.preventDefault();
-      var prev = this.previousElementSibling;
-      if (prev && prev.classList.contains('opt')) prev.focus();
-    }
-  });
-});
-
-function updateProgress() {
-  var pct = ((current / total) * 100);
-  var pbar = document.getElementById('pbar');
-  pbar.style.width = pct + '%';
-  pbar.parentElement.setAttribute('aria-valuenow', Math.round(pct));
+const E=[
+{k:'domestic_business_corp',l:'Domestic Business Corp',d:'June 30'},
+{k:'foreign_business_corp',l:'Foreign Business Corp',d:'June 30'},
+{k:'domestic_nonprofit_corp',l:'Domestic Nonprofit Corp',d:'June 30'},
+{k:'foreign_nonprofit_corp',l:'Foreign Nonprofit Corp',d:'June 30'},
+{k:'domestic_llc',l:'Domestic LLC',d:'September 30'},
+{k:'foreign_llc',l:'Foreign LLC',d:'September 30'},
+{k:'domestic_lp',l:'Domestic LP',d:'December 31'},
+{k:'foreign_lp',l:'Foreign LP',d:'December 31'},
+{k:'domestic_llp',l:'Domestic LLP',d:'December 31'},
+{k:'foreign_llp',l:'Foreign LLP',d:'December 31'},
+{k:'professional_association',l:'Professional Association',d:'December 31'},
+{k:'business_trust',l:'Business Trust',d:'December 31'}
+];
+const g=document.getElementById('eg');
+E.forEach(e=>{const b=document.createElement('button');b.className='entity-btn';b.innerHTML=`${e.l}<div class="dl">Due: ${e.d}</div>`;b.onclick=()=>sel(e.k,b);g.appendChild(b)});
+async function sel(k,btn){
+document.querySelectorAll('.entity-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');
+try{const r=await fetch(`/api/compliance-check?entity_type=${k}`);const d=await r.json();if(d.success)show(d.result)}catch(e){console.error(e)}
 }
-
-function nextQuestion() {
-  var questions = document.querySelectorAll('.question');
-  questions[current].classList.remove('active');
-  current++;
-  if (current < total) {
-    questions[current].classList.add('active');
-    updateProgress();
-    document.getElementById('nextBtn').disabled = true;
-    document.getElementById('backBtn').style.display = current > 0 ? '' : 'none';
-    if (current === total - 1) document.getElementById('nextBtn').textContent = 'See results';
-    // Focus first option in new question
-    var firstOpt = questions[current].querySelector('.opt');
-    if (firstOpt) setTimeout(function() { firstOpt.focus(); }, 200);
-    // Announce to screen readers
-    var qNum = questions[current].querySelector('.num');
-    if (qNum) announceToSR(qNum.textContent);
-  } else {
-    showResult();
-  }
-}
-
-function prevQuestion() {
-  if (current <= 0) return;
-  var questions = document.querySelectorAll('.question');
-  questions[current].classList.remove('active');
-  current--;
-  questions[current].classList.add('active');
-  updateProgress();
-  document.getElementById('nextBtn').disabled = !answers[current];
-  document.getElementById('nextBtn').textContent = 'Next →';
-  document.getElementById('backBtn').style.display = current > 0 ? '' : 'none';
-}
-
-// Screen reader announcements
-function announceToSR(text) {
-  var el = document.getElementById('sr-announce');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'sr-announce';
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'polite');
-    el.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)';
-    document.body.appendChild(el);
-  }
-  el.textContent = text;
-}
-
-function showResult() {
-  document.querySelector('.nav-btns').style.display = 'none';
-  document.querySelector('.progress').style.display = 'none';
-
-  totalRisk = Object.values(answers).reduce(function(sum, a) { return sum + a.risk; }, 0);
-  var maxRisk = 15;
-
-  var circle = document.getElementById('scoreCircle');
-  var title = document.getElementById('resultTitle');
-  var desc = document.getElementById('resultDesc');
-  var items = document.getElementById('riskItems');
-
-  var risks = [];
-  if (answers['1'] && answers['1'].risk >= 2) risks.push({ text: 'You haven\'t filed your PA annual report. Starting in 2027, this could lead to administrative dissolution.' });
-  if (answers['2'] && answers['2'].risk >= 2) risks.push({ text: 'Your registered office address may be outdated. Legal documents could be going to the wrong address.' });
-  if (answers['3'] && answers['3'].risk >= 2) risks.push({ text: 'Nobody is reliably available at your registered office during business hours. This means missed legal service.' });
-  if (answers['4'] && answers['4'].risk >= 2) risks.push({ text: 'The 2027 dissolution deadline could catch you off guard. Foreign entities cannot reinstate after termination.' });
-  if (answers['0'] && answers['0'].val === 'foreign') risks.push({ text: 'As a foreign entity, you cannot reinstate if dissolved. You would need to re-register, possibly under a new name.' });
-  if (answers['5'] && answers['5'].risk >= 1) risks.push({ text: 'Without a CROP, your personal address is public record and you\'re responsible for being available during business hours.' });
-
-  if (totalRisk <= 3) {
-    circle.className = 'score-circle score-low';
-    circle.textContent = 'Low';
-    title.textContent = 'Your compliance risk is low';
-    desc.textContent = 'You\'re in good shape. Keep filing on time and monitoring your registered office.';
-  } else if (totalRisk <= 8) {
-    circle.className = 'score-circle score-med';
-    circle.textContent = 'Med';
-    title.textContent = 'You have moderate compliance risk';
-    desc.textContent = 'There are a few areas that need attention before the 2027 enforcement deadline.';
-  } else {
-    circle.className = 'score-circle score-high';
-    circle.textContent = 'High';
-    title.textContent = 'Your business is at significant risk';
-    desc.textContent = 'Multiple compliance gaps could lead to administrative dissolution, missed lawsuits, or loss of your business name.';
-  }
-
-  if (risks.length > 0) {
-    items.innerHTML = risks.map(function(r) {
-      return '<div class="risk-item"><span class="risk-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C44536" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span><span>' + r.text + '</span></div>';
-    }).join('');
-  } else {
-    items.innerHTML = '<div class="risk-item"><span class="risk-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></span><span>No major compliance risks detected. Consider a CROP for added protection and convenience.</span></div>';
-  }
-
-  document.getElementById('result').classList.add('show');
-  announceToSR('Your compliance score is ' + circle.textContent + '. ' + title.textContent);
-
-  // Show plan recommendation
-  var recDiv = document.getElementById('plan-recs');
-  var recCards = document.getElementById('rec-cards');
-  recDiv.style.display = 'block';
-  var cards = '';
-  if (totalRisk <= 3) {
-    cards = '<a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #10B981;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
-      + '<div style="font-size:13px;color:#10B981;font-weight:700;margin-bottom:4px">RECOMMENDED</div>'
-      + '<div style="font-size:18px;font-weight:700;color:#111">Compliance Only</div>'
-      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$99<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:12px">PA CROP + annual report reminders + document scanning</div>'
-      + '<div style="background:#10B981;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Get Protected →</div></a>';
-  } else if (totalRisk <= 8) {
-    cards = '<a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #F59E0B;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
-      + '<div style="font-size:13px;color:#F59E0B;font-weight:700;margin-bottom:4px">RECOMMENDED</div>'
-      + '<div style="font-size:18px;font-weight:700;color:#111">Business Starter</div>'
-      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$199<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Everything in Compliance + hosting, email, and website</div>'
-      + '<div style="background:#F59E0B;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Fix My Compliance →</div></a>';
-  } else {
-    cards = '<a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" style="text-decoration:none;flex:1;min-width:220px;max-width:300px;padding:20px;background:#fff;border:2px solid #EF4444;border-radius:12px;text-align:center;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
-      + '<div style="font-size:13px;color:#EF4444;font-weight:700;margin-bottom:4px">URGENT — RECOMMENDED</div>'
-      + '<div style="font-size:18px;font-weight:700;color:#111">Business Pro</div>'
-      + '<div style="font-size:28px;font-weight:800;color:#111;margin:8px 0">$349<span style="font-size:14px;font-weight:400;color:#666">/year</span></div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:12px">Full compliance management + we file your annual report</div>'
-      + '<div style="background:#EF4444;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Protect My Business →</div></a>';
-  }
-  recCards.innerHTML = cards;
-
-  // Scroll result into view
-  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function submitLead() {
-  var email = document.getElementById('lead-email').value.trim();
-  var name = document.getElementById('lead-name').value.trim();
-  var btn = document.getElementById('lead-btn');
-  var errEl = document.getElementById('lead-error');
-
-  // Inline validation instead of alert()
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    document.getElementById('lead-email').style.borderColor = '#DC2626';
-    if (errEl) { errEl.textContent = 'Please enter a valid email address'; errEl.style.display = 'block'; }
-    setTimeout(function() { document.getElementById('lead-email').style.borderColor = '#d1d5db'; }, 2000);
-    return;
-  }
-  if (errEl) errEl.style.display = 'none';
-
-  btn.textContent = 'Analyzing...'; btn.disabled = true; btn.setAttribute('aria-busy', 'true');
-
-  try {
-    var qualRes = await fetch('/api/qualify-lead', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ email: email, name: name, answers: { risk_score: totalRisk, source: 'compliance_check', state: 'PA' } })
-    });
-    var qualData = await qualRes.json();
-
-    await fetch('/api/intake', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ email: email, name: name, source: 'compliance_check', score: qualData.totalScore || totalRisk, tier: qualData.tier || 'warm' })
-    });
-
-    document.getElementById('lead-capture').querySelector('div[style]').style.display = 'none';
-    document.getElementById('lead-success').style.display = 'block';
-    if (window.plausible) plausible('Lead Captured', { props: { source: 'compliance_check', score: totalRisk } });
-  } catch(e) {
-    btn.textContent = 'Get my report →'; btn.disabled = false; btn.setAttribute('aria-busy', 'false');
-    if (errEl) { errEl.textContent = 'Something went wrong. Please try again.'; errEl.style.display = 'block'; }
-  }
+function show(r){
+document.getElementById('result').style.display='block';
+document.getElementById('rt').textContent=r.label;
+document.getElementById('rs').textContent='Pennsylvania Annual Report';
+const d=r.days_until;
+document.getElementById('dv').textContent=d<0?Math.abs(d)+' overdue':d;
+document.getElementById('dlv').textContent=r.deadline;
+document.getElementById('fv').textContent=r.fee===0?'Free':'$'+r.fee;
+const b=document.getElementById('rb');
+const rl={low:'On Track',medium:'Due Soon',high:'Urgent',critical:'Critical',overdue:'OVERDUE'};
+b.textContent=rl[r.risk_level]||r.risk_level;b.className='rb rb-'+r.risk_level;
+const c=document.getElementById('cbox');
+if(r.risk_level==='overdue'){c.className='cb cb-d';c.innerHTML='<strong>⚠️ Your report is overdue.</strong> '+(r.can_reinstate?'Starting with 2027 reports, this could lead to dissolution — but domestic entities can reinstate.':'<strong>Foreign entities cannot reinstate.</strong> You must re-register. Act immediately.')}
+else if(d<=30){c.className='cb cb-w';c.innerHTML='<strong>Deadline approaching.</strong> '+(r.consequence||'Missing your deadline could lead to administrative action.')}
+else{c.className='cb cb-o';c.innerHTML='<strong>✅ You\'re in good shape.</strong> Your deadline is '+d+' days away.'+(r.grace_period_active?' The current grace period means no enforcement for 2025-2026 reports.':'')}
+document.getElementById('rec').textContent=r.recommendation;
+document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
-<script src="/embed/chatbot.js" defer></script>
-<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
-<script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove("open")});</script>
 </body>
 </html>
-<!-- deploy-cache-bust 1774315871 -->
