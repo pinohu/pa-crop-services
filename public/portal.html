@@ -602,9 +602,17 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             </div>
           </div>
         </div>
+        <!-- Document filters -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm doc-filter active" onclick="filterDocs('all',this)" style="font-size:12px">All</button>
+          <button class="btn btn-ghost btn-sm doc-filter" onclick="filterDocs('critical',this)" style="font-size:12px;color:var(--red)">🔴 Critical</button>
+          <button class="btn btn-ghost btn-sm doc-filter" onclick="filterDocs('high',this)" style="font-size:12px;color:#f59e0b">🟡 High</button>
+          <button class="btn btn-ghost btn-sm doc-filter" onclick="filterDocs('pending',this)" style="font-size:12px">⏳ Pending Review</button>
+        </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title" id="docs-count-label">Documents received</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadDocumentsFromAPI()" style="font-size:12px">⟳ Refresh</button>
           </div>
           <div class="card-body" id="documents-list">
             <div class="empty-state" id="docs-empty">
@@ -894,6 +902,17 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div class="card-body">
             <div id="upgrade-options" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
             <p style="font-size:12px;color:var(--ink3);margin-top:12px">Your existing features carry over. New features activate immediately after payment.</p>
+          </div>
+        </div>
+
+        <!-- Notification History -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">
+            <span class="card-title">📬 Notification History</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadNotificationHistory()" style="font-size:12px">⟳ Refresh</button>
+          </div>
+          <div class="card-body" id="notification-history" style="max-height:300px;overflow-y:auto">
+            <div style="font-size:13px;color:var(--ink3);padding:8px 0">Notification history loads from the compliance engine.</div>
           </div>
         </div>
       </div>
@@ -1863,6 +1882,80 @@ async function showHealthReport() {
     var w = window.open('', '_blank', 'width=700,height=700');
     w.document.write('<html><head><title>Health Report — '+rpt.organization.legal_name+'</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet"></head><body style="padding:32px;font-family:Outfit,sans-serif;max-width:600px;margin:0 auto"><h1 style="text-align:center;font-size:22px">Compliance Health Report</h1><p style="text-align:center;color:#888;font-size:13px">'+rpt.organization.legal_name+' · '+new Date(rpt.generated_at).toLocaleDateString()+'</p><div style="display:flex;justify-content:center;gap:40px;margin:24px 0"><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.grade+'</div><div style="font-size:12px;color:#888">Grade</div></div><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.risk_level.toUpperCase()+'</div><div style="font-size:12px;color:#888">Risk</div></div></div><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Entity</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.organization.entity_type+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Status</td><td style="padding:10px;border-bottom:1px solid #eee">'+(rpt.organization.verified?'✅ Verified':'⏳ Pending')+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Obligations</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.compliance.total_obligations+' total · '+rpt.compliance.filed+' filed · '+rpt.compliance.overdue+' overdue</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Documents</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.documents.total+' received</td></tr></table>'+(rpt.verification_badge?'<div style="text-align:center;margin:24px 0"><img src="'+rpt.verification_badge.embed_url+'" alt="Verified Badge"><p style="font-size:10px;color:#888;margin-top:8px">Embed: &lt;img src=&quot;'+rpt.verification_badge.embed_url+'&quot;&gt;</p></div>':'')+'<div style="text-align:center;margin:24px 0;font-size:11px;color:#888">PA CROP Services · pacropservices.com</div></body></html>');
   } catch (e) { showToast('Health report requires compliance engine connection'); }
+}
+
+// ═══ DOCUMENTS WITH AI CLASSIFICATION (Feature 4) ═══
+
+async function loadDocumentsFromAPI() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) return;
+  var list = document.getElementById('documents-list');
+  var empty = document.getElementById('docs-empty');
+  var label = document.getElementById('docs-count-label');
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/organizations/' + orgId + '/documents', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var items = d.items || [];
+    if (!items.length) return;
+    if (empty) empty.style.display = 'none';
+    if (label) label.textContent = items.length + ' document' + (items.length > 1 ? 's' : '') + ' received';
+    list.innerHTML = items.map(function(doc) {
+      var uc = { critical:'#dc2626', high:'#f59e0b', normal:'#6b7280' };
+      var ui = { critical:'🔴', high:'🟡', normal:'📄' };
+      var typeLabels = { service_of_process:'⚖️ Service of Process', government_correspondence:'🏛️ Government', tax_notice:'💰 Tax Notice', general_mail:'📬 General Mail' };
+      var tl = typeLabels[doc.document_type] || (doc.document_type||'Document').replace(/_/g,' ');
+      return '<div class="doc-row" data-urgency="' + (doc.urgency||'normal') + '" data-review="' + (doc.review_status||'pending') + '" style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);align-items:flex-start">' +
+        '<div style="font-size:20px;flex-shrink:0">' + (ui[doc.urgency]||'📄') + '</div>' +
+        '<div style="flex:1">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<span style="font-weight:600;font-size:14px">' + tl + '</span>' +
+        '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:' + (uc[doc.urgency]||'#6b7280') + '15;color:' + (uc[doc.urgency]||'#6b7280') + ';text-transform:uppercase">' + (doc.urgency||'normal') + '</span>' +
+        '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:var(--bg);color:var(--ink3)">' + (doc.review_status||'pending') + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--ink3);margin-top:4px">' + (doc.filename||'') + ' · Received ' + new Date(doc.received_at).toLocaleDateString() + '</div>' +
+        (doc.urgency === 'critical' ? '<div style="margin-top:6px;padding:8px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;font-size:12px;color:#dc2626;font-weight:500">⚠️ This requires immediate attention. Contact your attorney if this is service of process.</div>' : '') +
+        '</div></div>';
+    }).join('');
+  } catch (e) { /* fall back to existing behavior */ }
+}
+
+function filterDocs(filter, btn) {
+  document.querySelectorAll('.doc-filter').forEach(function(b) { b.classList.remove('active'); b.style.fontWeight = '400'; });
+  btn.classList.add('active'); btn.style.fontWeight = '700';
+  document.querySelectorAll('.doc-row').forEach(function(row) {
+    if (filter === 'all') { row.style.display = ''; return; }
+    if (filter === 'critical') { row.style.display = row.dataset.urgency === 'critical' ? '' : 'none'; return; }
+    if (filter === 'high') { row.style.display = (row.dataset.urgency === 'high' || row.dataset.urgency === 'critical') ? '' : 'none'; return; }
+    if (filter === 'pending') { row.style.display = row.dataset.review === 'pending' ? '' : 'none'; return; }
+  });
+}
+
+// ═══ NOTIFICATION HISTORY (Feature 6) ═══
+
+async function loadNotificationHistory() {
+  var orgId = window._orgId || window._ctx?.organization_id;
+  if (!orgId) return;
+  var el = document.getElementById('notification-history');
+  try {
+    var token = localStorage.getItem('crop_token') || '';
+    var r = await fetch('/api/organizations/' + orgId + '/notifications', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var items = d.items || [];
+    if (!items.length) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:8px 0">No notifications sent yet. Reminders will appear here.</div>'; return; }
+    el.innerHTML = items.map(function(n) {
+      var sc = { sent:'var(--green)', delivered:'var(--green)', scheduled:'#3b82f6', failed:'var(--red)', bounced:'var(--red)' };
+      var si = { sent:'✉️', delivered:'✅', scheduled:'⏰', failed:'❌', bounced:'🔙' };
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+        '<div style="flex-shrink:0">' + (si[n.delivery_status]||'📧') + '</div>' +
+        '<div style="flex:1">' +
+        '<div style="font-weight:500">' + (n.template_id||n.notification_type||'notification').replace(/_/g,' ') + '</div>' +
+        '<div style="color:var(--ink3);font-size:12px">' + (n.channel||'email') + ' · ' + (n.sent_at ? new Date(n.sent_at).toLocaleString() : 'Scheduled: ' + new Date(n.scheduled_for).toLocaleString()) + '</div>' +
+        '</div>' +
+        '<span style="color:' + (sc[n.delivery_status]||'var(--ink3)') + ';font-size:11px;font-weight:600;text-transform:uppercase">' + (n.delivery_status||'unknown') + '</span>' +
+        '</div>';
+    }).join('');
+  } catch (e) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Notification history requires compliance engine.</div>'; }
 }
 
 </script>

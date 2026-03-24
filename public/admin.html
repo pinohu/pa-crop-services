@@ -333,6 +333,42 @@ tr:hover td{background:#fafafa}
             <div id="compliance-table"><div class="loading"><div class="spinner"></div>Loading compliance data...</div></div>
           </div>
         </div>
+
+        <!-- Obligation Explorer -->
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <div class="panel-title">🔍 Obligation Explorer</div>
+            <button class="btn-sm" onclick="loadObligationExplorer()" style="font-size:11px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer">⟳ Load from Engine</button>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+              <input type="text" id="obl-search" placeholder="Search entity name or ID..." style="flex:1;min-width:200px;padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+              <select id="obl-status-filter" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+                <option value="">All statuses</option>
+                <option value="overdue">Overdue</option>
+                <option value="escalated">Escalated</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="filed_confirmed">Filed</option>
+              </select>
+            </div>
+            <div id="obligation-explorer" style="max-height:400px;overflow-y:auto">
+              <div style="font-size:13px;color:var(--gray);padding:12px 0">Click "Load from Engine" to fetch obligations from the compliance engine. Requires Supabase.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rule Management -->
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-header">
+            <div class="panel-title">⚙️ Rule Management</div>
+            <button class="btn-sm" onclick="loadRulesAdmin()" style="font-size:11px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer">⟳ Load Rules</button>
+          </div>
+          <div class="panel-body">
+            <div id="rules-admin-list" style="max-height:300px;overflow-y:auto">
+              <div style="font-size:13px;color:var(--gray);padding:8px 0">Click "Load Rules" to view and manage compliance rules.</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- HOSTING PAGE -->
@@ -857,6 +893,86 @@ async function loadWorkflowFailures() {
       <div style="color:#6b7280;margin-top:2px">Attempt ${j.attempts}/${j.max_attempts} — ${j.last_error || 'No error details'}</div>
     </div>`).join('');
   } catch (e) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Workflow monitoring requires Supabase</div>'; }
+}
+
+// ── Obligation Explorer (Feature 15) ──────────────────────────────────
+async function loadObligationExplorer() {
+  const el = document.getElementById('obligation-explorer');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading obligations...</div>';
+  try {
+    const r = await fetch('/api/admin/audit?event_type=obligation.status_changed&limit=100', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    const items = d.items || [];
+    if (!items.length) {
+      el.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:8px 0">No obligation state changes recorded yet. Register entities and the engine will track them.</div>';
+      return;
+    }
+    el.innerHTML = items.map(e => {
+      const before = e.before_json || {};
+      const after = e.after_json || {};
+      const sc = { overdue:'#dc2626', escalated:'#7f1d1d', upcoming:'#3b82f6', filed_confirmed:'#15803d', closed:'#15803d' };
+      return `<div style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-weight:600">Obligation ${(e.target_id||'').slice(0,8)}</span>
+            <span style="margin:0 6px;color:#d1d5db">→</span>
+            <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${(sc[after.status]||'#6b7280')}15;color:${sc[after.status]||'#6b7280'};text-transform:uppercase">${after.status||'unknown'}</span>
+          </div>
+          <span style="color:#9ca3af">${new Date(e.created_at).toLocaleString()}</span>
+        </div>
+        <div style="color:#6b7280;margin-top:4px">
+          ${before.status ? '<span style="text-decoration:line-through">'+before.status+'</span> → ' : ''}${after.status||''} · by ${e.actor_type}:${e.actor_id||'system'}${e.reason ? ' · '+e.reason : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Obligation explorer requires Supabase. Using legacy compliance view.</div>';
+  }
+}
+
+// ── Rule Management (Feature 18) ──────────────────────────────────────
+async function loadRulesAdmin() {
+  const el = document.getElementById('rules-admin-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading rules...</div>';
+  try {
+    const r = await fetch('/api/admin/rules', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    const items = d.items || [];
+    if (!items.length) {
+      // Fall back to showing rules from the compliance-rules API
+      const r2 = await fetch('/api/compliance-rules');
+      const d2 = await r2.json();
+      if (d2.rules) {
+        const types = Object.entries(d2.rules.entityTypes || {});
+        el.innerHTML = '<div style="margin-bottom:8px;font-size:12px;color:var(--gray)">Showing rules from JSON file (Supabase not connected)</div>' +
+          types.map(([key, val]) => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+            <span style="font-weight:600">${val.label}</span>
+            <span style="color:var(--gray)">Due: ${val.deadline} · Fee: $${val.fee} · ${val.canReinstate ? 'Can reinstate' : '⚠️ Cannot reinstate'}</span>
+          </div>`).join('');
+        return;
+      }
+      el.innerHTML = '<div style="font-size:13px;color:var(--gray)">No rules found.</div>';
+      return;
+    }
+    el.innerHTML = items.map(rule => {
+      const rj = rule.rule_json || {};
+      return `<div style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-weight:600">${rule.entity_type}</span>
+            <span style="color:var(--gray);margin-left:8px">v${rule.version}</span>
+            <span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:6px;background:${rule.is_active?'#f0fdf4':'#f8fafc'};color:${rule.is_active?'#15803d':'#9ca3af'}">${rule.is_active?'ACTIVE':'superseded'}</span>
+          </div>
+          <span style="color:#9ca3af">${rule.jurisdiction} · ${rule.obligation_type}</span>
+        </div>
+        <div style="color:#6b7280;margin-top:4px">
+          Due: ${rj.due_date_rule?.month||'?'}/${rj.due_date_rule?.day||'?'} · Fee: $${rj.fee?.amount_usd||'?'} · Source: ${rule.authority_source||'—'}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Rule management requires Supabase connection.</div>';
+  }
 }
 
 // ── Clients ────────────────────────────────────────────────────────────
