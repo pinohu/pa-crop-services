@@ -7,19 +7,20 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   try {
-    const supabase = db.getClient();
-    if (!supabase) return res.status(200).json({ items: [] });
+    if (!db.isConnected()) return res.status(200).json({ items: [] });
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL);
 
     const urgency = req.query.urgency || 'high';
-    let query = supabase.from('documents')
-      .select('*, organizations(legal_name, entity_type)')
-      .in('urgency', urgency === 'all' ? ['normal', 'high', 'critical'] : ['high', 'critical'])
-      .eq('review_status', 'pending')
-      .order('received_at', { ascending: false })
-      .limit(50);
+    const urgencies = urgency === 'all' ? ['normal','high','critical'] : ['high','critical'];
 
-    const { data } = await query;
-    return res.status(200).json({ success: true, items: data || [] });
+    const rows = await sql(
+      `SELECT d.*, o.legal_name, o.entity_type FROM documents d
+       LEFT JOIN organizations o ON d.organization_id = o.id
+       WHERE d.urgency = ANY($1) AND d.review_status = $2
+       ORDER BY d.received_at DESC LIMIT 50`,
+      [urgencies, 'pending']);
+    return res.status(200).json({ success: true, items: rows || [] });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });
   }

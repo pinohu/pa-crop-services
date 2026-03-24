@@ -7,26 +7,19 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   try {
-    const supabase = db.getClient();
-    if (!supabase) return res.status(200).json({ items: [] });
+    if (!db.isConnected()) return res.status(200).json({ items: [] });
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL);
+    const limit = parseInt(req.query.limit) || 50;
+    const filter = req.query.filter;
 
-    // Get conversations needing review: low confidence OR escalated
-    let query = supabase.from('ai_conversations')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(parseInt(req.query.limit) || 50);
+    let where = '';
+    if (filter === 'escalated') where = 'WHERE escalation_flag = true';
+    else if (filter === 'low_confidence') where = 'WHERE confidence_score < 0.8';
+    else where = 'WHERE escalation_flag = true OR confidence_score < 0.8';
 
-    if (req.query.filter === 'escalated') {
-      query = query.eq('escalation_flag', true);
-    } else if (req.query.filter === 'low_confidence') {
-      query = query.lt('confidence_score', 0.8);
-    } else {
-      // Default: both
-      query = query.or('escalation_flag.eq.true,confidence_score.lt.0.8');
-    }
-
-    const { data } = await query;
-    return res.status(200).json({ success: true, items: data || [] });
+    const rows = await sql(`SELECT * FROM ai_conversations ${where} ORDER BY created_at DESC LIMIT $1`, [limit]);
+    return res.status(200).json({ success: true, items: rows || [] });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });
   }

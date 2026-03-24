@@ -122,17 +122,31 @@ export async function processPending() {
     const org = notif.organizations;
     const obl = notif.obligations;
     const variables = {
-      org_name: org?.legal_name || 'Your Entity',
+      org_name: org?.legal_name || notif.org_name || 'Your Entity',
       due_date: obl?.due_date || '',
       managed: obl?.filing_method === 'managed'
     };
 
-    // Find client email
-    const db2 = db.getClient();
+    // Find client email — try Neon first, then SuiteDash
     let email = null;
-    if (db2) {
-      const { data: clients } = await db2.from('clients').select('email').eq('organization_id', notif.organization_id).limit(1);
-      email = clients?.[0]?.email;
+    try {
+      const { neon } = await import('@neondatabase/serverless');
+      const dbUrl = process.env.DATABASE_URL;
+      if (dbUrl) {
+        const sql = neon(dbUrl);
+        const clients = await sql('SELECT email FROM clients WHERE organization_id = $1 LIMIT 1', [notif.organization_id]);
+        email = clients?.[0]?.email;
+      }
+    } catch (e) { /* Neon not available */ }
+
+    // SuiteDash fallback
+    if (!email && db.isSuiteDashConnected()) {
+      try {
+        const { suitedash } = db;
+        const clients = await suitedash.getAllClientsWithCompliance();
+        const match = clients.find(c => c.neon_org_id === notif.organization_id);
+        email = match?.email;
+      } catch (e) { /* SuiteDash not available */ }
     }
 
     if (!email) {

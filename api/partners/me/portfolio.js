@@ -13,21 +13,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabase = db.getClient();
-    if (!supabase) return res.status(200).json({ items: [] });
+    if (!db.isConnected()) return res.status(200).json({ success: true, items: [] });
 
-    // Get all clients referred by this partner
-    const { data: referrals } = await supabase.from('referrals')
-      .select('*, referred_client:clients!referred_client_id(*, organizations(*))')
-      .eq('referrer_client_id', session.clientId);
-
+    const referrals = await db.getReferrals(session.clientId);
     const portfolio = [];
-    for (const ref of (referrals || [])) {
-      const client = ref.referred_client;
+
+    for (const ref of referrals) {
+      if (!ref.referred_client_id) continue;
+      const client = await db.getClient_ById(ref.referred_client_id);
       if (!client) continue;
-      const org = client.organizations;
-      const obligations = org ? await db.getObligationsForOrg(org.id) : [];
+      const obligations = client.organization_id ? await db.getObligationsForOrg(client.organization_id) : [];
       const risk = computeRisk(obligations);
+      const org = client.organization_id ? await db.getOrganization(client.organization_id) : null;
 
       portfolio.push({
         client_name: client.owner_name || client.email,

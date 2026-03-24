@@ -7,47 +7,52 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   try {
-    const supabase = db.getClient();
-    if (!supabase) return res.status(200).json({ success: true, mode: 'no_db', message: 'Supabase not configured' });
+    if (!db.isConnected()) {
+      // Fallback: pull client data from SuiteDash
+      if (db.isSuiteDashConnected()) {
+        const { suitedash } = db;
+        const clients = await suitedash.getAllClientsWithCompliance();
+        return res.status(200).json({
+          success: true, mode: 'suitedash_only',
+          compliance: { total: clients.length, current: clients.filter(c => c.compliance_status === 'active').length, due_soon: 0, overdue: 0, escalated: 0, filed: 0 },
+          clients: { total: clients.length, active: clients.filter(c => c.role === 'client').length },
+          ai: { conversations_24h: 0, low_confidence: 0, escalated: 0 },
+          notifications: { failed: 0 }, workflow: { failed_jobs: 0 },
+          high_risk_entities: clients.filter(c => c.risk_level === 'high' || c.risk_level === 'critical').slice(0, 5).map(c => ({ id: c.uid, name: c.company_name || c.name, type: c.entity_type, status: c.compliance_status })),
+          generated_at: new Date().toISOString()
+        });
+      }
+      return res.status(200).json({ success: true, mode: 'no_db', message: 'Connect Neon or SuiteDash' });
+    }
 
-    // Obligation stats
-    const { data: obligations } = await supabase.from('obligations').select('obligation_status, escalation_level, due_date');
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL);
+
+    const obligations = await sql("SELECT obligation_status, escalation_level, due_date FROM obligations");
     const oblStats = { total: 0, current: 0, due_soon: 0, overdue: 0, escalated: 0, filed: 0 };
     const now = new Date();
-    for (const o of (obligations || [])) {
+    for (const o of obligations) {
       oblStats.total++;
-      if (['filed_confirmed', 'closed'].includes(o.obligation_status)) oblStats.filed++;
-      else if (['overdue'].includes(o.obligation_status)) oblStats.overdue++;
-      else if (['escalated'].includes(o.obligation_status)) oblStats.escalated++;
+      if (["filed_confirmed","closed"].includes(o.obligation_status)) oblStats.filed++;
+      else if (o.obligation_status === "overdue") oblStats.overdue++;
+      else if (o.obligation_status === "escalated") oblStats.escalated++;
       else {
-        const days = Math.ceil((new Date(o.due_date) - now) / (1000*60*60*24));
-        if (days <= 30) oblStats.due_soon++;
-        else oblStats.current++;
+        const days = Math.ceil((new Date(o.due_date) - now) / 86400000);
+        if (days <= 30) oblStats.due_soon++; else oblStats.current++;
       }
     }
 
-    // Client stats
-    const { count: totalClients } = await supabase.from('clients').select('*', { count: 'exact', head: true });
-    const { count: activeClients } = await supabase.from('clients').select('*', { count: 'exact', head: true }).eq('billing_status', 'active');
-
-    // AI stats (last 24h)
+    const clientRows = await sql("SELECT COUNT(*) as total FROM clients");
+    const activeRows = await sql("SELECT COUNT(*) as total FROM clients WHERE billing_status = $1", ["active"]);
     const yesterday = new Date(Date.now() - 86400000).toISOString();
-    const { data: aiConvos } = await supabase.from('ai_conversations').select('confidence_score, escalation_flag').gte('created_at', yesterday);
-    const lowConfidence = (aiConvos || []).filter(c => c.confidence_score < 0.8);
-    const escalated = (aiConvos || []).filter(c => c.escalation_flag);
-
-    // Notification stats
-    const { data: failedNotifs } = await supabase.from('notifications').select('id').eq('delivery_status', 'failed').limit(100);
-
-    // Failed jobs
+    const aiConvos = await sql("SELECT confidence_score, escalation_flag FROM ai_conversations WHERE created_at >= $1", [yesterday]);
+    const failedNotifs = await sql("SELECT COUNT(*) as total FROM notifications WHERE delivery_status = $1", ["failed"]);
     const failedJobs = await db.getFailedJobs(10);
 
-    // 5 highest risk entities
-    const { data: orgs } = await supabase.from('organizations').select('id, legal_name, entity_type, entity_status').limit(100);
+    const orgs = await sql("SELECT id, legal_name, entity_type, entity_status FROM organizations LIMIT 100");
     const highRisk = [];
-    for (const org of (orgs || []).slice(0, 20)) {
-      const orgObls = (obligations || []).filter(o => o.organization_id === org.id);
-      if (orgObls.some(o => ['overdue', 'escalated'].includes(o.obligation_status))) {
+    for (const org of orgs.slice(0, 20)) {
+      if (obligations.some(o => ["overdue","escalated"].includes(o.obligation_status))) {
         highRisk.push({ id: org.id, name: org.legal_name, type: org.entity_type, status: org.entity_status });
       }
     }
@@ -55,19 +60,15 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       compliance: oblStats,
-      clients: { total: totalClients || 0, active: activeClients || 0 },
-      ai: {
-        conversations_24h: (aiConvos || []).length,
-        low_confidence: lowConfidence.length,
-        escalated: escalated.length
-      },
-      notifications: { failed: (failedNotifs || []).length },
+      clients: { total: parseInt(clientRows[0]?.total || 0), active: parseInt(activeRows[0]?.total || 0) },
+      ai: { conversations_24h: aiConvos.length, low_confidence: aiConvos.filter(c => c.confidence_score < 0.8).length, escalated: aiConvos.filter(c => c.escalation_flag).length },
+      notifications: { failed: parseInt(failedNotifs[0]?.total || 0) },
       workflow: { failed_jobs: failedJobs.length },
       high_risk_entities: highRisk.slice(0, 5),
       generated_at: now.toISOString()
     });
   } catch (err) {
-    console.error('Command center error:', err.message);
-    return res.status(500).json({ success: false, error: 'internal_error' });
+    console.error("Command center error:", err.message);
+    return res.status(500).json({ success: false, error: "internal_error" });
   }
 }
