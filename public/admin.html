@@ -189,12 +189,16 @@ tr:hover td{background:#fafafa}
         <div class="nav-group-label">Overview</div>
         <button class="nav-item active" onclick="showPage('dashboard')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Dashboard</button>
         <button class="nav-item" onclick="showPage('revenue')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>Revenue</button>
+        <button class="nav-item" onclick="showPage('billing')"><span class="icon">💳</span>Billing & Retention</button>
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Clients</div>
         <button class="nav-item" onclick="showPage('clients')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>All Clients</button>
+        <button class="nav-item" onclick="showPage('client360')"><span class="icon">👤</span>Client 360</button>
         <button class="nav-item" onclick="showPage('leads')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>Lead Pipeline</button>
-        <button class="nav-item" onclick="showPage('compliance')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>Compliance Tracker</button>
+        <button class="nav-item" onclick="showPage('compliance')"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>Compliance</button>
+        <button class="nav-item" onclick="showPage('filing')"><span class="icon">📋</span>Filing Queue</button>
+        <button class="nav-item" onclick="showPage('notif_ops')"><span class="icon">📧</span>Notification Ops</button>
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Hosting</div>
@@ -474,14 +478,39 @@ tr:hover td{background:#fafafa}
 
       <!-- REVENUE PAGE -->
       <div class="page" id="page-revenue">
-        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-          <div class="stat-card green"><div class="label">Monthly Recurring Revenue</div><div class="value" id="rev-mrr">—</div></div>
-          <div class="stat-card gold"><div class="label">Annual Run Rate</div><div class="value" id="rev-arr">—</div></div>
-          <div class="stat-card"><div class="label">Active Subscriptions</div><div class="value" id="rev-subs">—</div></div>
+        <!-- Revenue KPIs -->
+        <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+          <div class="stat-card green"><div class="label">MRR</div><div class="value" id="rev-mrr">—</div></div>
+          <div class="stat-card gold"><div class="label">ARR</div><div class="value" id="rev-arr">—</div></div>
+          <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="rev-active">—</div></div>
+          <div class="stat-card"><div class="label">Churn Rate</div><div class="value" id="rev-churn">—</div></div>
+          <div class="stat-card"><div class="label">Past Due</div><div class="value" id="rev-pastdue">—</div></div>
         </div>
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title">Recent Invoices</div></div>
-          <div class="panel-body" style="padding:0"><div id="invoices-table"><div class="loading"><div class="spinner"></div>Loading Stripe data...</div></div></div>
+
+        <div class="two-col">
+          <!-- Plan Distribution -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Plan Distribution</div></div>
+            <div class="panel-body" id="rev-plan-dist"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+          <!-- Churn Risk -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">⚠️ Churn Risk</div></div>
+            <div class="panel-body" id="rev-churn-list" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <!-- Upsell Candidates -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">⬆️ Upsell Candidates</div></div>
+            <div class="panel-body" id="rev-upsell" style="max-height:250px;overflow-y:auto"><div style="font-size:13px;color:var(--gray)">Loading...</div></div>
+          </div>
+          <!-- Renewal Forecast -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">🔄 Renewal Forecast (90 days)</div></div>
+            <div class="panel-body" id="rev-renewals" style="max-height:250px;overflow-y:auto"><div style="font-size:13px;color:var(--gray)">Loading...</div></div>
+          </div>
         </div>
       </div>
 
@@ -539,6 +568,83 @@ tr:hover td{background:#fafafa}
             <div id="article-result" style="margin-top:16px"></div>
             <div id="article-preview" style="display:none;margin-top:16px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #e5e7eb;max-height:500px;overflow-y:auto"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ── CLIENT 360 ── -->
+      <div class="page" id="page-client360">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">👤 Client 360</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="c360-search" placeholder="Email or client ID..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;width:240px;font-family:inherit" onkeydown="if(event.key==='Enter')loadClient360()">
+              <button class="btn btn-primary btn-sm" onclick="loadClient360()">Load</button>
+            </div>
+          </div>
+          <div class="panel-body" id="c360-body">
+            <div style="text-align:center;padding:32px;color:var(--gray);font-size:14px">Enter a client email or ID above to load their complete profile.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FILING QUEUE ── -->
+      <div class="page" id="page-filing">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📋 Filing Operations Queue</div>
+            <button class="btn btn-primary btn-sm" onclick="loadFilingQueue()">⟳ Refresh</button>
+          </div>
+          <div class="panel-body">
+            <div id="filing-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-total">—</div><div style="font-size:11px;color:var(--gray)">Total</div></div>
+              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="fq-overdue">—</div><div style="font-size:11px;color:var(--gray)">Overdue</div></div>
+              <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#92400e" id="fq-critical">—</div><div style="font-size:11px;color:var(--gray)">Critical</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="fq-ready">—</div><div style="font-size:11px;color:var(--gray)">Ready</div></div>
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-notready">—</div><div style="font-size:11px;color:var(--gray)">Not Ready</div></div>
+            </div>
+            <div id="filing-queue-list" style="max-height:500px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading filing queue...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NOTIFICATION OPS ── -->
+      <div class="page" id="page-notif_ops">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📧 Notification Operations</div>
+            <button class="btn btn-primary btn-sm" onclick="loadNotifOps()">⟳ Refresh</button>
+          </div>
+          <div class="panel-body">
+            <!-- Summary stats -->
+            <div id="notif-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="no-total">—</div><div style="font-size:11px;color:var(--gray)">Total</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-sent">—</div><div style="font-size:11px;color:var(--gray)">Sent</div></div>
+              <div style="text-align:center;padding:12px;background:#eff6ff;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#3b82f6" id="no-scheduled">—</div><div style="font-size:11px;color:var(--gray)">Scheduled</div></div>
+              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="no-failed">—</div><div style="font-size:11px;color:var(--gray)">Failed</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-rate">—</div><div style="font-size:11px;color:var(--gray)">Delivery %</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">❌ Failed Deliveries</div></div>
+            <div class="panel-body" id="notif-failures" style="max-height:300px;overflow-y:auto"><div style="color:var(--gray);font-size:13px">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">📊 Template Performance</div></div>
+            <div class="panel-body" id="notif-templates" style="max-height:300px;overflow-y:auto"><div style="color:var(--gray);font-size:13px">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BILLING & RETENTION ── -->
+      <div class="page" id="page-billing">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">💳 Billing & Retention Console</div>
+            <button class="btn btn-primary btn-sm" onclick="loadBillingRetention()">⟳ Refresh</button>
+          </div>
+          <div class="panel-body" id="billing-body"><div class="loading"><div class="spinner"></div>Loading billing data...</div></div>
         </div>
       </div>
 
@@ -749,12 +855,16 @@ function showPage(name) {
   else if (name === 'clients') loadClients();
   else if (name === 'leads') loadLeads();
   else if (name === 'hosting') loadHosting();
-  else if (name === 'revenue') loadRevenue();
+  else if (name === 'revenue') loadRevenuePage();
   else if (name === 'email_stats') loadEmailStats();
   else if (name === 'compliance') loadCompliance();
   else if (name === 'health') loadHealthScores();
   else if (name === 'webhooks') loadWebhookStatus();
   else if (name === 'renewals') loadRenewals();
+  else if (name === 'client360') { /* manual load via search */ }
+  else if (name === 'filing') loadFilingQueue();
+  else if (name === 'notif_ops') loadNotifOps();
+  else if (name === 'billing') loadBillingRetention();
 }
 
 function refreshCurrent() { showPage(currentPage); }
@@ -973,6 +1083,270 @@ async function loadRulesAdmin() {
   } catch (e) {
     el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Rule management requires Neon Postgres connection.</div>';
   }
+}
+
+// ── Revenue Page ───────────────────────────────────────────────────────
+async function loadRevenuePage() {
+  try {
+    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) { toast('Revenue data unavailable', 'error'); return; }
+
+    const rev = d.revenue || {};
+    document.getElementById('rev-mrr').textContent = '$' + (rev.mrr || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('rev-arr').textContent = '$' + (rev.arr || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('rev-active').textContent = rev.active || rev.total_clients || 0;
+    document.getElementById('rev-churn').textContent = (rev.churn_rate || 0) + '%';
+    document.getElementById('rev-pastdue').textContent = rev.past_due || 0;
+
+    // Plan distribution
+    const planEl = document.getElementById('rev-plan-dist');
+    const plans = d.plan_distribution || [];
+    if (plans.length) {
+      const total = plans.reduce((s, p) => s + p.count, 0) || 1;
+      planEl.innerHTML = plans.map(p => `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span style="font-weight:600">${p.label || p.code}</span>
+          <span style="color:var(--gray)">${p.count} clients · $${p.mrr?.toFixed(0) || 0}/mo</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" style="width:${Math.round(p.count/total*100)}%;background:var(--accent)"></div></div>
+      </div>`).join('');
+    } else { planEl.innerHTML = '<div style="color:var(--gray);font-size:13px">No plan data yet</div>'; }
+
+    // Churn risk
+    const churnEl = document.getElementById('rev-churn-list');
+    const churn = d.churn_risk || [];
+    churnEl.innerHTML = churn.length ? churn.map(c => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${c.name || c.email}</span><span style="color:#dc2626;font-size:11px">${c.signals?.join(', ') || ''}</span></div>
+      <div style="color:#6b7280;margin-top:2px">${c.recommended_action || ''}</div>
+    </div>`).join('') : '<div style="font-size:13px;color:#15803d;padding:8px 0">✅ No churn risk detected</div>';
+
+    // Upsell candidates
+    const upEl = document.getElementById('rev-upsell');
+    const ups = d.upsell_candidates || [];
+    upEl.innerHTML = ups.length ? ups.map(u => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="font-weight:600">${u.name || u.email}</div>
+      <div style="color:#6b7280">${u.reason} → <span style="color:var(--accent);font-weight:600">${u.recommended || u.recommended_plan || ''}</span> (+$${(u.monthly_uplift || u.potential_uplift || 0).toFixed(0)}/mo)</div>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No upsell candidates</div>';
+
+    // Renewals
+    const renEl = document.getElementById('rev-renewals');
+    const rens = d.renewal_forecast || [];
+    renEl.innerHTML = rens.length ? rens.map(r => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <span style="font-weight:600">${r.client_name || r.email}</span> · ${r.plan} · $${r.amount} · Renews ${new Date(r.renews).toLocaleDateString()}
+    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No renewals in next 90 days</div>';
+  } catch (e) { toast('Revenue load error: ' + e.message, 'error'); }
+}
+
+// ── Client 360 ─────────────────────────────────────────────────────────
+async function loadClient360() {
+  const search = document.getElementById('c360-search')?.value?.trim();
+  if (!search) { toast('Enter an email or client ID', 'error'); return; }
+  const el = document.getElementById('c360-body');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading client profile...</div>';
+
+  try {
+    const r = await fetch('/api/admin/client-360?email=' + encodeURIComponent(search), { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Client not found: ' + (d.error || '') + '</div>'; return; }
+
+    const c = d.client || {};
+    const o = d.organization || {};
+    const comp = d.compliance || {};
+    const h = comp.health || {};
+    const gc = { A:'#15803d', B:'#3b82f6', C:'#f59e0b', D:'#ea580c', F:'#dc2626' };
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="background:#f8fafc;padding:16px;border-radius:8px">
+          <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Client</div>
+          <div style="font-weight:700;font-size:15px">${c.name || c.email}</div>
+          <div style="font-size:12px;color:var(--gray)">${c.email} · ${c.phone || 'No phone'}</div>
+          <div style="margin-top:8px"><span class="badge ${planBadge(c.plan_code)}">${planLabel(c.plan_code)}</span></div>
+          <div style="font-size:11px;color:var(--gray);margin-top:4px">Billing: ${c.billing_status || 'unknown'} · Since ${c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</div>
+        </div>
+        <div style="background:#f8fafc;padding:16px;border-radius:8px">
+          <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Entity</div>
+          <div style="font-weight:700;font-size:15px">${o.legal_name || 'No entity'}</div>
+          <div style="font-size:12px;color:var(--gray)">${o.entity_type || ''} · ${o.jurisdiction || ''} · DOS #${o.dos_number || '—'}</div>
+          <div style="font-size:12px;margin-top:4px">Status: <span style="font-weight:600;color:${o.entity_status === 'active' ? '#15803d' : '#f59e0b'}">${o.entity_status || 'unknown'}</span></div>
+        </div>
+        <div style="background:#f8fafc;padding:16px;border-radius:8px;text-align:center">
+          <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Health</div>
+          <div style="font-size:40px;font-weight:800;color:${gc[h.grade] || '#374151'}">${h.grade || '—'}</div>
+          <div style="font-size:12px;color:var(--gray)">${h.overall || 0}/100 · Risk: ${comp.risk_level || '—'}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#f8fafc;padding:12px;border-radius:8px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Obligations (${(comp.obligations || []).length})</div>
+          ${(comp.obligations || []).map(o => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb">
+            ${o.type?.replace(/_/g,' ')} · Due ${o.due_date} · <span style="color:${o.status==='overdue'?'#dc2626':o.status==='filed_confirmed'?'#15803d':'#374151'};font-weight:600">${o.status?.replace(/_/g,' ')}</span> · ${o.days_until}d
+          </div>`).join('') || '<div style="color:var(--gray);font-size:12px">None</div>'}
+        </div>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Documents (${(d.documents || []).length})</div>
+          ${(d.documents || []).slice(0, 5).map(doc => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb">
+            ${doc.type || doc.filename || 'Doc'} · <span style="color:${doc.urgency==='critical'?'#dc2626':'var(--gray)'}">${doc.urgency}</span> · ${doc.review_status}
+          </div>`).join('') || '<div style="color:var(--gray);font-size:12px">None</div>'}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#f8fafc;padding:12px;border-radius:8px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Notifications</div>
+          <div style="font-size:12px;color:var(--gray)">Sent: ${d.notifications?.sent || 0} · Pending: ${d.notifications?.pending || 0} · Failed: ${d.notifications?.failed || 0}</div>
+        </div>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Referrals</div>
+          <div style="font-size:12px;color:var(--gray)">Code: ${d.referrals?.code || '—'} · Total: ${d.referrals?.total || 0} · Converted: ${d.referrals?.converted || 0}</div>
+        </div>
+      </div>
+
+      ${(d.signals?.churn_risk?.length || d.signals?.upsell_opportunities?.length) ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        ${d.signals.churn_risk?.length ? `<div style="background:#fef2f2;padding:12px;border-radius:8px;border:1px solid #fca5a5">
+          <div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:4px">⚠️ Churn Signals</div>
+          ${d.signals.churn_risk.map(s => `<div style="font-size:12px;color:#374151;padding:2px 0">${s}</div>`).join('')}
+        </div>` : ''}
+        ${d.signals.upsell_opportunities?.length ? `<div style="background:#f0fdf4;padding:12px;border-radius:8px;border:1px solid #86efac">
+          <div style="font-size:12px;font-weight:600;color:#15803d;margin-bottom:4px">⬆️ Upsell Opportunities</div>
+          ${d.signals.upsell_opportunities.map(s => `<div style="font-size:12px;color:#374151;padding:2px 0">${s}</div>`).join('')}
+        </div>` : ''}
+      </div>` : ''}
+
+      <div style="background:#f8fafc;padding:12px;border-radius:8px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Recent AI Conversations (${(d.ai_conversations || []).length})</div>
+        ${(d.ai_conversations || []).slice(0, 5).map(a => `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid #e5e7eb">
+          <strong>Q:</strong> ${(a.question || '').slice(0, 100)} · <span style="color:${a.confidence < 0.8 ? '#f59e0b' : '#15803d'}">${(a.confidence * 100).toFixed(0)}%</span> ${a.escalated ? '🚨' : ''}
+        </div>`).join('') || '<div style="color:var(--gray);font-size:12px">No conversations</div>'}
+      </div>
+
+      <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px;max-height:200px;overflow-y:auto">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Audit Trail (${(d.audit_trail || []).length})</div>
+        ${(d.audit_trail || []).slice(0, 10).map(e => `<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #e5e7eb;color:var(--gray)">
+          ${new Date(e.timestamp).toLocaleString()} · <span style="color:#374151">${e.event}</span> · ${e.actor} ${e.reason ? '· ' + e.reason : ''}
+        </div>`).join('') || '<div style="color:var(--gray);font-size:12px">No audit events</div>'}
+      </div>`;
+  } catch (e) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Error: ' + e.message + '</div>'; }
+}
+
+// ── Filing Queue ───────────────────────────────────────────────────────
+async function loadFilingQueue() {
+  try {
+    const r = await fetch('/api/admin/filing-queue', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) return;
+
+    const s = d.summary || {};
+    document.getElementById('fq-total').textContent = s.total || 0;
+    document.getElementById('fq-overdue').textContent = s.overdue || 0;
+    document.getElementById('fq-critical').textContent = s.critical || 0;
+    document.getElementById('fq-ready').textContent = s.ready || 0;
+    document.getElementById('fq-notready').textContent = s.not_ready || 0;
+
+    const el = document.getElementById('filing-queue-list');
+    const items = d.items || [];
+    if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:14px">No managed filings pending. Filings appear when Pro/Empire clients have upcoming deadlines.</div>'; return; }
+
+    el.innerHTML = items.map(i => {
+      const uc = { overdue:'#dc2626', critical:'#dc2626', high:'#f59e0b', medium:'#3b82f6', normal:'#6b7280' };
+      return `<div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid #f3f4f6;align-items:flex-start">
+        <div style="width:48px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${uc[i.urgency] || '#6b7280'}">${i.days_until < 0 ? Math.abs(i.days_until) : i.days_until}</div>
+          <div style="font-size:9px;color:var(--gray)">${i.days_until < 0 ? 'days late' : 'days left'}</div>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:600;font-size:14px">${i.entity_name || 'Unknown'}</div>
+            <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${uc[i.urgency]}15;color:${uc[i.urgency]};text-transform:uppercase">${i.urgency}</span>
+          </div>
+          <div style="font-size:12px;color:var(--gray);margin-top:2px">${i.entity_type || ''} · DOS #${i.dos_number || '—'} · Due ${i.due_date} · $${i.fee}</div>
+          <div style="font-size:12px;color:var(--gray)">${i.client_name || ''} · ${i.client_email || ''}</div>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:${i.readiness_pct}%;background:${i.readiness_pct >= 100?'#15803d':'#f59e0b'};border-radius:3px"></div></div>
+            <span style="font-size:11px;color:var(--gray)">${i.readiness_pct}% ready</span>
+          </div>
+          ${i.missing?.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">Missing: ${i.missing.join(', ')}</div>` : ''}
+        </div>
+        <a href="${i.filing_url}" target="_blank" class="btn btn-gold btn-sm" style="font-size:11px;flex-shrink:0">File →</a>
+      </div>`;
+    }).join('');
+  } catch (e) { document.getElementById('filing-queue-list').innerHTML = '<div style="color:var(--gray);font-size:13px">Filing queue requires Neon Postgres</div>'; }
+}
+
+// ── Notification Ops ───────────────────────────────────────────────────
+async function loadNotifOps() {
+  try {
+    const r = await fetch('/api/admin/notification-ops', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) return;
+
+    const s = d.summary || {};
+    document.getElementById('no-total').textContent = s.total || 0;
+    document.getElementById('no-sent').textContent = s.sent || 0;
+    document.getElementById('no-scheduled').textContent = s.scheduled || 0;
+    document.getElementById('no-failed').textContent = s.failed || 0;
+    document.getElementById('no-rate').textContent = (s.delivery_rate || 0) + '%';
+
+    // Failures
+    const fEl = document.getElementById('notif-failures');
+    const failures = d.failures || [];
+    fEl.innerHTML = failures.length ? failures.map(f => `<div style="padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${f.entity || 'Unknown'}</span><span style="color:#dc2626">${f.status}</span></div>
+      <div style="color:#6b7280">${f.template || ''} · ${f.channel || ''} · Retries: ${f.retry_count || 0}${f.error ? ' · ' + f.error : ''}</div>
+    </div>`).join('') : '<div style="font-size:13px;color:#15803d">✅ No failed deliveries</div>';
+
+    // Templates
+    const tEl = document.getElementById('notif-templates');
+    const templates = d.template_performance || [];
+    tEl.innerHTML = templates.length ? templates.map(t => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600">${(t.template || '').replace(/_/g, ' ')}</span><span style="color:${t.rate >= 90 ? '#15803d' : t.rate >= 70 ? '#f59e0b' : '#dc2626'};font-weight:600">${t.rate}%</span></div>
+      <div style="color:#6b7280">${t.total} total · ${t.delivered} delivered · ${t.failed} failed</div>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No template data yet</div>';
+  } catch (e) { document.getElementById('notif-failures').innerHTML = '<div style="color:var(--gray);font-size:13px">Notification ops requires Neon Postgres</div>'; }
+}
+
+// ── Billing & Retention ────────────────────────────────────────────────
+async function loadBillingRetention() {
+  const el = document.getElementById('billing-body');
+  try {
+    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (!d.success) { el.innerHTML = '<div style="color:var(--gray)">Billing data unavailable</div>'; return; }
+
+    const rev = d.revenue || {};
+    const plans = d.plan_distribution || [];
+    const churn = d.churn_risk || [];
+    const ups = d.upsell_candidates || [];
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#15803d">$${(rev.mrr || 0).toFixed(0)}</div><div style="font-size:11px;color:var(--gray)">MRR</div></div>
+        <div style="text-align:center;padding:16px;background:#fffbeb;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#92400e">$${(rev.arr || 0).toFixed(0)}</div><div style="font-size:11px;color:var(--gray)">ARR</div></div>
+        <div style="text-align:center;padding:16px;background:#f8fafc;border-radius:8px"><div style="font-size:24px;font-weight:700">${rev.total_clients || 0}</div><div style="font-size:11px;color:var(--gray)">Total Clients</div></div>
+        <div style="text-align:center;padding:16px;background:${rev.churn_rate > 0 ? '#fef2f2' : '#f8fafc'};border-radius:8px"><div style="font-size:24px;font-weight:700;color:${rev.churn_rate > 0 ? '#dc2626' : '#374151'}">${rev.churn_rate || 0}%</div><div style="font-size:11px;color:var(--gray)">Churn Rate</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:#f8fafc;padding:16px;border-radius:8px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">Plan Distribution</div>
+          ${plans.map(p => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb"><span>${p.label || p.code}</span><span style="font-weight:600">${p.count} · $${(p.mrr || 0).toFixed(0)}/mo</span></div>`).join('') || '<div style="color:var(--gray);font-size:12px">No data</div>'}
+        </div>
+        <div style="background:${churn.length ? '#fef2f2' : '#f0fdf4'};padding:16px;border-radius:8px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">${churn.length ? '⚠️ Churn Risk (' + churn.length + ')' : '✅ No Churn Risk'}</div>
+          ${churn.slice(0, 5).map(c => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #fca5a5"><span style="font-weight:600">${c.name || c.email}</span> · ${c.signals?.join(', ') || ''}</div>`).join('') || ''}
+        </div>
+      </div>
+
+      ${ups.length ? `<div style="background:#f0fdf4;padding:16px;border-radius:8px;margin-top:12px;border:1px solid #86efac">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">⬆️ Upsell Candidates (${ups.length})</div>
+        ${ups.slice(0, 5).map(u => `<div style="font-size:12px;padding:4px 0">${u.name || u.email} — ${u.reason} → <span style="color:var(--accent);font-weight:600">+$${(u.monthly_uplift || 0).toFixed(0)}/mo</span></div>`).join('')}
+      </div>` : ''}
+
+      <div style="font-size:11px;color:var(--gray);margin-top:12px;text-align:right">Source: ${d.mode === 'suitedash_only' ? 'SuiteDash CRM' : 'Neon Postgres'} · Generated ${new Date(d.generated_at).toLocaleString()}</div>`;
+  } catch (e) { el.innerHTML = '<div style="color:var(--gray)">Error loading billing data</div>'; }
 }
 
 // ── Clients ────────────────────────────────────────────────────────────
