@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-24 (3) — Compliance engine foundation: rules file, _compliance.js, validation CI, domain model (Prisma), chat.js + client-context.js wired to rules engine
+> **Auto-updated on every commit.** Last updated: 2026-03-24 (5) — Compliance engine operational: entity-status API, scheduler webhook, dashboard, structured logging wired across system
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -665,14 +665,33 @@ Full design documented in `COMPLIANCE-ENGINE-ARCHITECTURE.md`.
   - **AuditEvent** — Immutable event log: actor, event type, before/after state, reason
 - [ ] **Action required:** Provision Supabase Postgres (free tier) and set `DATABASE_URL` in Vercel env vars. Run `npx prisma db push` to create tables.
 
-**Phase 2-6: Compliance Engine, AI Guardrails, Portal Rebuild, Agents, Scale**
+**Phase 2: Operational Endpoints (COMPLETE — pending Upstash provisioning)**
 
-See `COMPLIANCE-ENGINE-ARCHITECTURE.md` for complete design. Build sequence:
-- Phase 2: State machine + deadline calculator + scheduler (n8n workflows)
-- Phase 3: Controlled chatbot with intent classification + citation requirement + audit log
-- Phase 4: Portal rebuilt on real API-backed state
-- Phase 5: Agent fleet (rules monitor, risk scorer, document intake, concierge, filing ops, retention)
-- Phase 6: Partner portal, multi-state rules engine, white-label mode
+- [x] `api/entity-status.js` — Primary compliance engine API. Actions: `register` (create entity + compute first obligation), `transition` (move obligation through state machine with validation), `file` (record annual report filing), `evaluate` (what actions are needed?), `reminder_sent` (log reminder delivery), `events` (audit trail). Admin-key protected for writes.
+- [x] `api/scheduler.js` — n8n webhook endpoint for daily compliance processing. Actions: `process_reminders` (evaluate entity batch, return which reminders to send), `evaluate_all` (compliance posture summary: status counts, risk distribution, overdue list), `overdue_check` (auto-escalate overdue entities). Admin-key protected.
+- [x] `api/compliance-dashboard.js` — Real-time compliance dashboard for admin panel. Returns: deadline proximity by entity group, enforcement status, daily metrics (chat questions, escalations, subscribes), recent audit events, system health.
+- [x] `api/subscribe.js` — Wired to structured logging (`_log.js`) and metrics (`_db.js`). Daily subscribe count tracked for dashboard.
+- [x] `data/compliance-rules.js` — JS module version of compliance-rules.json for Edge + Node runtime compatibility. Both files must stay in sync.
+
+**Compliance engine module inventory (all in `api/`):**
+
+| Module | Purpose | Consumers |
+|--------|---------|-----------|
+| `_compliance.js` | Rules engine — reads from canonical rules | chat.js, client-context.js, entity-status.js, scheduler.js, _obligations.js, _guardrails.js |
+| `_obligations.js` | State machine — 10 states, validated transitions, risk scoring | entity-status.js, scheduler.js |
+| `_guardrails.js` | Chatbot control — intent classification, deterministic answers, legal boundary | chat.js |
+| `_db.js` | Persistence — entity/obligation CRUD, event log, conversation audit, metrics | entity-status.js, scheduler.js, compliance-dashboard.js, subscribe.js |
+| `_log.js` | Structured JSON logging — scoped loggers, conversation audit, state change trail | All endpoints |
+| `_ratelimit.js` | Durable rate limiting — Upstash Redis + in-memory fallback | chat.js, subscribe.js |
+
+**New API endpoints (compliance engine):**
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/compliance-rules` | GET | Public | Canonical rules lookup (entity-specific or full) |
+| `/api/entity-status` | GET/POST | Admin (writes) | Entity + obligation state management |
+| `/api/scheduler` | POST | Admin | Daily compliance processing for n8n |
+| `/api/compliance-dashboard` | GET | Admin | Real-time compliance posture dashboard |
 
 ---
 

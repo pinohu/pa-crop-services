@@ -3,6 +3,10 @@
 // POST { email, source, tag }
 
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+import { db } from './_db.js';
+
+const logger = createLogger('subscribe');
 
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
@@ -60,15 +64,15 @@ export default async function handler(req, res) {
         });
         if (!acumbaRes.ok) {
           const errText = await acumbaRes.text().catch(() => 'unknown');
-          console.error('[subscribe] Acumbamail failed (' + acumbaRes.status + '): ' + errText + ' | email=' + cleanEmail);
+          logger.error('acumbamail_failed', { status: acumbaRes.status, errText, email: cleanEmail });
           warnings.push('email_list');
         }
       } catch (acumbaErr) {
-        console.error('[subscribe] Acumbamail error: ' + acumbaErr.message + ' | email=' + cleanEmail);
+        logger.error('acumbamail_error', { email: cleanEmail }, acumbaErr);
         warnings.push('email_list');
       }
     } else {
-      console.warn('[subscribe] ACUMBAMAIL_API_KEY not set — skipping list subscription');
+      logger.warn('acumbamail_not_configured', { reason: 'ACUMBAMAIL_API_KEY not set' });
       warnings.push('email_list_config');
     }
 
@@ -81,13 +85,18 @@ export default async function handler(req, res) {
       });
       if (!n8nRes.ok) {
         const errText = await n8nRes.text().catch(() => 'unknown');
-        console.error('[subscribe] n8n webhook failed (' + n8nRes.status + '): ' + errText + ' | email=' + cleanEmail);
+        logger.error('n8n_webhook_failed', { status: n8nRes.status, errText, email: cleanEmail });
         warnings.push('nurture_sequence');
       }
     } catch (n8nErr) {
-      console.error('[subscribe] n8n webhook error: ' + n8nErr.message + ' | email=' + cleanEmail);
+      logger.error('n8n_webhook_error', { email: cleanEmail }, n8nErr);
       warnings.push('nurture_sequence');
     }
+
+    // Track metrics
+    await db.incrementMetric('subscribe').catch(() => {});
+    if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(() => {});
+    logger.info('subscribe_complete', { email: cleanEmail, source: source || 'website', warnings });
 
     // Return success with visibility into partial failures
     return res.status(200).json({
@@ -95,7 +104,7 @@ export default async function handler(req, res) {
       ...(warnings.length > 0 && { warnings, partial: true })
     });
   } catch (err) {
-    console.error('[subscribe] Unexpected error:', err);
+    logger.error('unexpected_error', {}, err);
     return res.status(500).json({ error: 'Something went wrong processing your request. Please try again or call 814-228-2822.' });
   }
 }

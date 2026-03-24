@@ -5,7 +5,9 @@
 // Usage:
 //   import { getRules, getEntityDeadline, computeDaysUntil, getDeadlineGroup } from './_compliance.js';
 
-import rules from '../data/compliance-rules.json' assert { type: 'json' };
+// Load rules — works in both Edge and Node Vercel runtimes
+// The rules data is defined in data/compliance-rules.js (JS module, not JSON)
+import { rules } from '../data/compliance-rules.js';
 
 /**
  * Get the full rules object.
