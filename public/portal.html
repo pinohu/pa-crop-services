@@ -436,7 +436,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="nav-label">Services</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity',this)" id="entity-nav">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          Entity Status</div>
+          Entity Health</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('hosting',this)" id="hosting-nav" style="display:none">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
           Hosting</div>
@@ -710,8 +710,47 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <!-- ══ ENTITY STATUS TAB ══ -->
       <div id="tab-entity" class="hidden">
-        <div class="page-header"><h1>Entity status</h1><p>Real-time monitoring of your PA Department of State record</p></div>
-        <div class="card"><div class="card-body" id="entity-detail">
+        <div class="page-header"><h1>Entity Health</h1><p>7-component compliance health assessment for your PA entity</p></div>
+
+        <!-- Health Score Card -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-body" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+            <div style="text-align:center;min-width:100px">
+              <div id="eh-grade" style="font-size:56px;font-weight:800;font-family:var(--serif);color:var(--green)">—</div>
+              <div style="font-size:12px;color:var(--ink3)">Compliance Grade</div>
+            </div>
+            <div style="flex:1;min-width:200px">
+              <div style="font-weight:600;font-size:15px;margin-bottom:8px" id="eh-score-label">Loading health score...</div>
+              <div style="height:10px;background:var(--bg3);border-radius:5px;overflow:hidden"><div id="eh-score-bar" style="height:100%;background:var(--green);border-radius:5px;width:0%;transition:width .8s"></div></div>
+              <div style="font-size:12px;color:var(--ink3);margin-top:4px" id="eh-risk-label"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 Health Components -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><span class="card-title">Health Components</span></div>
+          <div class="card-body" id="eh-components" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="padding:12px;text-align:center;color:var(--ink3);font-size:13px;grid-column:span 2">Loading components...</div>
+          </div>
+        </div>
+
+        <!-- Risk Drivers + Fixes -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Risk Drivers</span></div>
+            <div class="card-body" id="eh-drivers"><div style="font-size:13px;color:var(--ink3)">No risks detected</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Recommended Fixes</span></div>
+            <div class="card-body" id="eh-fixes"><div style="font-size:13px;color:var(--ink3)">No actions needed</div></div>
+          </div>
+        </div>
+
+        <!-- Entity Details Grid -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Entity Details</span></div>
+          <div class="card-body" id="entity-detail">
           <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;font-size:14px">
             <div style="font-weight:600;color:var(--ink3)">Entity name</div><div id="ed-name">—</div>
             <div style="font-weight:600;color:var(--ink3)">Entity type</div><div id="ed-type">—</div>
@@ -722,9 +761,8 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div style="font-weight:600;color:var(--ink3)">Next deadline</div><div id="ed-deadline">—</div>
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-            <p style="font-size:13px;color:var(--ink3)">Entity status is verified daily against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Verify on PA DOS</a></p>
+            <p style="font-size:13px;color:var(--ink3)">Entity status is verified against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Verify on PA DOS</a></p>
           </div>
-          <!-- Entity update form -->
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Update entity information</h3>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -738,34 +776,56 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
               <span id="eu-msg" style="font-size:12px;display:none"></span>
             </div>
           </div>
+          </div>
         </div>
-        <!-- Multi-entity management (Pro/Empire) -->
-        <div class="card" style="margin-top:16px" id="multi-entity-card" style="display:none">
+
+        <!-- Multi-entity management -->
+        <div class="card" style="margin-top:16px" id="multi-entity-card">
           <div class="card-header"><span class="card-title">🏢 Multi-Entity Management</span></div>
           <div class="card-body">
             <div id="entity-list"></div>
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
               <div style="display:flex;gap:8px">
                 <input type="text" id="me-name" placeholder="New entity name" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
-                <select id="me-type" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff">
-                  <option value="LLC">LLC</option><option value="Corporation">Corporation</option><option value="LP">LP</option><option value="Foreign LLC">Foreign LLC</option>
-                </select>
+                <select id="me-type" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff"><option value="LLC">LLC</option><option value="Corporation">Corporation</option><option value="LP">LP</option><option value="Foreign LLC">Foreign LLC</option></select>
                 <button class="btn btn-accent btn-sm" onclick="addEntity()">+ Add</button>
               </div>
-              <p id="me-msg" style="font-size:12px;display:none;margin-top:8px"></p>
             </div>
           </div>
         </div>
-          </div>
-        </div></div>
       </div>
 
-      <!-- ══ HOSTING TAB ══ -->
+      <!-- ══ MY BUSINESS STACK TAB ══ -->
       <div id="tab-hosting" class="hidden">
-        <div class="page-header"><h1>Web hosting</h1><p>Manage your website, email, and hosting dashboard</p></div>
-        <div class="card">
+        <div class="page-header"><h1>My Business Stack</h1><p>Everything included in your plan — and what you're saving</p></div>
+
+        <!-- Savings Banner -->
+        <div id="bs-savings" class="card" style="border-left:4px solid var(--accent);margin-bottom:16px">
+          <div class="card-body" id="bs-savings-content" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div><div style="font-weight:600;font-size:15px">Loading your value summary...</div></div>
+          </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><span class="card-title">Included Services</span></div>
+          <div class="card-body" id="bs-services" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="padding:12px;text-align:center;color:var(--ink3);font-size:13px;grid-column:span 2">Loading services...</div>
+          </div>
+        </div>
+
+        <!-- Available to Activate -->
+        <div class="card" style="margin-bottom:16px" id="bs-available-card">
+          <div class="card-header"><span class="card-title">Available to Activate</span></div>
+          <div class="card-body" id="bs-available">
+            <div style="font-size:13px;color:var(--ink3)">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Hosting Panel (for plans that include hosting) -->
+        <div class="card" id="bs-hosting-card" style="display:none">
           <div class="card-header">
-            <span class="card-title">Hosting dashboard</span>
+            <span class="card-title">Website & Email Hosting</span>
             <a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open 20i panel</a>
           </div>
           <div class="card-body" id="hosting-content">
@@ -789,7 +849,16 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <!-- ══ REFERRAL TAB ══ -->
       <div id="tab-referral" class="hidden">
-        <div class="page-header"><h1>Refer and earn</h1><p>Share PA CROP Services with other PA business owners</p></div>
+        <div class="page-header"><h1>Refer & Earn</h1><p>Share PA CROP Services with other PA business owners</p></div>
+
+        <!-- Stats Row -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700" id="ref-total">0</div><div style="font-size:11px;color:var(--ink3)">Total Referrals</div></div></div>
+          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700;color:var(--green)" id="ref-converted">0</div><div style="font-size:11px;color:var(--ink3)">Converted</div></div></div>
+          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700;color:var(--accent)" id="ref-credit">$0</div><div style="font-size:11px;color:var(--ink3)">Credit Earned</div></div></div>
+          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700" id="ref-next-milestone">5</div><div style="font-size:11px;color:var(--ink3)">Next Milestone</div></div></div>
+        </div>
+
         <div class="grid-2">
           <div class="card">
             <div class="card-header"><span class="card-title">Your referral code</span></div>
@@ -806,20 +875,20 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div class="card-body">
               <div style="display:flex;flex-direction:column;gap:12px">
                 <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</div><div style="font-size:13px;color:var(--ink2)">Share your referral code or link with another PA business owner</div></div>
-                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</div><div style="font-size:13px;color:var(--ink2)">They sign up using your code and get a PA registered office</div></div>
-                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">&#10003;</div><div style="font-size:13px;color:var(--ink2)">You both benefit — they get compliance protection, you get credit on your next renewal</div></div>
+                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</div><div style="font-size:13px;color:var(--ink2)">They sign up and get a PA registered office</div></div>
+                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">✓</div><div style="font-size:13px;color:var(--ink2)">You get credit toward your next renewal — they get compliance protection</div></div>
+              </div>
+              <div style="margin-top:16px;padding:12px;background:var(--accent-bg);border-radius:var(--radius);font-size:12px;color:var(--ink2)">
+                <strong>Milestone rewards:</strong> 5 referrals = 1 month free · 10 referrals = 3 months free · 25 referrals = 1 year free
               </div>
             </div>
           </div>
         </div>
+        <!-- Referral tracking table -->
         <div class="card" style="margin-top:16px">
-          <div class="card-header"><span class="card-title">Your referrals</span></div>
+          <div class="card-header"><span class="card-title">Your referrals</span><button class="btn btn-ghost btn-sm" onclick="loadReferralTracking()" style="font-size:12px">⟳ Refresh</button></div>
           <div class="card-body" id="referral-list">
-            <div id="referral-data"><div class="empty-state">
-              <div style="font-size:16px;margin-bottom:8px">🤝</div>
-              <h3>No referrals yet</h3>
-              <p>Share your code with PA business owners. When they sign up, they'll appear here.</p>
-            </div></div>
+            <div id="referral-data"><div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">Share your code to start tracking referrals here.</div></div>
           </div>
         </div>
       </div>
@@ -827,37 +896,101 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       <!-- ══ SETTINGS TAB ══ -->
       <!-- ══ KNOWLEDGE BASE TAB ══ -->
       <div id="tab-knowledge" class="hidden">
-        <div class="page-header"><h1>Knowledge Base</h1><p>Self-service answers to common PA compliance questions</p></div>
+        <div class="page-header"><h1>Knowledge Base</h1><p>25 articles covering everything about PA business compliance</p></div>
         <div style="margin-bottom:16px">
-          <input type="text" id="kb-search" placeholder="Search knowledge base..." oninput="searchKB(this.value)" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-lg);font-size:15px">
+          <input type="text" id="kb-search" placeholder="Search articles... (e.g. 'deadline LLC' or 'service of process')" oninput="searchKB(this.value)" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-lg);font-size:15px">
         </div>
-        <div id="kb-articles" class="card"><div class="card-body" style="padding:0"><div style="padding:20px;text-align:center;color:var(--ink3)">Loading...</div></div></div>
+        <!-- Category chips -->
+        <div id="kb-categories" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <!-- Article list -->
+        <div id="kb-articles" class="card"><div class="card-body" style="padding:0"><div style="padding:20px;text-align:center;color:var(--ink3)">Loading articles...</div></div></div>
+        <!-- Article reader (hidden until clicked) -->
+        <div id="kb-reader" style="display:none" class="card">
+          <div class="card-body">
+            <button onclick="closeKBReader()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);margin-bottom:12px">← Back to articles</button>
+            <h2 id="kb-reader-title" style="font-family:var(--serif);font-size:22px;margin-bottom:8px"></h2>
+            <div id="kb-reader-meta" style="font-size:12px;color:var(--ink3);margin-bottom:16px"></div>
+            <div id="kb-reader-content" style="font-size:14px;line-height:1.8;color:var(--ink2)"></div>
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+              <div style="font-size:13px;color:var(--ink3);margin-bottom:8px">Still have questions?</div>
+              <button class="btn btn-accent btn-sm" onclick="setTab('ai',document.querySelector('[onclick*=ai]'))">Ask the AI Assistant →</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ══ MULTI-STATE TAB ══ -->
       <div id="tab-multistate" class="hidden">
         <div class="page-header"><h1>Multi-State Monitoring</h1><p>Track entity compliance across multiple states</p></div>
-        <div class="card"><div class="card-header"><span class="card-title">Monitored States</span></div>
-        <div class="card-body" id="ms-list"><p style="color:var(--ink3);font-size:14px">Loading state data...</p></div></div>
-        <div class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">+ Add State</span></div>
-        <div class="card-body">
-          <div style="display:flex;gap:8px">
-            <select id="ms-state" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:#fff">
-              <option value="NJ">New Jersey</option><option value="NY">New York</option><option value="DE">Delaware</option><option value="OH">Ohio</option><option value="MD">Maryland</option>
-            </select>
-            <input type="text" id="ms-entity" placeholder="Entity name in this state" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px">
-            <button class="btn btn-accent btn-sm" onclick="addState()">Add</button>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:48px 32px">
+            <div style="font-size:48px;margin-bottom:16px">🗺️</div>
+            <h3 style="font-family:var(--serif);font-size:22px;margin-bottom:8px">Coming Soon</h3>
+            <p style="font-size:14px;color:var(--ink3);max-width:400px;margin:0 auto 20px;line-height:1.6">Multi-state compliance monitoring is in development. Track annual reports, registered agents, and filing deadlines across Pennsylvania, New Jersey, New York, Delaware, and more — all from one dashboard.</p>
+            <div style="background:var(--bg);border-radius:var(--radius);padding:16px;max-width:360px;margin:0 auto">
+              <div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px">Get notified when it launches</div>
+              <div style="display:flex;gap:8px">
+                <input type="email" id="ms-waitlist-email" placeholder="Your email" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" value="">
+                <button class="btn btn-accent btn-sm" onclick="document.getElementById('ms-waitlist-email').value=CLIENT?.email||'';showToast('You\'ll be notified when multi-state launches!')">Notify me</button>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--ink3);margin-top:16px">Currently tracking: <strong>Pennsylvania</strong> (all 12 entity types)</p>
           </div>
-          <p id="ms-msg" style="font-size:12px;display:none;margin-top:8px"></p>
-        </div></div>
+        </div>
       </div>
 
       <!-- ══ CERTIFICATION TAB ══ -->
       <div id="tab-certification" class="hidden">
-        <div class="page-header"><h1>Compliance Certification</h1><p>Complete our 5-lesson course and earn your PA Compliance Certified badge</p></div>
-        <div id="cert-status" class="card"><div class="card-body" style="text-align:center;padding:32px"><p style="color:var(--ink3)">Loading certification status...</p></div></div>
-        <div id="cert-course" class="card" style="margin-top:16px"><div class="card-header"><span class="card-title">📚 Course Lessons</span></div>
-        <div class="card-body" id="cert-lessons"></div></div>
+        <div class="page-header"><h1>PA Compliance Academy</h1><p>Complete 5 lessons and earn your Compliance Certified badge</p></div>
+        <!-- Progress -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-body" style="display:flex;align-items:center;gap:16px">
+            <div id="cert-badge" style="width:60px;height:60px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">🎓</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px" id="cert-progress-label">0 of 5 lessons completed</div>
+              <div style="height:8px;background:var(--bg3);border-radius:4px;margin-top:6px;overflow:hidden"><div id="cert-progress-bar" style="height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .5s"></div></div>
+            </div>
+            <div id="cert-badge-earned" style="display:none;text-align:center">
+              <div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase">Certified</div>
+            </div>
+          </div>
+        </div>
+        <!-- Lessons -->
+        <div class="card">
+          <div class="card-body" style="padding:0" id="cert-lessons">
+            <div class="cert-lesson" data-lesson="1" onclick="openLesson(1)" style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+              <div class="cert-check" id="cert-check-1" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--ink3)">1</div>
+              <div><div style="font-weight:600;font-size:14px">What is a CROP?</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">Pennsylvania's registered office system and why it matters for your entity</div></div>
+            </div>
+            <div class="cert-lesson" data-lesson="2" onclick="openLesson(2)" style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+              <div class="cert-check" id="cert-check-2" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--ink3)">2</div>
+              <div><div style="font-weight:600;font-size:14px">Annual Reports by Entity Type</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">Corps June 30, LLCs Sept 30, all others Dec 31 — and why dates matter</div></div>
+            </div>
+            <div class="cert-lesson" data-lesson="3" onclick="openLesson(3)" style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+              <div class="cert-check" id="cert-check-3" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--ink3)">3</div>
+              <div><div style="font-weight:600;font-size:14px">Enforcement & Dissolution</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">What happens if you miss deadlines, starting with 2027 reports</div></div>
+            </div>
+            <div class="cert-lesson" data-lesson="4" onclick="openLesson(4)" style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+              <div class="cert-check" id="cert-check-4" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--ink3)">4</div>
+              <div><div style="font-weight:600;font-size:14px">Service of Process & Legal Documents</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">Why your registered office matters most when you're sued</div></div>
+            </div>
+            <div class="cert-lesson" data-lesson="5" onclick="openLesson(5)" style="display:flex;gap:14px;padding:16px 20px;cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+              <div class="cert-check" id="cert-check-5" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:var(--ink3)">5</div>
+              <div><div style="font-weight:600;font-size:14px">Your Compliance Toolkit</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">How to use your portal, AI assistant, and filing tools effectively</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Lesson reader (hidden) -->
+        <div id="cert-reader" style="display:none" class="card" style="margin-top:16px">
+          <div class="card-body">
+            <button onclick="closeLessonReader()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);margin-bottom:12px">← Back to lessons</button>
+            <h2 id="cert-reader-title" style="font-family:var(--serif);font-size:22px;margin-bottom:16px"></h2>
+            <div id="cert-reader-content" style="font-size:14px;line-height:1.8;color:var(--ink2)"></div>
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+              <button class="btn btn-accent btn-sm" id="cert-complete-btn" onclick="completeLesson()">✓ Mark as Complete</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="tab-settings" class="hidden">
