@@ -1,6 +1,6 @@
 # PA CROP Services — Infrastructure & Access Reference
 
-> **Auto-updated on every commit.** Last updated: 2026-03-23 — COMPLETE: 36 pages, 25 APIs, 20 active workflows, UX/UI/Conversion audit applied, design system codified
+> **Auto-updated on every commit.** Last updated: 2026-03-23 — COMPLETE: 36 pages, 90 APIs, 20 active workflows, full Nielsen + WCAG heuristic compliance, design system codified
 > This file is the single source of truth for all infrastructure access, credentials topology,
 > development philosophy, and design standards. Safe to share with AI assistants continuing work on this codebase.
 
@@ -72,8 +72,8 @@ pa-crop-services/
 │   │
 │   ├── embed/
 │   │   ├── crop-widget.js           # Partner embeddable compliance widget
-│   │   └── chatbot.js               # AI chatbot embed — brand-aligned (Outfit, slate/gold)
-│   ├── site.css                     # Shared design system (Outfit + Instrument Serif)
+│   │   └── chatbot.js               # AI chatbot embed — brand-aligned, ARIA dialog, keyboard (Esc close)
+│   ├── site.css                     # Shared design system (Outfit + Instrument Serif + accessibility)
 │   ├── sitemap.xml                  # 23 URLs
 │   └── robots.txt
 │

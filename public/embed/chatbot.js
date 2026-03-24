@@ -81,12 +81,17 @@ function detectPageContext() {
 var fab = document.createElement('button');
 fab.className = 'crop-fab';
 fab.setAttribute('aria-label', 'Chat with compliance team');
+fab.setAttribute('aria-expanded', 'false');
+fab.setAttribute('aria-controls', 'crop-chat-panel');
 fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
 document.body.appendChild(fab);
 
 var panel = document.createElement('div');
 panel.className = 'crop-panel';
-panel.innerHTML = '<div class="crop-head"><div class="crop-head-left"><div class="crop-avatar">PA</div><div><h4>PA CROP Services</h4><p>Compliance team \u2022 Online now</p></div></div><button class="crop-close" aria-label="Close chat">\u00d7</button></div><div class="crop-body" id="crop-body"></div><div class="crop-suggestions" id="crop-suggests"></div><div class="crop-input-area"><input class="crop-input" id="crop-input" placeholder="Ask anything about PA compliance\u2026" autocomplete="off"><button class="crop-send" id="crop-send">Send</button></div>';
+panel.setAttribute('role', 'dialog');
+panel.setAttribute('aria-label', 'PA CROP Services compliance chat');
+panel.id = 'crop-chat-panel';
+panel.innerHTML = '<div class="crop-head"><div class="crop-head-left"><div class="crop-avatar">PA</div><div><h4>PA CROP Services</h4><p>Compliance team \u2022 Online now</p></div></div><button class="crop-close" aria-label="Close chat">\u00d7</button></div><div class="crop-body" id="crop-body" role="log" aria-live="polite" aria-label="Chat messages"></div><div class="crop-suggestions" id="crop-suggests" role="group" aria-label="Suggested questions"></div><div class="crop-input-area"><input class="crop-input" id="crop-input" placeholder="Ask anything about PA compliance\u2026" autocomplete="off" aria-label="Type your question"><button class="crop-send" id="crop-send" aria-label="Send message">Send</button></div>';
 document.body.appendChild(panel);
 
 var body = panel.querySelector('#crop-body');
@@ -99,6 +104,8 @@ fab.onclick = function() {
   isOpen = !isOpen;
   panel.classList.toggle('open', isOpen);
   fab.classList.toggle('open', isOpen);
+  fab.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  if (isOpen) { input.focus(); }
   if (isOpen && body.children.length === 0) {
     // First open: show greeting with typing effect
     showTyping();
@@ -254,6 +261,17 @@ input.addEventListener('keydown', function(e) {
 });
 sendBtn.addEventListener('click', function() {
   if (input.value.trim()) sendMessage(input.value.trim());
+});
+
+// Escape key closes chat
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && isOpen) {
+    isOpen = false;
+    panel.classList.remove('open');
+    fab.classList.remove('open');
+    fab.setAttribute('aria-expanded', 'false');
+    fab.focus();
+  }
 });
 
 })();
