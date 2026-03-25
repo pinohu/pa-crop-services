@@ -37,6 +37,48 @@ export default async function handler(req, res) {
 
   const sql = db.getSql();
   const dryRun = req.query.dry === 'true';
+  const fixMode = req.query.fix;
+
+  // Fix mode: create missing obligations for existing clients
+  if (fixMode === 'obligations') {
+    try {
+      const clients = await sql.query(`
+        SELECT c.id as client_id, c.email, c.plan_code, o.id as org_id, o.entity_type, o.legal_name
+        FROM clients c
+        JOIN organizations o ON c.organization_id = o.id
+        LEFT JOIN obligations obl ON obl.organization_id = o.id
+        WHERE obl.id IS NULL
+      `);
+      const fixed = [];
+      for (const c of clients) {
+        const entityType = c.entity_type || 'domestic_llc';
+        const deadline = DEADLINES[entityType] || '09-30';
+        const year = new Date().getFullYear();
+        const dueDate = `${year}-${deadline}`;
+        const due = new Date(dueDate);
+        const status = due < new Date() ? 'overdue' : 'current';
+
+        const ruleRows = await sql.query(
+          'SELECT id, version FROM rules WHERE entity_type = $1 AND jurisdiction = $2 AND is_active = true LIMIT 1',
+          [entityType, 'PA']
+        );
+        const rule = ruleRows[0];
+        if (!rule) { fixed.push({ email: c.email, error: 'no rule for ' + entityType }); continue; }
+
+        await sql.query(
+          `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, rule_id, rule_version, due_date, fee_usd, obligation_status, escalation_level, filing_method, source_reason, metadata, created_at, updated_at)
+           VALUES ($1, 'annual_report', 'PA', $2, $3, $4, 7.00, $5, 'none', $6, 'fix-obligations', $7, now(), now())`,
+          [c.org_id, rule.id, rule.version, dueDate, status,
+           c.plan_code?.includes('pro') || c.plan_code?.includes('empire') ? 'managed' : 'self',
+           JSON.stringify({ year, entity_type: entityType, source: 'fix' })]
+        );
+        fixed.push({ email: c.email, entity: c.legal_name, due: dueDate, status });
+      }
+      return res.status(200).json({ success: true, mode: 'fix-obligations', fixed });
+    } catch (e) {
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  }
   const results = { synced: 0, skipped: 0, errors: [], created_orgs: [], created_clients: [], created_obligations: [] };
 
   try {
