@@ -167,7 +167,6 @@ export default async function handler(req, res) {
             score: c.custom_fields?.lead_score || 0,
           }))
         });
-        });
       }
 
       // ── All Clients ───────────────────────────────────────────────────

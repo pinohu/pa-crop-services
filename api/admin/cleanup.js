@@ -230,7 +230,7 @@ export default async function handler(req, res) {
         const client = existing?.[0];
         if (client) {
           await sql.query(
-            "UPDATE clients SET metadata = metadata || $1, updated_at = now() WHERE id = $2",
+            "UPDATE clients SET metadata = metadata || $1, onboarding_status = 'completed', updated_at = now() WHERE id = $2",
             [JSON.stringify({ access_code: 'CROP2026' }), client.id]
           );
           results.push({ email: entry.client.email, code: 'CROP2026', status: 'reset' });
