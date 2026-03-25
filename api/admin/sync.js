@@ -1,0 +1,160 @@
+// PA CROP Services — SuiteDash → Neon Sync
+// Pulls clients from SuiteDash CRM and creates corresponding records
+// in Neon Postgres (organizations, clients, obligations).
+
+import { setCors, isAdminRequest } from '../services/auth.js';
+import * as db from '../services/db.js';
+import * as suitedash from '../services/suitedash.js';
+
+// Map SuiteDash entity types to our canonical types
+const ENTITY_MAP = {
+  'llc': 'domestic_llc', 'LLC': 'domestic_llc', 'domestic llc': 'domestic_llc',
+  'corporation': 'domestic_business_corp', 'corp': 'domestic_business_corp', 'Corporation': 'domestic_business_corp',
+  'nonprofit': 'domestic_nonprofit_corp', 'Nonprofit': 'domestic_nonprofit_corp',
+  'lp': 'domestic_lp', 'LP': 'domestic_lp', 'limited partnership': 'domestic_lp',
+  'llp': 'domestic_llp', 'LLP': 'domestic_llp',
+  'foreign llc': 'foreign_llc', 'Foreign LLC': 'foreign_llc',
+  'foreign corp': 'foreign_business_corp', 'Foreign Corporation': 'foreign_business_corp',
+};
+
+// Deadline by entity type
+const DEADLINES = {
+  domestic_business_corp: '06-30', foreign_business_corp: '06-30',
+  domestic_nonprofit_corp: '06-30', foreign_nonprofit_corp: '06-30',
+  domestic_llc: '09-30', foreign_llc: '09-30',
+  domestic_lp: '12-31', foreign_lp: '12-31',
+  domestic_llp: '12-31', foreign_llp: '12-31',
+  professional_association: '12-31', business_trust: '12-31',
+};
+
+export default async function handler(req, res) {
+  setCors(req, res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
+
+  if (!db.isConnected()) return res.status(503).json({ success: false, error: 'neon_not_connected' });
+  if (!suitedash.isConfigured()) return res.status(503).json({ success: false, error: 'suitedash_not_configured' });
+
+  const sql = db.getSql();
+  const dryRun = req.query.dry === 'true';
+  const results = { synced: 0, skipped: 0, errors: [], created_orgs: [], created_clients: [], created_obligations: [] };
+
+  try {
+    // Pull all clients from SuiteDash
+    const sdClients = await suitedash.getAllClientsWithCompliance();
+    results.suitedash_total = sdClients.length;
+
+    for (const sd of sdClients) {
+      try {
+        const email = (sd.email || '').toLowerCase().trim();
+        if (!email) { results.skipped++; results.errors.push({ email: '(empty)', reason: 'no email' }); continue; }
+
+        // Check if already synced
+        const existing = await sql.query('SELECT id FROM clients WHERE email = $1', [email]);
+        if (existing.length > 0) {
+          results.skipped++;
+          continue;
+        }
+
+        // Determine entity type
+        const rawType = sd.custom_fields?.entity_type || sd.entity_type || 'llc';
+        const entityType = ENTITY_MAP[rawType] || ENTITY_MAP[rawType.toLowerCase()] || 'domestic_llc';
+
+        // Determine plan
+        const planCode = sd.custom_fields?.plan_code || sd.plan_code || 'compliance_only';
+
+        const entityName = sd.company_name || sd.name || `${sd.first_name || ''} ${sd.last_name || ''}`.trim() || email;
+        const dosNumber = sd.custom_fields?.dos_number || sd.dos_number || null;
+
+        if (dryRun) {
+          results.created_orgs.push({ name: entityName, type: entityType, dos: dosNumber });
+          results.created_clients.push({ email, plan: planCode });
+          results.synced++;
+          continue;
+        }
+
+        // Create organization
+        const orgRows = await sql.query(
+          `INSERT INTO organizations (legal_name, display_name, entity_type, jurisdiction, dos_number, entity_status, registered_office_address, metadata, created_at, updated_at)
+           VALUES ($1, $2, $3, 'PA', $4, 'active', $5, $6, now(), now()) RETURNING id`,
+          [
+            entityName,
+            entityName,
+            entityType,
+            dosNumber,
+            JSON.stringify({ street: '924 W 23rd St', city: 'Erie', state: 'PA', zip: '16502' }),
+            JSON.stringify({ suitedash_uid: sd.uid, synced_at: new Date().toISOString() })
+          ]
+        );
+        const orgId = orgRows[0]?.id;
+        if (!orgId) { results.errors.push({ email, reason: 'org insert failed' }); continue; }
+
+        // Create client
+        const clientRows = await sql.query(
+          `INSERT INTO clients (email, owner_name, phone, plan_code, billing_status, organization_id, referral_code, onboarding_status, metadata, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, 'active', $5, $6, 'complete', $7, now(), now()) RETURNING id`,
+          [
+            email,
+            `${sd.first_name || ''} ${sd.last_name || ''}`.trim() || entityName,
+            sd.phone || null,
+            planCode,
+            orgId,
+            'CROP-' + (sd.uid || '').slice(0, 6).toUpperCase(),
+            JSON.stringify({ suitedash_uid: sd.uid, first_name: sd.first_name, last_name: sd.last_name })
+          ]
+        );
+        const clientId = clientRows[0]?.id;
+
+        // Create annual report obligation
+        const year = new Date().getFullYear();
+        const deadline = DEADLINES[entityType] || '09-30';
+        const dueDate = `${year}-${deadline}`;
+        const now = new Date();
+        const due = new Date(dueDate);
+        const status = due < now ? 'overdue' : 'current';
+
+        const oblRows = await sql.query(
+          `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, entity_type, due_date, fee_usd, obligation_status, filing_method, escalation_level, rule_snapshot, created_at, updated_at)
+           VALUES ($1, 'annual_report', 'PA', $2, $3, 7.00, $4, $5, 0, $6, now(), now()) RETURNING id`,
+          [
+            orgId,
+            entityType,
+            dueDate,
+            status,
+            planCode.includes('pro') || planCode.includes('empire') ? 'managed' : 'self',
+            JSON.stringify({ year, entity_type: entityType, deadline, source: 'sync' })
+          ]
+        );
+
+        // Audit event
+        await sql.query(
+          `INSERT INTO audit_events (actor_type, actor_id, event_type, target_type, target_id, after_json, reason, created_at)
+           VALUES ('admin', 'sync', 'client.synced_from_suitedash', 'client', $1, $2, 'SuiteDash → Neon sync', now())`,
+          [clientId, JSON.stringify({ org_id: orgId, email, entity: entityName, plan: planCode })]
+        );
+
+        // Sync neon_org_id back to SuiteDash
+        try {
+          if (sd.uid) {
+            await suitedash.setComplianceFields(sd.uid, { neon_org_id: orgId });
+          }
+        } catch (e) { /* non-critical */ }
+
+        results.synced++;
+        results.created_orgs.push({ id: orgId, name: entityName, type: entityType });
+        results.created_clients.push({ id: clientId, email, plan: planCode });
+        results.created_obligations.push({ org: orgId, type: 'annual_report', due: dueDate, status });
+      } catch (e) {
+        results.errors.push({ email: sd.email || '?', reason: e.message?.slice(0, 100) });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      dry_run: dryRun,
+      ...results
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
