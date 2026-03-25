@@ -113,12 +113,21 @@ export default async function handler(req, res) {
         const due = new Date(dueDate);
         const status = due < now ? 'overdue' : 'current';
 
+        // Look up the rule for this entity type
+        const ruleRows = await sql.query(
+          'SELECT id, version FROM rules WHERE entity_type = $1 AND jurisdiction = $2 AND is_active = true LIMIT 1',
+          [entityType, 'PA']
+        );
+        const rule = ruleRows[0];
+        if (!rule) { results.errors.push({ email, reason: 'No active rule for ' + entityType }); continue; }
+
         const oblRows = await sql.query(
-          `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, entity_type, due_date, fee_usd, obligation_status, filing_method, escalation_level, rule_snapshot, created_at, updated_at)
-           VALUES ($1, 'annual_report', 'PA', $2, $3, 7.00, $4, $5, 0, $6, now(), now()) RETURNING id`,
+          `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, rule_id, rule_version, due_date, fee_usd, obligation_status, escalation_level, filing_method, source_reason, metadata, created_at, updated_at)
+           VALUES ($1, 'annual_report', 'PA', $2, $3, $4, 7.00, $5, 'none', $6, 'SuiteDash sync', $7, now(), now()) RETURNING id`,
           [
             orgId,
-            entityType,
+            rule.id,
+            rule.version,
             dueDate,
             status,
             planCode.includes('pro') || planCode.includes('empire') ? 'managed' : 'self',
