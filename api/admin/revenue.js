@@ -7,8 +7,11 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   try {
+    const dbConnected = db.isConnected();
+    const sdConnected = db.isSuiteDashConnected();
+
     // Try SuiteDash first for client data if Neon not available
-    if (!db.isConnected() && db.isSuiteDashConnected()) {
+    if (!dbConnected && sdConnected) {
       const { suitedash } = db;
       const clients = await suitedash.getAllClientsWithCompliance();
       const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
@@ -25,7 +28,7 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!db.isConnected()) return res.status(200).json({ success: true, mode: 'no_db' });
+    if (!dbConnected) return res.status(200).json({ success: true, mode: 'no_db', _diag: { dbConnected, sdConnected } });
 
     const sql = db.getSql();
 
@@ -58,7 +61,7 @@ export default async function handler(req, res) {
       generated_at: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Revenue analytics error:", err.message);
-    return res.status(500).json({ success: false, error: "internal_error" });
+    console.error("Revenue analytics error:", err.message, err.stack?.slice(0, 300));
+    return res.status(500).json({ success: false, error: "internal_error", debug: err.message, _diag: { dbConnected: db.isConnected(), sdConnected: db.isSuiteDashConnected() } });
   }
 }
