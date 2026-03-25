@@ -607,12 +607,12 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <span>AI Compliance Assistant</span>
           </div>
           <div class="ai-quick-actions">
-            <button class="ai-quick" onclick="askAIWithFallback('When is my annual report due and what do I need to do?')">My annual report</button>
-            <button class="ai-quick" onclick="askAIWithFallback('What documents have you received for my entity?')">My documents</button>
-            <button class="ai-quick" onclick="askAIWithFallback('What is included in my current plan?')">My plan details</button>
-            <button class="ai-quick" onclick="askAIWithFallback('What is the 2027 dissolution deadline and am I at risk?')">2027 deadline</button>
-            <button class="ai-quick" id="aq-upgrade" style="display:none" onclick="askAIWithFallback('What would I get if I upgraded my plan?')">Upgrade options</button>
-            <button class="ai-quick" id="aq-hosting" style="display:none" onclick="askAIWithFallback('How do I set up my website and email hosting?')">My hosting</button>
+            <button class="ai-quick" onclick="setTab('filing_actions')">My annual report</button>
+            <button class="ai-quick" onclick="setTab('documents')">My documents</button>
+            <button class="ai-quick" onclick="setTab('settings')">My plan details</button>
+            <button class="ai-quick" onclick="setTab('comp_intel')">2027 deadline</button>
+            <button class="ai-quick" id="aq-upgrade" style="display:none" onclick="setTab('settings')">Upgrade options</button>
+            <button class="ai-quick" id="aq-hosting" style="display:none" onclick="setTab('hosting')">My hosting</button>
           </div>
           <div class="ai-input-row">
             <input class="ai-input" id="ai-dash-input" placeholder="Ask anything about PA compliance..." onkeydown="if(event.key==='Enter')askAI()">
@@ -1618,6 +1618,9 @@ function mountClient(c) {
   if (avatar) avatar.textContent = (c.name||'?')[0].toUpperCase();
   loadHealthScore(c);
   loadClientContext(c);
+  // Set org context for entity health and other org-dependent features
+  if (c.organization_id) { window._orgId = c.organization_id; }
+  window._ctx = { organization_id: c.organization_id, entityName: c.name, entityType: c.entityType, entityNumber: c.entityNumber };
   if(typeof initSettings === 'function') initSettings(c);
   if(typeof checkUpgradeEligibility === 'function') checkUpgradeEligibility();
   if(typeof initNewTabs === 'function') initNewTabs();
