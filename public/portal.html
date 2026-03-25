@@ -1152,6 +1152,7 @@ function updateActivityFeed(ctx) {
 // ═══ CORE AUTH ═══
 let CLIENT = null;
 let CLIENT_CONTEXT = null;
+let CLIENT_TOKEN = null;
 const chatHistory = [];
 
 async function doLogin() {
@@ -1163,7 +1164,7 @@ async function doLogin() {
   try {
     var res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
     var data = await res.json();
-    if (data.success && data.client) { mountClient(data.client); }
+    if (data.success && data.client) { CLIENT_TOKEN = data.token || null; mountClient(data.client); }
     else { showLoginError(data.error || 'Invalid email or access code.'); btn.textContent = 'Sign in'; btn.disabled = false; }
   } catch(e) { showLoginError('Connection error. Please try again.'); btn.textContent = 'Sign in'; btn.disabled = false; }
 }
@@ -1175,6 +1176,17 @@ function demoLogin() {
 
 // ═══ PORTAL FEATURE UIs — Functional Interfaces ═══
 
+// Authenticated fetch for portal API calls
+function portalHeaders() {
+  const h = {'Content-Type':'application/json'};
+  if (CLIENT_TOKEN) h['Authorization'] = 'Bearer ' + CLIENT_TOKEN;
+  return h;
+}
+async function portalFetch(url, opts={}) {
+  const headers = {...portalHeaders(), ...(opts.headers||{})};
+  return fetch(url, {...opts, headers});
+}
+
 // ── 1. COMPLIANCE INTEL ─────────────────────────────────────────────
 async function loadPortal_comp_intel() {
   if (!CLIENT) return;
@@ -1185,9 +1197,9 @@ async function loadPortal_comp_intel() {
     // Fetch compliance check for entity type
     const et = CLIENT.entityType || 'domestic_llc';
     const [scoreR, checkR, dissR] = await Promise.allSettled([
-      fetch('/api/compliance-score', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email})}),
-      fetch('/api/compliance-check?entity_type=' + et),
-      fetch('/api/dissolution-predictor', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entity_type:et})})
+      portalFetch('/api/compliance-score', {method:'POST', body:JSON.stringify({email:CLIENT.email})}),
+      portalFetch('/api/compliance-check?entity_type=' + et),
+      portalFetch('/api/dissolution-predictor', {method:'POST', body:JSON.stringify({entity_type:et})})
     ]);
     const check = checkR.status === 'fulfilled' ? await checkR.value.json().catch(()=>({})) : {};
     const diss = dissR.status === 'fulfilled' ? await dissR.value.json().catch(()=>({})) : {};
@@ -1243,7 +1255,7 @@ async function loadPortal_filing_actions() {
   if (!org) { el.innerHTML = '<div style="padding:24px;color:var(--ink3,#999)">No organization linked to your account yet.</div>'; return; }
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading obligations...</div>';
   try {
-    const r = await fetch('/api/organizations/'+org+'/obligations');
+    const r = await portalFetch('/api/organizations/'+org+'/obligations');
     const d = await r.json();
     const obls = d.obligations || d.data || (Array.isArray(d) ? d : []);
     if (!obls.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3)">No obligations found. Your compliance engine will populate these.</div>'; return; }
@@ -1270,7 +1282,7 @@ async function loadPortal_filing_actions() {
 }
 async function portalOblAction(oblId, action) {
   try {
-    const r = await fetch('/api/obligations/'+oblId+'/'+action, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email})});
+    const r = await portalFetch('/api/obligations/'+oblId+'/'+action, {method:'POST', body:JSON.stringify({email:CLIENT.email})});
     const d = await r.json();
     if (d.success !== false) { loadPortal_filing_actions(); } else { alert(d.error || 'Action failed'); }
   } catch(e) { alert('Error: '+e.message); }
@@ -1321,7 +1333,7 @@ async function portalDOSSearch() {
   const el = document.getElementById('dos-search-results');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Searching...</div>';
   try {
-    const r = await fetch('/api/pa-dos-search', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:q})});
+    const r = await portalFetch('/api/pa-dos-search', {method:'POST', body:JSON.stringify({query:q})});
     const d = await r.json();
     const results = d.results || d.entities || [];
     el.innerHTML = results.length ? results.slice(0,5).map(e => '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px"><strong>'+e.name+'</strong><br><span style="color:var(--ink3,#666)">'+e.entity_number+' · '+e.status+'</span></div>').join('') : '<div style="font-size:13px;color:var(--ink3)">No results. '+(d.message||d.error||'')+'</div>';
@@ -1333,7 +1345,7 @@ async function portalAddrVerify() {
   const el = document.getElementById('addr-verify-results');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Verifying...</div>';
   try {
-    const r = await fetch('/api/address-verify', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({address:addr})});
+    const r = await portalFetch('/api/address-verify', {method:'POST', body:JSON.stringify({address:addr})});
     const d = await r.json();
     el.innerHTML = d.valid || d.verified ? '<div style="font-size:13px;color:#15803d;font-weight:600">✓ Address verified</div>' : '<div style="font-size:13px;color:#dc2626">✗ '+(d.error||d.message||'Could not verify')+'</div>';
   } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
@@ -1345,7 +1357,7 @@ async function portalEntityIntake() {
   if (!name || !type) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">Name and type required</div>'; return; }
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Submitting...</div>';
   try {
-    const r = await fetch('/api/entity-intake', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entity_name:name, entity_type:type, dos_number:document.getElementById('ei-dos').value.trim(), address:document.getElementById('ei-addr').value.trim(), email:CLIENT.email})});
+    const r = await portalFetch('/api/entity-intake', {method:'POST', body:JSON.stringify({entityName:name, entityType:type, dosFileNumber:document.getElementById('ei-dos').value.trim(), address:document.getElementById('ei-addr').value.trim(), email:CLIENT.email})});
     const d = await r.json();
     el.innerHTML = d.success !== false ? '<div style="font-size:13px;color:#15803d;font-weight:600">✓ Entity submitted for onboarding</div>' : '<div style="font-size:13px;color:#dc2626">'+(d.error||'Submission failed')+'</div>';
   } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
@@ -1379,7 +1391,7 @@ async function portalAISummarize() {
   const el = document.getElementById('ai-doc-result');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Summarizing...</div>';
   try {
-    const r = await fetch('/api/assistant/summarize-document', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text, email:CLIENT.email})});
+    const r = await portalFetch('/api/assistant/summarize-document', {method:'POST', body:JSON.stringify({text, email:CLIENT.email})});
     const d = await r.json();
     el.innerHTML = '<div style="background:#f8fafc;padding:16px;border-radius:8px;font-size:14px;line-height:1.7;border:1px solid var(--border,#eee)">'+(d.summary||d.answer||d.result||JSON.stringify(d))+'</div>';
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;font-size:13px">'+e.message+'</div>'; }
@@ -1390,7 +1402,7 @@ async function portalAIExplain() {
   const el = document.getElementById('ai-obl-result');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Thinking...</div>';
   try {
-    const r = await fetch('/api/assistant/explain-obligation', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:q, email:CLIENT.email})});
+    const r = await portalFetch('/api/assistant/explain-obligation', {method:'POST', body:JSON.stringify({question:q, email:CLIENT.email})});
     const d = await r.json();
     el.innerHTML = '<div style="background:#f8fafc;padding:16px;border-radius:8px;font-size:14px;line-height:1.7;border:1px solid var(--border,#eee)">'+(d.explanation||d.answer||d.result||JSON.stringify(d))+'</div>';
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;font-size:13px">'+e.message+'</div>'; }
@@ -1428,7 +1440,7 @@ async function portalGenInvoice() {
   const el = document.getElementById('inv-result');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Generating...</div>';
   try {
-    const r = await fetch('/api/invoice-generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email, plan:CLIENT.tier})});
+    const r = await portalFetch('/api/invoice-generate', {method:'POST', body:JSON.stringify({email:CLIENT.email, plan:CLIENT.tier})});
     const d = await r.json();
     if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Invoice PDF</a>'; }
     else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||'Invoice generated. Check your email.')+'</div>'; }
@@ -1438,7 +1450,7 @@ async function portalTaxExport() {
   const el = document.getElementById('tax-result');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Exporting...</div>';
   try {
-    const r = await fetch('/api/tax-export?email='+encodeURIComponent(CLIENT.email));
+    const r = await portalFetch('/api/tax-export?email='+encodeURIComponent(CLIENT.email));
     const d = await r.json();
     if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Tax Export</a>'; }
     else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||JSON.stringify(d))+'</div>'; }
@@ -1453,7 +1465,7 @@ async function loadPortal_portal_referrals() {
   const shareUrl = 'https://pacropservices.com/?ref=' + encodeURIComponent(refCode);
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading referrals...</div>';
   try {
-    const r = await fetch('/api/referrals/me?email='+encodeURIComponent(CLIENT.email));
+    const r = await portalFetch('/api/referrals/me?email='+encodeURIComponent(CLIENT.email));
     const d = await r.json();
     const refs = d.referrals || d.data || [];
     el.innerHTML = `
@@ -1475,9 +1487,9 @@ async function loadPortal_portal_referrals() {
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Checking compliance status...</div>';
   try {
     const [score,dash,diss] = await Promise.allSettled([
-      fetch('/api/compliance-score?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
-      fetch('/api/compliance-dashboard?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
-      fetch('/api/dissolution-predictor?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json())
+      portalFetch('/api/compliance-score?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
+      portalFetch('/api/compliance-dashboard?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
+      portalFetch('/api/dissolution-predictor?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json())
     ]);
     const s=score.value||{}, d=dash.value||{}, di=diss.value||{};
     el.innerHTML = `
@@ -1504,7 +1516,7 @@ async function loadPortal_portal_referrals() {
 
 
 function doLogout() {
-  CLIENT = null; CLIENT_CONTEXT = null;
+  CLIENT = null; CLIENT_CONTEXT = null; CLIENT_TOKEN = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('portal').style.display = 'none';
   document.getElementById('login-code').value = '';
@@ -2353,7 +2365,7 @@ async function loadComplianceTimeline() {
   }
   try {
     const token = localStorage.getItem('crop_token') || '';
-    const r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     const d = await r.json();
     if (!d.success) throw new Error(d.error);
 
@@ -2400,7 +2412,7 @@ async function showPrefill() {
   if (!orgId) { showToast('Connect your entity first'); return; }
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/organizations/' + orgId + '/prefill', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/organizations/' + orgId + '/prefill', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success) throw new Error('');
     var p = d.prefill;
@@ -2414,7 +2426,7 @@ async function showHealthReport() {
   if (!orgId) { showToast('Connect your entity first'); return; }
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/organizations/' + orgId + '/health-report', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/organizations/' + orgId + '/health-report', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success) throw new Error('');
     var rpt = d.report;
@@ -2434,7 +2446,7 @@ async function loadDocumentsFromAPI() {
   var label = document.getElementById('docs-count-label');
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/organizations/' + orgId + '/documents', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/organizations/' + orgId + '/documents', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     var items = d.items || [];
     if (!items.length) return;
@@ -2479,7 +2491,7 @@ async function loadNotificationHistory() {
   var el = document.getElementById('notification-history');
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/organizations/' + orgId + '/notifications', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/organizations/' + orgId + '/notifications', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     var items = d.items || [];
     if (!items.length) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:8px 0">No notifications sent yet. Reminders will appear here.</div>'; return; }
@@ -2506,7 +2518,7 @@ async function loadEntitySwitcher() {
   try {
     var token = localStorage.getItem('crop_token') || '';
     var r = await fetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT?.email || ''), {
-      method: 'GET', headers: { 'Authorization': 'Bearer ' + token }
+      method: 'GET', headers: { 'Authorization': 'Bearer ' + (CLIENT_TOKEN||'') }
     });
     var d = await r.json();
     var entities = d.entities || [];
@@ -2545,7 +2557,7 @@ async function updateDashboardRisk() {
   if (!orgId) return;
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/organizations/' + orgId + '/timeline', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success || !d.risk) return;
 
@@ -2645,7 +2657,7 @@ async function loadEntityHealth() {
   if (!orgId) { document.getElementById('eh-score-label').textContent = 'Connect your entity to see health score'; return; }
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/portal/value?action=health&org=' + orgId, { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/portal/value?action=health&org=' + orgId, { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success || !d.health) throw new Error('');
     var h = d.health;
@@ -2687,7 +2699,7 @@ async function loadBusinessStack() {
   var plan = window._ctx?.plan || CLIENT?.tier || 'compliance_only';
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/portal/value?action=business-stack', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/portal/value?action=business-stack', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success) { r = await fetch('/api/portal/value?action=savings&plan=' + plan); d = await r.json(); }
 
@@ -2734,7 +2746,7 @@ async function loadBusinessStack() {
 async function loadReferralTracking() {
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/referrals/me', { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/referrals/me', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     document.getElementById('ref-total').textContent = d.total_referrals || 0;
     document.getElementById('ref-converted').textContent = d.converted || 0;
@@ -2833,7 +2845,7 @@ async function loadRealActivityFeed() {
   if (!orgId) return;
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/portal/value?action=activity&org=' + orgId, { headers: { Authorization: 'Bearer ' + token } });
+    var r = await fetch('/api/portal/value?action=activity&org=' + orgId, { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
     if (!d.success || !d.activities?.length) return;
     var feed = document.getElementById('activity-feed');

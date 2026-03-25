@@ -30,8 +30,12 @@ export default async function handler(req, res) {
 
   // ── Demo account ─────────────────────────────────────────
   if (cleanEmail === 'demo@pacropservices.com' && cleanCode === 'DEMO2026') {
+    const { createSession } = await import('../services/auth.js');
+    const session = await createSession({ id: 'demo', organization_id: 'demo-org', plan_code: 'business_pro', email: cleanEmail, roles: ['client'] });
     return res.status(200).json({
       success: true,
+      token: session.token,
+      expires_at: session.expires_at,
       client: {
         name: 'Acme Holdings LLC',
         email: cleanEmail,
@@ -63,8 +67,12 @@ export default async function handler(req, res) {
         // Check access code against custom field or use simple matching
         const storedCode = sdClient.custom_fields?.access_code || '';
         if (storedCode && storedCode.toUpperCase() === cleanCode) {
+          const { createSession } = await import('../services/auth.js');
+          const session = await createSession({ id: sdClient.uid, organization_id: sdClient.custom_fields?.neon_org_id || null, plan_code: sdClient.custom_fields?.plan_code || 'compliance_only', email: sdClient.email, roles: ['client'] });
           return res.status(200).json({
             success: true,
+            token: session.token,
+            expires_at: session.expires_at,
             client: {
               name: sdClient.company_name || sdClient.name || `${sdClient.first_name} ${sdClient.last_name}`,
               email: sdClient.email,
@@ -104,8 +112,19 @@ export default async function handler(req, res) {
           if (meta.access_code_expires) {
             await db.updateClient(client.id, { metadata: { ...meta, access_code: null, access_code_expires: null } });
           }
+          // Issue JWT session token
+          const { createSession } = await import('../services/auth.js');
+          const session = await createSession({
+            id: client.id,
+            organization_id: client.organization_id,
+            plan_code: client.plan_code || 'compliance_only',
+            email: client.email,
+            roles: meta.roles || ['client']
+          });
           return res.status(200).json({
             success: true,
+            token: session.token,
+            expires_at: session.expires_at,
             client: {
               name: client.legal_name || client.owner_name || cleanEmail,
               email: client.email,

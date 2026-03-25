@@ -1,93 +1,75 @@
 // PA CROP Services — Churn Prediction & Retention
 // GET /api/churn-check (admin-key required)
-// Analyzes all clients for churn risk, triggers retention campaigns
+// Reads Neon Postgres first, falls back to SuiteDash
+
+import { setCors, isAdminRequest } from './services/auth.js';
+import * as db from './services/db.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
-  const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'SuiteDash not configured' });
-
-  const results = { at_risk: [], healthy: 0, total: 0 };
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    const sdRes = await fetch('https://app.suitedash.com/secure-api/contacts?limit=500&role=client', {
-      headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
-    });
-    const clients = (await sdRes.json())?.data || [];
-    results.total = clients.length;
+    if (db.isConnected()) {
+      const sql = db.getSql();
+      const clients = await sql.query(`
+        SELECT c.id, c.owner_name, c.email, c.plan_code, c.billing_status, c.onboarding_status, c.created_at,
+               c.metadata, c.organization_id
+        FROM clients c ORDER BY c.created_at DESC
+      `);
+      const obligations = await sql.query("SELECT organization_id, obligation_status FROM obligations");
+      const orgOverdue = new Set((obligations||[]).filter(o=>['overdue','escalated'].includes(o.obligation_status)).map(o=>o.organization_id));
 
-    const now = new Date();
-    for (const c of clients) {
-      const since = c.custom_fields?.crop_since ? new Date(c.custom_fields.crop_since) : null;
-      const daysSince = since ? Math.floor((now - since) / 86400000) : 999;
-      const lastLogin = c.custom_fields?.last_portal_login ? new Date(c.custom_fields.last_portal_login) : null;
-      const daysSinceLogin = lastLogin ? Math.floor((now - lastLogin) / 86400000) : 999;
-      const tier = c.custom_fields?.crop_plan || 'unknown';
+      const now = new Date();
+      const at_risk = [];
+      let healthy = 0;
 
-      // Churn risk scoring
-      let risk = 0;
-      if (daysSinceLogin > 60) risk += 3;
-      else if (daysSinceLogin > 30) risk += 1;
-      if (daysSince > 300 && daysSince < 400) risk += 2; // Approaching renewal
-      if (!c.custom_fields?.entity_name) risk += 1; // Never completed onboarding
+      for (const c of (clients || [])) {
+        const reasons = [];
+        const meta = c.metadata || {};
+        const daysSinceCreated = Math.floor((now - new Date(c.created_at)) / 86400000);
+        const lastLogin = meta.last_portal_login ? Math.floor((now - new Date(meta.last_portal_login)) / 86400000) : 999;
 
-      if (risk >= 3) {
-        results.at_risk.push({
-          email: c.email,
-          name: c.first_name || c.name,
-          tier,
-          risk_score: risk,
-          days_since_login: daysSinceLogin,
-          days_as_client: daysSince,
-          reasons: [
-            ...(daysSinceLogin > 60 ? ['No portal login in 60+ days'] : []),
-            ...(daysSince > 300 ? ['Approaching renewal period'] : []),
-            ...(!c.custom_fields?.entity_name ? ['Onboarding incomplete'] : []),
-          ]
-        });
+        if (c.billing_status === 'past_due') reasons.push('Payment past due');
+        if (c.billing_status === 'cancelled') reasons.push('Cancelled');
+        if (c.onboarding_status !== 'completed') reasons.push('Onboarding incomplete');
+        if (orgOverdue.has(c.organization_id)) reasons.push('Overdue obligations');
+        if (lastLogin > 60) reasons.push('No portal login in 60+ days');
+        if (daysSinceCreated > 300 && daysSinceCreated < 400) reasons.push('Approaching renewal period');
 
-        // Auto-trigger retention email
-        const emailitKey = process.env.EMAILIT_API_KEY;
-        if (emailitKey && risk >= 4) {
-          await fetch('https://api.emailit.com/v1/emails', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              from: 'hello@pacropservices.com', to: c.email,
-              subject: 'We noticed you haven\'t logged in recently',
-              html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
-                <div style="border-bottom:3px solid #C9982A;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div>
-                <p>Hi ${c.first_name || 'there'},</p>
-                <p>We noticed you haven't checked your compliance portal recently. Here's a quick update on your entity:</p>
-                <div style="background:#FAF9F6;border:1px solid #EBE8E2;border-radius:12px;padding:20px;margin:16px 0">
-                  <p style="margin:0"><strong>Entity:</strong> ${c.custom_fields?.entity_name || 'Check your portal'}<br>
-                  <strong>Plan:</strong> ${tier}<br>
-                  <strong>Status:</strong> We're actively monitoring your compliance</p>
-                </div>
-                <p>Your annual report deadlines, entity status, and any documents we've received are all waiting in your portal.</p>
-                <p><a href="https://pacropservices.com/portal" style="background:#0C1220;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">Log in to your portal →</a></p>
-                <p style="margin-top:20px">Questions? Call <a href="tel:8142282822">814-228-2822</a> or reply to this email.</p>
-              </div>`
-            })
-          }).catch(() => {});
-        }
-      } else {
-        results.healthy++;
+        if (reasons.length > 0) {
+          at_risk.push({
+            id: c.id, name: c.owner_name, email: c.email, tier: c.plan_code,
+            billing_status: c.billing_status, risk_score: reasons.length,
+            days_since_login: lastLogin, days_as_client: daysSinceCreated,
+            reasons,
+            recommended_action: c.billing_status === 'past_due' ? 'Send payment reminder' :
+              c.billing_status === 'cancelled' ? 'Send win-back offer' :
+              reasons.includes('Onboarding incomplete') ? 'Send onboarding nudge' : 'Schedule check-in call'
+          });
+        } else { healthy++; }
       }
-    }
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
 
-  return res.status(200).json({ success: true, ...results });
+      at_risk.sort((a, b) => b.risk_score - a.risk_score);
+      return res.status(200).json({
+        success: true, source: 'neon', generated: new Date().toISOString(),
+        total: (clients||[]).length, healthy, at_risk_count: at_risk.length,
+        at_risk: at_risk.slice(0, 20)
+      });
+    }
+
+    if (db.isSuiteDashConnected()) {
+      const clients = await db.suitedash.getAllClientsWithCompliance();
+      const at_risk = clients.filter(c => c.compliance_status === 'overdue' || c.risk_level === 'high' || c.risk_level === 'critical')
+        .map(c => ({ name: c.name, email: c.email, plan: c.plan_code, reasons: [c.compliance_status === 'overdue' ? 'Overdue' : 'High risk'], risk_score: 1 }));
+      return res.status(200).json({
+        success: true, source: 'suitedash', generated: new Date().toISOString(),
+        total: clients.length, healthy: clients.length - at_risk.length, at_risk_count: at_risk.length,
+        at_risk
+      });
+    }
+
+    return res.status(200).json({ success: true, source: 'none', total: 0, at_risk: [] });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
 }
