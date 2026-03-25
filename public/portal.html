@@ -490,7 +490,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           Hosting</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('ai',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          AI Assistant<kbd>A</kbd></div>
+          AI Chat<kbd>A</kbd></div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_ai',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v1h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2V6a4 4 0 014-4z"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
           AI Tools</div>
@@ -1332,14 +1332,15 @@ async function loadPortal_filing_actions() {
     el.innerHTML = obls.map(o => {
       const due = o.due_date ? new Date(o.due_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : 'TBD';
       const st = o.obligation_status || o.status || 'unknown';
-      const stColor = {upcoming:'#d97706',current:'#15803d',overdue:'#dc2626',filed:'#6b7280',acknowledged:'#2563eb'}[st] || '#6b7280';
+      const stLabels = {upcoming:'Upcoming',current:'Current',overdue:'Overdue',filed:'Filed',filed_pending_confirmation:'Filed — Pending Confirmation',acknowledged:'Acknowledged',escalated:'Escalated',closed:'Closed',unknown:'Pending'};
+      const stColor = {upcoming:'#d97706',current:'#15803d',overdue:'#dc2626',filed:'#059669',filed_pending_confirmation:'#059669',acknowledged:'#2563eb',escalated:'#dc2626',closed:'#6b7280'}[st] || '#6b7280';
       return `<div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee);margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <div>
             <div style="font-weight:600;font-size:16px">${o.obligation_type === 'annual_report' ? 'Annual Report' : o.obligation_type || 'Obligation'}</div>
             <div style="font-size:13px;color:var(--ink3,#666);margin-top:2px">Due: ${due} · Fee: $${o.fee_usd || 7}</div>
           </div>
-          <span style="padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600;background:${stColor}22;color:${stColor}">${st.charAt(0).toUpperCase()+st.slice(1)}</span>
+          <span style="padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600;background:${stColor}22;color:${stColor}">${stLabels[st] || st.replace(/_/g,' ')}</span>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
           ${st !== 'filed' && st !== 'acknowledged' ? '<button onclick="portalOblAction(\''+o.id+'\',\'acknowledge\')" style="padding:8px 16px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:13px;font-weight:500">✓ Acknowledge</button>' : ''}
@@ -1654,6 +1655,10 @@ async function loadHealthScore(c) {
 
 // ─── NAVIGATION ───
 function setTab(id, el) {
+  // Redirect old tabs to new equivalents
+  const redirects = {compliance:'comp_intel', referral:'portal_referrals'};
+  if (redirects[id]) { id = redirects[id]; el = null; }
+  
   document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
   const tab = document.getElementById('tab-'+id);
   if (tab) tab.classList.remove('hidden');
