@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     </div>
     <table>
       <tr><th>Description</th><th>Period</th><th style="text-align:right">Amount</th></tr>
-      <tr><td>${tierLabel} Plan — Annual Subscription<br><span style="font-size:12px;color:#7A7A7A">${description || 'PA CROP registered office service, compliance monitoring, portal access'}</span></td><td>${today} — ${new Date(Date.now() + 365*86400000).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</td><td style="text-align:right">$${(amount/100).toFixed(2)}</td></tr>
-      <tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">$${(amount/100).toFixed(2)}</td></tr>
+      <tr><td>${tierLabel} Plan — Annual Subscription<br><span style="font-size:12px;color:#7A7A7A">${description || 'PA CROP registered office service, compliance monitoring, portal access'}</span></td><td>${today} — ${new Date(Date.now() + 365*86400000).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</td><td style="text-align:right">$${amount.toFixed(2)}</td></tr>
+      <tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">$${amount.toFixed(2)}</td></tr>
     </table>
     <div class="footer">
       PA Registered Office Services, LLC · Licensed PA CROP under 15 Pa. C.S. § 109<br>

@@ -329,22 +329,38 @@ export default async function handler(req, res) {
 
       // ── Lead Pipeline ─────────────────────────────────────────────────
       case 'leads': {
+        // Try Neon first for lead data
+        try {
+          const { neon } = await import('@neondatabase/serverless');
+          const dbUrl = process.env.DATABASE_URL;
+          if (dbUrl) {
+            const sql = neon(dbUrl);
+            // Leads are clients with billing_status='inactive' or from intake
+            const rows = await sql.query("SELECT id, owner_name, email, plan_code, billing_status, created_at, metadata FROM clients WHERE billing_status != 'active' ORDER BY created_at DESC LIMIT 50");
+            const leads = (rows||[]).map(c => ({
+              id: c.id, name: c.owner_name || '(unnamed)', email: c.email,
+              score: c.billing_status === 'trialing' ? 80 : 30,
+              tier: c.billing_status === 'trialing' ? 'hot' : 'warm',
+              source: c.metadata?.source || 'organic', entityType: c.metadata?.entity_type || '',
+              createdAt: c.created_at, tags: []
+            }));
+            return res.status(200).json({
+              leads, hot: leads.filter(l => l.tier === 'hot').length,
+              warm: leads.filter(l => l.tier === 'warm').length,
+              cold: leads.filter(l => l.tier === 'cold').length,
+            });
+          }
+        } catch(_) {}
+        // Fall back to SuiteDash
         const data = await sdFetch('/contacts?limit=100&role=lead');
         const leads = (data?.data || []).map(c => ({
-          id: c.id,
-          name: `${c.first_name} ${c.last_name}`.trim(),
-          email: c.email,
-          score: parseInt(c.custom_fields?.lead_score || 0),
-          tier: c.custom_fields?.lead_tier || 'cold',
-          source: c.custom_fields?.lead_source || 'unknown',
-          entityType: c.custom_fields?.entity_type || '',
-          createdAt: c.created_at,
-          tags: c.tags || [],
+          id: c.id, name: `${c.first_name} ${c.last_name}`.trim(), email: c.email,
+          score: parseInt(c.custom_fields?.lead_score || 0), tier: c.custom_fields?.lead_tier || 'cold',
+          source: c.custom_fields?.lead_source || 'unknown', entityType: c.custom_fields?.entity_type || '',
+          createdAt: c.created_at, tags: c.tags || [],
         })).sort((a, b) => b.score - a.score);
-        
         return res.status(200).json({
-          leads,
-          hot: leads.filter(l => l.tier === 'hot').length,
+          leads, hot: leads.filter(l => l.tier === 'hot').length,
           warm: leads.filter(l => l.tier === 'warm').length,
           cold: leads.filter(l => l.tier === 'cold').length,
         });

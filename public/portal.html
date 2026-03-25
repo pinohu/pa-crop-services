@@ -1563,7 +1563,7 @@ function mountClient(c) {
 }
 async function loadClientContext(c) {
   try {
-    var res = await fetch('/api/client-context', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:c.email}) });
+    var res = await portalFetch('/api/client-context', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:c.email}) });
     var d = await res.json();
     if (d.success && d.context) {
       CLIENT_CONTEXT = d.context;
@@ -1579,7 +1579,7 @@ async function loadClientContext(c) {
 
 async function loadHealthScore(c) {
   try {
-    const res = await fetch('/api/portal-health', {
+    const res = await portalFetch('/api/portal-health', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email:c.email, tier:c.tier||'compliance_only', name:c.name})
     });
@@ -1638,7 +1638,7 @@ async function askAI(question) {
   
   chatHistory.push({role:'user',content:msg});
   try {
-    var res = await fetch('/api/chat', {
+    var res = await portalFetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4), stream:true})
     });
@@ -1685,7 +1685,7 @@ async function askAIFull() {
   
   chatHistory.push({role:'user',content:msg});
   try {
-    var res = await fetch('/api/chat', {
+    var res = await portalFetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-6), stream:true})
     });
@@ -1748,7 +1748,7 @@ function formatDate(d) {
 async function resetCode() {
   const email = document.getElementById('login-email')?.value?.trim();
   if (!email) { showLoginError('Enter your email address first.'); return; }
-  await fetch('/api/reset-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) }).catch(()=>{});
+  await portalFetch('/api/reset-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) }).catch(()=>{});
   showLoginError('If an account exists, we sent a code reset. Check your inbox.', 'success');
 }
 
@@ -1800,7 +1800,7 @@ async function loadHostingTab(c) {
   var el = document.getElementById('hosting-content');
   if (!el) return;
   try {
-    var res = await fetch('/api/client-hosting', {
+    var res = await portalFetch('/api/client-hosting', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: c.email, suitedashId: c.suitedashId })
     });
@@ -1918,7 +1918,7 @@ function savePref(cb) {
     if (cb.id === 'pref-sms') prefs.sms_notifications = cb.checked;
     if (cb.id === 'pref-phone') prefs.phone_ok = cb.checked;
     if (cb.id === 'pref-newsletter') prefs.marketing_emails = cb.checked;
-    fetch('/api/notification-preferences', {
+    portalFetch('/api/notification-preferences', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT.email, prefs })
     }).then(r => { if(r.ok) showToast('Preferences saved'); }).catch(() => showToast('Could not save preferences. Please try again.'));
@@ -1954,7 +1954,7 @@ function showUpgrade() {
 
 async function doUpgrade(targetTier) {
   try {
-    const r = await fetch('/api/client-upgrade', {
+    const r = await portalFetch('/api/client-upgrade', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, currentTier: CLIENT?.tier, targetTier })
     });
@@ -1987,7 +1987,7 @@ async function uploadDocument() {
   const file = fileInput.files[0];
   btn.textContent = 'Classifying...'; btn.disabled = true;
   try {
-    const r = await fetch('/api/document-upload', {
+    const r = await portalFetch('/api/document-upload', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, fileName: file.name, fileType: file.type, notes })
     });
@@ -2017,7 +2017,7 @@ async function updateEntity() {
   if (phone) updates.phone = phone;
   if (!Object.keys(updates).length) { msg.textContent = 'Enter at least one field to update'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'inline'; return; }
   try {
-    const r = await fetch('/api/entity-update', {
+    const r = await portalFetch('/api/entity-update', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, ...updates })
     });
@@ -2034,7 +2034,7 @@ async function updateEntity() {
 async function loadEntities() {
   if (!CLIENT?.email) return;
   try {
-    const r = await fetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT.email));
+    const r = await portalFetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT.email));
     const data = await r.json();
     if (!data.success) return;
     const list = document.getElementById('entity-list');
@@ -2059,7 +2059,7 @@ async function addEntity() {
   const msg = document.getElementById('me-msg');
   if (!name) { msg.textContent = 'Enter entity name'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; return; }
   try {
-    const r = await fetch('/api/multi-entity', {
+    const r = await portalFetch('/api/multi-entity', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, action: 'add', entityData: { name, type } })
     });
@@ -2073,7 +2073,7 @@ async function addEntity() {
 async function removeEntity(name) {
   if (!confirm('Remove ' + name + ' from your entities?')) return;
   try {
-    await fetch('/api/multi-entity', {
+    await portalFetch('/api/multi-entity', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, action: 'remove', entityData: { name } })
     });
@@ -2147,7 +2147,7 @@ async function loadMultiState() {
   if (msNav && (tier === 'pro' || tier === 'empire')) msNav.style.display = 'flex';
   
   try {
-    const r = await fetch('/api/multi-state?email=' + encodeURIComponent(CLIENT.email));
+    const r = await portalFetch('/api/multi-state?email=' + encodeURIComponent(CLIENT.email));
     const data = await r.json();
     const list = document.getElementById('ms-list');
     if (!list) return;
@@ -2168,7 +2168,7 @@ async function addState() {
   const msg = document.getElementById('ms-msg');
   if (!entity) { msg.textContent = 'Enter entity name'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'block'; return; }
   try {
-    await fetch('/api/multi-state', {
+    await portalFetch('/api/multi-state', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, states: [{ state, entityName: entity }] })
     });
@@ -2182,7 +2182,7 @@ async function addState() {
 async function loadCertification() {
   if (!CLIENT?.email) return;
   try {
-    const r = await fetch('/api/certification?email=' + encodeURIComponent(CLIENT.email));
+    const r = await portalFetch('/api/certification?email=' + encodeURIComponent(CLIENT.email));
     const data = await r.json();
     const statusEl = document.getElementById('cert-status');
     const lessonsEl = document.getElementById('cert-lessons');
@@ -2205,7 +2205,7 @@ async function loadCertification() {
 
     // Load course lessons
     try {
-    const courseR = await fetch('/api/onboarding-course');
+    const courseR = await portalFetch('/api/onboarding-course');
     const courseData = await courseR.json();
     const lessons = courseData?.course?.lessons || [];
     const completedCount = parseInt((data.progress||'0').split('/')[0]) || 0;
@@ -2224,7 +2224,7 @@ async function loadCertification() {
 
 async function completeLesson(id) {
   try {
-    await fetch('/api/certification', {
+    await portalFetch('/api/certification', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: CLIENT?.email, action: 'complete_lesson', lessonId: id })
     });
@@ -2271,7 +2271,7 @@ async function askAIWithFallback(msg) {
   chatHistory.push({role:'user',content:msg});
   
   try {
-    var res = await fetch('/api/chat', {
+    var res = await portalFetch('/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message:msg, clientContext:CLIENT_CONTEXT, clientTier:CLIENT?.tier, entityName:CLIENT?.name, history:chatHistory.slice(-4), stream:true})
     });
@@ -2517,7 +2517,7 @@ async function loadEntitySwitcher() {
   if (!orgId) return;
   try {
     var token = localStorage.getItem('crop_token') || '';
-    var r = await fetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT?.email || ''), {
+    var r = await portalFetch('/api/multi-entity?email=' + encodeURIComponent(CLIENT?.email || ''), {
       method: 'GET', headers: { 'Authorization': 'Bearer ' + (CLIENT_TOKEN||'') }
     });
     var d = await r.json();
@@ -2588,7 +2588,7 @@ var _kbFilter = '';
 
 async function loadKnowledgeBase() {
   try {
-    var r = await fetch('/api/portal/knowledge-base');
+    var r = await portalFetch('/api/portal/knowledge-base');
     var d = await r.json();
     if (!d.success) return;
     _kbData = d;
@@ -2619,7 +2619,7 @@ function renderKBArticles(articles) {
 function searchKB(q) {
   if (!_kbData) { loadKnowledgeBase(); return; }
   if (!q || q.length < 2) { renderKBArticles(_kbData.articles); return; }
-  fetch('/api/portal/knowledge-base?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(d) { if (d.success) renderKBArticles(d.articles); });
+  portalFetch('/api/portal/knowledge-base?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(d) { if (d.success) renderKBArticles(d.articles); });
 }
 
 function filterKBCategory(cat) {
@@ -2631,7 +2631,7 @@ function filterKBCategory(cat) {
 
 async function openKBArticle(id) {
   try {
-    var r = await fetch('/api/portal/knowledge-base?id=' + id);
+    var r = await portalFetch('/api/portal/knowledge-base?id=' + id);
     var d = await r.json();
     if (!d.success || !d.article) return;
     document.getElementById('kb-articles').style.display = 'none';
@@ -2701,7 +2701,7 @@ async function loadBusinessStack() {
     var token = localStorage.getItem('crop_token') || '';
     var r = await fetch('/api/portal/value?action=business-stack', { headers: { Authorization: 'Bearer ' + (CLIENT_TOKEN||'') } });
     var d = await r.json();
-    if (!d.success) { r = await fetch('/api/portal/value?action=savings&plan=' + plan); d = await r.json(); }
+    if (!d.success) { r = await portalFetch('/api/portal/value?action=savings&plan=' + plan); d = await r.json(); }
 
     // Savings banner
     var sav = d.savings || d;
@@ -2819,7 +2819,7 @@ function completeLesson() {
 async function loadDashboardSavings() {
   var plan = window._ctx?.plan || CLIENT?.tier || 'compliance_only';
   try {
-    var r = await fetch('/api/portal/value?action=savings&plan=' + plan);
+    var r = await portalFetch('/api/portal/value?action=savings&plan=' + plan);
     var d = await r.json();
     if (!d.success || !d.plan_price) return;
     var widget = document.getElementById('savings-widget');

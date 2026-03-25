@@ -33,9 +33,9 @@ export default async function handler(req, res) {
 
         if (c.billing_status === 'past_due') reasons.push('Payment past due');
         if (c.billing_status === 'cancelled') reasons.push('Cancelled');
-        if (c.onboarding_status !== 'completed') reasons.push('Onboarding incomplete');
+        if (c.onboarding_status !== 'completed' && daysSinceCreated > 14) reasons.push('Onboarding incomplete');
         if (orgOverdue.has(c.organization_id)) reasons.push('Overdue obligations');
-        if (lastLogin > 60) reasons.push('No portal login in 60+ days');
+        if (lastLogin > 60 && daysSinceCreated > 60) reasons.push('No portal login in 60+ days');
         if (daysSinceCreated > 300 && daysSinceCreated < 400) reasons.push('Approaching renewal period');
 
         if (reasons.length > 0) {
