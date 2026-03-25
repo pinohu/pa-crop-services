@@ -1440,22 +1440,40 @@ async function loadPortal_portal_billing() {
 }
 async function portalGenInvoice() {
   const el = document.getElementById('inv-result');
-  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Generating...</div>';
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Generating invoice...</div>';
   try {
     const r = await portalFetch('/api/invoice-generate', {method:'POST', body:JSON.stringify({email:CLIENT.email, name:CLIENT.name, tier:CLIENT.tier, amount:CLIENT.tier==='business_empire'?699:CLIENT.tier==='business_pro'?349:CLIENT.tier==='business_starter'?199:99, description:'PA CROP Services — '+(CLIENT.tierLabel||CLIENT.tier)})});
     const d = await r.json();
-    if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Invoice PDF</a>'; }
-    else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||'Invoice generated. Check your email.')+'</div>'; }
+    if (d.html) {
+      el.innerHTML = '<div style="margin-top:12px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-weight:600;font-size:14px">Invoice #'+(d.invoiceNumber||'')+'</span><button onclick="this.closest(\'div\').querySelector(\'iframe\').contentWindow.print()" style="font-size:11px;padding:4px 12px;border:1px solid var(--border,#ddd);border-radius:6px;background:var(--surface,#fff);cursor:pointer">🖨 Print</button></div><div style="border:1px solid var(--border,#eee);border-radius:10px;overflow:hidden"><iframe srcdoc="'+d.html.replace(/"/g,'&quot;')+'" style="width:100%;height:420px;border:none;background:#fff"></iframe></div></div>';
+    } else if (d.url || d.download_url) {
+      el.innerHTML = '<a href="'+(d.url||d.download_url)+'" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Invoice</a>';
+    } else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||'Invoice generated.')+'</div>'; }
   } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
 }
 async function portalTaxExport() {
   const el = document.getElementById('tax-result');
-  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Exporting...</div>';
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Exporting tax data...</div>';
   try {
     const r = await portalFetch('/api/tax-export?email='+encodeURIComponent(CLIENT.email));
     const d = await r.json();
-    if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Tax Export</a>'; }
-    else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||JSON.stringify(d))+'</div>'; }
+    let html = '<div style="margin-top:12px;background:var(--surface,#f8f9fa);border:1px solid var(--border,#eee);border-radius:10px;padding:16px">';
+    html += '<div style="font-weight:600;font-size:14px;margin-bottom:12px">Tax Summary — '+(d.quarter||'Current Quarter')+'</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+    html += '<div style="padding:10px;background:#fff;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:700">$'+(d.totalRevenue||0)+'</div><div style="font-size:11px;color:var(--ink3,#999)">Total Revenue</div></div>';
+    html += '<div style="padding:10px;background:#fff;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:700">'+(d.clientCount||0)+'</div><div style="font-size:11px;color:var(--ink3,#999)">Clients</div></div>';
+    html += '</div>';
+    if (d.csv) {
+      const lines = d.csv.trim().split('\n');
+      if (lines.length > 1) {
+        html += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+        html += '<tr>' + lines[0].split(',').map(h => '<th style="text-align:left;padding:6px 4px;border-bottom:2px solid var(--border,#ddd);font-size:11px;text-transform:uppercase;color:var(--ink3,#999)">'+h+'</th>').join('') + '</tr>';
+        lines.slice(1, 11).forEach(line => { html += '<tr>' + line.split(',').map(c => '<td style="padding:6px 4px;border-bottom:1px solid var(--border,#eee)">'+c+'</td>').join('') + '</tr>'; });
+        html += '</table>';
+      } else { html += '<div style="font-size:13px;color:var(--ink3,#999);text-align:center;padding:12px">No transactions this quarter</div>'; }
+    }
+    html += '</div>';
+    el.innerHTML = html;
   } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
 }
 
