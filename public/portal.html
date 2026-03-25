@@ -1440,7 +1440,7 @@ async function portalGenInvoice() {
   const el = document.getElementById('inv-result');
   el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Generating...</div>';
   try {
-    const r = await portalFetch('/api/invoice-generate', {method:'POST', body:JSON.stringify({email:CLIENT.email, plan:CLIENT.tier})});
+    const r = await portalFetch('/api/invoice-generate', {method:'POST', body:JSON.stringify({email:CLIENT.email, name:CLIENT.name, tier:CLIENT.tier, amount:CLIENT.tier==='business_empire'?699:CLIENT.tier==='business_pro'?349:CLIENT.tier==='business_starter'?199:99, description:'PA CROP Services — '+(CLIENT.tierLabel||CLIENT.tier)})});
     const d = await r.json();
     if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Invoice PDF</a>'; }
     else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||'Invoice generated. Check your email.')+'</div>'; }
