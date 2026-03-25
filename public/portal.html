@@ -1173,11 +1173,305 @@ function demoLogin() {
   doLogin();
 }
 
-// ═══ PORTAL FEATURE UIs ═══
+// ═══ PORTAL FEATURE UIs — Functional Interfaces ═══
 
+// ── 1. COMPLIANCE INTEL ─────────────────────────────────────────────
 async function loadPortal_comp_intel() {
-  if(!CLIENT) return;
+  if (!CLIENT) return;
   const el = document.getElementById('comp_intel-body');
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Checking compliance...</div>';
+  const org = CLIENT.organization_id;
+  try {
+    // Fetch compliance check for entity type
+    const et = CLIENT.entityType || 'domestic_llc';
+    const [scoreR, checkR, dissR] = await Promise.allSettled([
+      fetch('/api/compliance-score', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email})}),
+      fetch('/api/compliance-check?entity_type=' + et),
+      fetch('/api/dissolution-predictor', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entity_type:et})})
+    ]);
+    const check = checkR.status === 'fulfilled' ? await checkR.value.json().catch(()=>({})) : {};
+    const diss = dissR.status === 'fulfilled' ? await dissR.value.json().catch(()=>({})) : {};
+    const r = check.result || {};
+    const riskColors = {low:'#15803d',medium:'#d97706',high:'#dc2626',critical:'#dc2626',overdue:'#7f1d1d'};
+    const riskBg = {low:'#f0fdf4',medium:'#fffbeb',high:'#fef2f2',critical:'#fef2f2',overdue:'#fef2f2'};
+    const riskLabel = {low:'On Track',medium:'Due Soon',high:'Urgent',critical:'Critical',overdue:'OVERDUE'};
+    const rl = r.risk_level || 'low';
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+        <div style="text-align:center;padding:20px;background:${riskBg[rl]||'#f8fafc'};border-radius:12px;border:1px solid var(--border,#eee)">
+          <div style="font-size:32px;font-weight:700;color:${riskColors[rl]||'#333'}">${r.days_until != null ? (r.days_until < 0 ? Math.abs(r.days_until)+' overdue' : r.days_until) : '—'}</div>
+          <div style="font-size:13px;color:var(--ink3,#666);margin-top:4px">Days until deadline</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--surface,#f8fafc);border-radius:12px;border:1px solid var(--border,#eee)">
+          <div style="font-size:24px;font-weight:700">${r.deadline || '—'}</div>
+          <div style="font-size:13px;color:var(--ink3,#666);margin-top:4px">${r.label || et} deadline</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--surface,#f8fafc);border-radius:12px;border:1px solid var(--border,#eee)">
+          <div style="font-size:24px;font-weight:700;color:${riskColors[rl]||'#333'}">${riskLabel[rl]||rl}</div>
+          <div style="font-size:13px;color:var(--ink3,#666);margin-top:4px">Risk level</div>
+        </div>
+      </div>
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee);margin-bottom:16px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:8px">Recommendation</div>
+        <div style="font-size:14px;color:var(--ink2,#555);line-height:1.6">${r.recommendation || 'No recommendation available.'}</div>
+      </div>
+      ${r.fee != null ? `<div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid var(--border,#eee);flex:1;min-width:140px">
+          <div style="font-size:12px;color:var(--ink3,#666)">Filing fee</div>
+          <div style="font-size:20px;font-weight:700;margin-top:4px">${r.fee === 0 ? 'Free' : '$'+r.fee}</div>
+        </div>
+        <div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid var(--border,#eee);flex:1;min-width:140px">
+          <div style="font-size:12px;color:var(--ink3,#666)">Form</div>
+          <div style="font-size:16px;font-weight:600;margin-top:4px">${r.form || 'DSCB:15-146'}</div>
+        </div>
+        <div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid var(--border,#eee);flex:1;min-width:140px">
+          <div style="font-size:12px;color:var(--ink3,#666)">Enforcement starts</div>
+          <div style="font-size:16px;font-weight:600;margin-top:4px">${r.enforcement_starts || 2027}</div>
+        </div>
+      </div>` : ''}
+      ${r.grace_period_active ? '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-top:16px;font-size:13px;color:#92400e"><strong>Grace period active:</strong> No enforcement for 2025-2026 reports.</div>' : ''}
+      ${r.filing_url ? '<a href="'+r.filing_url+'" target="_blank" style="display:inline-block;margin-top:16px;padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">File at PA DOS →</a>' : ''}
+    `;
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">Error: '+e.message+'</div>'; }
+}
+
+// ── 2. FILING ACTIONS ───────────────────────────────────────────────
+async function loadPortal_filing_actions() {
+  if (!CLIENT) return;
+  const el = document.getElementById('filing_actions-body');
+  const org = CLIENT.organization_id;
+  if (!org) { el.innerHTML = '<div style="padding:24px;color:var(--ink3,#999)">No organization linked to your account yet.</div>'; return; }
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading obligations...</div>';
+  try {
+    const r = await fetch('/api/organizations/'+org+'/obligations');
+    const d = await r.json();
+    const obls = d.obligations || d.data || (Array.isArray(d) ? d : []);
+    if (!obls.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3)">No obligations found. Your compliance engine will populate these.</div>'; return; }
+    el.innerHTML = obls.map(o => {
+      const due = o.due_date ? new Date(o.due_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : 'TBD';
+      const st = o.obligation_status || o.status || 'unknown';
+      const stColor = {upcoming:'#d97706',current:'#15803d',overdue:'#dc2626',filed:'#6b7280',acknowledged:'#2563eb'}[st] || '#6b7280';
+      return `<div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee);margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:600;font-size:16px">${o.obligation_type === 'annual_report' ? 'Annual Report' : o.obligation_type || 'Obligation'}</div>
+            <div style="font-size:13px;color:var(--ink3,#666);margin-top:2px">Due: ${due} · Fee: $${o.fee_usd || 7}</div>
+          </div>
+          <span style="padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600;background:${stColor}22;color:${stColor}">${st.charAt(0).toUpperCase()+st.slice(1)}</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          ${st !== 'filed' && st !== 'acknowledged' ? '<button onclick="portalOblAction(\''+o.id+'\',\'acknowledge\')" style="padding:8px 16px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:13px;font-weight:500">✓ Acknowledge</button>' : ''}
+          ${st !== 'filed' ? '<button onclick="portalOblAction(\''+o.id+'\',\'mark-filed\')" style="padding:8px 16px;border:1px solid #86efac;border-radius:8px;background:#f0fdf4;cursor:pointer;font-size:13px;font-weight:500;color:#15803d">📋 Mark as Filed</button>' : ''}
+          <button onclick="portalOblAction('${o.id}','submit-review')" style="padding:8px 16px;border:1px solid #93c5fd;border-radius:8px;background:#eff6ff;cursor:pointer;font-size:13px;font-weight:500;color:#1d4ed8">📤 Submit for Review</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">'+e.message+'</div>'; }
+}
+async function portalOblAction(oblId, action) {
+  try {
+    const r = await fetch('/api/obligations/'+oblId+'/'+action, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email})});
+    const d = await r.json();
+    if (d.success !== false) { loadPortal_filing_actions(); } else { alert(d.error || 'Action failed'); }
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ── 3. MY ENTITIES ──────────────────────────────────────────────────
+async function loadPortal_entity_mgmt() {
+  if (!CLIENT) return;
+  const el = document.getElementById('entity_mgmt-body');
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:12px">🔍 PA DOS Search</div>
+        <input type="text" id="dos-search-input" placeholder="Entity name or DOS number" style="width:100%;padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;margin-bottom:8px;box-sizing:border-box">
+        <button onclick="portalDOSSearch()" style="width:100%;padding:10px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Search PA Registry</button>
+        <div id="dos-search-results" style="margin-top:12px"></div>
+      </div>
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:12px">📍 Address Verification</div>
+        <input type="text" id="addr-verify-input" placeholder="Street address, City, PA ZIP" style="width:100%;padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;margin-bottom:8px;box-sizing:border-box">
+        <button onclick="portalAddrVerify()" style="width:100%;padding:10px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Verify Address</button>
+        <div id="addr-verify-results" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee);margin-top:16px">
+      <div style="font-weight:600;font-size:15px;margin-bottom:12px">➕ Add New Entity</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <input type="text" id="ei-name" placeholder="Legal entity name" style="padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
+        <select id="ei-type" style="padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
+          <option value="">Select entity type</option>
+          <option value="domestic_llc">Domestic LLC</option>
+          <option value="domestic_business_corp">Domestic Business Corp</option>
+          <option value="foreign_llc">Foreign LLC</option>
+          <option value="foreign_business_corp">Foreign Business Corp</option>
+          <option value="domestic_nonprofit_corp">Domestic Nonprofit Corp</option>
+          <option value="domestic_lp">Domestic LP</option>
+        </select>
+        <input type="text" id="ei-dos" placeholder="PA DOS number (optional)" style="padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
+        <input type="text" id="ei-addr" placeholder="Registered office address" style="padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
+      </div>
+      <button onclick="portalEntityIntake()" style="margin-top:12px;padding:10px 24px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Add Entity</button>
+      <div id="ei-result" style="margin-top:8px"></div>
+    </div>`;
+}
+async function portalDOSSearch() {
+  const q = document.getElementById('dos-search-input').value.trim();
+  if (!q) return;
+  const el = document.getElementById('dos-search-results');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Searching...</div>';
+  try {
+    const r = await fetch('/api/pa-dos-search', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:q})});
+    const d = await r.json();
+    const results = d.results || d.entities || [];
+    el.innerHTML = results.length ? results.slice(0,5).map(e => '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px"><strong>'+e.name+'</strong><br><span style="color:var(--ink3,#666)">'+e.entity_number+' · '+e.status+'</span></div>').join('') : '<div style="font-size:13px;color:var(--ink3)">No results. '+(d.message||d.error||'')+'</div>';
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
+}
+async function portalAddrVerify() {
+  const addr = document.getElementById('addr-verify-input').value.trim();
+  if (!addr) return;
+  const el = document.getElementById('addr-verify-results');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Verifying...</div>';
+  try {
+    const r = await fetch('/api/address-verify', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({address:addr})});
+    const d = await r.json();
+    el.innerHTML = d.valid || d.verified ? '<div style="font-size:13px;color:#15803d;font-weight:600">✓ Address verified</div>' : '<div style="font-size:13px;color:#dc2626">✗ '+(d.error||d.message||'Could not verify')+'</div>';
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
+}
+async function portalEntityIntake() {
+  const el = document.getElementById('ei-result');
+  const name = document.getElementById('ei-name').value.trim();
+  const type = document.getElementById('ei-type').value;
+  if (!name || !type) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">Name and type required</div>'; return; }
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Submitting...</div>';
+  try {
+    const r = await fetch('/api/entity-intake', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entity_name:name, entity_type:type, dos_number:document.getElementById('ei-dos').value.trim(), address:document.getElementById('ei-addr').value.trim(), email:CLIENT.email})});
+    const d = await r.json();
+    el.innerHTML = d.success !== false ? '<div style="font-size:13px;color:#15803d;font-weight:600">✓ Entity submitted for onboarding</div>' : '<div style="font-size:13px;color:#dc2626">'+(d.error||'Submission failed')+'</div>';
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
+}
+
+// ── 4. AI TOOLS ─────────────────────────────────────────────────────
+async function loadPortal_portal_ai() {
+  if (!CLIENT) return;
+  const el = document.getElementById('portal_ai-body');
+  el.innerHTML = `
+    <div style="display:grid;gap:16px">
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:8px">📄 Summarize a Document</div>
+        <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Paste document text or describe what you need summarized.</div>
+        <textarea id="ai-doc-input" placeholder="Paste document text, or describe the document..." style="width:100%;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;min-height:100px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <button onclick="portalAISummarize()" style="margin-top:8px;padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Summarize</button>
+        <div id="ai-doc-result" style="margin-top:12px"></div>
+      </div>
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:8px">❓ Explain an Obligation</div>
+        <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Ask about any PA compliance obligation in plain English.</div>
+        <input type="text" id="ai-obl-input" placeholder="e.g. What happens if I miss my LLC annual report deadline?" style="width:100%;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;box-sizing:border-box">
+        <button onclick="portalAIExplain()" style="margin-top:8px;padding:10px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Explain</button>
+        <div id="ai-obl-result" style="margin-top:12px"></div>
+      </div>
+    </div>`;
+}
+async function portalAISummarize() {
+  const text = document.getElementById('ai-doc-input').value.trim();
+  if (!text) return;
+  const el = document.getElementById('ai-doc-result');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Summarizing...</div>';
+  try {
+    const r = await fetch('/api/assistant/summarize-document', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text, email:CLIENT.email})});
+    const d = await r.json();
+    el.innerHTML = '<div style="background:#f8fafc;padding:16px;border-radius:8px;font-size:14px;line-height:1.7;border:1px solid var(--border,#eee)">'+(d.summary||d.answer||d.result||JSON.stringify(d))+'</div>';
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;font-size:13px">'+e.message+'</div>'; }
+}
+async function portalAIExplain() {
+  const q = document.getElementById('ai-obl-input').value.trim();
+  if (!q) return;
+  const el = document.getElementById('ai-obl-result');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Thinking...</div>';
+  try {
+    const r = await fetch('/api/assistant/explain-obligation', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:q, email:CLIENT.email})});
+    const d = await r.json();
+    el.innerHTML = '<div style="background:#f8fafc;padding:16px;border-radius:8px;font-size:14px;line-height:1.7;border:1px solid var(--border,#eee)">'+(d.explanation||d.answer||d.result||JSON.stringify(d))+'</div>';
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;font-size:13px">'+e.message+'</div>'; }
+}
+
+// ── 5. INVOICES & TAX ───────────────────────────────────────────────
+async function loadPortal_portal_billing() {
+  if (!CLIENT) return;
+  const el = document.getElementById('portal_billing-body');
+  el.innerHTML = `
+    <div style="display:grid;gap:16px">
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:600;font-size:15px">📄 Generate Invoice</div>
+        </div>
+        <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Generate a PDF invoice for your current plan.</div>
+        <button onclick="portalGenInvoice()" id="inv-btn" style="padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Generate Invoice PDF</button>
+        <div id="inv-result" style="margin-top:12px"></div>
+      </div>
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:8px">🧾 Tax Documents</div>
+        <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Export tax-related documents for your records.</div>
+        <button onclick="portalTaxExport()" id="tax-btn" style="padding:10px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Export Tax Documents</button>
+        <div id="tax-result" style="margin-top:12px"></div>
+      </div>
+      <div style="background:var(--surface,#f8fafc);padding:16px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-size:13px;color:var(--ink3,#666)">
+          <strong>Current plan:</strong> ${CLIENT.tierLabel || CLIENT.tier || 'Unknown'}<br>
+          <strong>Member since:</strong> ${CLIENT.since || 'N/A'}
+        </div>
+      </div>
+    </div>`;
+}
+async function portalGenInvoice() {
+  const el = document.getElementById('inv-result');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Generating...</div>';
+  try {
+    const r = await fetch('/api/invoice-generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:CLIENT.email, plan:CLIENT.tier})});
+    const d = await r.json();
+    if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Invoice PDF</a>'; }
+    else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||'Invoice generated. Check your email.')+'</div>'; }
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
+}
+async function portalTaxExport() {
+  const el = document.getElementById('tax-result');
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Exporting...</div>';
+  try {
+    const r = await fetch('/api/tax-export?email='+encodeURIComponent(CLIENT.email));
+    const d = await r.json();
+    if (d.url || d.download_url) { el.innerHTML = '<a href="'+(d.url||d.download_url)+'" target="_blank" style="display:inline-block;padding:10px 20px;background:#15803d;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">⬇ Download Tax Export</a>'; }
+    else { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">'+(d.message||JSON.stringify(d))+'</div>'; }
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
+}
+
+// ── 6. REFERRAL CENTER ──────────────────────────────────────────────
+async function loadPortal_portal_referrals() {
+  if (!CLIENT) return;
+  const el = document.getElementById('portal_referrals-body');
+  const refCode = CLIENT.refCode || 'N/A';
+  const shareUrl = 'https://pacropservices.com/?ref=' + encodeURIComponent(refCode);
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading referrals...</div>';
+  try {
+    const r = await fetch('/api/referrals/me?email='+encodeURIComponent(CLIENT.email));
+    const d = await r.json();
+    const refs = d.referrals || d.data || [];
+    el.innerHTML = `
+      <div style="background:linear-gradient(135deg,#0C1220,#1a2a3e);color:#fff;padding:24px;border-radius:12px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Refer & Earn</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:16px">Share your referral link. When someone signs up, you both get benefits.</div>
+        <div style="background:rgba(255,255,255,0.1);padding:12px;border-radius:8px;display:flex;align-items:center;gap:8px">
+          <input type="text" value="${shareUrl}" readonly style="flex:1;background:transparent;border:none;color:#fff;font-size:13px;font-family:monospace;outline:none" id="ref-url">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('ref-url').value);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="padding:8px 16px;background:var(--accent,#C9982A);color:#0C1220;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">Copy</button>
+        </div>
+        <div style="font-size:12px;color:#888;margin-top:8px">Your code: <strong style="color:#C9982A">${refCode}</strong></div>
+      </div>
+      <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
+        <div style="font-weight:600;font-size:15px;margin-bottom:12px">Your Referrals ${refs.length ? '('+refs.length+')' : ''}</div>
+        ${refs.length ? refs.map(r => '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border,#eee);font-size:13px"><span>'+(r.referred_email||r.email||'—')+'</span><span style="color:'+(r.referral_status==='converted'?'#15803d':r.referral_status==='signed_up'?'#2563eb':'#d97706')+';font-weight:600">'+(r.referral_status||'pending')+'</span></div>').join('') : '<div style="font-size:14px;color:var(--ink3,#999);text-align:center;padding:16px">No referrals yet. Share your link to get started!</div>'}
+      </div>`;
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">'+e.message+'</div>'; }
+}
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Checking compliance status...</div>';
   try {
     const [score,dash,diss] = await Promise.allSettled([
@@ -1206,118 +1500,6 @@ async function loadPortal_comp_intel() {
         <p style="font-size:13px;color:var(--ink2,#666)">Your entity is being monitored for changes at the PA Department of State, court filings, and UCC liens.</p>
       </div>`;
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">Error loading compliance data: '+e.message+'</div>'; }
-}
-
-async function loadPortal_filing_actions() {
-  if(!CLIENT) return;
-  const el = document.getElementById('filing_actions-body');
-  el.innerHTML = `
-    <div style="background:var(--surface,#f8f9fa);padding:24px;border-radius:12px;border:1px solid var(--border,#eee);margin-bottom:16px">
-      <h3 style="font-family:var(--serif);margin-bottom:8px">Annual Report Pre-Fill</h3>
-      <p style="font-size:14px;color:var(--ink2,#666);margin-bottom:16px">We can pre-fill your annual report with data from the PA DOS registry. Enter your DOS entity number to get started.</p>
-      <div style="display:flex;gap:8px">
-        <input id="portal-prefill-dos" type="text" placeholder="DOS entity number (e.g. 0015295203)" value="${CLIENT.entityNumber||''}" style="flex:1;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
-        <button onclick="doPortalPrefill()" style="padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Pre-Fill →</button>
-      </div>
-      <div id="portal-prefill-result" style="margin-top:12px;font-size:13px"></div>
-    </div>
-    <div style="background:#fffbeb;padding:16px;border-radius:12px;border:1px solid #fcd34d;font-size:13px">
-      <strong>Pro & Empire plan clients:</strong> We handle your annual report filing for you. If your report is due soon, we'll notify you to confirm your details.
-    </div>`;
-}
-async function doPortalPrefill(){const v=document.getElementById('portal-prefill-dos').value.trim();if(!v)return;const el=document.getElementById('portal-prefill-result');el.innerHTML='Loading from PA DOS registry...';try{const r=await fetch('/api/annual-report-prefill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dos_number:v})});const d=await r.json();el.innerHTML=d.success?'<pre style="font-size:12px;background:var(--surface);padding:12px;border-radius:8px;max-height:300px;overflow:auto">'+JSON.stringify(d,null,2)+'</pre>':'<div style="color:#dc2626">'+(d.error||'Could not prefill')+'</div>'}catch(e){el.innerHTML='<div style="color:#dc2626">'+e.message+'</div>'}}
-
-async function loadPortal_entity_mgmt() {
-  if(!CLIENT) return;
-  const el = document.getElementById('entity_mgmt-body');
-  el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div style="background:var(--surface,#f8f9fa);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <h3 style="margin-bottom:8px">PA DOS Lookup</h3>
-        <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">Search the Pennsylvania Department of State registry.</p>
-        <input id="portal-dos-q" type="text" placeholder="Entity name or DOS number" style="width:100%;padding:10px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;margin-bottom:8px;box-sizing:border-box">
-        <button onclick="doPortalDOS()" style="width:100%;padding:10px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Search →</button>
-        <div id="portal-dos-result" style="margin-top:12px;font-size:12px;max-height:200px;overflow:auto"></div>
-      </div>
-      <div style="background:var(--surface,#f8f9fa);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <h3 style="margin-bottom:8px">Verify Address</h3>
-        <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">Check if an address is valid for PA registered office use.</p>
-        <input id="portal-addr" type="text" placeholder="Full address" style="width:100%;padding:10px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;margin-bottom:8px;box-sizing:border-box">
-        <button onclick="doPortalAddr()" style="width:100%;padding:10px;border:1px solid var(--border,#ddd);border-radius:8px;background:#fff;cursor:pointer;font-weight:600">Verify →</button>
-        <div id="portal-addr-result" style="margin-top:12px;font-size:12px;max-height:200px;overflow:auto"></div>
-      </div>
-    </div>`;
-}
-async function doPortalDOS(){const q=document.getElementById('portal-dos-q').value.trim();if(!q)return;document.getElementById('portal-dos-result').innerHTML='Searching...';try{const r=await fetch('/api/pa-dos-search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})});const d=await r.json();document.getElementById('portal-dos-result').innerHTML='<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('portal-dos-result').innerHTML=e.message}}
-async function doPortalAddr(){const q=document.getElementById('portal-addr').value.trim();if(!q)return;document.getElementById('portal-addr-result').innerHTML='Verifying...';try{const r=await fetch('/api/address-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:q})});const d=await r.json();document.getElementById('portal-addr-result').innerHTML='<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('portal-addr-result').innerHTML=e.message}}
-
-async function loadPortal_portal_ai() {
-  if(!CLIENT) return;
-  const el = document.getElementById('portal_ai-body');
-  el.innerHTML = `
-    <div style="background:var(--surface,#f8f9fa);padding:24px;border-radius:12px;border:1px solid var(--border,#eee);margin-bottom:16px">
-      <h3 style="margin-bottom:8px">Document Summarizer</h3>
-      <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">Paste any legal or compliance document and get a plain-English summary.</p>
-      <textarea id="portal-doc-text" placeholder="Paste document text here..." rows="5" style="width:100%;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
-      <button onclick="doPortalDocSum()" style="margin-top:8px;padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Summarize →</button>
-      <div id="portal-doc-result" style="margin-top:12px;font-size:14px;line-height:1.6"></div>
-    </div>
-    <div style="background:var(--surface,#f8f9fa);padding:24px;border-radius:12px;border:1px solid var(--border,#eee)">
-      <h3 style="margin-bottom:8px">Obligation Explainer</h3>
-      <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">Ask any question about Pennsylvania compliance obligations.</p>
-      <div style="display:flex;gap:8px">
-        <input id="portal-obl-q" type="text" placeholder="e.g. What happens if I miss my annual report deadline?" style="flex:1;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px">
-        <button onclick="doPortalOblEx()" style="padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Ask →</button>
-      </div>
-      <div id="portal-obl-result" style="margin-top:12px;font-size:14px;line-height:1.6"></div>
-    </div>`;
-}
-async function doPortalDocSum(){const t=document.getElementById('portal-doc-text').value.trim();if(!t)return;document.getElementById('portal-doc-result').innerHTML='<em>Summarizing with AI...</em>';try{const r=await fetch('/api/assistant/summarize-document',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});const d=await r.json();document.getElementById('portal-doc-result').innerHTML=d.summary||d.answer||JSON.stringify(d)}catch(e){document.getElementById('portal-doc-result').innerHTML='Error: '+e.message}}
-async function doPortalOblEx(){const q=document.getElementById('portal-obl-q').value.trim();if(!q)return;document.getElementById('portal-obl-result').innerHTML='<em>Thinking...</em>';try{const r=await fetch('/api/assistant/explain-obligation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});const d=await r.json();document.getElementById('portal-obl-result').innerHTML=d.explanation||d.answer||JSON.stringify(d)}catch(e){document.getElementById('portal-obl-result').innerHTML='Error: '+e.message}}
-
-async function loadPortal_portal_billing() {
-  if(!CLIENT) return;
-  const el = document.getElementById('portal_billing-body');
-  el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="background:var(--surface,#f8f9fa);padding:24px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <h3 style="margin-bottom:8px">Your Invoices</h3>
-        <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">View and download past invoices for your account.</p>
-        <button onclick="doPortalInvoice()" style="padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Load Invoices →</button>
-        <div id="portal-inv-result" style="margin-top:12px;font-size:13px"></div>
-      </div>
-      <div style="background:var(--surface,#f8f9fa);padding:24px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <h3 style="margin-bottom:8px">Tax Documents</h3>
-        <p style="font-size:13px;color:var(--ink2,#666);margin-bottom:12px">Export tax-related documents for your accountant.</p>
-        <button onclick="doPortalTax()" style="padding:12px 24px;border:1px solid var(--border,#ddd);border-radius:8px;background:#fff;cursor:pointer;font-weight:600">Export Tax Docs →</button>
-        <div id="portal-tax-result" style="margin-top:12px;font-size:13px"></div>
-      </div>
-    </div>`;
-}
-async function doPortalInvoice(){document.getElementById('portal-inv-result').innerHTML='Loading...';try{const r=await fetch('/api/invoice-generate?email='+encodeURIComponent(CLIENT.email));const d=await r.json();document.getElementById('portal-inv-result').innerHTML=d.invoices?d.invoices.map(i=>'<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px">'+i.date+' · $'+i.amount+' <a href="'+(i.url||'#')+'" target="_blank">Download</a></div>').join(''):'<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('portal-inv-result').innerHTML=e.message}}
-async function doPortalTax(){document.getElementById('portal-tax-result').innerHTML='Exporting...';try{const r=await fetch('/api/tax-export?email='+encodeURIComponent(CLIENT.email));const d=await r.json();document.getElementById('portal-tax-result').innerHTML='<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('portal-tax-result').innerHTML=e.message}}
-
-async function loadPortal_portal_referrals() {
-  if(!CLIENT) return;
-  const el = document.getElementById('portal_referrals-body');
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading referral data...</div>';
-  try {
-    const r = await fetch('/api/referrals/me?email='+encodeURIComponent(CLIENT.email));
-    const d = await r.json();
-    const refs = d.referrals || [];
-    const code = CLIENT.refCode || 'CROP-REF';
-    el.innerHTML = `
-      <div style="background:linear-gradient(135deg,#0C1220,#1a2a3e);color:#fff;padding:24px;border-radius:12px;margin-bottom:16px;text-align:center">
-        <div style="font-size:14px;opacity:0.8;margin-bottom:4px">Your referral link</div>
-        <div style="font-size:18px;font-weight:700;font-family:var(--mono);background:rgba(255,255,255,0.1);padding:12px;border-radius:8px;margin:8px 0">https://pacropservices.com/?ref=${code}</div>
-        <button onclick="navigator.clipboard.writeText('https://pacropservices.com/?ref=${code}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Link',2000)" style="padding:10px 24px;background:var(--accent,#C9982A);color:#0C1220;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-top:8px">Copy Link</button>
-        <div style="font-size:13px;opacity:0.7;margin-top:8px">Earn credit for every client who signs up through your link</div>
-      </div>
-      <div style="background:var(--surface,#f8f9fa);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <h3 style="margin-bottom:12px">Your Referrals (${refs.length})</h3>
-        ${refs.length ? refs.map(r=>'<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px;display:flex;justify-content:space-between"><span>'+r.email+'</span><span style="color:var(--ink3)">'+r.status+'</span></div>').join('') : '<p style="font-size:13px;color:var(--ink3)">No referrals yet. Share your link to get started!</p>'}
-      </div>`;
-  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">'+e.message+'</div>'; }
 }
 
 
