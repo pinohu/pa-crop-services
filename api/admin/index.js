@@ -89,6 +89,42 @@ export default async function handler(req, res) {
 
       // ── Dashboard Overview ────────────────────────────────────────────
       case 'dashboard': {
+        // Try Neon Postgres first for clean data
+        let neonClients = null;
+        try {
+          const { neon } = await import('@neondatabase/serverless');
+          const dbUrl = process.env.DATABASE_URL;
+          if (dbUrl) {
+            const sql = neon(dbUrl);
+            neonClients = await sql.query("SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC");
+          }
+        } catch(_) {}
+
+        if (neonClients && neonClients.length > 0) {
+          const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
+          const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+          const planCounts = {};
+          let mrr = 0, activeSubs = 0;
+          neonClients.forEach(c => {
+            const plan = c.plan_code || 'compliance_only';
+            planCounts[plan] = (planCounts[plan] || 0) + 1;
+            if (c.billing_status === 'active') { activeSubs++; mrr += (planPricing[plan] || 99) / 12; }
+          });
+          // Get 20i hosting count
+          let hostingCount = 0;
+          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(_) {}
+          return res.status(200).json({
+            stats: { totalClients: neonClients.length, activeSubscriptions: activeSubs, mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, hostingPackages: hostingCount },
+            planBreakdown: Object.fromEntries(Object.entries(planCounts).map(([k,v]) => [planLabels[k] || k, v])),
+            recentClients: neonClients.slice(0, 10).map(c => ({
+              id: c.id, name: c.owner_name || '(unnamed)', email: c.email,
+              plan: c.plan_code || 'compliance_only', since: c.created_at ? new Date(c.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'New',
+              score: c.billing_status === 'active' ? 85 : 40
+            }))
+          });
+        }
+
+        // Fall back to SuiteDash + Stripe
         const [contacts, subscriptions, packages] = await Promise.allSettled([
           sdFetch('/contacts?limit=100&role=client'),
           stripeFetch('/subscriptions?limit=100&status=active'),
@@ -99,7 +135,6 @@ export default async function handler(req, res) {
         const subs = subscriptions.status === 'fulfilled' ? (subscriptions.value?.data || []) : [];
         const hosting = packages.status === 'fulfilled' ? (packages.value || {}) : {};
 
-        // Revenue calculation
         const mrr = subs.reduce((sum, s) => {
           const amt = s.plan?.amount || 0;
           const interval = s.plan?.interval || 'year';
@@ -108,7 +143,6 @@ export default async function handler(req, res) {
 
         const arr = mrr * 12;
 
-        // Client stats
         const planCounts = {};
         clients.forEach(c => {
           const plan = c.custom_fields?.crop_plan || 'unknown';
@@ -133,28 +167,48 @@ export default async function handler(req, res) {
             score: c.custom_fields?.lead_score || 0,
           }))
         });
+        });
       }
 
       // ── All Clients ───────────────────────────────────────────────────
       case 'clients': {
         const { page = 1, search = '', plan = '' } = payload;
+        // Try Neon first
+        try {
+          const { neon } = await import('@neondatabase/serverless');
+          const dbUrl = process.env.DATABASE_URL;
+          if (dbUrl) {
+            const sql = neon(dbUrl);
+            let q = "SELECT c.id, c.owner_name, c.email, c.phone, c.plan_code, c.billing_status, c.onboarding_status, c.referral_code, c.created_at, c.metadata, o.legal_name, o.entity_type, o.dos_number FROM clients c LEFT JOIN organizations o ON c.organization_id = o.id";
+            const conditions = [];
+            if (search) conditions.push(`(c.owner_name ILIKE '%${search.replace(/'/g,"")}%' OR c.email ILIKE '%${search.replace(/'/g,"")}%')`);
+            if (plan) conditions.push(`c.plan_code = '${plan.replace(/'/g,"")}'`);
+            if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
+            q += ' ORDER BY c.created_at DESC LIMIT 50';
+            const rows = await sql.query(q);
+            const planLabels = { compliance_only:'Compliance Only', business_starter:'Business Starter', business_pro:'Business Pro', business_empire:'Business Empire' };
+            return res.status(200).json({
+              clients: (rows||[]).map(c => ({
+                id: c.id, name: c.owner_name || c.legal_name || '(unnamed)', email: c.email, phone: c.phone || '',
+                company: c.legal_name || '', plan: c.plan_code || 'compliance_only',
+                since: c.created_at ? new Date(c.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : 'New',
+                accessCode: c.metadata?.access_code || '—', leadScore: c.billing_status === 'active' ? 85 : 30,
+                referralCode: c.referral_code || '', entityType: c.entity_type || '', tags: [], createdAt: c.created_at
+              })),
+              total: (rows||[]).length
+            });
+          }
+        } catch(_) {}
+        // Fallback: SuiteDash
         let url = `/contacts?limit=50&offset=${(page-1)*50}&role=client`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
         const data = await sdFetch(url);
         let clients = (data?.data || []).map(c => ({
-          id: c.id,
-          name: `${c.first_name} ${c.last_name}`.trim(),
-          email: c.email,
-          phone: c.phone,
-          company: c.company,
-          plan: c.custom_fields?.crop_plan || 'compliance_only',
-          since: c.custom_fields?.crop_since,
-          accessCode: c.custom_fields?.portal_access_code,
-          leadScore: c.custom_fields?.lead_score || 0,
-          referralCode: c.custom_fields?.referral_code,
-          entityType: c.custom_fields?.entity_type,
-          tags: c.tags || [],
-          createdAt: c.created_at,
+          id: c.id, name: `${c.first_name} ${c.last_name}`.trim(), email: c.email, phone: c.phone,
+          company: c.company, plan: c.custom_fields?.crop_plan || 'compliance_only',
+          since: c.custom_fields?.crop_since, accessCode: c.custom_fields?.portal_access_code,
+          leadScore: c.custom_fields?.lead_score || 0, referralCode: c.custom_fields?.referral_code,
+          entityType: c.custom_fields?.entity_type, tags: c.tags || [], createdAt: c.created_at,
         }));
         if (plan) clients = clients.filter(c => c.plan === plan);
         return res.status(200).json({ clients, total: data?.total || clients.length });
