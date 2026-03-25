@@ -1336,7 +1336,7 @@ async function portalDOSSearch() {
     const r = await portalFetch('/api/pa-dos-search', {method:'POST', body:JSON.stringify({query:q})});
     const d = await r.json();
     const results = d.results || d.entities || [];
-    el.innerHTML = results.length ? results.slice(0,5).map(e => '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px"><strong>'+e.name+'</strong><br><span style="color:var(--ink3,#666)">'+e.entity_number+' · '+e.status+'</span></div>').join('') : '<div style="font-size:13px;color:var(--ink3)">No results. '+(d.message||d.error||'')+'</div>';
+    el.innerHTML = results.length ? results.slice(0,5).map(e => '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);font-size:13px"><strong>'+e.name+'</strong><br><span style="color:var(--ink3,#666)">'+(e.type||'')+(e.status?' · '+e.status:'')+(e.notes?' — '+e.notes:'')+'</span></div>').join('') : '<div style="font-size:13px;color:var(--ink3)">No results. '+(d.message||d.error||d.recommendation||'')+'</div>';
   } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
 }
 async function portalAddrVerify() {
