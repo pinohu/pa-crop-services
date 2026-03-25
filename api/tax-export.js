@@ -2,16 +2,17 @@
 // GET /api/tax-export?key=ADMIN&quarter=Q1&year=2026
 // Exports revenue data in CSV format for tax preparation
 
+import { authenticateRequest } from './services/auth.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE');
+  const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
+  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;

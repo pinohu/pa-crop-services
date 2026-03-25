@@ -2,6 +2,7 @@
 // POST /api/entity-monitor { entityName, entityNumber, clientEmail }
 // Checks PA DOS entity status via web search scraping
 
+import { authenticateRequest } from './services/auth.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,10 +10,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const adminKey = req.headers['x-admin-key'] || req.headers['x-internal-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE');
+  const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
+  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
 
   const { entityName, entityNumber, clientEmail } = req.body || {};
   if (!entityName && !entityNumber) {

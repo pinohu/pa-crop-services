@@ -2,15 +2,18 @@
 // POST /api/court-monitor { entityName, email } (check for cases)
 // Groq-assisted search + direct links to PACER and PA courts
 
+import { authenticateRequest } from './services/auth.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) return res.status(401).json({ error: 'Unauthorized' });
+  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE');
+  const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
+  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
 
   const { entityName, county } = req.body || {};
   if (!entityName) return res.status(400).json({ error: 'entityName required' });
