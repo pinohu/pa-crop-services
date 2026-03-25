@@ -2112,5 +2112,9 @@ async function runSystemHealth() {
   }
 }
 </script>
+<script>
+// Remove Vercel dev toolbar (INP warnings are noise on admin pages)
+new MutationObserver((m,o)=>{document.querySelectorAll('vercel-live-feedback,[data-vercel-toolbar],[id*="vercel"]').forEach(e=>{e.remove();o.disconnect()})}).observe(document.body,{childList:true,subtree:true});
+</script>
 </body>
 </html>
