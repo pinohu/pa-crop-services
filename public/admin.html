@@ -928,7 +928,7 @@ async function loadDashboard() {
 async function loadCommandCenter() {
   const el = document.getElementById('command-center-body');
   try {
-    const r = await fetch('/api/admin/command-center', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/command-center', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center requires Neon Postgres. Using legacy dashboard.</div>'; return; }
     const c = d.compliance;
@@ -956,7 +956,7 @@ async function loadCommandCenter() {
 async function loadAIReviewQueue() {
   const el = document.getElementById('ai-review-body');
   try {
-    const r = await fetch('/api/admin/ai-review?limit=10', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/ai-review?limit=10', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No conversations need review</div>'; return; }
     el.innerHTML = d.items.map(c => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
@@ -973,7 +973,7 @@ async function loadAIReviewQueue() {
 async function loadDocReviewQueue() {
   const el = document.getElementById('doc-review-body');
   try {
-    const r = await fetch('/api/admin/document-review?urgency=high', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/document-review?urgency=high', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No documents need review</div>'; return; }
     el.innerHTML = d.items.map(doc => {
@@ -995,7 +995,7 @@ async function loadDocReviewQueue() {
 async function loadWorkflowFailures() {
   const el = document.getElementById('workflow-failures-body');
   try {
-    const r = await fetch('/api/admin/workflow-failures', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/workflow-failures', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#15803d;padding:8px 0">✅ No workflow failures</div>'; return; }
     el.innerHTML = d.items.map(j => `<div style="padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
@@ -1010,7 +1010,7 @@ async function loadObligationExplorer() {
   const el = document.getElementById('obligation-explorer');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading obligations...</div>';
   try {
-    const r = await fetch('/api/admin/audit?event_type=obligation.status_changed&limit=100', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/audit?event_type=obligation.status_changed&limit=100', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     const items = d.items || [];
     if (!items.length) {
@@ -1045,7 +1045,7 @@ async function loadRulesAdmin() {
   const el = document.getElementById('rules-admin-list');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading rules...</div>';
   try {
-    const r = await fetch('/api/admin/rules', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/rules', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     const items = d.items || [];
     if (!items.length) {
@@ -1088,7 +1088,7 @@ async function loadRulesAdmin() {
 // ── Revenue Page ───────────────────────────────────────────────────────
 async function loadRevenuePage() {
   try {
-    const r = await fetch('/api/admin/revenue', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/revenue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { toast('Revenue data unavailable', 'error'); return; }
 
@@ -1150,7 +1150,7 @@ async function loadClient360() {
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading client profile...</div>';
 
   try {
-    const r = await fetch('/api/admin/client-360?email=' + encodeURIComponent(search), { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/client-360?email=' + encodeURIComponent(search), { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Client not found: ' + (d.error || '') + '</div>'; return; }
 
@@ -1239,7 +1239,7 @@ async function loadClient360() {
 // ── Filing Queue ───────────────────────────────────────────────────────
 async function loadFilingQueue() {
   try {
-    const r = await fetch('/api/admin/filing-queue', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/filing-queue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) return;
 
@@ -1283,7 +1283,7 @@ async function loadFilingQueue() {
 // ── Notification Ops ───────────────────────────────────────────────────
 async function loadNotifOps() {
   try {
-    const r = await fetch('/api/admin/notification-ops', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/notification-ops', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) return;
 
@@ -1316,7 +1316,7 @@ async function loadNotifOps() {
 async function loadBillingRetention() {
   const el = document.getElementById('billing-body');
   try {
-    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="color:var(--gray)">Billing data unavailable</div>'; return; }
 
