@@ -846,7 +846,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.textContent.toLowerCase().includes(name.replace('_',' '))) n.classList.add('active');
   });
-  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status', bulk:'Bulk Operations', compose:'Send Email', renewals:'Renewal Reminders' };
+  const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status', bulk:'Bulk Operations', compose:'Send Email', renewals:'Renewal Reminders', client360:'Client 360', filing:'Filing Queue', notif_ops:'Notification Ops', billing:'Billing & Retention' };
   document.getElementById('page-title').textContent = titles[name] || name;
   currentPage = name;
   document.getElementById('last-refresh').textContent = '';
@@ -1088,7 +1088,7 @@ async function loadRulesAdmin() {
 // ── Revenue Page ───────────────────────────────────────────────────────
 async function loadRevenuePage() {
   try {
-    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch('/api/admin/revenue', { headers: { 'X-Admin-Key': adminKey } });
     const d = await r.json();
     if (!d.success) { toast('Revenue data unavailable', 'error'); return; }
 
@@ -1113,28 +1113,32 @@ async function loadRevenuePage() {
       </div>`).join('');
     } else { planEl.innerHTML = '<div style="color:var(--gray);font-size:13px">No plan data yet</div>'; }
 
-    // Churn risk
+    // Churn risk — from revenue endpoint or link to billing
     const churnEl = document.getElementById('rev-churn-list');
     const churn = d.churn_risk || [];
     churnEl.innerHTML = churn.length ? churn.map(c => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
       <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${c.name || c.email}</span><span style="color:#dc2626;font-size:11px">${c.signals?.join(', ') || ''}</span></div>
       <div style="color:#6b7280;margin-top:2px">${c.recommended_action || ''}</div>
-    </div>`).join('') : '<div style="font-size:13px;color:#15803d;padding:8px 0">✅ No churn risk detected</div>';
+    </div>`).join('') : '<div style="font-size:13px;color:var(--gray);padding:8px 0"><a href="#" onclick="showPage(\'billing\');return false" style="color:var(--accent)">Open Billing & Retention →</a> for churn risk details</div>';
 
     // Upsell candidates
     const upEl = document.getElementById('rev-upsell');
-    const ups = d.upsell_candidates || [];
-    upEl.innerHTML = ups.length ? ups.map(u => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
-      <div style="font-weight:600">${u.name || u.email}</div>
-      <div style="color:#6b7280">${u.reason} → <span style="color:var(--accent);font-weight:600">${u.recommended || u.recommended_plan || ''}</span> (+$${(u.monthly_uplift || u.potential_uplift || 0).toFixed(0)}/mo)</div>
-    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No upsell candidates</div>';
+    const ups = d.upsell_candidates || d.opportunities ? [d.opportunities].filter(Boolean) : [];
+    if (d.upsell_candidates?.length) {
+      upEl.innerHTML = d.upsell_candidates.map(u => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
+        <div style="font-weight:600">${u.name || u.email}</div>
+        <div style="color:#6b7280">${u.reason} → <span style="color:var(--accent);font-weight:600">${u.recommended || u.recommended_plan || ''}</span> (+$${(u.monthly_uplift || u.potential_uplift || 0).toFixed(0)}/mo)</div>
+      </div>`).join('');
+    } else if (d.opportunities) {
+      upEl.innerHTML = `<div style="padding:8px 0;font-size:13px"><span style="font-weight:600">${d.opportunities.upgrade_candidates || 0}</span> upgrade candidates · <span style="color:var(--accent);font-weight:600">+$${(d.opportunities.potential_mrr_uplift || 0).toFixed(0)}/mo</span> potential uplift<br><a href="#" onclick="showPage('billing');return false" style="color:var(--accent);font-size:12px">See individual candidates →</a></div>`;
+    } else { upEl.innerHTML = '<div style="font-size:13px;color:var(--gray)">No upsell data</div>'; }
 
     // Renewals
     const renEl = document.getElementById('rev-renewals');
     const rens = d.renewal_forecast || [];
     renEl.innerHTML = rens.length ? rens.map(r => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
       <span style="font-weight:600">${r.client_name || r.email}</span> · ${r.plan} · $${r.amount} · Renews ${new Date(r.renews).toLocaleDateString()}
-    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No renewals in next 90 days</div>';
+    </div>`).join('') : '<div style="font-size:13px;color:var(--gray);padding:8px 0"><a href="#" onclick="showPage(\'billing\');return false" style="color:var(--accent)">Open Billing & Retention →</a> for renewal forecast</div>';
   } catch (e) { toast('Revenue load error: ' + e.message, 'error'); }
 }
 

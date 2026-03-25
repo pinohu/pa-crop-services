@@ -12,6 +12,7 @@ export default async function handler(req, res) {
       const { suitedash } = db;
       const clients = await suitedash.getAllClientsWithCompliance();
       const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
+      const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
       const plans = {};
       for (const c of clients) { plans[c.plan_code] = (plans[c.plan_code] || 0) + 1; }
       let mrr = 0;
@@ -19,7 +20,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true, mode: 'suitedash_only',
         revenue: { mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, total_clients: clients.length },
-        plans: Object.entries(plans).map(([code, count]) => ({ code, count, mrr_contribution: Math.round((planPricing[code] || 0) * count * 100) / 100 })),
+        plan_distribution: Object.entries(plans).map(([code, count]) => ({ code, label: planLabels[code] || code, count, mrr: Math.round((planPricing[code] || 0) * count * 100) / 100 })),
         generated_at: new Date().toISOString()
       });
     }
@@ -30,6 +31,7 @@ export default async function handler(req, res) {
 
     const clients = await sql.query("SELECT plan_code, billing_status, created_at FROM clients");
     const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
+    const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
     const plans = {};
     let active = 0, churned = 0;
     for (const c of clients) {
@@ -49,7 +51,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       revenue: { mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, total_clients: clients.length, active, churned, churn_rate: active + churned > 0 ? Math.round(churned / (active + churned) * 100) : 0 },
-      plans: Object.entries(plans).map(([code, count]) => ({ code, count, mrr_contribution: Math.round((planPricing[code] || 0) * count * 100) / 100 })),
+      plan_distribution: Object.entries(plans).map(([code, count]) => ({ code, label: planLabels[code] || code, count, mrr: Math.round((planPricing[code] || 0) * count * 100) / 100 })),
       compliance_risk: { entities_overdue: orgsOverdue.size },
       opportunities: { upgrade_candidates: upgradeCandidate, potential_mrr_uplift: Math.round(upgradeCandidate * (planPricing.business_pro - planPricing.compliance_only) * 100) / 100 },
       cohorts: Object.entries(cohorts).sort().map(([month, count]) => ({ month, count })),

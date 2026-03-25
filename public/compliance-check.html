@@ -114,7 +114,10 @@ const E=[
 {k:'business_trust',l:'Business Trust',d:'December 31'}
 ];
 const g=document.getElementById('eg');
-E.forEach(e=>{const b=document.createElement('button');b.className='entity-btn';b.innerHTML=`${e.l}<div class="dl">Due: ${e.d}</div>`;b.onclick=()=>sel(e.k,b);g.appendChild(b)});
+const btns={};
+E.forEach(e=>{const b=document.createElement('button');b.className='entity-btn';b.innerHTML=`${e.l}<div class="dl">Due: ${e.d}</div>`;b.onclick=()=>sel(e.k,b);g.appendChild(b);btns[e.k]=b});
+// Auto-select from URL query param: /compliance-check?entity_type=domestic_llc
+(function(){const p=new URLSearchParams(window.location.search);const t=p.get('entity_type')||p.get('type');if(t&&btns[t])sel(t,btns[t])})();
 async function sel(k,btn){
 document.querySelectorAll('.entity-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');
 try{const r=await fetch(`/api/compliance-check?entity_type=${k}`);const d=await r.json();if(d.success)show(d.result)}catch(e){console.error(e)}
