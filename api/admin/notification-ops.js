@@ -12,11 +12,10 @@ export default async function handler(req, res) {
   try {
     if (!db.isConnected()) return res.status(200).json({ success: true, mode: 'no_db', stats: {}, items: [] });
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     // Aggregate stats
-    const stats = await sql(`
+    const stats = await sql.query(`
       SELECT
         delivery_status,
         channel,
@@ -40,7 +39,7 @@ export default async function handler(req, res) {
     summary.delivery_rate = summary.total > 0 ? Math.round(summary.sent / summary.total * 100) : 0;
 
     // Recent failures
-    const failures = await sql(`
+    const failures = await sql.query(`
       SELECT n.*, o.legal_name, o.entity_type
       FROM notifications n
       LEFT JOIN organizations o ON n.organization_id = o.id
@@ -50,7 +49,7 @@ export default async function handler(req, res) {
     `);
 
     // Upcoming scheduled
-    const scheduled = await sql(`
+    const scheduled = await sql.query(`
       SELECT n.*, o.legal_name
       FROM notifications n
       LEFT JOIN organizations o ON n.organization_id = o.id
@@ -60,7 +59,7 @@ export default async function handler(req, res) {
     `);
 
     // Template performance
-    const templateStats = await sql(`
+    const templateStats = await sql.query(`
       SELECT
         template_id,
         COUNT(*) as total,

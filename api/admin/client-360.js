@@ -36,9 +36,8 @@ export default async function handler(req, res) {
     let aiConversations = [];
     if (db.isConnected() && orgId) {
       try {
-        const { neon } = await import('@neondatabase/serverless');
-        const sql = neon(process.env.DATABASE_URL);
-        aiConversations = await sql(
+        const sql = db.getSql();
+        aiConversations = await sql.query(
           'SELECT * FROM ai_conversations WHERE organization_id = $1 OR client_id = $2 ORDER BY created_at DESC LIMIT 20',
           [orgId, client.id]
         );

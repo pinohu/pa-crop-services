@@ -8,13 +8,12 @@ export default async function handler(req, res) {
 
   try {
     if (!db.isConnected()) return res.status(200).json({ items: [] });
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     const urgency = req.query.urgency || 'high';
     const urgencies = urgency === 'all' ? ['normal','high','critical'] : ['high','critical'];
 
-    const rows = await sql(
+    const rows = await sql.query(
       `SELECT d.*, o.legal_name, o.entity_type FROM documents d
        LEFT JOIN organizations o ON d.organization_id = o.id
        WHERE d.urgency = ANY($1) AND d.review_status = $2

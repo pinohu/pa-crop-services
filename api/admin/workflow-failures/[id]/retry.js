@@ -16,11 +16,10 @@ export default async function handler(req, res) {
   try {
     if (!db.isConnected()) return res.status(200).json({ success: false, error: 'db_not_connected' });
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     // Get the job
-    const jobs = await sql('SELECT * FROM workflow_jobs WHERE id = $1', [jobId]);
+    const jobs = await sql.query('SELECT * FROM workflow_jobs WHERE id = $1', [jobId]);
     const job = jobs?.[0];
     if (!job) return res.status(404).json({ success: false, error: 'job_not_found' });
 
@@ -29,7 +28,7 @@ export default async function handler(req, res) {
     }
 
     // Reset to queued
-    await sql(
+    await sql.query(
       'UPDATE workflow_jobs SET job_status = $1, attempts = 0, last_error = NULL, updated_at = now() WHERE id = $2',
       ['queued', jobId]
     );

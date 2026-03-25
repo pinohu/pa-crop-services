@@ -25,10 +25,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, mode: 'no_db', message: 'Connect Neon or SuiteDash' });
     }
 
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
-    const obligations = await sql("SELECT obligation_status, escalation_level, due_date FROM obligations");
+    const obligations = await sql.query("SELECT obligation_status, escalation_level, due_date FROM obligations");
     const oblStats = { total: 0, current: 0, due_soon: 0, overdue: 0, escalated: 0, filed: 0 };
     const now = new Date();
     for (const o of obligations) {
@@ -42,14 +41,14 @@ export default async function handler(req, res) {
       }
     }
 
-    const clientRows = await sql("SELECT COUNT(*) as total FROM clients");
-    const activeRows = await sql("SELECT COUNT(*) as total FROM clients WHERE billing_status = $1", ["active"]);
+    const clientRows = await sql.query("SELECT COUNT(*) as total FROM clients");
+    const activeRows = await sql.query("SELECT COUNT(*) as total FROM clients WHERE billing_status = $1", ["active"]);
     const yesterday = new Date(Date.now() - 86400000).toISOString();
-    const aiConvos = await sql("SELECT confidence_score, escalation_flag FROM ai_conversations WHERE created_at >= $1", [yesterday]);
-    const failedNotifs = await sql("SELECT COUNT(*) as total FROM notifications WHERE delivery_status = $1", ["failed"]);
+    const aiConvos = await sql.query("SELECT confidence_score, escalation_flag FROM ai_conversations WHERE created_at >= $1", [yesterday]);
+    const failedNotifs = await sql.query("SELECT COUNT(*) as total FROM notifications WHERE delivery_status = $1", ["failed"]);
     const failedJobs = await db.getFailedJobs(10);
 
-    const orgs = await sql("SELECT id, legal_name, entity_type, entity_status FROM organizations LIMIT 100");
+    const orgs = await sql.query("SELECT id, legal_name, entity_type, entity_status FROM organizations LIMIT 100");
     const highRisk = [];
     for (const org of orgs.slice(0, 20)) {
       if (obligations.some(o => ["overdue","escalated"].includes(o.obligation_status))) {

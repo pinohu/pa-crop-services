@@ -20,13 +20,16 @@ import * as suitedash from './suitedash.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
-function sql() {
-  if (!DATABASE_URL) return null;
-  return neon(DATABASE_URL);
-}
+// Singleton connection — reused across all queries in a request
+const _sql = DATABASE_URL ? neon(DATABASE_URL) : null;
 
 export function isConnected() {
-  return !!DATABASE_URL;
+  return !!DATABASE_URL && !!_sql;
+}
+
+// Export the raw sql function for admin files that need direct queries
+export function getSql() {
+  return _sql;
 }
 
 // Re-export SuiteDash config check
@@ -37,10 +40,9 @@ export function isSuiteDashConnected() {
 // ── Generic query helper ───────────────────────────────────
 
 async function query(text, params = []) {
-  const db = sql();
-  if (!db) return null;
+  if (!_sql) return null;
   try {
-    return await db(text, params);
+    return await _sql.query(text, params);
   } catch (err) {
     console.error('DB query error:', err.message, text.slice(0, 80));
     throw err;

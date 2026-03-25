@@ -62,13 +62,12 @@ export default async function handler(req, res) {
 
     if (!db.isConnected()) return res.status(200).json({ success: true, mode: 'no_db' });
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     // Full analysis from Postgres
-    const clients = await sql('SELECT * FROM clients ORDER BY created_at DESC');
-    const obligations = await sql('SELECT organization_id, obligation_status, due_date FROM obligations');
-    const billing = await sql('SELECT * FROM billing_accounts');
+    const clients = await sql.query('SELECT * FROM clients ORDER BY created_at DESC');
+    const obligations = await sql.query('SELECT organization_id, obligation_status, due_date FROM obligations');
+    const billing = await sql.query('SELECT * FROM billing_accounts');
 
     const now = new Date();
     const planDist = {};

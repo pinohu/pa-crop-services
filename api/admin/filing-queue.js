@@ -12,11 +12,10 @@ export default async function handler(req, res) {
   try {
     if (!db.isConnected()) return res.status(200).json({ success: true, items: [], mode: 'no_db' });
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     // Get all managed-filing obligations that aren't yet filed
-    const items = await sql(`
+    const items = await sql.query(`
       SELECT o.*, org.legal_name, org.entity_type, org.dos_number, org.entity_status,
              c.email as client_email, c.owner_name as client_name, c.phone as client_phone, c.plan_code
       FROM obligations o

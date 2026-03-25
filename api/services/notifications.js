@@ -130,11 +130,9 @@ export async function processPending() {
     // Find client email — try Neon first, then SuiteDash
     let email = null;
     try {
-      const { neon } = await import('@neondatabase/serverless');
-      const dbUrl = process.env.DATABASE_URL;
-      if (dbUrl) {
-        const sql = neon(dbUrl);
-        const clients = await sql('SELECT email FROM clients WHERE organization_id = $1 LIMIT 1', [notif.organization_id]);
+      const sql = db.getSql();
+      if (sql) {
+        const clients = await sql.query('SELECT email FROM clients WHERE organization_id = $1 LIMIT 1', [notif.organization_id]);
         email = clients?.[0]?.email;
       }
     } catch (e) { /* Neon not available */ }

@@ -26,10 +26,9 @@ export default async function handler(req, res) {
 
     if (!db.isConnected()) return res.status(200).json({ success: true, mode: 'no_db' });
 
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
-    const clients = await sql("SELECT plan_code, billing_status, created_at FROM clients");
+    const clients = await sql.query("SELECT plan_code, billing_status, created_at FROM clients");
     const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
     const plans = {};
     let active = 0, churned = 0;
@@ -41,7 +40,7 @@ export default async function handler(req, res) {
     let mrr = 0;
     for (const [plan, count] of Object.entries(plans)) mrr += (planPricing[plan] || 0) * count;
 
-    const obligations = await sql("SELECT organization_id, obligation_status FROM obligations");
+    const obligations = await sql.query("SELECT organization_id, obligation_status FROM obligations");
     const orgsOverdue = new Set(obligations.filter(o => ["overdue","escalated"].includes(o.obligation_status)).map(o => o.organization_id));
     const upgradeCandidate = clients.filter(c => c.plan_code === "compliance_only" && c.billing_status === "active").length;
     const cohorts = {};

@@ -8,8 +8,7 @@ export default async function handler(req, res) {
 
   try {
     if (!db.isConnected()) return res.status(200).json({ items: [] });
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
     const limit = parseInt(req.query.limit) || 50;
     const filter = req.query.filter;
 
@@ -18,7 +17,7 @@ export default async function handler(req, res) {
     else if (filter === 'low_confidence') where = 'WHERE confidence_score < 0.8';
     else where = 'WHERE escalation_flag = true OR confidence_score < 0.8';
 
-    const rows = await sql(`SELECT * FROM ai_conversations ${where} ORDER BY created_at DESC LIMIT $1`, [limit]);
+    const rows = await sql.query(`SELECT * FROM ai_conversations ${where} ORDER BY created_at DESC LIMIT $1`, [limit]);
     return res.status(200).json({ success: true, items: rows || [] });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });

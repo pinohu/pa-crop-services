@@ -36,13 +36,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = db.getSql();
 
     // Get the rule being previewed
     let rule = null;
     if (rule_id) {
-      const rows = await sql('SELECT * FROM rules WHERE id = $1', [rule_id]);
+      const rows = await sql.query('SELECT * FROM rules WHERE id = $1', [rule_id]);
       rule = rows?.[0];
     }
 
@@ -57,7 +56,7 @@ export default async function handler(req, res) {
       orgQuery += ' AND entity_type = $2';
       orgParams.push(targetEntityType);
     }
-    const orgCount = await sql(orgQuery, orgParams);
+    const orgCount = await sql.query(orgQuery, orgParams);
 
     // Count affected obligations
     let oblQuery = 'SELECT COUNT(*) as count FROM obligations WHERE jurisdiction = $1 AND obligation_type = $2';
@@ -66,12 +65,12 @@ export default async function handler(req, res) {
       oblQuery += ` AND organization_id IN (SELECT id FROM organizations WHERE entity_type = $3)`;
       oblParams.push(targetEntityType);
     }
-    const oblCount = await sql(oblQuery, oblParams);
+    const oblCount = await sql.query(oblQuery, oblParams);
 
     // Get current active rule being superseded
     let currentRule = null;
     if (targetEntityType) {
-      const current = await sql(
+      const current = await sql.query(
         'SELECT * FROM rules WHERE jurisdiction = $1 AND entity_type = $2 AND obligation_type = $3 AND is_active = true',
         [targetJurisdiction, targetEntityType, targetObligationType]
       );
@@ -86,7 +85,7 @@ export default async function handler(req, res) {
       sampleParams.push(targetEntityType);
     }
     sampleQuery += ' LIMIT 10';
-    const samples = await sql(sampleQuery, sampleParams);
+    const samples = await sql.query(sampleQuery, sampleParams);
 
     return res.status(200).json({
       success: true,
