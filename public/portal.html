@@ -40,6 +40,48 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 *:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .btn:focus-visible,.nav-item:focus-visible{outline-offset:3px}
 
+/* ─── UTILITY CLASSES ─── */
+.u-grid{display:grid;gap:16px}.u-grid-2{grid-template-columns:repeat(2,1fr)}.u-grid-3{grid-template-columns:repeat(3,1fr)}.u-grid-4{grid-template-columns:repeat(4,1fr)}
+.u-card{background:var(--bg2,#fff);padding:20px;border-radius:var(--radius-lg);border:1px solid var(--border)}
+.u-metric{text-align:center;padding:20px}.u-metric-value{font-size:36px;font-weight:700;color:var(--accent);line-height:1}.u-metric-label{font-size:12px;color:var(--ink3);margin-top:4px}
+.u-text-sm{font-size:13px}.u-text-xs{font-size:11px}.u-text-muted{color:var(--ink3)}.u-text-center{text-align:center}
+.u-mb-sm{margin-bottom:8px}.u-mb-md{margin-bottom:16px}.u-mb-lg{margin-bottom:24px}
+.u-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.u-badge{display:inline-block;padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600}
+.u-divider{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.u-empty{text-align:center;padding:32px;color:var(--ink3);font-size:14px}
+.u-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.quick-nav-tile{padding:14px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s,box-shadow .2s}
+.quick-nav-tile:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.quick-nav-icon{font-size:20px;margin-bottom:4px}
+.quick-nav-label{font-size:12px;font-weight:600;color:var(--ink)}
+
+/* ─── FEATURE TAB COMMON STYLES ─── */
+.feature-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.feature-header h2{font-family:var(--serif);font-size:24px;margin:0}
+.feature-action{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font);transition:border-color .2s}
+.feature-action:hover{border-color:var(--accent)}
+.feature-action-primary{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--font);transition:opacity .2s}
+.feature-action-primary:hover{opacity:.9}
+.feature-result{margin-top:12px;padding:16px;background:var(--bg3);border-radius:var(--radius-lg);border:1px solid var(--border);font-size:13px}
+.feature-nav{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);position:fixed;z-index:200;height:100vh}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0!important}
+  .u-grid-2,.u-grid-3,.u-grid-4{grid-template-columns:1fr!important}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
+  .page-header h1{font-size:22px!important}
+  .feature-header h2{font-size:20px!important}
+  .topbar{padding-left:16px!important}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr!important}
+  .u-grid-2{grid-template-columns:1fr!important}
+}
+
 /* ─── ANIMATIONS ─── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -576,26 +618,26 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <input class="ai-input" id="ai-dash-input" placeholder="Ask anything about PA compliance..." onkeydown="if(event.key==='Enter')askAI()">
             <button class="ai-send" onclick="askAIWithFallback()">Ask</button>
           </div>
-          <div class="ai-response" id="ai-dash-response"></div>
+          <div class="ai-response" id="ai-dash-response" aria-live="polite"></div>
         </div>
 
         <!-- Quick Navigation -->
         <div class="fade-up" style="animation-delay:.28s;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-          <button onclick="setTab('comp_intel')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
-            <div style="font-size:20px;margin-bottom:4px">🛡</div>
-            <div style="font-size:12px;font-weight:600;color:var(--ink)">Compliance Intel</div>
+          <button class="quick-nav-tile" onclick="setTab('comp_intel')" aria-label="Go to Compliance Intel">
+            <div class="quick-nav-icon">🛡</div>
+            <div class="quick-nav-label">Compliance Intel</div>
           </button>
-          <button onclick="setTab('filing_actions')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
-            <div style="font-size:20px;margin-bottom:4px">📋</div>
-            <div style="font-size:12px;font-weight:600;color:var(--ink)">Filing Actions</div>
+          <button class="quick-nav-tile" onclick="setTab('filing_actions')" aria-label="Go to Filing Actions">
+            <div class="quick-nav-icon">📋</div>
+            <div class="quick-nav-label">Filing Actions</div>
           </button>
-          <button onclick="setTab('portal_ai')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
-            <div style="font-size:20px;margin-bottom:4px">🤖</div>
-            <div style="font-size:12px;font-weight:600;color:var(--ink)">AI Tools</div>
+          <button class="quick-nav-tile" onclick="setTab('portal_ai')" aria-label="Go to AI Tools">
+            <div class="quick-nav-icon">🤖</div>
+            <div class="quick-nav-label">AI Tools</div>
           </button>
-          <button onclick="setTab('portal_billing')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
-            <div style="font-size:20px;margin-bottom:4px">💳</div>
-            <div style="font-size:12px;font-weight:600;color:var(--ink)">Invoices & Tax</div>
+          <button class="quick-nav-tile" onclick="setTab('portal_billing')" aria-label="Go to Invoices and Tax">
+            <div class="quick-nav-icon">💳</div>
+            <div class="quick-nav-label">Invoices & Tax</div>
           </button>
         </div>
 
@@ -795,7 +837,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <p style="font-size:13px;color:var(--ink3)">Entity status is verified against the PA Department of State.</p>
             <button onclick="verifyEntityOnDOS()" class="btn btn-ghost btn-sm" style="margin-top:6px">🔍 Verify on PA DOS</button>
-            <div id="dos-verify-result" style="margin-top:8px"></div>
+            <div id="dos-verify-result" aria-live="polite" style="margin-top:8px"></div>
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Update entity information</h3>
@@ -1098,7 +1140,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Compliance Intel</h2>
           <button onclick="loadPortal_comp_intel()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="comp_intel-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="comp_intel-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
       <div id="tab-filing_actions" class="hidden">
@@ -1106,7 +1148,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Filing Actions</h2>
           <button onclick="loadPortal_filing_actions()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="filing_actions-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="filing_actions-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
       <div id="tab-entity_mgmt" class="hidden">
@@ -1114,7 +1156,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">My Entities</h2>
           <button onclick="loadPortal_entity_mgmt()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="entity_mgmt-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="entity_mgmt-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
       <div id="tab-portal_ai" class="hidden">
@@ -1122,7 +1164,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">AI Tools</h2>
           <button onclick="loadPortal_portal_ai()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_ai-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_ai-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
       <div id="tab-portal_billing" class="hidden">
@@ -1130,7 +1172,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Invoices & Tax</h2>
           <button onclick="loadPortal_portal_billing()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_billing-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_billing-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
       <div id="tab-portal_referrals" class="hidden">
@@ -1138,7 +1180,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Referral Center</h2>
           <button onclick="loadPortal_portal_referrals()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_referrals-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_referrals-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
       </div>
 
     </main>
@@ -1403,14 +1445,14 @@ async function loadPortal_portal_ai() {
         <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Paste document text or describe what you need summarized.</div>
         <textarea id="ai-doc-input" placeholder="Paste document text, or describe the document..." style="width:100%;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;min-height:100px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
         <button onclick="portalAISummarize()" style="margin-top:8px;padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Summarize</button>
-        <div id="ai-doc-result" style="margin-top:12px"></div>
+        <div id="ai-doc-result" aria-live="polite" style="margin-top:12px"></div>
       </div>
       <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
         <div style="font-weight:600;font-size:15px;margin-bottom:8px">❓ Explain an Obligation</div>
         <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Ask about any PA compliance obligation in plain English.</div>
         <input type="text" id="ai-obl-input" placeholder="e.g. What happens if I miss my LLC annual report deadline?" style="width:100%;padding:12px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:14px;box-sizing:border-box">
         <button onclick="portalAIExplain()" style="margin-top:8px;padding:10px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Explain</button>
-        <div id="ai-obl-result" style="margin-top:12px"></div>
+        <div id="ai-obl-result" aria-live="polite" style="margin-top:12px"></div>
       </div>
     </div>`;
 }
@@ -1449,13 +1491,13 @@ async function loadPortal_portal_billing() {
         </div>
         <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Generate a PDF invoice for your current plan.</div>
         <button onclick="portalGenInvoice()" id="inv-btn" style="padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Generate Invoice PDF</button>
-        <div id="inv-result" style="margin-top:12px"></div>
+        <div id="inv-result" aria-live="polite" style="margin-top:12px"></div>
       </div>
       <div style="background:var(--surface,#fff);padding:20px;border-radius:12px;border:1px solid var(--border,#eee)">
         <div style="font-weight:600;font-size:15px;margin-bottom:8px">🧾 Tax Documents</div>
         <div style="font-size:13px;color:var(--ink3,#666);margin-bottom:12px">Export tax-related documents for your records.</div>
         <button onclick="portalTaxExport()" id="tax-btn" style="padding:10px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px">Export Tax Documents</button>
-        <div id="tax-result" style="margin-top:12px"></div>
+        <div id="tax-result" aria-live="polite" style="margin-top:12px"></div>
       </div>
       <div style="background:var(--surface,#f8fafc);padding:16px;border-radius:12px;border:1px solid var(--border,#eee)">
         <div style="font-size:13px;color:var(--ink3,#666)">
