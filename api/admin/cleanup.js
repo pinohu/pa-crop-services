@@ -172,6 +172,15 @@ export default async function handler(req, res) {
             referral_code: 'CROP-' + (entry.org.display_name || 'CLIENT').toUpperCase().replace(/\s+/g, '').slice(0, 8),
             metadata: { access_code: 'CROP2026', source: 'admin_seed' }
           });
+        } else {
+          // Client exists — ensure access code is set (may have been cleared by one-time auth)
+          const meta = client.metadata || {};
+          if (!meta.access_code) {
+            await sql.query(
+              "UPDATE clients SET metadata = metadata || $1, updated_at = now() WHERE id = $2",
+              [JSON.stringify({ access_code: 'CROP2026' }), client.id]
+            );
+          }
         }
 
         // Create initial obligation
@@ -213,7 +222,26 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(400).json({ success: false, error: 'Invalid action. Use: audit, purge, seed' });
+    // ── RESET-CODES: Reset access codes for all real clients ──
+    if (action === 'reset-codes') {
+      const results = [];
+      for (const entry of REAL_CLIENTS) {
+        const existing = await sql.query('SELECT id, metadata FROM clients WHERE email = $1', [entry.client.email]);
+        const client = existing?.[0];
+        if (client) {
+          await sql.query(
+            "UPDATE clients SET metadata = metadata || $1, updated_at = now() WHERE id = $2",
+            [JSON.stringify({ access_code: 'CROP2026' }), client.id]
+          );
+          results.push({ email: entry.client.email, code: 'CROP2026', status: 'reset' });
+        } else {
+          results.push({ email: entry.client.email, status: 'not_found' });
+        }
+      }
+      return res.status(200).json({ success: true, action: 'reset-codes', results });
+    }
+
+    return res.status(400).json({ success: false, error: 'Invalid action. Use: audit, purge, seed, reset-codes' });
   } catch (err) {
     console.error('Cleanup error:', err.message);
     return res.status(500).json({ success: false, error: 'internal_error', detail: err.message });

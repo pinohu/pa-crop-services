@@ -100,8 +100,10 @@ export default async function handler(req, res) {
           if (meta.access_code_expires && new Date(meta.access_code_expires) < new Date()) {
             return res.status(401).json({ success: false, error: 'Code expired. Request a new one.' });
           }
-          // Clear used code
-          await db.updateClient(client.id, { metadata: { ...meta, access_code: null, access_code_expires: null } });
+          // Only clear one-time codes (those with an expiry). Permanent codes persist.
+          if (meta.access_code_expires) {
+            await db.updateClient(client.id, { metadata: { ...meta, access_code: null, access_code_expires: null } });
+          }
           return res.status(200).json({
             success: true,
             client: {
