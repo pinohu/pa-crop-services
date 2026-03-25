@@ -1067,6 +1067,56 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           </div>
         </div>
       </div>
+
+      <!-- ═══ WIRED PORTAL TABS ═══ -->
+      <div id="tab-comp_intel" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">Compliance Intel</h2>
+          <button onclick="loadPortal_comp_intel()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="comp_intel-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
+      <div id="tab-filing_actions" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">Filing Actions</h2>
+          <button onclick="loadPortal_filing_actions()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="filing_actions-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
+      <div id="tab-entity_mgmt" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">My Entities</h2>
+          <button onclick="loadPortal_entity_mgmt()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="entity_mgmt-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
+      <div id="tab-portal_ai" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">AI Tools</h2>
+          <button onclick="loadPortal_portal_ai()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="portal_ai-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
+      <div id="tab-portal_billing" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">Invoices & Tax</h2>
+          <button onclick="loadPortal_portal_billing()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="portal_billing-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
+      <div id="tab-portal_referrals" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-family:var(--serif);font-size:24px">Referral Center</h2>
+          <button onclick="loadPortal_portal_referrals()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
+        </div>
+        <div id="portal_referrals-body"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+      </div>
+
     </main>
   </div><!-- .shell -->
 </div><!-- #portal -->
