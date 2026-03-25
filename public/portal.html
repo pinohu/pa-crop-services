@@ -1484,35 +1484,6 @@ async function loadPortal_portal_referrals() {
       </div>`;
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">'+e.message+'</div>'; }
 }
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Checking compliance status...</div>';
-  try {
-    const [score,dash,diss] = await Promise.allSettled([
-      portalFetch('/api/compliance-score?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
-      portalFetch('/api/compliance-dashboard?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json()),
-      portalFetch('/api/dissolution-predictor?email='+encodeURIComponent(CLIENT.email)).then(r=>r.json())
-    ]);
-    const s=score.value||{}, d=dash.value||{}, di=diss.value||{};
-    el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-        <div style="text-align:center;padding:20px;background:var(--surface,#f8f9fa);border-radius:12px;border:1px solid var(--border,#eee)">
-          <div style="font-size:36px;font-weight:700;color:var(--accent,#C9982A)">${s.score||s.compliance_score||'—'}</div>
-          <div style="font-size:12px;color:var(--ink3,#999);margin-top:4px">Compliance Score</div>
-        </div>
-        <div style="text-align:center;padding:20px;background:var(--surface,#f8f9fa);border-radius:12px;border:1px solid var(--border,#eee)">
-          <div style="font-size:36px;font-weight:700;color:${di.risk==='high'||di.risk_level==='high'?'#dc2626':'#15803d'}">${di.risk_level||di.risk||'Low'}</div>
-          <div style="font-size:12px;color:var(--ink3,#999);margin-top:4px">Dissolution Risk</div>
-        </div>
-        <div style="text-align:center;padding:20px;background:var(--surface,#f8f9fa);border-radius:12px;border:1px solid var(--border,#eee)">
-          <div style="font-size:36px;font-weight:700">${d.days_until||d.next_deadline||'—'}</div>
-          <div style="font-size:12px;color:var(--ink3,#999);margin-top:4px">Days to Next Deadline</div>
-        </div>
-      </div>
-      <div style="background:var(--surface,#f8f9fa);padding:16px;border-radius:12px;border:1px solid var(--border,#eee)">
-        <div style="font-weight:600;margin-bottom:8px">Entity Monitoring</div>
-        <p style="font-size:13px;color:var(--ink2,#666)">Your entity is being monitored for changes at the PA Department of State, court filings, and UCC liens.</p>
-      </div>`;
-  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">Error loading compliance data: '+e.message+'</div>'; }
-}
 
 
 function doLogout() {

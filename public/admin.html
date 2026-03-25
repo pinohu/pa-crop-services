@@ -2275,8 +2275,8 @@ async function load_revenue_intel() {
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
         ${metric('MRR','$'+(m.mrr||m.revenue?.mrr||0))}
         ${metric('ARR','$'+(m.arr||m.revenue?.arr||0))}
-        ${metric('Clients',m.total_clients||m.clients||'—')}
-        ${metric('Churn Risk',c.at_risk||c.risk_count||'0','#dc2626')}
+        ${metric('Clients',m.clients?.total||m.total_clients||'—')}
+        ${metric('Churn Risk',c.at_risk_count||c.at_risk?.length||'0','#dc2626')}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb">
