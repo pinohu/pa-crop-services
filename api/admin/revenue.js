@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!dbConnected) return res.status(200).json({ success: true, mode: 'no_db', _diag: { dbConnected, sdConnected } });
+    if (!dbConnected) return res.status(200).json({ success: true, mode: 'no_db' });
 
     const sql = db.getSql();
 
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     const orgsOverdue = new Set(obligations.filter(o => ["overdue","escalated"].includes(o.obligation_status)).map(o => o.organization_id));
     const upgradeCandidate = clients.filter(c => c.plan_code === "compliance_only" && c.billing_status === "active").length;
     const cohorts = {};
-    for (const c of clients) { const m = (c.created_at || "").slice(0, 7); cohorts[m] = (cohorts[m] || 0) + 1; }
+    for (const c of clients) { const m = (c.created_at ? new Date(c.created_at).toISOString().slice(0, 7) : 'unknown'); cohorts[m] = (cohorts[m] || 0) + 1; }
 
     return res.status(200).json({
       success: true,
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       generated_at: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Revenue analytics error:", err.message, err.stack?.slice(0, 300));
-    return res.status(500).json({ success: false, error: "internal_error", debug: err.message, _diag: { dbConnected: db.isConnected(), sdConnected: db.isSuiteDashConnected() } });
+    console.error("Revenue analytics error:", err.message);
+    return res.status(500).json({ success: false, error: "internal_error" });
   }
 }
