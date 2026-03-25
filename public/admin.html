@@ -1692,10 +1692,12 @@ function closeClientModal() {
   document.getElementById('client-modal').style.display = 'none';
 }
 
-function prefillAgreement() {
+async function prefillAgreement() {
   const c = clientData[currentClientId];
   if (!c) return;
   closeClientModal();
+  // Yield to browser so modal close paints before page switch
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   showPage('agreements');
   document.getElementById('ag-name').value = `${c.first_name||''} ${c.last_name||''}`.trim();
   document.getElementById('ag-email').value = c.email || '';
