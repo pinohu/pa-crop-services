@@ -465,6 +465,16 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           Settings</div>
       </div>
+
+      <div class="nav-group">
+        <div class="nav-label">More Features</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('comp_intel',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🛡</span> Compliance Intel</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('filing_actions',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">📝</span> Filing Actions</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity_mgmt',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🏛</span> My Entities</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_ai',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🤖</span> AI Tools</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_billing',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">💳</span> Invoices & Tax</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_referrals',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🎯</span> Referral Center</div>
+      </div>
       <div class="sidebar-footer">
         <div style="font-size:11px;color:var(--ink3)">PA Registered Office Services, LLC</div>
         <div style="font-size:11px;color:var(--ink3);margin-top:2px">Licensed PA CROP · 15 Pa. C.S. §109</div>
@@ -1112,6 +1122,33 @@ function demoLogin() {
   document.getElementById('login-code').value = 'DEMO2026';
   doLogin();
 }
+
+// ═══ AUTO-WIRED PORTAL LOADERS ═══
+async function loadPortal_comp_intel(){
+  if(!CLIENT)return;const el=document.getElementById('comp_intel-body');const eps=[{r:'/api/compliance-score',l:'Compliance score'},{r:'/api/compliance-dashboard',l:'Compliance dashboard'},{r:'/api/dissolution-predictor',l:'Dissolution predictor'},{r:'/api/entity-monitor',l:'Entity monitor'},{r:'/api/compliance-check',l:'Compliance check'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+async function loadPortal_filing_actions(){
+  if(!CLIENT)return;const el=document.getElementById('filing_actions-body');const eps=[{r:'/api/annual-report-prefill',l:'Annual report prefill'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+async function loadPortal_entity_mgmt(){
+  if(!CLIENT)return;const el=document.getElementById('entity_mgmt-body');const eps=[{r:'/api/entity-intake',l:'Entity intake'},{r:'/api/entity-database',l:'Entity database'},{r:'/api/pa-dos-search',l:'Pa dos search'},{r:'/api/address-verify',l:'Address verify'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+async function loadPortal_portal_ai(){
+  if(!CLIENT)return;const el=document.getElementById('portal_ai-body');const eps=[{r:'/api/assistant/summarize-document',l:'Summarize document'},{r:'/api/assistant/explain-obligation',l:'Explain obligation'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+async function loadPortal_portal_billing(){
+  if(!CLIENT)return;const el=document.getElementById('portal_billing-body');const eps=[{r:'/api/invoice-generate',l:'Invoice generate'},{r:'/api/tax-export',l:'Tax export'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+async function loadPortal_portal_referrals(){
+  if(!CLIENT)return;const el=document.getElementById('portal_referrals-body');const eps=[{r:'/api/referrals/share',l:'Share'},{r:'/api/referral-track',l:'Referral track'}];
+  let h='';for(const ep of eps){try{const url=ep.r+(ep.r.includes('?')?'&':'?')+'email='+encodeURIComponent(CLIENT.email);const r=await fetch(url);let d={};try{d=await r.json()}catch(_){}const ok=r.ok&&d.success!==false;h+=`<div style="background:var(--surface,#fff);padding:16px;border-radius:12px;border:1px solid ${ok?'var(--border,#eee)':'#fca5a5'};margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">${ep.l}</div><span style="font-size:10px;padding:2px 10px;border-radius:10px;background:${ok?'#f0fdf4':'#fef2f2'};color:${ok?'#15803d':'#dc2626'};font-weight:600">${ok?'Available':'Unavailable'}</span></div>${d.score!==undefined?'<div style="font-size:28px;font-weight:700;margin-top:8px;color:var(--accent,#C9982A)">'+d.score+'</div>':''}</div>`}catch(e){h+=`<div style="background:#fef2f2;padding:16px;border-radius:12px;border:1px solid #fca5a5;margin-bottom:12px"><div style="font-weight:600;font-size:15px">${ep.l}</div><div style="font-size:12px;color:#dc2626;margin-top:4px">${e.message}</div></div>`}}el.innerHTML=h;
+}
+
 function doLogout() {
   CLIENT = null; CLIENT_CONTEXT = null;
   document.getElementById('login-screen').style.display = 'flex';
@@ -1200,6 +1237,14 @@ function setTab(id, el) {
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
+
+  // Auto-wired tab loaders
+  if(id==='comp_intel')loadPortal_comp_intel();
+  if(id==='filing_actions')loadPortal_filing_actions();
+  if(id==='entity_mgmt')loadPortal_entity_mgmt();
+  if(id==='portal_ai')loadPortal_portal_ai();
+  if(id==='portal_billing')loadPortal_portal_billing();
+  if(id==='portal_referrals')loadPortal_portal_referrals();
 }
 
 function toggleSidebar() {
