@@ -176,23 +176,19 @@ export default async function handler(req, res) {
         try {
           if (db.isConnected()) {
             const sql = db.getSql();
-            let q = "SELECT c.id, c.owner_name, c.email, c.phone, c.plan_code, c.billing_status, c.onboarding_status, c.referral_code, c.created_at, c.metadata, o.legal_name, o.entity_type, o.dos_number FROM clients c LEFT JOIN organizations o ON c.organization_id = o.id";
-            const conditions = [];
-            if (search) conditions.push(`(c.owner_name ILIKE '%${search.replace(/'/g,"")}%' OR c.email ILIKE '%${search.replace(/'/g,"")}%')`);
-            if (plan) conditions.push(`c.plan_code = '${plan.replace(/'/g,"")}'`);
-            if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
-            q += ' ORDER BY c.created_at DESC LIMIT 50';
-            const rows = await sql(q);
-            const planLabels = { compliance_only:'Compliance Only', business_starter:'Business Starter', business_pro:'Business Pro', business_empire:'Business Empire' };
+            const allRows = await sql`SELECT c.id, c.owner_name, c.email, c.phone, c.plan_code, c.billing_status, c.onboarding_status, c.referral_code, c.created_at, c.metadata, o.legal_name, o.entity_type, o.dos_number FROM clients c LEFT JOIN organizations o ON c.organization_id = o.id ORDER BY c.created_at DESC LIMIT 100`;
+            let rows = allRows || [];
+            if (search) { const s = search.toLowerCase(); rows = rows.filter(c => (c.owner_name||'').toLowerCase().includes(s) || (c.email||'').toLowerCase().includes(s)); }
+            if (plan) rows = rows.filter(c => c.plan_code === plan);
             return res.status(200).json({
-              clients: (rows||[]).map(c => ({
+              clients: rows.map(c => ({
                 id: c.id, name: c.owner_name || c.legal_name || '(unnamed)', email: c.email, phone: c.phone || '',
                 company: c.legal_name || '', plan: c.plan_code || 'compliance_only',
                 since: c.created_at ? new Date(c.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : 'New',
                 accessCode: c.metadata?.access_code || '—', leadScore: c.billing_status === 'active' ? 85 : 30,
                 referralCode: c.referral_code || '', entityType: c.entity_type || '', tags: [], createdAt: c.created_at
               })),
-              total: (rows||[]).length
+              total: rows.length
             });
           }
         } catch(_) {}

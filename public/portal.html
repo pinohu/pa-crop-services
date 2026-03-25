@@ -1563,7 +1563,7 @@ function mountClient(c) {
 }
 async function loadClientContext(c) {
   try {
-    var res = await portalFetch('/api/client-context', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:c.email}) });
+    var res = await portalFetch('/api/client-context', { method:'POST', body:JSON.stringify({email:c.email}) });
     var d = await res.json();
     if (d.success && d.context) {
       CLIENT_CONTEXT = d.context;
@@ -1748,7 +1748,7 @@ function formatDate(d) {
 async function resetCode() {
   const email = document.getElementById('login-email')?.value?.trim();
   if (!email) { showLoginError('Enter your email address first.'); return; }
-  await portalFetch('/api/reset-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) }).catch(()=>{});
+  await portalFetch('/api/reset-code', { method:'POST', body:JSON.stringify({email}) }).catch(()=>{});
   showLoginError('If an account exists, we sent a code reset. Check your inbox.', 'success');
 }
 
