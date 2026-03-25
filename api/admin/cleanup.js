@@ -178,11 +178,22 @@ export default async function handler(req, res) {
         if (org?.id) {
           const existingObl = await sql.query('SELECT * FROM obligations WHERE organization_id = $1 AND obligation_type = $2', [org.id, 'annual_report']);
           if (!existingObl?.length) {
-            await sql.query(
-              `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, due_date, fee_usd, obligation_status, filing_method, source_reason, metadata, created_at, updated_at)
-               VALUES ($1, 'annual_report', 'PA', $2, $3, 'upcoming', 'online', 'admin_seed', $4, now(), now())`,
-              [org.id, '2026-09-30', 0, JSON.stringify({ enforcement_year: 2027 })]
+            // Look up active rule for this entity type
+            const rules = await sql.query(
+              'SELECT id, version FROM rules WHERE entity_type = $1 AND jurisdiction = $2 AND is_active = true LIMIT 1',
+              [entry.org.entity_type, entry.org.jurisdiction || 'PA']
             );
+            const rule = rules?.[0];
+            const ruleId = rule?.id || null;
+            const ruleVersion = rule?.version || '2026.1';
+
+            if (ruleId) {
+              await sql.query(
+                `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, rule_id, rule_version, due_date, fee_usd, obligation_status, escalation_level, filing_method, source_reason, metadata, created_at, updated_at)
+                 VALUES ($1, 'annual_report', 'PA', $2, $3, $4, 7.00, 'upcoming', 'none', 'managed', 'admin_seed', $5, now(), now())`,
+                [org.id, ruleId, ruleVersion, '2026-09-30', JSON.stringify({ enforcement_year: 2027, year: 2026, entity_type: entry.org.entity_type })]
+              );
+            }
           }
         }
 
