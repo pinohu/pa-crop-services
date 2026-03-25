@@ -179,8 +179,8 @@ export default async function handler(req, res) {
           const existingObl = await sql.query('SELECT * FROM obligations WHERE organization_id = $1 AND obligation_type = $2', [org.id, 'annual_report']);
           if (!existingObl?.length) {
             await sql.query(
-              `INSERT INTO obligations (organization_id, obligation_type, filing_method, due_date, obligation_status, filing_fee_cents, metadata)
-               VALUES ($1, 'annual_report', 'online', $2, 'upcoming', $3, $4)`,
+              `INSERT INTO obligations (organization_id, obligation_type, jurisdiction, due_date, fee_usd, obligation_status, filing_method, source_reason, metadata, created_at, updated_at)
+               VALUES ($1, 'annual_report', 'PA', $2, $3, 'upcoming', 'online', 'admin_seed', $4, now(), now())`,
               [org.id, '2026-09-30', 0, JSON.stringify({ enforcement_year: 2027 })]
             );
           }
