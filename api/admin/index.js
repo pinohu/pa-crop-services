@@ -1,6 +1,8 @@
 // PA CROP Services — /api/admin
-// Secure admin API — reads SuiteDash, 20i, Stripe live data
+// Secure admin API — reads Neon Postgres + SuiteDash + 20i + Stripe
 // POST { action, payload, adminKey }
+
+import * as db from '../services/db.js';
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
 const SD_BASE = 'https://app.suitedash.com/secure-api';
@@ -92,11 +94,9 @@ export default async function handler(req, res) {
         // Try Neon Postgres first for clean data
         let neonClients = null;
         try {
-          const { neon } = await import('@neondatabase/serverless');
-          const dbUrl = process.env.DATABASE_URL;
-          if (dbUrl) {
-            const sql = neon(dbUrl);
-            neonClients = await sql.query("SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC");
+          if (db.isConnected()) {
+            const sql = db.getSql();
+            neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC`;
           }
         } catch(_) {}
 
@@ -175,17 +175,15 @@ export default async function handler(req, res) {
         const { page = 1, search = '', plan = '' } = payload;
         // Try Neon first
         try {
-          const { neon } = await import('@neondatabase/serverless');
-          const dbUrl = process.env.DATABASE_URL;
-          if (dbUrl) {
-            const sql = neon(dbUrl);
+          if (db.isConnected()) {
+            const sql = db.getSql();
             let q = "SELECT c.id, c.owner_name, c.email, c.phone, c.plan_code, c.billing_status, c.onboarding_status, c.referral_code, c.created_at, c.metadata, o.legal_name, o.entity_type, o.dos_number FROM clients c LEFT JOIN organizations o ON c.organization_id = o.id";
             const conditions = [];
             if (search) conditions.push(`(c.owner_name ILIKE '%${search.replace(/'/g,"")}%' OR c.email ILIKE '%${search.replace(/'/g,"")}%')`);
             if (plan) conditions.push(`c.plan_code = '${plan.replace(/'/g,"")}'`);
             if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
             q += ' ORDER BY c.created_at DESC LIMIT 50';
-            const rows = await sql.query(q);
+            const rows = await sql(q);
             const planLabels = { compliance_only:'Compliance Only', business_starter:'Business Starter', business_pro:'Business Pro', business_empire:'Business Empire' };
             return res.status(200).json({
               clients: (rows||[]).map(c => ({
@@ -331,12 +329,9 @@ export default async function handler(req, res) {
       case 'leads': {
         // Try Neon first for lead data
         try {
-          const { neon } = await import('@neondatabase/serverless');
-          const dbUrl = process.env.DATABASE_URL;
-          if (dbUrl) {
-            const sql = neon(dbUrl);
-            // Leads are clients with billing_status='inactive' or from intake
-            const rows = await sql.query("SELECT id, owner_name, email, plan_code, billing_status, created_at, metadata FROM clients WHERE billing_status != 'active' ORDER BY created_at DESC LIMIT 50");
+          if (db.isConnected()) {
+            const sql = db.getSql();
+            const rows = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, metadata FROM clients WHERE billing_status != 'active' ORDER BY created_at DESC LIMIT 50`;
             const leads = (rows||[]).map(c => ({
               id: c.id, name: c.owner_name || '(unnamed)', email: c.email,
               score: c.billing_status === 'trialing' ? 80 : 30,
