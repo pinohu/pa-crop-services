@@ -428,21 +428,30 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('documents',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
           Documents</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('compliance',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('comp_intel',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Compliance Intel</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('filing_actions',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-          Compliance</div>
+          Filing Actions</div>
       </div>
       <div class="nav-group">
         <div class="nav-label">Services</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity',this)" id="entity-nav">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
           Entity Health</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity_mgmt',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8l-2 4h12z"/></svg>
+          My Entities</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('hosting',this)" id="hosting-nav" style="display:none">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
           Hosting</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('ai',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           AI Assistant<kbd>A</kbd></div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_ai',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v1h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2V6a4 4 0 014-4z"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          AI Tools</div>
       </div>
       <div class="nav-group">
         <div class="nav-label">Learn & Grow</div>
@@ -458,22 +467,15 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       </div>
       <div class="nav-group">
         <div class="nav-label">Account</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('referral',this)">
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_billing',this)">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Invoices & Tax</div>
+        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_referrals',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-          Referral</div>
+          Referrals</div>
         <div class="nav-item" tabindex="0" role="button" onclick="setTab('settings',this)">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           Settings</div>
-      </div>
-
-      <div class="nav-group">
-        <div class="nav-label">More Features</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('comp_intel',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🛡</span> Compliance Intel</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('filing_actions',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">📝</span> Filing Actions</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('entity_mgmt',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🏛</span> My Entities</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_ai',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🤖</span> AI Tools</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_billing',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">💳</span> Invoices & Tax</div>
-        <div class="nav-item" tabindex="0" role="button" onclick="setTab('portal_referrals',this)"><span style="font-size:16px;width:20px;display:inline-block;text-align:center">🎯</span> Referral Center</div>
       </div>
       <div class="sidebar-footer">
         <div style="font-size:11px;color:var(--ink3)">PA Registered Office Services, LLC</div>
