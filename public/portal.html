@@ -579,6 +579,26 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div class="ai-response" id="ai-dash-response"></div>
         </div>
 
+        <!-- Quick Navigation -->
+        <div class="fade-up" style="animation-delay:.28s;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+          <button onclick="setTab('comp_intel')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
+            <div style="font-size:20px;margin-bottom:4px">🛡</div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Compliance Intel</div>
+          </button>
+          <button onclick="setTab('filing_actions')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
+            <div style="font-size:20px;margin-bottom:4px">📋</div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Filing Actions</div>
+          </button>
+          <button onclick="setTab('portal_ai')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
+            <div style="font-size:20px;margin-bottom:4px">🤖</div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">AI Tools</div>
+          </button>
+          <button onclick="setTab('portal_billing')" style="padding:14px 12px;background:var(--panel,#fff);border:1px solid var(--border,#eee);border-radius:10px;cursor:pointer;text-align:center;font-family:var(--font);transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border,#eee)'">
+            <div style="font-size:20px;margin-bottom:4px">💳</div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Invoices & Tax</div>
+          </button>
+        </div>
+
         <!-- Two Column: Recent Docs + Activity -->
         <div class="grid-2">
           <div class="card fade-up" style="animation-delay:.3s">
@@ -773,7 +793,9 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div style="font-weight:600;color:var(--ink3)">Next deadline</div><div id="ed-deadline">—</div>
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-            <p style="font-size:13px;color:var(--ink3)">Entity status is verified against the PA Department of State. <a href="https://www.corporations.pa.gov/search/corpsearch" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Verify on PA DOS</a></p>
+            <p style="font-size:13px;color:var(--ink3)">Entity status is verified against the PA Department of State.</p>
+            <button onclick="verifyEntityOnDOS()" class="btn btn-ghost btn-sm" style="margin-top:6px">🔍 Verify on PA DOS</button>
+            <div id="dos-verify-result" style="margin-top:8px"></div>
           </div>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Update entity information</h3>
@@ -838,7 +860,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="card" id="bs-hosting-card" style="display:none">
           <div class="card-header">
             <span class="card-title">Website & Email Hosting</span>
-            <a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open 20i panel</a>
+            <button class="btn btn-ghost btn-sm" onclick="loadHostingStatus()">⟳ Refresh</button>
           </div>
           <div class="card-body" id="hosting-content">
             <p style="color:var(--ink3);font-size:13px">Loading hosting status...</p>
@@ -1244,7 +1266,11 @@ async function loadPortal_comp_intel() {
         </div>
       </div>` : ''}
       ${r.grace_period_active ? '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-top:16px;font-size:13px;color:#92400e"><strong>Grace period active:</strong> No enforcement for 2025-2026 reports.</div>' : ''}
-      ${r.filing_url ? '<a href="'+r.filing_url+'" target="_blank" style="display:inline-block;margin-top:16px;padding:12px 24px;background:var(--accent,#C9982A);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">File at PA DOS →</a>' : ''}
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border,#eee);display:flex;gap:12px;flex-wrap:wrap">
+        <button onclick="setTab('filing_actions')" style="padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--font)">View Filing Actions →</button>
+        <button onclick="setTab('portal_ai')" style="padding:10px 20px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font)">🤖 Ask AI About Compliance</button>
+        <button onclick="setTab('entity_mgmt')" style="padding:10px 20px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font)">My Entities →</button>
+      </div>
     `;
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">Error: '+e.message+'</div>'; }
 }
@@ -1277,17 +1303,18 @@ async function loadPortal_filing_actions() {
           ${st !== 'filed' && st !== 'acknowledged' ? '<button onclick="portalOblAction(\''+o.id+'\',\'acknowledge\')" style="padding:8px 16px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:13px;font-weight:500">✓ Acknowledge</button>' : ''}
           ${st !== 'filed' ? '<button onclick="portalOblAction(\''+o.id+'\',\'mark-filed\')" style="padding:8px 16px;border:1px solid #86efac;border-radius:8px;background:#f0fdf4;cursor:pointer;font-size:13px;font-weight:500;color:#15803d">📋 Mark as Filed</button>' : ''}
           <button onclick="portalOblAction('${o.id}','submit-review')" style="padding:8px 16px;border:1px solid #93c5fd;border-radius:8px;background:#eff6ff;cursor:pointer;font-size:13px;font-weight:500;color:#1d4ed8">📤 Submit for Review</button>
+          <button onclick="document.getElementById('ai-obl-input').value='What is the ${o.obligation_type === 'annual_report' ? 'annual report' : o.obligation_type} deadline and what happens if I miss it?';setTab('portal_ai')" style="padding:8px 16px;border:1px solid #e9d5ff;border-radius:8px;background:#faf5ff;cursor:pointer;font-size:13px;font-weight:500;color:#7c3aed">🤖 Ask AI</button>
         </div>
       </div>`;
-    }).join('');
+    }).join('') + '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border,#eee);display:flex;gap:12px;flex-wrap:wrap"><button onclick="setTab(\'comp_intel\')" style="padding:8px 16px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:12px;color:var(--ink3)">← Compliance Intel</button><button onclick="setTab(\'entity_mgmt\')" style="padding:8px 16px;border:1px solid var(--border,#ddd);border-radius:8px;background:var(--surface,#fff);cursor:pointer;font-size:12px;color:var(--ink3)">My Entities →</button></div>';
   } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:16px">'+e.message+'</div>'; }
 }
 async function portalOblAction(oblId, action) {
   try {
     const r = await portalFetch('/api/obligations/'+oblId+'/'+action, {method:'POST', body:JSON.stringify({email:CLIENT.email})});
     const d = await r.json();
-    if (d.success !== false) { loadPortal_filing_actions(); } else { alert(d.error || 'Action failed'); }
-  } catch(e) { alert('Error: '+e.message); }
+    if (d.success !== false) { loadPortal_filing_actions(); } else { showToast(d.error || 'Action failed'); }
+  } catch(e) { showToast('Error: '+e.message); }
 }
 
 // ── 3. MY ENTITIES ──────────────────────────────────────────────────
@@ -1806,10 +1833,10 @@ async function loadHostingTab(c) {
         '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">' +
         '<div class="kpi"><div class="kpi-label">SSL</div><div style="font-size:16px;font-weight:600">' + (data.package.ssl ? 'Active' : 'Pending') + '</div></div>' +
         '<div class="kpi"><div class="kpi-label">Backups</div><div style="font-size:16px;font-weight:600">' + (data.package.backups ? 'Daily' : 'Not included') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Control panel</div><div><a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-weight:600;font-size:14px">my.20i.com</a></div></div>' +
+        '<div class="kpi"><div class="kpi-label">Managed by</div><div style="font-size:14px;font-weight:600;color:var(--accent)">PA CROP Services</div></div>' +
         '</div>';
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up. Check back shortly.</p><p style="margin-top:8px"><a href="https://my.20i.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">my.20i.com</a></p></div>';
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up by our team. Check back shortly.</p><p style="margin-top:8px;font-size:12px">Need help? Call 814-228-2822</p></div>';
     }
   } catch(e) {
     showError('hosting-content', 'Could not load hosting status.', 'loadHostingTab(CLIENT)');
@@ -2019,6 +2046,21 @@ async function updateEntity() {
     } else { msg.textContent = data.error || 'Update failed'; msg.style.color = 'var(--red,#C44536)'; }
     msg.style.display = 'inline';
   } catch(e) { msg.textContent = 'Error'; msg.style.color = 'var(--red,#C44536)'; msg.style.display = 'inline'; }
+}
+
+async function verifyEntityOnDOS() {
+  const el = document.getElementById('dos-verify-result');
+  if (!el) return;
+  const q = CLIENT?.name || CLIENT?.entityNumber || '';
+  if (!q) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">No entity name to search.</div>'; return; }
+  el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">Searching PA DOS for "'+q+'"...</div>';
+  try {
+    const r = await portalFetch('/api/pa-dos-search', {method:'POST', body:JSON.stringify({query:q})});
+    const d = await r.json();
+    const results = d.results || [];
+    if (!results.length) { el.innerHTML = '<div style="font-size:13px;color:var(--ink3)">No results found on PA DOS.</div>'; return; }
+    el.innerHTML = results.map(r => '<div style="background:var(--surface,#f8f9fa);padding:12px;border-radius:8px;margin-bottom:8px;border:1px solid var(--border,#eee)"><div style="font-weight:600">'+r.name+'</div><div style="font-size:12px;color:var(--ink3);margin-top:2px">'+[(r.entity_type||r.type||''),(r.status||''),(r.dos_number||'')].filter(Boolean).join(' · ')+'</div></div>').join('');
+  } catch(e) { el.innerHTML = '<div style="font-size:13px;color:#dc2626">'+e.message+'</div>'; }
 }
 
 // ─── MULTI-ENTITY MANAGEMENT ───
@@ -2367,7 +2409,7 @@ async function loadComplianceTimeline() {
       return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">' +
         '<div style="width:8px;height:8px;border-radius:50%;background:' + (colors[a.priority]||'var(--ink3)') + ';flex-shrink:0"></div>' +
         '<div style="flex:1;font-size:14px">' + a.label + '</div>' +
-        (a.url ? '<a href="' + a.url + '" target="_blank" class="btn btn-accent btn-sm" style="font-size:12px">Go →</a>' : '') +
+        (a.url ? (a.url.startsWith('/') || a.url.includes('pacropservices') ? '<button onclick="setTab(\'' + (a.tab || 'dashboard') + '\')" class="btn btn-accent btn-sm" style="font-size:12px">Go →</button>' : '<a href="' + a.url + '" rel="noopener noreferrer" class="btn btn-accent btn-sm" style="font-size:12px">Go →</a>') : '') +
         '</div>';
     }).join('');
 
@@ -2407,8 +2449,12 @@ async function showPrefill() {
     var d = await r.json();
     if (!d.success) throw new Error('');
     var p = d.prefill;
-    var w = window.open('', '_blank', 'width=500,height=500');
-    w.document.write('<html><head><title>Filing Details</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"></head><body style="padding:24px;font-family:Outfit,sans-serif"><h2>Your Filing Details</h2><div style="background:#f8f8f5;padding:16px;border-radius:8px;font-size:14px;line-height:2"><b>Entity:</b> '+p.entity_name+'<br><b>DOS#:</b> '+(p.entity_number||'N/A')+'<br><b>Type:</b> '+p.entity_type+'<br><b>Office:</b> '+p.registered_office.street+', '+p.registered_office.city+', '+p.registered_office.state+' '+p.registered_office.postal_code+'<br><b>Fee:</b> $'+p.fee+'<br><b>Form:</b> '+p.form_number+'</div><div style="text-align:center;margin-top:20px"><a href="'+p.filing_url+'" target="_blank" style="display:inline-block;padding:14px 28px;background:#C9982A;color:#0C1220;font-weight:700;border-radius:8px;text-decoration:none">File at PA DOS →</a></div></body></html>');
+    var container = document.getElementById('dash-filing-details') || document.createElement('div');
+    container.id = 'dash-filing-details';
+    container.style.cssText = 'margin-top:16px;background:var(--surface,#f8f9fa);border:1px solid var(--border,#eee);border-radius:12px;padding:20px';
+    container.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:16px;font-weight:600;margin:0">Your Filing Details</h3><button onclick="this.closest(\'div\').remove()" style="border:none;background:none;cursor:pointer;font-size:18px;color:var(--ink3)">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px;line-height:1.8"><div><span style="color:var(--ink3)">Entity:</span> <strong>'+p.entity_name+'</strong></div><div><span style="color:var(--ink3)">DOS#:</span> <strong>'+(p.entity_number||'N/A')+'</strong></div><div><span style="color:var(--ink3)">Type:</span> <strong>'+p.entity_type+'</strong></div><div><span style="color:var(--ink3)">Fee:</span> <strong>$'+p.fee+'</strong></div><div style="grid-column:1/-1"><span style="color:var(--ink3)">Office:</span> <strong>'+p.registered_office.street+', '+p.registered_office.city+', '+p.registered_office.state+' '+p.registered_office.postal_code+'</strong></div><div style="grid-column:1/-1"><span style="color:var(--ink3)">Form:</span> <strong>'+p.form_number+'</strong></div></div><div style="margin-top:12px;display:flex;gap:8px"><button onclick="setTab(\'filing_actions\')" style="padding:10px 20px;background:var(--accent,#C9982A);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--font)">Go to Filing Actions →</button></div>';
+    var parent = document.getElementById('tab-dashboard');
+    if (parent && !document.getElementById('dash-filing-details')) parent.appendChild(container);
   } catch (e) { showToast('Could not load filing details'); }
 }
 
@@ -2422,8 +2468,12 @@ async function showHealthReport() {
     if (!d.success) throw new Error('');
     var rpt = d.report;
     var gc = { A:'#15803d', B:'#3b82f6', C:'#f59e0b', D:'#ea580c', F:'#dc2626' };
-    var w = window.open('', '_blank', 'width=700,height=700');
-    w.document.write('<html><head><title>Health Report — '+rpt.organization.legal_name+'</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet"></head><body style="padding:32px;font-family:Outfit,sans-serif;max-width:600px;margin:0 auto"><h1 style="text-align:center;font-size:22px">Compliance Health Report</h1><p style="text-align:center;color:#888;font-size:13px">'+rpt.organization.legal_name+' · '+new Date(rpt.generated_at).toLocaleDateString()+'</p><div style="display:flex;justify-content:center;gap:40px;margin:24px 0"><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.grade+'</div><div style="font-size:12px;color:#888">Grade</div></div><div style="text-align:center"><div style="font-size:56px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.risk_level.toUpperCase()+'</div><div style="font-size:12px;color:#888">Risk</div></div></div><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Entity</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.organization.entity_type+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Status</td><td style="padding:10px;border-bottom:1px solid #eee">'+(rpt.organization.verified?'✅ Verified':'⏳ Pending')+'</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Obligations</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.compliance.total_obligations+' total · '+rpt.compliance.filed+' filed · '+rpt.compliance.overdue+' overdue</td></tr><tr><td style="padding:10px;border-bottom:1px solid #eee;font-weight:600">Documents</td><td style="padding:10px;border-bottom:1px solid #eee">'+rpt.documents.total+' received</td></tr></table>'+(rpt.verification_badge?'<div style="text-align:center;margin:24px 0"><img src="'+rpt.verification_badge.embed_url+'" alt="Verified Badge"><p style="font-size:10px;color:#888;margin-top:8px">Embed: &lt;img src=&quot;'+rpt.verification_badge.embed_url+'&quot;&gt;</p></div>':'')+'<div style="text-align:center;margin:24px 0;font-size:11px;color:#888">PA CROP Services · pacropservices.com</div></body></html>');
+    var container = document.getElementById('dash-health-report') || document.createElement('div');
+    container.id = 'dash-health-report';
+    container.style.cssText = 'margin-top:16px;background:var(--surface,#f8f9fa);border:1px solid var(--border,#eee);border-radius:12px;padding:20px';
+    container.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="font-size:16px;font-weight:600;margin:0">Compliance Health Report</h3><button onclick="this.closest(\'div\').remove()" style="border:none;background:none;cursor:pointer;font-size:18px;color:var(--ink3)">✕</button></div><div style="display:flex;justify-content:center;gap:40px;margin-bottom:20px"><div style="text-align:center"><div style="font-size:48px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.grade+'</div><div style="font-size:11px;color:var(--ink3)">Grade</div></div><div style="text-align:center"><div style="font-size:48px;font-weight:800;color:'+(gc[rpt.compliance.grade]||'#333')+'">'+rpt.compliance.risk_level.toUpperCase()+'</div><div style="font-size:11px;color:var(--ink3)">Risk Level</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px"><div style="padding:10px;background:#fff;border-radius:8px"><span style="color:var(--ink3)">Entity Type</span><div style="font-weight:600">'+rpt.organization.entity_type+'</div></div><div style="padding:10px;background:#fff;border-radius:8px"><span style="color:var(--ink3)">Status</span><div style="font-weight:600">'+(rpt.organization.verified?'✅ Verified':'⏳ Pending')+'</div></div><div style="padding:10px;background:#fff;border-radius:8px"><span style="color:var(--ink3)">Obligations</span><div style="font-weight:600">'+rpt.compliance.total_obligations+' total · '+rpt.compliance.filed+' filed</div></div><div style="padding:10px;background:#fff;border-radius:8px"><span style="color:var(--ink3)">Documents</span><div style="font-weight:600">'+rpt.documents.total+' received</div></div></div>';
+    var parent = document.getElementById('tab-dashboard');
+    if (parent && !document.getElementById('dash-health-report')) parent.appendChild(container);
   } catch (e) { showToast('Health report requires compliance engine connection'); }
 }
 
