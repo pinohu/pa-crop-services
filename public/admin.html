@@ -156,7 +156,10 @@ tr:hover td{background:#fafafa}
 .step-dot.active::before{background:var(--navy);color:#fff;content:attr(data-num)}
 .step-dot:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#e5e7eb}
 .step-dot.done:not(:last-child)::after{background:var(--green)}
-/* ─── Admin Utility Classes ─── */
+/* ─── Admin Utility + Text Classes ─── */
+.at-sm{font-size:13px;color:var(--gray)}.at-xs{font-size:11px;color:var(--gray)}.at-label{font-size:12px;color:var(--gray)}
+.at-label-bold{font-size:12px;font-weight:600;margin-bottom:8px}.at-sub{font-size:12px;color:var(--gray);font-weight:400}
+.at-muted{color:var(--gray);font-size:13px}.at-scroll{max-height:300px;overflow-y:auto}
 .a-metric{text-align:center;padding:14px;background:var(--light);border-radius:8px}
 .a-metric-val{font-size:24px;font-weight:700;color:var(--navy)}
 .a-metric-lbl{font-size:11px;color:var(--gray);margin-top:2px}
@@ -278,7 +281,7 @@ tr:hover td{background:#fafafa}
       <button class="btn btn-outline btn-sm" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('admin-overlay')?.classList.toggle('show')" style="display:none;margin-right:8px" id="admin-menu-btn" aria-label="Toggle menu">☰</button>
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
-        <span style="font-size:12px;color:var(--gray)" id="last-refresh"></span>
+        <span class="at-label" id="last-refresh"></span>
         <button class="btn btn-outline btn-sm" onclick="refreshCurrent()">⟳ Refresh</button>
         <button class="btn btn-gold btn-sm" onclick="showPage('provision')">⚡ New Client</button>
       </div>
@@ -308,11 +311,11 @@ tr:hover td{background:#fafafa}
         <div class="two-col">
           <div class="panel">
             <div class="panel-header"><div class="panel-title">🤖 AI Review Queue</div></div>
-            <div class="panel-body" id="ai-review-body" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+            <div class="panel-body" id="ai-review-body" class="at-scroll"><div class="loading"><div class="spinner"></div>Loading...</div></div>
           </div>
           <div class="panel">
             <div class="panel-header"><div class="panel-title">📄 Document Review Queue</div></div>
-            <div class="panel-body" id="doc-review-body" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+            <div class="panel-body" id="doc-review-body" class="at-scroll"><div class="loading"><div class="spinner"></div>Loading...</div></div>
           </div>
         </div>
 
@@ -361,7 +364,7 @@ tr:hover td{background:#fafafa}
         <div class="panel" style="margin-bottom:20px">
           <div class="panel-header">
             <div class="panel-title">Lead Pipeline</div>
-            <div id="lead-counts" style="font-size:13px;color:var(--gray)"></div>
+            <div id="lead-counts" class="at-sm"></div>
           </div>
         </div>
         <div class="kanban" id="leads-kanban"><div class="loading"><div class="spinner"></div>Loading pipeline...</div></div>
@@ -372,7 +375,7 @@ tr:hover td{background:#fafafa}
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">📋 Annual Report Compliance Tracker</div>
-            <div style="font-size:13px;color:var(--gray)">Deadlines: Corps June 30 · LLCs Sept 30 · All others Dec 31 · 2027 enforcement: dissolution 6 months after missed deadline</div>
+            <div class="at-sm">Deadlines: Corps June 30 · LLCs Sept 30 · All others Dec 31 · 2027 enforcement: dissolution 6 months after missed deadline</div>
           </div>
           <div class="panel-body">
             <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px">
@@ -412,7 +415,7 @@ tr:hover td{background:#fafafa}
             <button class="btn-sm" onclick="loadRulesAdmin()" style="font-size:11px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer">⟳ Load Rules</button>
           </div>
           <div class="panel-body">
-            <div id="rules-admin-list" style="max-height:300px;overflow-y:auto">
+            <div id="rules-admin-list" class="at-scroll">
               <div style="font-size:13px;color:var(--gray);padding:8px 0">Click "Load Rules" to view and manage compliance rules.</div>
             </div>
           </div>
@@ -540,7 +543,7 @@ tr:hover td{background:#fafafa}
           <!-- Churn Risk -->
           <div class="panel">
             <div class="panel-header"><div class="panel-title">⚠️ Churn Risk</div></div>
-            <div class="panel-body" id="rev-churn-list" style="max-height:300px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+            <div class="panel-body" id="rev-churn-list" class="at-scroll"><div class="loading"><div class="spinner"></div>Loading...</div></div>
           </div>
         </div>
 
@@ -548,12 +551,12 @@ tr:hover td{background:#fafafa}
           <!-- Upsell Candidates -->
           <div class="panel">
             <div class="panel-header"><div class="panel-title">⬆️ Upsell Candidates</div></div>
-            <div class="panel-body" id="rev-upsell" style="max-height:250px;overflow-y:auto"><div style="font-size:13px;color:var(--gray)">Loading...</div></div>
+            <div class="panel-body" id="rev-upsell" style="max-height:250px;overflow-y:auto"><div class="at-sm">Loading...</div></div>
           </div>
           <!-- Renewal Forecast -->
           <div class="panel">
             <div class="panel-header"><div class="panel-title">🔄 Renewal Forecast (90 days)</div></div>
-            <div class="panel-body" id="rev-renewals" style="max-height:250px;overflow-y:auto"><div style="font-size:13px;color:var(--gray)">Loading...</div></div>
+            <div class="panel-body" id="rev-renewals" style="max-height:250px;overflow-y:auto"><div class="at-sm">Loading...</div></div>
           </div>
         </div>
       </div>
@@ -640,11 +643,11 @@ tr:hover td{background:#fafafa}
           </div>
           <div class="panel-body">
             <div id="filing-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
-              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-total">—</div><div style="font-size:11px;color:var(--gray)">Total</div></div>
-              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="fq-overdue">—</div><div style="font-size:11px;color:var(--gray)">Overdue</div></div>
-              <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#92400e" id="fq-critical">—</div><div style="font-size:11px;color:var(--gray)">Critical</div></div>
-              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="fq-ready">—</div><div style="font-size:11px;color:var(--gray)">Ready</div></div>
-              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-notready">—</div><div style="font-size:11px;color:var(--gray)">Not Ready</div></div>
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-total">—</div><div class="at-xs">Total</div></div>
+              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="fq-overdue">—</div><div class="at-xs">Overdue</div></div>
+              <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#92400e" id="fq-critical">—</div><div class="at-xs">Critical</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="fq-ready">—</div><div class="at-xs">Ready</div></div>
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-notready">—</div><div class="at-xs">Not Ready</div></div>
             </div>
             <div id="filing-queue-list" style="max-height:500px;overflow-y:auto"><div class="loading"><div class="spinner"></div>Loading filing queue...</div></div>
           </div>
@@ -661,22 +664,22 @@ tr:hover td{background:#fafafa}
           <div class="panel-body">
             <!-- Summary stats -->
             <div id="notif-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
-              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="no-total">—</div><div style="font-size:11px;color:var(--gray)">Total</div></div>
-              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-sent">—</div><div style="font-size:11px;color:var(--gray)">Sent</div></div>
-              <div style="text-align:center;padding:12px;background:#eff6ff;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#3b82f6" id="no-scheduled">—</div><div style="font-size:11px;color:var(--gray)">Scheduled</div></div>
-              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="no-failed">—</div><div style="font-size:11px;color:var(--gray)">Failed</div></div>
-              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-rate">—</div><div style="font-size:11px;color:var(--gray)">Delivery %</div></div>
+              <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="no-total">—</div><div class="at-xs">Total</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-sent">—</div><div class="at-xs">Sent</div></div>
+              <div style="text-align:center;padding:12px;background:#eff6ff;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#3b82f6" id="no-scheduled">—</div><div class="at-xs">Scheduled</div></div>
+              <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="no-failed">—</div><div class="at-xs">Failed</div></div>
+              <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-rate">—</div><div class="at-xs">Delivery %</div></div>
             </div>
           </div>
         </div>
         <div class="two-col">
           <div class="panel">
             <div class="panel-header"><div class="panel-title">❌ Failed Deliveries</div></div>
-            <div class="panel-body" id="notif-failures" style="max-height:300px;overflow-y:auto"><div style="color:var(--gray);font-size:13px">Loading...</div></div>
+            <div class="panel-body" id="notif-failures" class="at-scroll"><div class="at-muted">Loading...</div></div>
           </div>
           <div class="panel">
             <div class="panel-header"><div class="panel-title">📊 Template Performance</div></div>
-            <div class="panel-body" id="notif-templates" style="max-height:300px;overflow-y:auto"><div style="color:var(--gray);font-size:13px">Loading...</div></div>
+            <div class="panel-body" id="notif-templates" class="at-scroll"><div class="at-muted">Loading...</div></div>
           </div>
         </div>
       </div>
@@ -843,15 +846,15 @@ tr:hover td{background:#fafafa}
 </div>
 
       <!-- ═══ WIRED API PAGES ═══ -->
-      <div class="page" id="page-compliance_intel"><div class="panel"><div class="panel-header"><div class="panel-title">🔍 Compliance Intel <span style="font-size:12px;color:var(--gray);font-weight:400">(10 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_compliance_intel()">⟳ Refresh</button></div><div class="panel-body" id="compliance_intel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-entity_ops"><div class="panel"><div class="panel-header"><div class="panel-title">🏢 Entity Operations <span style="font-size:12px;color:var(--gray);font-weight:400">(6 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_entity_ops()">⟳ Refresh</button></div><div class="panel-body" id="entity_ops-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-obligation_mgmt"><div class="panel"><div class="panel-header"><div class="panel-title">📋 Obligation Manager <span style="font-size:12px;color:var(--gray);font-weight:400">(2 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_obligation_mgmt()">⟳ Refresh</button></div><div class="panel-body" id="obligation_mgmt-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-revenue_intel"><div class="panel"><div class="panel-header"><div class="panel-title">💰 Revenue Intel <span style="font-size:12px;color:var(--gray);font-weight:400">(7 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_revenue_intel()">⟳ Refresh</button></div><div class="panel-body" id="revenue_intel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-partner_channel"><div class="panel"><div class="panel-header"><div class="panel-title">🤝 Partner Channel <span style="font-size:12px;color:var(--gray);font-weight:400">(9 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_partner_channel()">⟳ Refresh</button></div><div class="panel-body" id="partner_channel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-content_engine"><div class="panel"><div class="panel-header"><div class="panel-title">✏️ Content Engine <span style="font-size:12px;color:var(--gray);font-weight:400">(9 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_content_engine()">⟳ Refresh</button></div><div class="panel-body" id="content_engine-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-comms_center"><div class="panel"><div class="panel-header"><div class="panel-title">📞 Communications <span style="font-size:12px;color:var(--gray);font-weight:400">(6 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_comms_center()">⟳ Refresh</button></div><div class="panel-body" id="comms_center-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-ops_monitor"><div class="panel"><div class="panel-header"><div class="panel-title">⚙️ Ops Monitor <span style="font-size:12px;color:var(--gray);font-weight:400">(15 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_ops_monitor()">⟳ Refresh</button></div><div class="panel-body" id="ops_monitor-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
-      <div class="page" id="page-doc_pipeline"><div class="panel"><div class="panel-header"><div class="panel-title">📄 Doc Pipeline <span style="font-size:12px;color:var(--gray);font-weight:400">(3 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_doc_pipeline()">⟳ Refresh</button></div><div class="panel-body" id="doc_pipeline-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-compliance_intel"><div class="panel"><div class="panel-header"><div class="panel-title">🔍 Compliance Intel <span class="at-sub">(10 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_compliance_intel()">⟳ Refresh</button></div><div class="panel-body" id="compliance_intel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-entity_ops"><div class="panel"><div class="panel-header"><div class="panel-title">🏢 Entity Operations <span class="at-sub">(6 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_entity_ops()">⟳ Refresh</button></div><div class="panel-body" id="entity_ops-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-obligation_mgmt"><div class="panel"><div class="panel-header"><div class="panel-title">📋 Obligation Manager <span class="at-sub">(2 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_obligation_mgmt()">⟳ Refresh</button></div><div class="panel-body" id="obligation_mgmt-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-revenue_intel"><div class="panel"><div class="panel-header"><div class="panel-title">💰 Revenue Intel <span class="at-sub">(7 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_revenue_intel()">⟳ Refresh</button></div><div class="panel-body" id="revenue_intel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-partner_channel"><div class="panel"><div class="panel-header"><div class="panel-title">🤝 Partner Channel <span class="at-sub">(9 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_partner_channel()">⟳ Refresh</button></div><div class="panel-body" id="partner_channel-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-content_engine"><div class="panel"><div class="panel-header"><div class="panel-title">✏️ Content Engine <span class="at-sub">(9 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_content_engine()">⟳ Refresh</button></div><div class="panel-body" id="content_engine-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-comms_center"><div class="panel"><div class="panel-header"><div class="panel-title">📞 Communications <span class="at-sub">(6 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_comms_center()">⟳ Refresh</button></div><div class="panel-body" id="comms_center-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-ops_monitor"><div class="panel"><div class="panel-header"><div class="panel-title">⚙️ Ops Monitor <span class="at-sub">(15 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_ops_monitor()">⟳ Refresh</button></div><div class="panel-body" id="ops_monitor-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
+      <div class="page" id="page-doc_pipeline"><div class="panel"><div class="panel-header"><div class="panel-title">📄 Doc Pipeline <span class="at-sub">(3 endpoints)</span></div><button class="btn btn-outline btn-sm" onclick="load_doc_pipeline()">⟳ Refresh</button></div><div class="panel-body" id="doc_pipeline-body" aria-live="polite"><div class="loading"><div class="spinner"></div>Loading...</div></div></div></div>
 
 <script>
 const API = '/api/admin';
@@ -954,10 +957,10 @@ async function loadDashboard() {
         <thead><tr><th>Name</th><th>Plan</th><th>Score</th><th>Since</th></tr></thead>
         <tbody>${data.recentClients.map(c => `
           <tr style="cursor:pointer" onclick="openClientModal(${c.id})">
-            <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div></td>
+            <td><div style="font-weight:600">${c.name || '(no name)'}</div><div class="at-xs">${c.email}</div></td>
             <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
             <td><div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c.score}%;background:${scoreColor(c.score)}"></div></div><div style="font-size:11px;color:var(--gray);margin-top:2px">${c.score}/100</div></td>
-            <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+            <td class="at-label">${c.since || '—'}</td>
           </tr>`).join('')}
         </tbody></table></div>`;
     } else {
@@ -976,7 +979,7 @@ async function loadDashboard() {
             <span style="color:var(--gray)">${count} client${count!==1?'s':''}</span>
           </div>
           <div class="score-bar"><div class="score-fill" style="width:${Math.round(count/total*100)}%;background:var(--accent)"></div></div>
-        </div>`).join('') || '<div style="color:var(--gray);font-size:13px">No plan data</div>';
+        </div>`).join('') || '<div class="at-muted">No plan data</div>';
     }
     
     document.getElementById('last-refresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
@@ -1001,12 +1004,12 @@ async function loadCommandCenter() {
     const riskColor = c.overdue + c.escalated > 0 ? '#dc2626' : c.due_soon > 0 ? '#f59e0b' : '#15803d';
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
-        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.current}</div><div style="font-size:11px;color:#6b7280">Current</div></div>
-        <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#92400e">${c.due_soon}</div><div style="font-size:11px;color:#6b7280">Due Soon</div></div>
-        <div style="text-align:center;padding:12px;background:${c.overdue>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.overdue>0?'#dc2626':'#6b7280'}">${c.overdue}</div><div style="font-size:11px;color:#6b7280">Overdue</div></div>
-        <div style="text-align:center;padding:12px;background:${c.escalated>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.escalated>0?'#7f1d1d':'#6b7280'}">${c.escalated}</div><div style="font-size:11px;color:#6b7280">Escalated</div></div>
-        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.filed}</div><div style="font-size:11px;color:#6b7280">Filed</div></div>
-        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:20px;font-weight:700">${c.total}</div><div style="font-size:11px;color:#6b7280">Total</div></div>
+        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.current}</div><div class="at-xs">Current</div></div>
+        <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#92400e">${c.due_soon}</div><div class="at-xs">Due Soon</div></div>
+        <div style="text-align:center;padding:12px;background:${c.overdue>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.overdue>0?'#dc2626':'#6b7280'}">${c.overdue}</div><div class="at-xs">Overdue</div></div>
+        <div style="text-align:center;padding:12px;background:${c.escalated>0?'#fef2f2':'#f8fafc'};border-radius:8px"><div style="font-size:20px;font-weight:700;color:${c.escalated>0?'#7f1d1d':'#6b7280'}">${c.escalated}</div><div class="at-xs">Escalated</div></div>
+        <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#15803d">${c.filed}</div><div class="at-xs">Filed</div></div>
+        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:20px;font-weight:700">${c.total}</div><div class="at-xs">Total</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
         <div style="padding:10px;background:#f8fafc;border-radius:6px"><span style="font-weight:600">AI (24h):</span> ${d.ai.conversations_24h} convos · ${d.ai.low_confidence} low conf · ${d.ai.escalated} escalated</div>
@@ -1102,7 +1105,7 @@ async function loadObligationExplorer() {
       </div>`;
     }).join('');
   } catch (e) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Obligation explorer requires Neon Postgres. Using legacy compliance view.</div>';
+    el.innerHTML = '<div class="at-sm">Obligation explorer requires Neon Postgres. Using legacy compliance view.</div>';
   }
 }
 
@@ -1127,7 +1130,7 @@ async function loadRulesAdmin() {
           </div>`).join('');
         return;
       }
-      el.innerHTML = '<div style="font-size:13px;color:var(--gray)">No rules found.</div>';
+      el.innerHTML = '<div class="at-sm">No rules found.</div>';
       return;
     }
     el.innerHTML = items.map(rule => {
@@ -1147,7 +1150,7 @@ async function loadRulesAdmin() {
       </div>`;
     }).join('');
   } catch (e) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--gray)">Rule management requires Neon Postgres connection.</div>';
+    el.innerHTML = '<div class="at-sm">Rule management requires Neon Postgres connection.</div>';
   }
 }
 
@@ -1177,7 +1180,7 @@ async function loadRevenuePage() {
         </div>
         <div class="score-bar"><div class="score-fill" style="width:${Math.round(p.count/total*100)}%;background:var(--accent)"></div></div>
       </div>`).join('');
-    } else { planEl.innerHTML = '<div style="color:var(--gray);font-size:13px">No plan data yet</div>'; }
+    } else { planEl.innerHTML = '<div class="at-muted">No plan data yet</div>'; }
 
     // Churn risk — from revenue endpoint or link to billing
     const churnEl = document.getElementById('rev-churn-list');
@@ -1197,7 +1200,7 @@ async function loadRevenuePage() {
       </div>`).join('');
     } else if (d.opportunities) {
       upEl.innerHTML = `<div style="padding:8px 0;font-size:13px"><span style="font-weight:600">${d.opportunities.upgrade_candidates || 0}</span> upgrade candidates · <span style="color:var(--accent);font-weight:600">+$${(d.opportunities.potential_mrr_uplift || 0).toFixed(0)}/mo</span> potential uplift<br><a href="#" onclick="showPage('billing');return false" style="color:var(--accent);font-size:12px">See individual candidates →</a></div>`;
-    } else { upEl.innerHTML = '<div style="font-size:13px;color:var(--gray)">No upsell data</div>'; }
+    } else { upEl.innerHTML = '<div class="at-sm">No upsell data</div>'; }
 
     // Renewals
     const renEl = document.getElementById('rev-renewals');
@@ -1231,32 +1234,32 @@ async function loadClient360() {
         <div style="background:#f8fafc;padding:16px;border-radius:8px">
           <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Client</div>
           <div style="font-weight:700;font-size:15px">${c.name || c.email}</div>
-          <div style="font-size:12px;color:var(--gray)">${c.email} · ${c.phone || 'No phone'}</div>
+          <div class="at-label">${c.email} · ${c.phone || 'No phone'}</div>
           <div style="margin-top:8px"><span class="badge ${planBadge(c.plan_code)}">${planLabel(c.plan_code)}</span></div>
           <div style="font-size:11px;color:var(--gray);margin-top:4px">Billing: ${c.billing_status || 'unknown'} · Since ${c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</div>
         </div>
         <div style="background:#f8fafc;padding:16px;border-radius:8px">
           <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Entity</div>
           <div style="font-weight:700;font-size:15px">${o.legal_name || 'No entity'}</div>
-          <div style="font-size:12px;color:var(--gray)">${o.entity_type || ''} · ${o.jurisdiction || ''} · DOS #${o.dos_number || '—'}</div>
+          <div class="at-label">${o.entity_type || ''} · ${o.jurisdiction || ''} · DOS #${o.dos_number || '—'}</div>
           <div style="font-size:12px;margin-top:4px">Status: <span style="font-weight:600;color:${o.entity_status === 'active' ? '#15803d' : '#f59e0b'}">${o.entity_status || 'unknown'}</span></div>
         </div>
         <div style="background:#f8fafc;padding:16px;border-radius:8px;text-align:center">
           <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Health</div>
           <div style="font-size:40px;font-weight:800;color:${gc[h.grade] || '#374151'}">${h.grade || '—'}</div>
-          <div style="font-size:12px;color:var(--gray)">${h.overall || 0}/100 · Risk: ${comp.risk_level || '—'}</div>
+          <div class="at-label">${h.overall || 0}/100 · Risk: ${comp.risk_level || '—'}</div>
         </div>
       </div>
 
       <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Obligations (${(comp.obligations || []).length})</div>
+          <div class="at-label-bold">Obligations (${(comp.obligations || []).length})</div>
           ${(comp.obligations || []).map(o => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb">
             ${o.type?.replace(/_/g,' ')} · Due ${o.due_date} · <span style="color:${o.status==='overdue'?'#dc2626':o.status==='filed_confirmed'?'#15803d':'#374151'};font-weight:600">${o.status?.replace(/_/g,' ')}</span> · ${o.days_until}d
           </div>`).join('') || '<div style="color:var(--gray);font-size:12px">None</div>'}
         </div>
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Documents (${(d.documents || []).length})</div>
+          <div class="at-label-bold">Documents (${(d.documents || []).length})</div>
           ${(d.documents || []).slice(0, 5).map(doc => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb">
             ${doc.type || doc.filename || 'Doc'} · <span style="color:${doc.urgency==='critical'?'#dc2626':'var(--gray)'}">${doc.urgency}</span> · ${doc.review_status}
           </div>`).join('') || '<div style="color:var(--gray);font-size:12px">None</div>'}
@@ -1265,12 +1268,12 @@ async function loadClient360() {
 
       <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Notifications</div>
-          <div style="font-size:12px;color:var(--gray)">Sent: ${d.notifications?.sent || 0} · Pending: ${d.notifications?.pending || 0} · Failed: ${d.notifications?.failed || 0}</div>
+          <div class="at-label-bold">Notifications</div>
+          <div class="at-label">Sent: ${d.notifications?.sent || 0} · Pending: ${d.notifications?.pending || 0} · Failed: ${d.notifications?.failed || 0}</div>
         </div>
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px">Referrals</div>
-          <div style="font-size:12px;color:var(--gray)">Code: ${d.referrals?.code || '—'} · Total: ${d.referrals?.total || 0} · Converted: ${d.referrals?.converted || 0}</div>
+          <div class="at-label-bold">Referrals</div>
+          <div class="at-label">Code: ${d.referrals?.code || '—'} · Total: ${d.referrals?.total || 0} · Converted: ${d.referrals?.converted || 0}</div>
         </div>
       </div>
 
@@ -1287,14 +1290,14 @@ async function loadClient360() {
       </div>` : ''}
 
       <div style="background:#f8fafc;padding:12px;border-radius:8px">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Recent AI Conversations (${(d.ai_conversations || []).length})</div>
+        <div class="at-label-bold">Recent AI Conversations (${(d.ai_conversations || []).length})</div>
         ${(d.ai_conversations || []).slice(0, 5).map(a => `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid #e5e7eb">
           <strong>Q:</strong> ${(a.question || '').slice(0, 100)} · <span style="color:${a.confidence < 0.8 ? '#f59e0b' : '#15803d'}">${(a.confidence * 100).toFixed(0)}%</span> ${a.escalated ? '🚨' : ''}
         </div>`).join('') || '<div style="color:var(--gray);font-size:12px">No conversations</div>'}
       </div>
 
       <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px;max-height:200px;overflow-y:auto">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Audit Trail (${(d.audit_trail || []).length})</div>
+        <div class="at-label-bold">Audit Trail (${(d.audit_trail || []).length})</div>
         ${(d.audit_trail || []).slice(0, 10).map(e => `<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #e5e7eb;color:var(--gray)">
           ${new Date(e.timestamp).toLocaleString()} · <span style="color:#374151">${e.event}</span> · ${e.actor} ${e.reason ? '· ' + e.reason : ''}
         </div>`).join('') || '<div style="color:var(--gray);font-size:12px">No audit events</div>'}
@@ -1333,17 +1336,17 @@ async function loadFilingQueue() {
             <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${uc[i.urgency]}15;color:${uc[i.urgency]};text-transform:uppercase">${i.urgency}</span>
           </div>
           <div style="font-size:12px;color:var(--gray);margin-top:2px">${i.entity_type || ''} · DOS #${i.dos_number || '—'} · Due ${i.due_date} · $${i.fee}</div>
-          <div style="font-size:12px;color:var(--gray)">${i.client_name || ''} · ${i.client_email || ''}</div>
+          <div class="at-label">${i.client_name || ''} · ${i.client_email || ''}</div>
           <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
             <div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:${i.readiness_pct}%;background:${i.readiness_pct >= 100?'#15803d':'#f59e0b'};border-radius:3px"></div></div>
-            <span style="font-size:11px;color:var(--gray)">${i.readiness_pct}% ready</span>
+            <span class="at-xs">${i.readiness_pct}% ready</span>
           </div>
           ${i.missing?.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">Missing: ${i.missing.join(', ')}</div>` : ''}
         </div>
         <a href="${i.filing_url}" rel="noopener" class="btn btn-gold btn-sm" style="font-size:11px;flex-shrink:0">File at PA DOS →</a>
       </div>`;
     }).join('');
-  } catch (e) { document.getElementById('filing-queue-list').innerHTML = '<div style="color:var(--gray);font-size:13px">Filing queue requires Neon Postgres</div>'; }
+  } catch (e) { document.getElementById('filing-queue-list').innerHTML = '<div class="at-muted">Filing queue requires Neon Postgres</div>'; }
 }
 
 // ── Notification Ops ───────────────────────────────────────────────────
@@ -1374,8 +1377,8 @@ async function loadNotifOps() {
     tEl.innerHTML = templates.length ? templates.map(t => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600">${(t.template || '').replace(/_/g, ' ')}</span><span style="color:${t.rate >= 90 ? '#15803d' : t.rate >= 70 ? '#f59e0b' : '#dc2626'};font-weight:600">${t.rate}%</span></div>
       <div style="color:#6b7280">${t.total} total · ${t.delivered} delivered · ${t.failed} failed</div>
-    </div>`).join('') : '<div style="font-size:13px;color:var(--gray)">No template data yet</div>';
-  } catch (e) { document.getElementById('notif-failures').innerHTML = '<div style="color:var(--gray);font-size:13px">Notification ops requires Neon Postgres</div>'; }
+    </div>`).join('') : '<div class="at-sm">No template data yet</div>';
+  } catch (e) { document.getElementById('notif-failures').innerHTML = '<div class="at-muted">Notification ops requires Neon Postgres</div>'; }
 }
 
 // ── Billing & Retention ────────────────────────────────────────────────
@@ -1393,10 +1396,10 @@ async function loadBillingRetention() {
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-        <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#15803d">$${(rev.mrr || 0).toFixed(0)}</div><div style="font-size:11px;color:var(--gray)">MRR</div></div>
-        <div style="text-align:center;padding:16px;background:#fffbeb;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#92400e">$${(rev.arr || 0).toFixed(0)}</div><div style="font-size:11px;color:var(--gray)">ARR</div></div>
-        <div style="text-align:center;padding:16px;background:#f8fafc;border-radius:8px"><div style="font-size:24px;font-weight:700">${rev.total_clients || 0}</div><div style="font-size:11px;color:var(--gray)">Total Clients</div></div>
-        <div style="text-align:center;padding:16px;background:${rev.churn_rate > 0 ? '#fef2f2' : '#f8fafc'};border-radius:8px"><div style="font-size:24px;font-weight:700;color:${rev.churn_rate > 0 ? '#dc2626' : '#374151'}">${rev.churn_rate || 0}%</div><div style="font-size:11px;color:var(--gray)">Churn Rate</div></div>
+        <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#15803d">$${(rev.mrr || 0).toFixed(0)}</div><div class="at-xs">MRR</div></div>
+        <div style="text-align:center;padding:16px;background:#fffbeb;border-radius:8px"><div style="font-size:24px;font-weight:700;color:#92400e">$${(rev.arr || 0).toFixed(0)}</div><div class="at-xs">ARR</div></div>
+        <div style="text-align:center;padding:16px;background:#f8fafc;border-radius:8px"><div style="font-size:24px;font-weight:700">${rev.total_clients || 0}</div><div class="at-xs">Total Clients</div></div>
+        <div style="text-align:center;padding:16px;background:${rev.churn_rate > 0 ? '#fef2f2' : '#f8fafc'};border-radius:8px"><div style="font-size:24px;font-weight:700;color:${rev.churn_rate > 0 ? '#dc2626' : '#374151'}">${rev.churn_rate || 0}%</div><div class="at-xs">Churn Rate</div></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -1432,12 +1435,12 @@ async function loadClients() {
       <thead><tr><th>Client</th><th>Plan</th><th>Entity Type</th><th>Lead Score</th><th>Access Code</th><th>Since</th><th>Actions</th></tr></thead>
       <tbody>${clients.length ? clients.map(c => `
         <tr>
-          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div><div style="font-size:11px;color:var(--gray)">${c.phone || ''}</div></td>
+          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div class="at-xs">${c.email}</div><div class="at-xs">${c.phone || ''}</div></td>
           <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
           <td style="font-size:12px">${c.entityType || '—'}</td>
-          <td><div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c.leadScore}%;background:${scoreColor(c.leadScore)}"></div></div><span style="font-size:11px;color:var(--gray)">${c.leadScore}</span></td>
+          <td><div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c.leadScore}%;background:${scoreColor(c.leadScore)}"></div></div><span class="at-xs">${c.leadScore}</span></td>
           <td><code style="font-size:11px;background:#f0f4ff;padding:2px 8px;border-radius:4px">${c.accessCode || '—'}</code></td>
-          <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+          <td class="at-label">${c.since || '—'}</td>
           <td><button class="btn btn-outline btn-sm" onclick="openClientModal(${c.id})">View</button></td>
         </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray)">No clients found</td></tr>'}
       </tbody></table></div>`;
@@ -1524,15 +1527,15 @@ async function loadEmailStats() {
       <div class="panel"><div class="panel-header"><div class="panel-title">📧 All Clients List</div></div>
         <div class="panel-body">
           <div class="stat-card" style="border:none;padding:0;margin-bottom:12px"><div class="label">Subscribers</div><div class="value">${data.allClients?.total || '—'}</div></div>
-          <div style="font-size:12px;color:var(--gray)">List ID: 1267324</div>
+          <div class="at-label">List ID: 1267324</div>
         </div></div>
       <div class="panel"><div class="panel-header"><div class="panel-title">🤝 CPA Partners List</div></div>
         <div class="panel-body">
           <div class="stat-card" style="border:none;padding:0;margin-bottom:12px"><div class="label">Subscribers</div><div class="value">${data.partners?.total || '—'}</div></div>
-          <div style="font-size:12px;color:var(--gray)">List ID: 1267325</div>
+          <div class="at-label">List ID: 1267325</div>
         </div></div>
       <div class="panel"><div class="panel-header"><div class="panel-title">⚙️ Acumbamail</div></div>
-        <div class="panel-body"><div style="font-size:13px;color:var(--gray)">
+        <div class="panel-body"><div class="at-sm">
           <div>Auth token: <code style="font-size:11px">0cdbad...f780</code></div>
           <div style="margin-top:8px;font-size:12px;color:var(--gray)">Synced with Acumbamail · Managed via PA CROP</div>
         </div></div></div>`;
@@ -1559,10 +1562,10 @@ async function loadCompliance() {
         const risk = c.entityType === 'foreign' ? 'HIGH' : 'LOW';
         const riskBadge = risk === 'HIGH' ? 'badge-red' : 'badge-green';
         return `<tr>
-          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div style="font-size:11px;color:var(--gray)">${c.email}</div></td>
+          <td><div style="font-weight:600">${c.name || '(no name)'}</div><div class="at-xs">${c.email}</div></td>
           <td><span class="badge ${planBadge(c.plan)}">${planLabel(c.plan)}</span></td>
           <td style="font-size:12px">${c.entityType || 'LLC'}</td>
-          <td style="font-size:12px;color:var(--gray)">${c.since || '—'}</td>
+          <td class="at-label">${c.since || '—'}</td>
           <td><span class="badge badge-yellow">Monitoring</span></td>
           <td><span class="badge ${riskBadge}">${risk}</span></td>
         </tr>`;
@@ -1742,7 +1745,7 @@ async function openClientModal(clientId) {
         <div class="form-group"><label>Entity Type</label><div style="font-size:14px">${cf.entity_type || '—'}</div></div>
         <div class="form-group"><label>Lead Score</label>
           <div class="score-bar" style="width:120px;margin-bottom:4px"><div class="score-fill" style="width:${cf.lead_score||0}%;background:${scoreColor(cf.lead_score||0)}"></div></div>
-          <span style="font-size:12px;color:var(--gray)">${cf.lead_score||0}/100</span>
+          <span class="at-label">${cf.lead_score||0}/100</span>
         </div>
         <div class="form-group"><label>Referral Code</label><div style="font-size:13px">${cf.referral_code || '—'}</div></div>
       </div>
@@ -2213,17 +2216,17 @@ async function load_compliance_intel() {
         ${metric('At Risk',d.at_risk||'0','#dc2626')}
       </div>
       <div class="a-grid-2" style="margin-bottom:16px">
-        ${card('Dissolution Risk Predictor','<p style="font-size:13px;color:var(--gray)">AI-powered risk scoring for all entities</p><button onclick="testEndpoint(\'/api/dissolution-predictor\')" class="btn btn-outline btn-sm" style="margin-top:8px">Run Predictor →</button>')}
-        ${card('Legislative Monitor','<p style="font-size:13px;color:var(--gray)">'+(l.updates?l.updates.length+' legislative updates tracked':'Monitoring PA legislation changes')+'</p><button onclick="testEndpoint(\'/api/legislative-monitor\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Updates →</button>')}
+        ${card('Dissolution Risk Predictor','<p class="at-sm">AI-powered risk scoring for all entities</p><button onclick="testEndpoint(\'/api/dissolution-predictor\')" class="btn btn-outline btn-sm" style="margin-top:8px">Run Predictor →</button>')}
+        ${card('Legislative Monitor','<p class="at-sm">'+(l.updates?l.updates.length+' legislative updates tracked':'Monitoring PA legislation changes')+'</p><button onclick="testEndpoint(\'/api/legislative-monitor\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Updates →</button>')}
       </div>
       <div class="a-grid-3">
-        ${card('Risk Model','<p style="font-size:13px;color:var(--gray)">Entity risk scoring engine</p>'+testBtn('/api/risk-model'))}
-        ${card('UCC Monitor','<p style="font-size:13px;color:var(--gray)">'+(u.liens?u.liens.length+' active liens':'Lien tracking active')+'</p>'+testBtn('/api/ucc-monitor'))}
-        ${card('Court Monitor','<p style="font-size:13px;color:var(--gray)">Court filing alerts</p>'+testBtn('/api/court-monitor'))}
+        ${card('Risk Model','<p class="at-sm">Entity risk scoring engine</p>'+testBtn('/api/risk-model'))}
+        ${card('UCC Monitor','<p class="at-sm">'+(u.liens?u.liens.length+' active liens':'Lien tracking active')+'</p>'+testBtn('/api/ucc-monitor'))}
+        ${card('Court Monitor','<p class="at-sm">Court filing alerts</p>'+testBtn('/api/court-monitor'))}
       </div>
       <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        ${card('Industry Benchmarks','<p style="font-size:13px;color:var(--gray)">How your clients compare</p>'+testBtn('/api/benchmark-data'))}
-        ${card('Rule Impact Preview','<p style="font-size:13px;color:var(--gray)">Preview compliance rule changes</p>'+testBtn('/api/admin/rules/impact-preview'))}
+        ${card('Industry Benchmarks','<p class="at-sm">How your clients compare</p>'+testBtn('/api/benchmark-data'))}
+        ${card('Rule Impact Preview','<p class="at-sm">Preview compliance rule changes</p>'+testBtn('/api/admin/rules/impact-preview'))}
       </div>`;
   } catch(e) { el.innerHTML = '<div style="color:#dc2626">Error: '+e.message+'</div>'; }
 }
@@ -2247,9 +2250,9 @@ async function load_entity_ops() {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
-      ${card('Entity Database','<p style="font-size:13px;color:var(--gray)">Browse all registered entities</p>'+testBtn('/api/entity-database'))}
-      ${card('License Verification','<p style="font-size:13px;color:var(--gray)">Check professional licenses</p>'+testBtn('/api/license-verify'))}
-      ${card('State Configuration','<p style="font-size:13px;color:var(--gray)">Manage state filing rules</p>'+testBtn('/api/state-config'))}
+      ${card('Entity Database','<p class="at-sm">Browse all registered entities</p>'+testBtn('/api/entity-database'))}
+      ${card('License Verification','<p class="at-sm">Check professional licenses</p>'+testBtn('/api/license-verify'))}
+      ${card('State Configuration','<p class="at-sm">Manage state filing rules</p>'+testBtn('/api/state-config'))}
     </div>`;
 }
 async function doDOSSearch(){
@@ -2322,9 +2325,9 @@ async function load_revenue_intel() {
         </div>
       </div>
       <div class="a-grid-3">
-        ${card('Tax Export','<p style="font-size:13px;color:var(--gray)">Export tax documents for clients</p>'+testBtn('/api/tax-export'))}
-        ${card('Retargeting Events','<p style="font-size:13px;color:var(--gray)">Pixel event management</p>'+testBtn('/api/retarget'))}
-        ${card('Market Calculator','<p style="font-size:13px;color:var(--gray)">'+(mk.total_market?'$'+mk.total_market.toLocaleString()+' TAM':'Market sizing tool')+'</p>'+testBtn('/api/market-calculator'))}
+        ${card('Tax Export','<p class="at-sm">Export tax documents for clients</p>'+testBtn('/api/tax-export'))}
+        ${card('Retargeting Events','<p class="at-sm">Pixel event management</p>'+testBtn('/api/retarget'))}
+        ${card('Market Calculator','<p class="at-sm">'+(mk.total_market?'$'+mk.total_market.toLocaleString()+' TAM':'Market sizing tool')+'</p>'+testBtn('/api/market-calculator'))}
       </div>`;
   } catch(e) { el.innerHTML = 'Error: '+e.message; }
 }
@@ -2346,17 +2349,17 @@ async function load_partner_channel() {
         ${metric('Conversion',r.conversion_rate?r.conversion_rate+'%':'—')}
       </div>
       <div class="a-grid-2" style="margin-bottom:16px">
-        ${card('Partner Applications','<p style="font-size:13px;color:var(--gray)">Review and onboard new partners</p><button onclick="testEndpoint(\'/api/partner-intake\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Applications →</button>')}
-        ${card('Partner Dashboard','<p style="font-size:13px;color:var(--gray)">Partner performance analytics</p><button onclick="testEndpoint(\'/api/partner-dashboard?partner_id=all\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Analytics →</button>')}
+        ${card('Partner Applications','<p class="at-sm">Review and onboard new partners</p><button onclick="testEndpoint(\'/api/partner-intake\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Applications →</button>')}
+        ${card('Partner Dashboard','<p class="at-sm">Partner performance analytics</p><button onclick="testEndpoint(\'/api/partner-dashboard?partner_id=all\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Analytics →</button>')}
       </div>
       <div class="a-grid-3">
-        ${card('Commission Tracking','<p style="font-size:13px;color:var(--gray)">Calculate and view commissions</p>'+testBtn('/api/partner-commission'))}
-        ${card('Landing Pages','<p style="font-size:13px;color:var(--gray)">Generate co-branded pages</p>'+testBtn('/api/partner-landing'))}
-        ${card('Franchise Setup','<p style="font-size:13px;color:var(--gray)">White-label configuration</p>'+testBtn('/api/franchise-setup'))}
+        ${card('Commission Tracking','<p class="at-sm">Calculate and view commissions</p>'+testBtn('/api/partner-commission'))}
+        ${card('Landing Pages','<p class="at-sm">Generate co-branded pages</p>'+testBtn('/api/partner-landing'))}
+        ${card('Franchise Setup','<p class="at-sm">White-label configuration</p>'+testBtn('/api/franchise-setup'))}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-        ${card('Referral Tracking','<p style="font-size:13px;color:var(--gray)">Track referral conversions</p>'+testBtn('/api/referral-track'))}
-        ${card('Share Links','<p style="font-size:13px;color:var(--gray)">Generate referral share links</p>'+testBtn('/api/referrals/share'))}
+        ${card('Referral Tracking','<p class="at-sm">Track referral conversions</p>'+testBtn('/api/referral-track'))}
+        ${card('Share Links','<p class="at-sm">Generate referral share links</p>'+testBtn('/api/referrals/share'))}
       </div>`;
   } catch(e) { el.innerHTML = 'Error: '+e.message; }
 }
@@ -2383,14 +2386,14 @@ async function load_content_engine() {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
-      ${card('Podcast Generator','<p style="font-size:13px;color:var(--gray)">Script podcast episodes</p>'+testBtn('/api/podcast-generate'))}
-      ${card('Video Scripts','<p style="font-size:13px;color:var(--gray)">Generate video content</p>'+testBtn('/api/video-generate'))}
-      ${card('YouTube Planner','<p style="font-size:13px;color:var(--gray)">Plan video content calendar</p>'+testBtn('/api/youtube-planner'))}
+      ${card('Podcast Generator','<p class="at-sm">Script podcast episodes</p>'+testBtn('/api/podcast-generate'))}
+      ${card('Video Scripts','<p class="at-sm">Generate video content</p>'+testBtn('/api/video-generate'))}
+      ${card('YouTube Planner','<p class="at-sm">Plan video content calendar</p>'+testBtn('/api/youtube-planner'))}
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      ${card('FAQ Expander','<p style="font-size:13px;color:var(--gray)">AI-expand FAQ answers</p>'+testBtn('/api/faq-expand'))}
-      ${card('County SEO Pages','<p style="font-size:13px;color:var(--gray)">Generate county landing pages</p>'+testBtn('/api/county-pages'))}
-      ${card('SEO Pages','<p style="font-size:13px;color:var(--gray)">Programmatic SEO pages</p>'+testBtn('/api/seo-pages'))}
+      ${card('FAQ Expander','<p class="at-sm">AI-expand FAQ answers</p>'+testBtn('/api/faq-expand'))}
+      ${card('County SEO Pages','<p class="at-sm">Generate county landing pages</p>'+testBtn('/api/county-pages'))}
+      ${card('SEO Pages','<p class="at-sm">Programmatic SEO pages</p>'+testBtn('/api/seo-pages'))}
     </div>`;
 }
 async function doGenArticle(){const t=document.getElementById('article-topic').value.trim();if(!t)return toast('Enter a topic','error');document.getElementById('article-result').innerHTML='Generating with AI...';try{const d=await adminFetch('/api/auto-article',{method:'POST',body:JSON.stringify({topic:t,type:document.getElementById('article-type').value})});document.getElementById('article-result').innerHTML=d.article||d.content||'<pre style="font-size:11px">'+JSON.stringify(d,null,2).slice(0,500)+'</pre>'}catch(e){document.getElementById('article-result').innerHTML='Error: '+e.message}}
@@ -2401,14 +2404,14 @@ async function load_comms_center() {
   const el = document.getElementById('comms_center-body');
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-      ${card('WhatsApp','<p style="font-size:13px;color:var(--gray)">Send WhatsApp messages to clients</p><input id="wa-to" placeholder="Phone number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><input id="wa-msg" placeholder="Message" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin-bottom:6px;box-sizing:border-box"><button onclick="doWhatsApp()" class="btn btn-outline btn-sm" style="width:100%">Send</button><div id="wa-result" style="font-size:11px;margin-top:4px"></div>')}
-      ${card('Review Requests','<p style="font-size:13px;color:var(--gray)">Solicit Google/Trustpilot reviews</p><input id="rev-email" placeholder="Client email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doReviewReq()" class="btn btn-outline btn-sm" style="width:100%">Send Request</button><div id="rev-result" style="font-size:11px;margin-top:4px"></div>')}
-      ${card('Test Notification','<p style="font-size:13px;color:var(--gray)">Send a test notification</p><input id="notif-email" placeholder="Recipient email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doNotifTest()" class="btn btn-outline btn-sm" style="width:100%">Send Test</button><div id="notif-result" style="font-size:11px;margin-top:4px"></div>')}
+      ${card('WhatsApp','<p class="at-sm">Send WhatsApp messages to clients</p><input id="wa-to" placeholder="Phone number" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><input id="wa-msg" placeholder="Message" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin-bottom:6px;box-sizing:border-box"><button onclick="doWhatsApp()" class="btn btn-outline btn-sm" style="width:100%">Send</button><div id="wa-result" style="font-size:11px;margin-top:4px"></div>')}
+      ${card('Review Requests','<p class="at-sm">Solicit Google/Trustpilot reviews</p><input id="rev-email" placeholder="Client email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doReviewReq()" class="btn btn-outline btn-sm" style="width:100%">Send Request</button><div id="rev-result" style="font-size:11px;margin-top:4px"></div>')}
+      ${card('Test Notification','<p class="at-sm">Send a test notification</p><input id="notif-email" placeholder="Recipient email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doNotifTest()" class="btn btn-outline btn-sm" style="width:100%">Send Test</button><div id="notif-result" style="font-size:11px;margin-top:4px"></div>')}
     </div>
     <div class="a-grid-3">
-      ${card('Voice Recordings','<p style="font-size:13px;color:var(--gray)">View call recordings (Thoughtly)</p>'+testBtn('/api/voice-recording'))}
-      ${card('Mail Processing','<p style="font-size:13px;color:var(--gray)">Incoming mail scanner</p>'+testBtn('/api/mail-process'))}
-      ${card('Return Mail','<p style="font-size:13px;color:var(--gray)">Handle returned mail</p>'+testBtn('/api/return-mail'))}
+      ${card('Voice Recordings','<p class="at-sm">View call recordings (Thoughtly)</p>'+testBtn('/api/voice-recording'))}
+      ${card('Mail Processing','<p class="at-sm">Incoming mail scanner</p>'+testBtn('/api/mail-process'))}
+      ${card('Return Mail','<p class="at-sm">Handle returned mail</p>'+testBtn('/api/return-mail'))}
     </div>`;
 }
 async function doWhatsApp(){const p=document.getElementById('wa-to').value.trim(),m=document.getElementById('wa-msg').value.trim();if(!p||!m)return toast('Enter phone and message','error');document.getElementById('wa-result').innerHTML='Sending...';try{const d=await adminFetch('/api/whatsapp',{method:'POST',body:JSON.stringify({phone:p,message:m})});document.getElementById('wa-result').innerHTML=d.success?'✅ Sent':'Error: '+(d.error||'Failed')}catch(e){document.getElementById('wa-result').innerHTML='Error: '+e.message}}
@@ -2461,9 +2464,9 @@ async function load_ops_monitor() {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-        ${card('API Analytics','<p style="font-size:13px;color:var(--gray)">API usage patterns</p>'+testBtn('/api/api-analytics'))}
-        ${card('Chatbot Analytics','<p style="font-size:13px;color:var(--gray)">AI assistant usage</p>'+testBtn('/api/chatbot-analytics'))}
-        ${card('Tool Connector','<p style="font-size:13px;color:var(--gray)">External integrations</p>'+testBtn('/api/tool-connector'))}
+        ${card('API Analytics','<p class="at-sm">API usage patterns</p>'+testBtn('/api/api-analytics'))}
+        ${card('Chatbot Analytics','<p class="at-sm">AI assistant usage</p>'+testBtn('/api/chatbot-analytics'))}
+        ${card('Tool Connector','<p class="at-sm">External integrations</p>'+testBtn('/api/tool-connector'))}
       </div>`;
   } catch(e) { el.innerHTML = 'Error: '+e.message; }
 }
@@ -2488,7 +2491,7 @@ async function load_doc_pipeline() {
         <div id="obl-explain-result" style="margin-top:12px;font-size:13px;max-height:200px;overflow:auto"></div>
       </div>
     </div>
-    ${card('Client Health Reports','<p style="font-size:13px;color:var(--gray)">Generate health report for any client entity</p>'+testBtn('/api/client-health-report'))}`;
+    ${card('Client Health Reports','<p class="at-sm">Generate health report for any client entity</p>'+testBtn('/api/client-health-report'))}`;
 }
 async function doDocSummary(){const t=document.getElementById('doc-text').value.trim();if(!t)return toast('Paste document text','error');document.getElementById('doc-summary-result').innerHTML='Summarizing with AI...';try{const d=await adminFetch('/api/assistant/summarize-document',{method:'POST',body:JSON.stringify({text:t})});document.getElementById('doc-summary-result').innerHTML=d.summary||d.answer||'<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('doc-summary-result').innerHTML='Error: '+e.message}}
 async function doOblExplain(){const q=document.getElementById('obl-query').value.trim();if(!q)return toast('Enter a question','error');document.getElementById('obl-explain-result').innerHTML='Thinking...';try{const d=await adminFetch('/api/assistant/explain-obligation',{method:'POST',body:JSON.stringify({question:q})});document.getElementById('obl-explain-result').innerHTML=d.explanation||d.answer||'<pre style="font-size:11px">'+JSON.stringify(d,null,2)+'</pre>'}catch(e){document.getElementById('obl-explain-result').innerHTML='Error: '+e.message}}
