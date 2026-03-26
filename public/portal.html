@@ -839,7 +839,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="card" id="bs-hosting-card" style="display:none">
           <div class="card-header">
             <span class="card-title">Website & Email Hosting</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadHostingStatus()">⟳ Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadHostingTab(CLIENT)">⟳ Refresh</button>
           </div>
           <div class="card-body" id="hosting-content">
             <div class="loading-state"><div class="spinner"></div></div>
@@ -2276,6 +2276,29 @@ async function completeLesson(id) {
 }
 
 // ─── INIT NEW TABS ON AUTH ───
+function showOnboarding(ctx) {
+  var card = document.getElementById('onboard-card');
+  if (!card) return;
+  var steps = { 'ob-account': true, 'ob-portal': true };
+  if (ctx.agreementSigned) steps['ob-agreement'] = true;
+  if (ctx.entityVerified) steps['ob-entity'] = true;
+  if (ctx.documentsReceived > 0) steps['ob-document'] = true;
+  if (ctx.remindersActive) steps['ob-reminders'] = true;
+  var done = Object.keys(steps).length;
+  Object.entries(steps).forEach(function(e) { var el = document.getElementById(e[0]); if (el) el.classList.add('done'); });
+  var pct = Math.round(done / 6 * 100);
+  var fill = document.getElementById('onboard-fill');
+  var pctEl = document.getElementById('onboard-pct');
+  if (fill) fill.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (pct >= 100) card.style.display = 'none';
+}
+function showTierActions(ctx) {
+  var aqUpgrade = document.getElementById('aq-upgrade');
+  if (aqUpgrade && ctx.tier !== 'business_empire') aqUpgrade.style.display = '';
+  var aqHosting = document.getElementById('aq-hosting');
+  if (aqHosting && ctx.includesHosting) aqHosting.style.display = '';
+}
 function initNewTabs() {
   searchKB('');
   loadMultiState();
