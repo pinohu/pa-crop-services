@@ -325,12 +325,27 @@ export default async function handler(req, res) {
               <p style="margin:0"><strong>Access code:</strong> ${accessCode}</p>
             </div>
             ${includesHosting ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
-              <h3 style="color:#0C1220;margin:0 0 8px">🌐 Your Hosting Is Ready</h3>
+              <h3 style="color:#0C1220;margin:0 0 8px">Your Business Website &amp; Hosting Is Live</h3>
               <p style="margin:0 0 8px"><strong>Hosting panel:</strong> <a href="https://my.20i.com">my.20i.com</a></p>
               <p style="margin:0 0 8px"><strong>Username:</strong> ${email}</p>
               <p style="margin:0 0 8px"><strong>Password:</strong> ${hostingPassword}</p>
-              <p style="margin:0;font-size:13px;color:#4A4A4A">Your hosting, email, and SSL are active. Visit our <a href="https://pacropservices.com/welcome">welcome page</a> to choose your domain name.</p>
+              <p style="margin:0 0 8px;font-size:13px;color:#4A4A4A">Your hosting, email mailboxes, WordPress site, and SSL are all active.</p>
+              <p style="margin:0;font-size:13px"><a href="https://pacropservices.com/welcome" style="color:#2D6A2E;font-weight:600">Choose your custom domain name &rarr;</a></p>
             </div>` : ''}
+            ${includesFiling ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
+              <h3 style="color:#0C1220;margin:0 0 8px">Annual Report Filing — We Handle It</h3>
+              <p style="margin:0;font-size:14px;color:#4A4A4A">Your annual report filing is included. We'll prepare the filing, confirm details with you, and submit to PA DOS before your deadline. You don't need to do anything.</p>
+            </div>` : ''}
+            ${results.phoneExtension ? `<div style="background:#FAF9F6;border:1px solid #EBE8E2;border-radius:12px;padding:16px 20px;margin:20px 0">
+              <p style="margin:0;font-size:14px"><strong>Your direct line:</strong> ${results.phoneExtension}</p>
+              <p style="margin:4px 0 0;font-size:13px;color:#4A4A4A">As a ${tierLabel} client, you have a dedicated phone extension for priority support.</p>
+            </div>` : ''}
+            ${includesNotary ? `<p style="font-size:14px;color:#4A4A4A"><strong>Notary services:</strong> Your plan includes 2 free notarizations per year. Request one anytime through your portal.</p>` : ''}
+            <div style="background:linear-gradient(135deg,#0C1220,#1a2540);border-radius:12px;padding:20px;margin:20px 0;color:#fff">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:4px">Your plan includes</div>
+              <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${{ compliance: '$2,240+', starter: '$4,817+', pro: '$9,452+', empire: '$21,582+' }[tier] || '$2,240+'} in services</div>
+              <div style="font-size:13px;opacity:.8">You pay ${{ compliance: '99', starter: '199', pro: '349', empire: '699' }[tier] || '99'}/year. That's a 96%+ savings over purchasing each service individually.</div>
+            </div>
             <p>Questions? Reply to this email or call <a href="tel:8142282822">814-228-2822</a>.</p>
             <div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">
               PA Registered Office Services, LLC · 924 W 23rd St, Erie, PA 16502
@@ -465,6 +480,135 @@ export default async function handler(req, res) {
       }
     } catch (e) {
       results.steps.push({ step: 'partner_cobranding', status: 'warning', error: e.message });
+    }
+  }
+
+  // ── STEP 11: WordPress starter content + theme configuration ─────────
+  if (websitePages > 0 && results.steps.find(s => s.step === '20i_wordpress_install' && s.status === 'done')) {
+    try {
+      await fetch(`${N8N}/crop-wordpress-setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          packageId: results.packageId,
+          domain: suggestedDomain || `${accountSlug}.pacrophosting.com`,
+          entityName: body.entityName || name || '',
+          phone: body.phone || '814-228-2822',
+          tier,
+          websitePages,
+          adminUser: accountSlug,
+          adminPassword: hostingPassword
+        })
+      }).catch(() => null);
+      results.steps.push({ step: 'wordpress_starter_content', status: 'done', pages: websitePages });
+    } catch (e) {
+      results.steps.push({ step: 'wordpress_starter_content', status: 'warning', error: e.message });
+    }
+  }
+
+  // ── STEP 12: Compliance Value Package PDF ────────────────────────────
+  try {
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+    const { getEntityDeadline, computeDaysUntil } = await import('./_compliance.js');
+    const entityType = body.entityType || 'domestic_llc';
+    const deadline = getEntityDeadline(entityType);
+    const daysUntil = computeDaysUntil(entityType);
+    const tierLabels = { compliance: 'Compliance Only ($99/yr)', starter: 'Business Starter ($199/yr)', pro: 'Business Pro ($349/yr)', empire: 'Business Empire ($699/yr)' };
+
+    const pkgRes = await fetch(`${baseUrl}/api/generate-compliance-package`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
+      body: JSON.stringify({
+        email, name: name || '', entityName: body.entityName || name || '',
+        entityType, tier, dosNumber: body.dosNumber || '',
+        accessCode, planLabel: tierLabels[tier] || tier,
+        deadline: deadline.label, daysUntilDeadline: daysUntil
+      })
+    });
+
+    if (pkgRes.ok) {
+      results.steps.push({ step: 'compliance_package_pdf', status: 'done' });
+      results.compliancePackageGenerated = true;
+    } else {
+      results.steps.push({ step: 'compliance_package_pdf', status: 'warning', reason: 'PDF generation returned non-OK' });
+    }
+  } catch (e) {
+    results.steps.push({ step: 'compliance_package_pdf', status: 'warning', error: e.message });
+  }
+
+  // ── STEP 13: Annual Report Pre-Fill Package (Pro/Empire — filing included) ──
+  if (includesFiling && results.neonOrgId) {
+    try {
+      const dbMod = await import('./services/db.js');
+      const obligations = await dbMod.getObligationsForOrg(results.neonOrgId);
+      const annualReport = obligations.find(o => o.obligation_type === 'annual_report');
+      if (annualReport) {
+        await dbMod.updateObligation(annualReport.id, {
+          filing_method: 'managed',
+          metadata: {
+            ...annualReport.metadata,
+            prefill_data: {
+              entity_name: body.entityName || name || '',
+              dos_number: body.dosNumber || '',
+              entity_type: body.entityType || 'domestic_llc',
+              registered_office: '924 W 23rd St, Erie, PA 16502',
+              crop_provider: 'PA Registered Office Services, LLC',
+              prepared_by: 'PA CROP Services',
+              status: 'awaiting_review'
+            },
+            filing_included: true,
+            managed_since: new Date().toISOString()
+          }
+        });
+        results.steps.push({ step: 'annual_report_prefill', status: 'done', obligation_id: annualReport.id });
+      } else {
+        results.steps.push({ step: 'annual_report_prefill', status: 'warning', reason: 'No annual report obligation found' });
+      }
+    } catch (e) {
+      results.steps.push({ step: 'annual_report_prefill', status: 'warning', error: e.message });
+    }
+  }
+
+  // ── STEP 14: Dedicated phone extension (Pro/Empire) ───────────────────
+  if (['pro', 'empire'].includes(tier)) {
+    try {
+      const ext = 100 + Math.floor(Math.random() * 99) + 1;
+      const phoneExt = `814-228-2822 ext ${ext}`;
+
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: {
+            phone_extension: ext,
+            direct_line: phoneExt
+          }
+        });
+      }
+
+      results.phoneExtension = phoneExt;
+      results.steps.push({ step: 'phone_extension', status: 'done', extension: ext, line: phoneExt });
+    } catch (e) {
+      results.steps.push({ step: 'phone_extension', status: 'warning', error: e.message });
+    }
+  }
+
+  // ── STEP 15: Notary credit tracking (Empire) ─────────────────────────
+  if (includesNotary) {
+    try {
+      const currentYear = new Date().getFullYear();
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: {
+            notary_credits: { total: 2, used: 0, year: currentYear },
+            includes_notary: true
+          }
+        });
+      }
+      results.steps.push({ step: 'notary_credits', status: 'done', credits: 2, year: currentYear });
+    } catch (e) {
+      results.steps.push({ step: 'notary_credits', status: 'warning', error: e.message });
     }
   }
 

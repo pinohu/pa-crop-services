@@ -567,7 +567,87 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           </div>
         </div>
 
-        
+        <!-- Plan Benefits Card (tier-aware) -->
+        <div class="card fade-up" id="plan-benefits-card" style="animation-delay:.15s;display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:linear-gradient(135deg,#0C1220,#1a2540);border-radius:12px 12px 0 0;color:#fff">
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6">Your plan</div>
+              <div style="font-size:18px;font-weight:700" id="plan-benefits-name">—</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6">Total service value</div>
+              <div style="font-size:22px;font-weight:700;color:#C9982A" id="plan-benefits-value">—</div>
+            </div>
+          </div>
+          <div style="padding:16px 24px;display:grid;grid-template-columns:1fr 1fr;gap:8px" id="plan-benefits-list"></div>
+          <div id="plan-upgrade-cta" style="padding:0 24px 16px;display:none">
+            <a href="/#pricing" style="font-size:13px;color:#C9982A;font-weight:600;text-decoration:none">Unlock more features — upgrade your plan &rarr;</a>
+          </div>
+        </div>
+
+        <!-- Website & Hosting Card (Starter/Pro/Empire only) -->
+        <div class="card fade-up" id="hosting-benefits-card" style="animation-delay:.2s;display:none">
+          <div class="card-header" style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            Your Website &amp; Hosting
+          </div>
+          <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div class="t-xs" style="margin-bottom:4px">Website</div>
+              <div id="hosting-website-url" style="font-weight:600;font-size:14px;word-break:break-all">Setting up...</div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <a id="hosting-visit-btn" href="#" target="_blank" class="btn-sm" style="font-size:12px;padding:6px 12px;background:var(--cream);border-radius:6px;color:var(--slate);text-decoration:none;font-weight:600">Visit site</a>
+                <a id="hosting-edit-btn" href="https://my.20i.com" target="_blank" class="btn-sm" style="font-size:12px;padding:6px 12px;background:var(--cream);border-radius:6px;color:var(--slate);text-decoration:none;font-weight:600">Edit in WordPress</a>
+              </div>
+            </div>
+            <div>
+              <div class="t-xs" style="margin-bottom:4px">Email accounts</div>
+              <div id="hosting-email-list" style="font-size:13px;color:var(--ink2)">Loading...</div>
+              <a href="https://my.20i.com" target="_blank" style="font-size:12px;color:var(--gold-muted);font-weight:600;text-decoration:none;display:inline-block;margin-top:6px">Manage hosting panel &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filing Status Card (Pro/Empire only) -->
+        <div class="card fade-up" id="filing-status-card" style="animation-delay:.25s;display:none">
+          <div class="card-header" style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Annual Report Filing — We Handle It
+          </div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px">
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;color:var(--slate)" id="filing-status-text">Your annual report filing is managed by our team</div>
+                <div style="font-size:13px;color:var(--ink3);margin-top:4px" id="filing-status-detail">We'll prepare your filing, confirm details with you, and submit to PA DOS before the deadline.</div>
+              </div>
+              <div id="filing-status-badge" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:#E8F0E9;color:#2D6A2E">Managed</div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:4px" id="filing-progress-steps">
+              <div style="flex:1;height:4px;border-radius:2px;background:#6B8F71" title="Plan active"></div>
+              <div style="flex:1;height:4px;border-radius:2px;background:var(--cream3)" title="Data confirmed"></div>
+              <div style="flex:1;height:4px;border-radius:2px;background:var(--cream3)" title="Filed"></div>
+              <div style="flex:1;height:4px;border-radius:2px;background:var(--cream3)" title="Confirmed"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink4);margin-top:4px">
+              <span>Plan active</span><span>Data confirmed</span><span>Filed</span><span>Confirmed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notary Credits Card (Empire only) -->
+        <div class="card fade-up" id="notary-credits-card" style="animation-delay:.3s;display:none">
+          <div class="card-header" style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Notary Services — <span id="notary-credits-remaining">2</span> credits remaining
+          </div>
+          <div class="card-body" style="display:flex;align-items:center;gap:16px">
+            <div style="flex:1">
+              <p style="font-size:13px;color:var(--ink2);margin:0">Your Empire plan includes 2 free notarizations per year. Request a notary for any business document.</p>
+            </div>
+            <button onclick="requestNotary()" class="btn-sm" style="padding:10px 20px;background:var(--slate);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap">Request Notary</button>
+          </div>
+        </div>
+
         <!-- Onboarding Progress (shown for new clients) -->
         <div class="onboard-card" id="onboard-card">
           <div class="onboard-header">
@@ -1544,6 +1624,59 @@ function mountClient(c) {
   if(typeof initSettings === 'function') initSettings(c);
   if(typeof checkUpgradeEligibility === 'function') checkUpgradeEligibility();
   if(typeof initNewTabs === 'function') initNewTabs();
+  initPlanBenefits(c);
+}
+
+function initPlanBenefits(c) {
+  var h = function(id){ return document.getElementById(id); };
+  var tier = c.tier || 'compliance_only';
+  var plans = {
+    compliance_only: { name: 'Compliance Only', price: '$99/yr', value: '$2,240+', features: ['PA registered office address','Mail & process forwarding','5 deadline reminders','Entity status monitoring','Compliance dashboard','AI compliance assistant (24/7)'] },
+    business_starter: { name: 'Business Starter', price: '$199/yr', value: '$4,817+', features: ['Everything in Compliance','1 domain name','5 professional email mailboxes','Website hosting + SSL','1-page business website','Priority email support'] },
+    business_pro: { name: 'Business Pro', price: '$349/yr', value: '$9,452+', features: ['Everything in Starter','Annual report filing included','Unlimited email mailboxes','5-page business website','3 domain names','Direct phone line'] },
+    business_empire: { name: 'Business Empire', price: '$699/yr', value: '$21,582+', features: ['Everything in Pro','Dedicated VPS hosting','3 managed websites','10 domain names','Multi-entity dashboard','2 free notarizations/year'] }
+  };
+  var p = plans[tier] || plans.compliance_only;
+
+  // Plan Benefits Card
+  var card = h('plan-benefits-card');
+  if (card) {
+    card.style.display = 'block';
+    if(h('plan-benefits-name')) h('plan-benefits-name').textContent = p.name + ' — ' + p.price;
+    if(h('plan-benefits-value')) h('plan-benefits-value').textContent = p.value;
+    var list = h('plan-benefits-list');
+    if (list) list.innerHTML = p.features.map(function(f){ return '<div style="font-size:13px;color:var(--ink2);padding:4px 0"><span style="color:var(--sage);margin-right:6px">&#10003;</span>' + f + '</div>'; }).join('');
+    // Show upgrade CTA for non-empire tiers
+    if (tier !== 'business_empire' && h('plan-upgrade-cta')) h('plan-upgrade-cta').style.display = 'block';
+  }
+
+  // Hosting Card (Starter+)
+  var hasHosting = ['business_starter','business_pro','business_empire'].includes(tier);
+  if (hasHosting && h('hosting-benefits-card')) {
+    h('hosting-benefits-card').style.display = 'block';
+    var domain = c.metadata?.hosting_slug ? c.metadata.hosting_slug + '.pacrophosting.com' : 'Setting up...';
+    if(h('hosting-website-url')) h('hosting-website-url').textContent = domain;
+    if(h('hosting-visit-btn')) h('hosting-visit-btn').href = 'https://' + domain;
+    var emails = tier === 'compliance_only' ? [] : ['info@','hello@','admin@','support@','billing@'];
+    if(h('hosting-email-list')) h('hosting-email-list').innerHTML = emails.map(function(e){ return '<div>' + e + domain.replace('.pacrophosting.com','') + '</div>'; }).join('') || 'Not configured';
+  }
+
+  // Filing Status Card (Pro/Empire)
+  var hasFiling = ['business_pro','business_empire'].includes(tier);
+  if (hasFiling && h('filing-status-card')) h('filing-status-card').style.display = 'block';
+
+  // Notary Credits Card (Empire)
+  if (tier === 'business_empire' && h('notary-credits-card')) {
+    h('notary-credits-card').style.display = 'block';
+    var credits = c.metadata?.notary_credits || { total: 2, used: 0 };
+    if(h('notary-credits-remaining')) h('notary-credits-remaining').textContent = (credits.total - credits.used);
+  }
+}
+
+function requestNotary() {
+  var subject = encodeURIComponent('Notary Request — ' + (CLIENT?.name || 'Client'));
+  var body = encodeURIComponent('Hi PA CROP Services,\n\nI would like to use one of my included notarization credits.\n\nDocument type: \nPreferred date: \n\nThank you.');
+  window.open('mailto:hello@pacropservices.com?subject=' + subject + '&body=' + body);
 }
 
 async function loadDeadlineCountdown(c) {
