@@ -16,7 +16,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#FAF9F6;--bg2:#ffffff;--bg3:#F3F1EC;
-  --ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;
+  --ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#6b6b6b;
   --accent:#C9982A;--accent2:#D4A843;--accent-bg:#F5EDDA;--accent-border:#E8D5A0;
   --gold:#C9982A;--gold-bg:#fef3c7;--gold-border:#fcd34d;
   --green:#15803d;--green-bg:#f0fdf4;--green-border:#86efac;
@@ -88,6 +88,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border,#ddd);border-top-color:var(--accent,#C9982A);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+.spinner-sm{width:14px;height:14px;border-width:2px}
+.loading-state{text-align:center;padding:32px;color:var(--ink3)}
+.loading-state .spinner{margin-bottom:8px}
 .fade-up{animation:fadeUp .4s var(--ease) both}
 .fade-in{animation:fadeIn .3s var(--ease) both}
 .stagger>*:nth-child(1){animation-delay:.05s}.stagger>*:nth-child(2){animation-delay:.1s}
