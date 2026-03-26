@@ -715,7 +715,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div class="card-body" id="action-items">
             <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
               <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
-              <div style="font-size:14px;color:var(--ink2)">Loading your compliance status...</div>
+              <div style="font-size:14px;color:var(--ink2)">Redirecting to Compliance Intel...</div>
             </div>
           </div>
         </div>
@@ -727,7 +727,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <button class="btn btn-ghost btn-sm" onclick="loadComplianceTimeline()" style="font-size:12px">⟳ Refresh</button>
           </div>
           <div class="card-body" id="obligation-timeline">
-            <div style="color:var(--ink3);font-size:13px;padding:12px 0">Loading timeline...</div>
+            <div style="color:var(--ink3);font-size:13px;padding:12px 0">Loading...</div>
           </div>
         </div>
 
@@ -939,7 +939,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <div class="card">
             <div class="card-header"><span class="card-title">Your referral code</span></div>
             <div class="card-body" style="text-align:center;padding:28px">
-              <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:16px" id="ref-code">CROP-XXXX</div>
+              <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:16px" id="ref-code"></div>
               <div style="display:flex;gap:8px;justify-content:center">
                 <button class="btn btn-accent btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('ref-code').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy code',2000)">Copy code</button>
                 <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('https://www.pacropservices.com/?ref='+document.getElementById('ref-code').textContent);this.textContent='Link copied!';setTimeout(()=>this.textContent='Copy link',2000)">Copy link</button>
