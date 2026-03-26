@@ -1,4 +1,5 @@
 import { setCors, authenticateRequest } from '../../services/auth.js';
+import { getPartnerClients } from '../../services/db.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -8,9 +9,19 @@ export default async function handler(req, res) {
   const session = await authenticateRequest(req);
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 
-  // Partner client list — requires partner role
   if (!session.roles?.includes('partner') && !session.roles?.includes('ops_admin')) {
     return res.status(403).json({ success: false, error: 'partner_role_required' });
   }
-  return res.status(200).json({ items: [] });
+
+  try {
+    const partnerId = session.partnerId || session.clientId;
+    const clients = await getPartnerClients(partnerId);
+    return res.status(200).json({
+      success: true,
+      items: clients,
+      total: clients.length
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'internal_error' });
+  }
 }

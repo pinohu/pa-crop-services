@@ -1,4 +1,4 @@
-import { setCors, authenticateRequest } from '../services/auth.js';
+import { setCors, authenticateRequest, createSession } from '../services/auth.js';
 import { getClient_ById } from '../services/db.js';
 
 export default async function handler(req, res) {
@@ -11,14 +11,33 @@ export default async function handler(req, res) {
 
   try {
     const client = await getClient_ById(session.clientId);
+
+    // Check if token is close to expiry (< 2 hours remaining) and refresh
+    let refreshedToken = null;
+    if (session.exp) {
+      const hoursRemaining = (session.exp * 1000 - Date.now()) / (1000 * 60 * 60);
+      if (hoursRemaining < 2 && client) {
+        const newSession = await createSession({
+          id: client.id,
+          organization_id: client.organization_id,
+          plan_code: client.plan_code,
+          roles: client.metadata?.roles || ['client'],
+          email: client.email
+        });
+        refreshedToken = newSession;
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      session: { token: null, expires_at: null },
+      session: refreshedToken || { token: null, expires_at: null },
       client: client ? {
         id: client.id,
         organization_id: client.organization_id,
         plan_code: client.plan_code,
-        roles: client.metadata?.roles || ['client']
+        roles: client.metadata?.roles || ['client'],
+        email: client.email,
+        owner_name: client.owner_name
       } : { id: session.clientId, organization_id: session.orgId, plan_code: session.plan, roles: session.roles }
     });
   } catch (err) {
