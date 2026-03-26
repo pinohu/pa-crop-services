@@ -171,14 +171,17 @@ tr:hover td{background:#fafafa}
 .a-empty{text-align:center;padding:24px;color:var(--gray);font-size:13px}
 /* ─── Mobile Responsive ─── */
 @media(max-width:900px){
-  .sidebar{transform:translateX(-100%);position:fixed;z-index:200;height:100vh;transition:transform .3s}
+  .sidebar{transform:translateX(-100%);position:fixed;z-index:200;height:100vh;transition:transform .3s ease}
   .sidebar.open{transform:translateX(0)}
   .content{margin-left:0!important}
   .stat-grid{grid-template-columns:repeat(2,1fr)!important}
+  #admin-menu-btn{display:inline-block!important}
+  #admin-overlay.show{opacity:1;pointer-events:auto}
 }
 @media(max-width:480px){
   .stat-grid{grid-template-columns:1fr!important}
   .panel-body{padding:12px!important}
+  .a-grid-2,.a-grid-3,.a-grid-4{grid-template-columns:1fr!important}
 }
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
@@ -203,6 +206,7 @@ tr:hover td{background:#fafafa}
 <main id="admin-main">
 <div id="admin-app">
   <!-- Sidebar -->
+  <div id="admin-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199;opacity:0;pointer-events:none;transition:opacity .3s" class="" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('show')"></div>
   <div class="sidebar">
     <div class="sidebar-logo">
       <div class="brand">PA <span>CROP</span> Admin</div>
@@ -271,6 +275,7 @@ tr:hover td{background:#fafafa}
   <!-- Main -->
   <div class="main">
     <div class="topbar">
+      <button class="btn btn-outline btn-sm" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('admin-overlay')?.classList.toggle('show')" style="display:none;margin-right:8px" id="admin-menu-btn" aria-label="Toggle menu">☰</button>
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
         <span style="font-size:12px;color:var(--gray)" id="last-refresh"></span>
@@ -890,6 +895,8 @@ function toast(msg, type = 'info') {
 }
 
 function showPage(name) {
+  document.querySelector('.sidebar')?.classList.remove('open');
+  document.getElementById('admin-overlay')?.classList.remove('show');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${name}`)?.classList.add('active');
