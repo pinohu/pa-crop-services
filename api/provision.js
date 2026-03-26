@@ -92,6 +92,80 @@ export default async function handler(req, res) {
     results.steps.push({ step: 'suitedash_contact', status: 'skipped', reason: 'SuiteDash keys not configured' });
   }
 
+  // ── STEP 2b: Create Neon compliance engine records ─────────────────
+  // This bridges the gap: SuiteDash is CRM, Neon is the compliance engine.
+  // Without this, the portal/admin API returns empty data for new clients.
+  try {
+    const dbMod = await import('./services/db.js');
+    if (dbMod.isConnected()) {
+      // Create organization in compliance engine
+      const org = await dbMod.createOrganization({
+        legal_name: body.entityName || name || email.split('@')[0],
+        display_name: body.entityName || name || '',
+        entity_type: body.entityType || 'domestic_llc',
+        jurisdiction: 'PA',
+        dos_number: body.dosNumber || null,
+        entity_status: body.dosNumber ? 'pending_verification' : 'pending_verification',
+        partner_id: body.partnerId || null,
+        metadata: { suitedash_uid: results.suitedashId || null, source: 'provision', tier }
+      });
+
+      if (org) {
+        results.neonOrgId = org.id;
+
+        // Create client record linked to org
+        const client = await dbMod.createClientRecord({
+          organization_id: org.id,
+          owner_name: name || '',
+          email,
+          phone: body.phone || null,
+          plan_code: tier === 'compliance' ? 'compliance_only' : `business_${tier}`,
+          billing_status: 'active',
+          onboarding_status: 'not_started',
+          referral_code: refCode,
+          referred_by_client_id: null,
+          metadata: {
+            access_code: accessCode,
+            access_code_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            roles: ['client'],
+            suitedash_uid: results.suitedashId || null,
+            stripe_session: body.sessionId || sessionId || ''
+          }
+        });
+
+        if (client) {
+          results.neonClientId = client.id;
+
+          // Compute obligations for this entity (annual report, etc.)
+          try {
+            const oblMod = await import('./services/obligations.js');
+            const oblResult = await oblMod.computeObligations(org.id, new Date().getFullYear());
+            results.steps.push({ step: 'neon_obligations', status: 'done', count: oblResult?.created || 0 });
+          } catch (oblErr) {
+            results.steps.push({ step: 'neon_obligations', status: 'warning', error: oblErr.message });
+          }
+        }
+
+        // Audit event
+        await dbMod.writeAuditEvent({
+          actor_type: 'system', actor_id: 'provision',
+          event_type: 'client.provisioned', target_type: 'organization', target_id: org.id,
+          after_json: { email, tier, org_id: org.id, client_id: client?.id },
+          reason: 'stripe_checkout_provision'
+        });
+
+        results.steps.push({ step: 'neon_compliance_engine', status: 'done', org_id: org.id, client_id: client?.id });
+      } else {
+        results.steps.push({ step: 'neon_compliance_engine', status: 'warning', reason: 'org creation returned null' });
+      }
+    } else {
+      results.steps.push({ step: 'neon_compliance_engine', status: 'skipped', reason: 'DATABASE_URL not configured' });
+    }
+  } catch (neonErr) {
+    console.error('Neon provision error:', neonErr.message);
+    results.steps.push({ step: 'neon_compliance_engine', status: 'error', error: neonErr.message });
+  }
+
   // ── STEP 3: 20i Hosting provisioning (Starter, Pro, Empire) ──────────
   if (includesHosting && BEARER) {
     try {
