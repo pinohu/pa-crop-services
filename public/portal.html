@@ -1111,6 +1111,11 @@ let CLIENT = null;
 let CLIENT_CONTEXT = null;
 let CLIENT_TOKEN = null;
 const chatHistory = [];
+function formatEntityType(t) {
+  if (!t) return 'LLC';
+  const map = { domestic_llc:'Domestic LLC', foreign_llc:'Foreign LLC', domestic_corp:'PA Corporation', foreign_corp:'Foreign Corporation', lp:'Limited Partnership', lllp:'LLLP', domestic_nonprofit:'Nonprofit Corp', professional_llc:'Professional LLC' };
+  return map[t] || t.replace(/_/g,' ').replace(/\b(llc|lp|lllp|pa)\b/gi, s=>s.toUpperCase()).replace(/\b\w/g, l=>l.toUpperCase());
+}
 
 async function doLogin() {
   var email = document.getElementById('login-email')?.value?.trim();
@@ -1486,7 +1491,7 @@ function mountClient(c) {
   if(h('entity-display-name')) h('entity-display-name').textContent = c.name || 'Your Entity';
   if(h('client-entity-name')) h('client-entity-name').textContent = c.name || 'your entity';
   if(h('entity-status')) h('entity-status').innerHTML = '<span class="badge badge-green"><span class="dot"></span> Active</span>';
-  if(h('entity-type-display')) h('entity-type-display').textContent = c.entityType ? c.entityType.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : 'LLC';
+  if(h('entity-type-display')) h('entity-type-display').textContent = formatEntityType(c.entityType);
   if(h('plan-display-inline')) h('plan-display-inline').textContent = c.tierLabel || c.tier || 'Plan';
 
   // ── KPI Cards ──
@@ -1497,7 +1502,7 @@ function mountClient(c) {
 
   // ── Entity Details Tab ──
   if(h('ed-dos')) h('ed-dos').textContent = c.entityNumber || '—';
-  if(h('ed-type')) h('ed-type').textContent = c.entityType ? c.entityType.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : '—';
+  if(h('ed-type')) h('ed-type').textContent = formatEntityType(c.entityType);
   if(h('ed-status')) h('ed-status').innerHTML = '<span class="badge badge-green"><span class="dot"></span> Active</span>';
 
   // ── Referral + Settings ──
