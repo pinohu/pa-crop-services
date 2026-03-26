@@ -809,7 +809,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <!-- Savings Banner -->
         <div id="bs-savings" class="card" style="border-left:4px solid var(--accent);margin-bottom:16px">
           <div class="card-body" id="bs-savings-content" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div><div style="font-weight:600;font-size:15px">Loading your value summary...</div></div>
+            <div><div style="font-weight:600;font-size:15px">Your plan includes everything below</div><div style="font-size:13px;color:var(--ink3)">Managed by PA CROP Services — no separate vendors needed</div></div>
           </div>
         </div>
 
@@ -817,7 +817,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="card" style="margin-bottom:16px">
           <div class="card-header"><span class="card-title">Included Services</span></div>
           <div class="card-body" id="bs-services" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="padding:12px;text-align:center;color:var(--ink3);font-size:13px;grid-column:span 2">Loading services...</div>
+            <div style="padding:12px;text-align:center;color:var(--ink3);font-size:13px;grid-column:span 2">Services will appear once your plan is activated</div>
           </div>
         </div>
 
@@ -825,7 +825,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         <div class="card" style="margin-bottom:16px" id="bs-available-card">
           <div class="card-header"><span class="card-title">Available to Activate</span></div>
           <div class="card-body" id="bs-available">
-            <div style="font-size:13px;color:var(--ink3)">Loading...</div>
+            <div style="font-size:13px;color:var(--ink3)">No additional services available at this time</div>
           </div>
         </div>
 
@@ -836,7 +836,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <button class="btn btn-ghost btn-sm" onclick="loadHostingStatus()">⟳ Refresh</button>
           </div>
           <div class="card-body" id="hosting-content">
-            <p style="color:var(--ink3);font-size:13px">Loading hosting status...</p>
+            <div class="loading-state"><div class="spinner"></div></div>
           </div>
         </div>
       </div>
