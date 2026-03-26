@@ -109,9 +109,9 @@ export default async function handler(req, res) {
         try {
           if (db.isConnected()) {
             const sql = db.getSql();
-            neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC`;
+            neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC LIMIT 500`;
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
 
         if (neonClients && neonClients.length > 0) {
           const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
@@ -125,7 +125,7 @@ export default async function handler(req, res) {
           });
           // Get 20i hosting count
           let hostingCount = 0;
-          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(_) {}
+          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(e) { console.error('Admin query error:', e.message); }
           return res.status(200).json({
             stats: { totalClients: neonClients.length, activeSubscriptions: activeSubs, mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, hostingPackages: hostingCount },
             planBreakdown: Object.fromEntries(Object.entries(planCounts).map(([k,v]) => [planLabels[k] || k, v])),
@@ -204,7 +204,7 @@ export default async function handler(req, res) {
               total: rows.length
             });
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
         // Fallback: SuiteDash
         let url = `/contacts?limit=50&offset=${(page-1)*50}&role=client`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -353,7 +353,7 @@ export default async function handler(req, res) {
               cold: leads.filter(l => l.tier === 'cold').length,
             });
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
         // Fall back to SuiteDash
         const data = await sdFetch('/contacts?limit=100&role=lead');
         const leads = (data?.data || []).map(c => ({

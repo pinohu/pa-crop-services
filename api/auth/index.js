@@ -28,8 +28,8 @@ export default async function handler(req, res) {
   const cleanEmail = email.toLowerCase().trim();
   const cleanCode = code.toUpperCase().trim();
 
-  // ── Demo account ─────────────────────────────────────────
-  if (cleanEmail === 'demo@pacropservices.com' && cleanCode === 'DEMO2026') {
+  // ── Demo account (disabled in production) ────────────────
+  if (cleanEmail === 'demo@pacropservices.com' && cleanCode === 'DEMO2026' && process.env.VERCEL_ENV !== 'production') {
     const { createSession } = await import('../services/auth.js');
     const session = await createSession({ id: 'demo', organization_id: 'demo-org', plan_code: 'business_pro', email: cleanEmail, roles: ['client'] });
     return res.status(200).json({

@@ -3,12 +3,22 @@ import { getBillingAccount, writeAuditEvent } from '../services/db.js';
 
 const PLAN_STRIPE_PRICES = {
   compliance_only: null,
+  business_starter: process.env.STRIPE_PRICE_STARTER,
+  business_pro: process.env.STRIPE_PRICE_PRO,
+  business_empire: process.env.STRIPE_PRICE_EMPIRE,
+  // Accept short names too for backwards compatibility
   starter: process.env.STRIPE_PRICE_STARTER,
   pro: process.env.STRIPE_PRICE_PRO,
   empire: process.env.STRIPE_PRICE_EMPIRE
 };
 
-const PLAN_ORDER = ['compliance_only', 'starter', 'pro', 'empire'];
+const PLAN_ORDER = ['compliance_only', 'business_starter', 'starter', 'business_pro', 'pro', 'business_empire', 'empire'];
+
+// Normalize plan codes to canonical form
+function normalizePlan(code) {
+  const map = { starter: 'business_starter', pro: 'business_pro', empire: 'business_empire' };
+  return map[code] || code;
+}
 
 export default async function handler(req, res) {
   setCors(req, res);

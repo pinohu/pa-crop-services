@@ -120,7 +120,7 @@ export async function updateOrganization(id, updates) {
 // Neon stores the client record for compliance engine joins.
 // SuiteDash is the CRM master — portal access, onboarding, invoicing.
 
-export async function getClient_ById(id) {
+export async function getClientById(id) {
   const rows = await query('SELECT * FROM clients WHERE id = $1', [id]);
   return rows?.[0] || null;
 }
@@ -203,7 +203,7 @@ export async function updateClient(id, updates) {
       values.push(JSON.stringify(val));
     }
   }
-  if (!setClauses.length) return await getClient_ById(id);
+  if (!setClauses.length) return await getClientById(id);
   setClauses.push(`updated_at = now()`);
   values.push(id);
   const rows = await query(`UPDATE clients SET ${setClauses.join(', ')} WHERE id = $${i} RETURNING *`, values);

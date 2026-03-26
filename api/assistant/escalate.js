@@ -1,5 +1,5 @@
 import { setCors, authenticateRequest } from '../services/auth.js';
-import { writeAuditEvent, getWorkflowJob } from '../services/db.js';
+import { writeAuditEvent } from '../services/db.js';
 import { notifyAdmin } from '../services/notifications.js';
 
 export default async function handler(req, res) {

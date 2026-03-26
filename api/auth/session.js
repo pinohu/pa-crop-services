@@ -1,5 +1,5 @@
 import { setCors, authenticateRequest, createSession } from '../services/auth.js';
-import { getClient_ById } from '../services/db.js';
+import { getClientById } from '../services/db.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 
   try {
-    const client = await getClient_ById(session.clientId);
+    const client = await getClientById(session.clientId);
 
     // Check if token is close to expiry (< 2 hours remaining) and refresh
     let refreshedToken = null;
