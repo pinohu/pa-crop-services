@@ -1589,41 +1589,86 @@ function mountClient(c) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
   var h = function(id){ return document.getElementById(id); };
+
+  // ── Identity ──
   if(h('entity-name')) h('entity-name').textContent = c.name || 'Your Entity';
+  if(h('entity-display-name')) h('entity-display-name').textContent = c.name || 'Your Entity';
+  if(h('client-entity-name')) h('client-entity-name').textContent = c.name || 'your entity';
   if(h('entity-status')) h('entity-status').innerHTML = '<span class="badge badge-green"><span class="dot"></span> Active</span>';
+  if(h('entity-type-display')) h('entity-type-display').textContent = c.entityType ? c.entityType.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : 'LLC';
+  if(h('plan-display-inline')) h('plan-display-inline').textContent = c.tierLabel || c.tier || 'Plan';
+
+  // ── KPI Cards ──
   if(h('kpi-since')) h('kpi-since').textContent = c.since || 'New';
+  if(h('kpi-tenure')) h('kpi-tenure').textContent = c.tierLabel || c.tier || '';
   if(h('kpi-fee')) h('kpi-fee').textContent = c.price || '$99/yr';
+  if(h('kpi-plan-label')) h('kpi-plan-label').textContent = c.tierLabel || c.tier || '';
+
+  // ── Entity Details Tab ──
+  if(h('ed-dos')) h('ed-dos').textContent = c.entityNumber || '—';
+  if(h('ed-type')) h('ed-type').textContent = c.entityType ? c.entityType.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : '—';
+  if(h('ed-status')) h('ed-status').innerHTML = '<span class="badge badge-green"><span class="dot"></span> Active</span>';
+
+  // ── Referral + Settings ──
   if(h('ref-code')) h('ref-code').textContent = c.refCode || 'N/A';
   if(h('set-ref')) h('set-ref').textContent = c.refCode || 'N/A';
   if(h('settings-email')) h('settings-email').textContent = c.email || '';
   if(h('settings-plan')) h('settings-plan').textContent = (c.tierLabel||c.tier||'') + ' (' + (c.price||'') + ')';
   if(h('settings-since')) h('settings-since').textContent = c.since || '';
+
+  // ── Sidebar + Nav ──
   var hasHosting = ['business_starter','business_pro','business_empire'].includes(c.tier);
   if(h('hosting-nav')) h('hosting-nav').style.display = hasHosting ? 'flex' : 'none';
   if(hasHosting) loadHostingTab(c);
-  setTab('dashboard', document.querySelector('.nav-item'));
-  // Personalize greeting
-  var firstName = (c.name || '').split(' ')[0] || (c.email || '').split('@')[0];
-  if (firstName && firstName !== 'demo') {
-    var wh = document.getElementById('welcome-heading');
-    if (wh) wh.textContent = 'Welcome back, ' + firstName;
-  }
-  var cen = document.getElementById('client-entity-name');
-  if (cen) cen.textContent = c.name || 'your entity';
-  var edn = document.getElementById('entity-display-name');
-  if (edn) edn.textContent = c.name || 'Your Entity';
+
   var tierBadge = document.getElementById('tier-badge');
   if (tierBadge) tierBadge.innerHTML = '<span class="dot"></span> ' + (c.tierLabel || c.tier || 'Plan');
   var avatar = document.getElementById('user-avatar');
   if (avatar) avatar.textContent = (c.name||'?')[0].toUpperCase();
-  loadHealthScore(c);
-  loadClientContext(c);
-  // Set org context for entity health and other org-dependent features
+
+  // ── Entity Dropdown ──
+  var sel = h('entity-select');
+  if (sel) { sel.innerHTML = '<option value="' + (c.organization_id||'') + '" selected>' + (c.name||'Your Entity') + '</option>'; }
+
+  // ── Personalize ──
+  var firstName = (c.name || '').split(' ')[0] || (c.email || '').split('@')[0];
+  if (firstName && firstName !== 'demo') {
+    if(h('welcome-heading')) h('welcome-heading').textContent = 'Welcome back, ' + firstName;
+  }
+
+  // ── Org context ──
   if (c.organization_id) { window._orgId = c.organization_id; }
   window._ctx = { organization_id: c.organization_id, entityName: c.name, entityType: c.entityType, entityNumber: c.entityNumber };
+
+  // ── Async data loaders ──
+  setTab('dashboard', document.querySelector('.nav-item'));
+  loadHealthScore(c);
+  loadClientContext(c);
+  loadDeadlineCountdown(c);
   if(typeof initSettings === 'function') initSettings(c);
   if(typeof checkUpgradeEligibility === 'function') checkUpgradeEligibility();
   if(typeof initNewTabs === 'function') initNewTabs();
+}
+
+async function loadDeadlineCountdown(c) {
+  try {
+    var et = c.entityType || 'domestic_llc';
+    var r = await portalFetch('/api/compliance-check?entity_type=' + encodeURIComponent(et));
+    var d = await r.json();
+    var result = d.result || d;
+    var el = document.getElementById('days-to-deadline');
+    if (el && result.days_until != null) {
+      el.textContent = result.days_until;
+      el.style.color = result.days_until < 30 ? 'var(--red)' : result.days_until < 90 ? 'var(--gold)' : 'var(--green)';
+    }
+    var lbl = el?.nextElementSibling;
+    if (lbl && result.deadline) lbl.textContent = result.deadline + ' deadline';
+    // Also set entity tab deadline
+    var edDl = document.getElementById('ed-deadline');
+    if (edDl && result.deadline) edDl.textContent = result.deadline;
+    var edRpt = document.getElementById('ed-report');
+    if (edRpt) edRpt.textContent = result.days_until != null ? result.days_until + ' days remaining' : '—';
+  } catch(e) {}
 }
 async function loadClientContext(c) {
   try {
