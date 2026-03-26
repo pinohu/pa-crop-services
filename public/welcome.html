@@ -129,7 +129,7 @@ nav .container{display:flex;align-items:center;gap:10px}
 <p style="font-size:14px;color:var(--gray);margin-bottom:16px">So we can start monitoring your compliance immediately.</p>
 <div style="display:flex;flex-direction:column;gap:12px">
 <input type="text" id="ei-name2" placeholder="Entity name (e.g. Acme LLC)" aria-label="Entity name" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-<select id="ei-type" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff">
+<select id="ei-type2" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff">
   <option value="">Entity type...</option>
   <option value="LLC">LLC</option>
   <option value="Corporation">Corporation</option>
@@ -139,7 +139,7 @@ nav .container{display:flex;align-items:center;gap:10px}
   <option value="Foreign Corp">Foreign Corporation</option>
 </select>
 <input type="text" id="ei-dos" placeholder="PA DOS file number (optional)" aria-label="PA DOS file number" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-<input type="email" id="ei-email" placeholder="Your email" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<input type="email" id="ei-email2" placeholder="Your email" aria-label="Email address" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
 <button onclick="submitEntity()" style="background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Submit entity details</button>
 <p id="ei-msg" style="font-size:13px;color:var(--green);display:none"></p>
 </div>
@@ -259,8 +259,8 @@ async function submitEntityIntake() {
 }
 </script>
 <script>
-const params = new URLSearchParams(window.location.search);
-const plan = params.get('plan') || '';
+const params2 = new URLSearchParams(window.location.search);
+const plan = params2.get('plan') || '';
 const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
 const planPrices = { compliance_only: '$99/yr', business_starter: '$199/yr', business_pro: '$349/yr', business_empire: '$699/yr' };
 if (plan && planLabels[plan]) {

@@ -54,10 +54,10 @@ img{max-width:100%;height:auto}
 /* ── Shared Footer ── */
 .site-footer{background:var(--slate);padding:40px 0;border-top:1px solid rgba(255,255,255,.06)}
 .footer-inner{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.footer-left{font-size:13px;color:rgba(255,255,255,.4)}
-.footer-legal{font-size:11px;color:rgba(255,255,255,.25);margin-top:4px}
+.footer-left{font-size:13px;color:rgba(255,255,255,.7)}
+.footer-legal{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px}
 .footer-links{display:flex;gap:24px}
-.footer-links a{font-size:13px;color:rgba(255,255,255,.5);transition:color .2s}
+.footer-links a{font-size:13px;color:rgba(255,255,255,.7);transition:color .2s}
 .footer-links a:hover{color:rgba(255,255,255,.85)}
 @media(max-width:768px){.footer-inner{flex-direction:column;text-align:center}}
 
