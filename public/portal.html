@@ -595,7 +595,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             <div class="kpi-sub">This year</div>
           </div>
           <div class="kpi fade-up">
-            <div class="kpi-label">Health score</div>
+            <div class="kpi-label">Compliance grade</div>
             <div class="kpi-value" id="kpi-health">—</div>
             <div class="kpi-sub" id="kpi-health-risk">Calculating...</div>
           </div>
@@ -1093,7 +1093,7 @@ function updateActivityFeed(ctx) {
     items += '<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Entity status: Active — Good Standing</div><div class="activity-time">Last checked today</div></div></div>';
   }
 
-  items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: ' + (ctx.entityDeadline || 'varies by entity type') + ' (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : 'Self-file at file.dos.pa.gov') + '</div></div></div>';
+  items += '<div class="activity-item"><div class="activity-dot gold"></div><div><div class="activity-text">Annual report deadline: ' + (ctx.entityDeadline || 'varies by entity type') + ' (' + (ctx.daysUntilDeadline || '—') + ' days)</div><div class="activity-time">' + (ctx.includesFiling ? 'We will file for you' : '<a href="#" onclick="setTab(\'filing_actions\');return false" style="color:var(--accent)">View filing actions →</a>') + '</div></div></div>';
 
   if (ctx.referralCount > 0) {
     items += '<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">' + ctx.referralCount + ' referral(s) active</div><div class="activity-time">Earning credits</div></div></div>';
@@ -1584,8 +1584,23 @@ async function loadClientContext(c) {
 
 async function loadHealthScore(c) {
   try {
+    // Try compliance health score first (same as Entity Health tab)
+    if (c.organization_id) {
+      const r = await portalFetch('/api/portal/value?action=health&org=' + c.organization_id);
+      const d = await r.json();
+      if (d.success && d.health) {
+        const h = d.health;
+        const gc = { A:'var(--green)', B:'#3b82f6', C:'var(--gold)', D:'#ea580c', F:'var(--red)' };
+        document.getElementById('kpi-health').textContent = h.grade || (h.overall + '/100');
+        document.getElementById('kpi-health').style.color = gc[h.grade] || 'var(--ink)';
+        const riskLabels = { low:'On track', medium:'Needs attention', high:'At risk', critical:'Critical' };
+        document.getElementById('kpi-health-risk').innerHTML = '<span style="color:' + (gc[h.grade]||'var(--ink3)') + '">' + (riskLabels[h.risk_level] || h.risk_level || '') + '</span>';
+        return;
+      }
+    }
+    // Fallback to portal-health
     const res = await portalFetch('/api/portal-health', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST',
       body:JSON.stringify({email:c.email, tier:c.tier||'compliance_only', name:c.name})
     });
     const d = await res.json();
@@ -1594,7 +1609,7 @@ async function loadHealthScore(c) {
       const riskColors = {very_low:'var(--green)',low:'var(--green)',medium:'var(--gold)',high:'var(--red)',critical:'var(--red)'};
       document.getElementById('kpi-health-risk').innerHTML = '<span style="color:'+(riskColors[d.churnRisk]||'var(--ink3)')+'">'+d.churnRisk.replace('_',' ')+' risk</span>';
     }
-  } catch(e) { document.getElementById('kpi-health').textContent = '—'; document.getElementById('kpi-health-risk').innerHTML = '<span style="color:var(--ink3);font-size:11px">Unavailable</span>'; }
+  } catch(e) { document.getElementById('kpi-health').textContent = '—'; document.getElementById('kpi-health-risk').textContent = ''; }
 }
 
 // ─── NAVIGATION ───
