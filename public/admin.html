@@ -156,6 +156,19 @@ tr:hover td{background:#fafafa}
 .step-dot.active::before{background:var(--navy);color:#fff;content:attr(data-num)}
 .step-dot:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#e5e7eb}
 .step-dot.done:not(:last-child)::after{background:var(--green)}
+/* ─── Admin Utility Classes ─── */
+.a-metric{text-align:center;padding:14px;background:var(--light);border-radius:8px}
+.a-metric-val{font-size:24px;font-weight:700;color:var(--navy)}
+.a-metric-lbl{font-size:11px;color:var(--gray);margin-top:2px}
+.a-card{background:var(--light);padding:16px;border-radius:8px;border:1px solid #e5e7eb}
+.a-card-title{font-weight:600;font-size:14px;margin-bottom:8px}
+.a-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.a-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.a-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.a-input{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box}
+.a-input:focus{border-color:var(--gold);outline:none}
+.a-section{margin-bottom:16px}
+.a-empty{text-align:center;padding:24px;color:var(--gray);font-size:13px}
 /* ─── Mobile Responsive ─── */
 @media(max-width:900px){
   .sidebar{transform:translateX(-100%);position:fixed;z-index:200;height:100vh;transition:transform .3s}
@@ -1228,7 +1241,7 @@ async function loadClient360() {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
           <div style="font-size:12px;font-weight:600;margin-bottom:8px">Obligations (${(comp.obligations || []).length})</div>
           ${(comp.obligations || []).map(o => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #e5e7eb">
@@ -1243,7 +1256,7 @@ async function loadClient360() {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#f8fafc;padding:12px;border-radius:8px">
           <div style="font-size:12px;font-weight:600;margin-bottom:8px">Notifications</div>
           <div style="font-size:12px;color:var(--gray)">Sent: ${d.notifications?.sent || 0} · Pending: ${d.notifications?.pending || 0} · Failed: ${d.notifications?.failed || 0}</div>
@@ -1255,7 +1268,7 @@ async function loadClient360() {
       </div>
 
       ${(d.signals?.churn_risk?.length || d.signals?.upsell_opportunities?.length) ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         ${d.signals.churn_risk?.length ? `<div style="background:#fef2f2;padding:12px;border-radius:8px;border:1px solid #fca5a5">
           <div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:4px">⚠️ Churn Signals</div>
           ${d.signals.churn_risk.map(s => `<div style="font-size:12px;color:#374151;padding:2px 0">${s}</div>`).join('')}
@@ -2163,8 +2176,8 @@ async function adminFetch(url, opts={}) {
   const r = await fetch(url, {headers:{'X-Admin-Key':ADMIN_KEY,'Content-Type':'application/json'},...opts});
   return r.json();
 }
-function card(title,body,color){return `<div style="background:${color||'#f8fafc'};padding:16px;border-radius:8px;border:1px solid #e5e7eb"><div style="font-weight:600;font-size:14px;margin-bottom:8px">${title}</div>${body}</div>`}
-function metric(label,val,color){return `<div style="text-align:center;padding:14px;background:#f8fafc;border-radius:8px"><div style="font-size:24px;font-weight:700;color:${color||'var(--navy)'}">${val}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${label}</div></div>`}
+function card(title,body,color){return `<div class="a-card"${color?' style="background:'+color+'"':''}><div class="a-card-title">${title}</div>${body}</div>`}
+function metric(label,val,color){return `<div class="a-metric"><div class="a-metric-val"${color?' style="color:'+color+'"':''}>${val}</div><div class="a-metric-lbl">${label}</div></div>`}
 function testBtn(route){const id='tb-'+route.replace(/[^a-z0-9]/gi,'_');return `<button onclick="testEndpoint('${route}','${id}')" style="font-size:11px;padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:var(--panel);cursor:pointer;margin-top:6px;transition:all .2s">⚡ Fetch Data</button><div id="${id}" style="margin-top:8px;display:none"></div>`}
 async function testEndpoint(route,containerId){const el=document.getElementById(containerId);if(!el)return;if(el.style.display==='block'){el.style.display='none';return}el.style.display='block';el.innerHTML='<div style="padding:12px;color:var(--gray);font-size:12px"><div class="spinner" style="display:inline-block;width:14px;height:14px;border-width:2px;margin-right:6px;vertical-align:middle"></div>Fetching...</div>';try{const r=await fetch(route,{headers:{'X-Admin-Key':ADMIN_KEY}});const d=await r.json();el.innerHTML=renderAPIResult(d)}catch(e){el.innerHTML='<div style="padding:12px;color:#dc2626;font-size:12px;background:#fef2f2;border-radius:8px">Error: '+e.message+'</div>'}}
 function renderAPIResult(d){if(!d||typeof d!=='object')return '<div style="padding:12px;color:var(--gray);font-size:13px">No data returned</div>';const keys=Object.keys(d);let html='<div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;max-height:320px;overflow-y:auto">';if(d.success===false)html+='<div style="color:#dc2626;font-weight:600;margin-bottom:8px">⚠ '+( d.error||'Request failed')+'</div>';const skip=new Set(['success','html','csv']);keys.forEach(k=>{if(skip.has(k))return;const v=d[k];if(v===null||v===undefined)return;if(typeof v==='object'&&!Array.isArray(v)){html+='<div style="margin-bottom:10px"><div style="font-weight:600;color:var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">'+k+'</div>';Object.entries(v).forEach(([sk,sv])=>{html+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">'+sk+'</span><span style="font-weight:500">'+( typeof sv==='object'?JSON.stringify(sv):sv)+'</span></div>'});html+='</div>'}else if(Array.isArray(v)){html+='<div style="margin-bottom:10px"><div style="font-weight:600;color:var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">'+k+' ('+v.length+')</div>';v.slice(0,5).forEach(item=>{if(typeof item==='object'){html+='<div style="background:#f9fafb;padding:8px;border-radius:6px;margin-bottom:4px;font-size:12px">';Object.entries(item).forEach(([ik,iv])=>{html+='<span style="color:var(--gray)">'+ik+':</span> <strong>'+(typeof iv==='object'?JSON.stringify(iv):iv)+'</strong> · '});html+='</div>'}else html+='<div style="padding:2px 0">'+item+'</div>'});if(v.length>5)html+='<div style="color:var(--gray);font-size:11px;margin-top:4px">+ '+(v.length-5)+' more</div>';html+='</div>'}else{html+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">'+k+'</span><span style="font-weight:500">'+v+'</span></div>'}});if(d.html){html+='<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11px;color:var(--accent)">View rendered HTML</summary><div style="margin-top:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden"><iframe srcdoc="'+d.html.replace(/"/g,'&quot;')+'" style="width:100%;height:300px;border:none"></iframe></div></details>'}if(d.csv){html+='<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11px;color:var(--accent)">View CSV data</summary><pre style="margin-top:8px;font-size:11px;padding:10px;background:#f9fafb;border-radius:8px;overflow-x:auto;max-height:200px">'+d.csv+'</pre></details>'}html+='</div>';return html}
@@ -2192,11 +2205,11 @@ async function load_compliance_intel() {
         ${metric('Overdue',d.overdue||'0','#dc2626')}
         ${metric('At Risk',d.at_risk||'0','#dc2626')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         ${card('Dissolution Risk Predictor','<p style="font-size:13px;color:var(--gray)">AI-powered risk scoring for all entities</p><button onclick="testEndpoint(\'/api/dissolution-predictor\')" class="btn btn-outline btn-sm" style="margin-top:8px">Run Predictor →</button>')}
         ${card('Legislative Monitor','<p style="font-size:13px;color:var(--gray)">'+(l.updates?l.updates.length+' legislative updates tracked':'Monitoring PA legislation changes')+'</p><button onclick="testEndpoint(\'/api/legislative-monitor\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Updates →</button>')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="a-grid-3">
         ${card('Risk Model','<p style="font-size:13px;color:var(--gray)">Entity risk scoring engine</p>'+testBtn('/api/risk-model'))}
         ${card('UCC Monitor','<p style="font-size:13px;color:var(--gray)">'+(u.liens?u.liens.length+' active liens':'Lien tracking active')+'</p>'+testBtn('/api/ucc-monitor'))}
         ${card('Court Monitor','<p style="font-size:13px;color:var(--gray)">Court filing alerts</p>'+testBtn('/api/court-monitor'))}
@@ -2281,27 +2294,27 @@ async function load_revenue_intel() {
     const c = churn.value||{};
     const mk = mkt.value||{};
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      <div class="a-grid-4" style="margin-bottom:16px">
         ${metric('MRR','$'+(m.mrr||m.revenue?.mrr||0))}
         ${metric('ARR','$'+(m.arr||m.revenue?.arr||0))}
         ${metric('Clients',m.clients?.total||m.total_clients||'—')}
         ${metric('Churn Risk',c.at_risk_count||c.at_risk?.length||'0','#dc2626')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb">
           <h4 style="margin-bottom:8px">Invoice Generator</h4>
-          <input id="inv-email" type="email" placeholder="Client email" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <input id="inv-email" type="email" placeholder="Client email" class="a-input" style="margin-bottom:8px">
           <button onclick="doInvoice()" class="btn btn-gold btn-sm">Generate Invoice</button>
           <div id="inv-result" style="margin-top:8px;font-size:12px"></div>
         </div>
         <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb">
           <h4 style="margin-bottom:8px">Lead Qualifier</h4>
-          <input id="lead-email" type="email" placeholder="Lead email" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <input id="lead-email" type="email" placeholder="Lead email" class="a-input" style="margin-bottom:8px">
           <button onclick="doQualify()" class="btn btn-outline btn-sm">Score Lead</button>
           <div id="lead-result" style="margin-top:8px;font-size:12px"></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="a-grid-3">
         ${card('Tax Export','<p style="font-size:13px;color:var(--gray)">Export tax documents for clients</p>'+testBtn('/api/tax-export'))}
         ${card('Retargeting Events','<p style="font-size:13px;color:var(--gray)">Pixel event management</p>'+testBtn('/api/retarget'))}
         ${card('Market Calculator','<p style="font-size:13px;color:var(--gray)">'+(mk.total_market?'$'+mk.total_market.toLocaleString()+' TAM':'Market sizing tool')+'</p>'+testBtn('/api/market-calculator'))}
@@ -2319,17 +2332,17 @@ async function load_partner_channel() {
     const [rep] = await Promise.allSettled([adminFetch('/api/partner-report')]);
     const r = rep.value||{};
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      <div class="a-grid-4" style="margin-bottom:16px">
         ${metric('Partners',r.total_partners||'0')}
         ${metric('Active Referrals',r.active_referrals||'0','#15803d')}
         ${metric('Commissions',r.total_commissions?'$'+r.total_commissions:'$0')}
         ${metric('Conversion',r.conversion_rate?r.conversion_rate+'%':'—')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         ${card('Partner Applications','<p style="font-size:13px;color:var(--gray)">Review and onboard new partners</p><button onclick="testEndpoint(\'/api/partner-intake\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Applications →</button>')}
         ${card('Partner Dashboard','<p style="font-size:13px;color:var(--gray)">Partner performance analytics</p><button onclick="testEndpoint(\'/api/partner-dashboard?partner_id=all\')" class="btn btn-outline btn-sm" style="margin-top:8px">View Analytics →</button>')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="a-grid-3">
         ${card('Commission Tracking','<p style="font-size:13px;color:var(--gray)">Calculate and view commissions</p>'+testBtn('/api/partner-commission'))}
         ${card('Landing Pages','<p style="font-size:13px;color:var(--gray)">Generate co-branded pages</p>'+testBtn('/api/partner-landing'))}
         ${card('Franchise Setup','<p style="font-size:13px;color:var(--gray)">White-label configuration</p>'+testBtn('/api/franchise-setup'))}
@@ -2385,7 +2398,7 @@ async function load_comms_center() {
       ${card('Review Requests','<p style="font-size:13px;color:var(--gray)">Solicit Google/Trustpilot reviews</p><input id="rev-email" placeholder="Client email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doReviewReq()" class="btn btn-outline btn-sm" style="width:100%">Send Request</button><div id="rev-result" style="font-size:11px;margin-top:4px"></div>')}
       ${card('Test Notification','<p style="font-size:13px;color:var(--gray)">Send a test notification</p><input id="notif-email" placeholder="Recipient email" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;margin:6px 0;box-sizing:border-box"><button onclick="doNotifTest()" class="btn btn-outline btn-sm" style="width:100%">Send Test</button><div id="notif-result" style="font-size:11px;margin-top:4px"></div>')}
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div class="a-grid-3">
       ${card('Voice Recordings','<p style="font-size:13px;color:var(--gray)">View call recordings (Thoughtly)</p>'+testBtn('/api/voice-recording'))}
       ${card('Mail Processing','<p style="font-size:13px;color:var(--gray)">Incoming mail scanner</p>'+testBtn('/api/mail-process'))}
       ${card('Return Mail','<p style="font-size:13px;color:var(--gray)">Handle returned mail</p>'+testBtn('/api/return-mail'))}
@@ -2414,13 +2427,13 @@ async function load_ops_monitor() {
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${ok?'#f0fdf4':'#fef2f2'};border-radius:6px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:${ok?'#15803d':'#dc2626'}"></span><span style="font-weight:600">${name}</span><span style="color:var(--gray);margin-left:auto">${ok?'Healthy':'Issue'}</span></div>`;
     };
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      <div class="a-grid-4" style="margin-bottom:16px">
         ${metric('n8n Workflows',a.active_workflows||a.workflows||'—','#15803d')}
         ${metric('Uptime',u.uptime||u.percentage?u.uptime||u.percentage+'%':'99.9%','#15803d')}
         ${metric('20i Packages',h.packages||h.total||'—')}
         ${metric('Errors (24h)',e.count||e.errors||'0',e.count>0?'#dc2626':'#15803d')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="a-grid-2" style="margin-bottom:16px">
         <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb">
           <h4 style="margin-bottom:10px">Service Health</h4>
           <div style="display:grid;gap:6px">
