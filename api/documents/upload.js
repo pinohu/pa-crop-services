@@ -14,6 +14,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'missing_required_fields' });
   }
 
+  // Enforce org-level access: users can only upload to their own org
+  if (organization_id !== session.orgId) {
+    return res.status(403).json({ success: false, error: 'access_denied' });
+  }
+
   try {
     const doc = await db.createDocument({
       organization_id,

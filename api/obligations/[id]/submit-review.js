@@ -22,6 +22,11 @@ export default async function handler(req, res) {
     const obl = await db.getObligation(obligationId);
     if (!obl) return res.status(404).json({ success: false, error: 'obligation_not_found' });
 
+    // Verify ownership
+    if (obl.organization_id !== session.orgId) {
+      return res.status(403).json({ success: false, error: 'access_denied' });
+    }
+
     // Transition to ready_to_file if possible
     if (canTransition(obl.obligation_status, 'ready_to_file')) {
       await transition(obligationId, 'ready_to_file',

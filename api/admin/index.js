@@ -4,7 +4,12 @@
 
 import * as db from '../services/db.js';
 
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
+import { timingSafeEqual } from 'crypto';
+const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
+if (!ADMIN_KEY && process.env.VERCEL) {
+  throw new Error('FATAL: ADMIN_SECRET_KEY is required');
+}
+const ADMIN_KEY_VALUE = ADMIN_KEY || 'dev-admin-key';
 const SD_BASE = 'https://app.suitedash.com/secure-api';
 const TWENTY_I_BASE = 'https://api.20i.com';
 const ACUMBA_TOKEN = process.env.ACUMBAMAIL_API_KEY;
@@ -73,14 +78,22 @@ async function _notifyIke(subject, body) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Restrict CORS to admin dashboard origins
+  const origin = req.headers.origin || '';
+  const allowedOrigins = ['https://pacropservices.com', 'https://www.pacropservices.com', 'https://pa-crop-services.vercel.app'];
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (process.env.VERCEL_ENV === 'preview') {
+    res.setHeader('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Auth check
-  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
-  if (adminKey !== ADMIN_KEY) {
+  // Auth check — only from header, timing-safe comparison
+  const adminKey = req.headers['x-admin-key'];
+  if (!adminKey || typeof adminKey !== 'string' || adminKey.length !== ADMIN_KEY_VALUE.length ||
+      !timingSafeEqual(Buffer.from(adminKey), Buffer.from(ADMIN_KEY_VALUE))) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

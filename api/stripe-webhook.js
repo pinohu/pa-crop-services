@@ -33,21 +33,23 @@ function detectTier(event) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
+  // Stripe webhooks come from Stripe servers, not browsers — no CORS needed
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!whSecret) {
-    console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured — webhook signature verification disabled');
+    console.error('FATAL: STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
+    return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
   const sig = req.headers['stripe-signature'];
-  
-  // Verify signature if secret is configured
-  if (whSecret && sig) {
+  if (!sig) {
+    return res.status(400).json({ error: 'Missing Stripe-Signature header' });
+  }
+
+  // Verify signature — always required
+  {
     try {
       const payload = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       const timestamp = sig.split(',').find(s => s.startsWith('t=')).split('=')[1];

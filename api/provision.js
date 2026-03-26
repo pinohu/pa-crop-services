@@ -28,7 +28,8 @@ export default async function handler(req, res) {
 
   // Auto-generate missing params
   const accountSlug = rawSlug || email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);
-  const hostingPassword = rawPw || 'Crop' + Math.random().toString(36).slice(2, 10) + '!';
+  const { randomBytes: rb } = await import('crypto');
+  const hostingPassword = rawPw || 'Crop' + rb(8).toString('base64url').slice(0, 12) + '!';
   
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
