@@ -149,28 +149,175 @@ nav .container{display:flex;align-items:center;gap:10px}
 </div>
 </div>
 
+<!-- Business Info Collection (for website creation) -->
+<div style="background:#fff;border:1.5px solid #EBE8E2;border-radius:12px;padding:24px;margin-bottom:24px" id="website-info-section">
+<h2 style="font-size:18px;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Tell us about your business</h2>
+<p style="font-size:14px;color:var(--gray);margin-bottom:16px">We'll use this to create your professional website. The more detail you provide, the better your site will look.</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business name *</label>
+    <input type="text" id="biz-name" placeholder="e.g., ABC Consulting LLC" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business name">
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Tagline / Slogan</label>
+    <input type="text" id="biz-tagline" placeholder="e.g., Professional consulting for PA businesses" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business tagline">
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">What does your business do? *</label>
+    <textarea id="biz-description" rows="3" placeholder="Describe your business in 2-3 sentences. What services do you offer? Who are your customers?" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical" aria-label="Business description"></textarea>
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Services offered (comma-separated) *</label>
+    <input type="text" id="biz-services" placeholder="e.g., Tax Advisory, Bookkeeping, Business Formation, Compliance" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Services offered">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business phone</label>
+      <input type="tel" id="biz-phone" placeholder="814-555-1234" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business phone">
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business email</label>
+      <input type="email" id="biz-email" placeholder="info@yourbusiness.com" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business email">
+    </div>
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business address</label>
+    <input type="text" id="biz-address" placeholder="123 Main St, Erie, PA 16502" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business address">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business hours</label>
+      <input type="text" id="biz-hours" placeholder="Mon-Fri 9am-5pm" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business hours">
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Industry</label>
+      <select id="biz-industry" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff" aria-label="Industry">
+        <option value="">Select...</option>
+        <option value="consulting">Consulting</option>
+        <option value="legal">Legal Services</option>
+        <option value="accounting">Accounting / Tax</option>
+        <option value="real-estate">Real Estate</option>
+        <option value="construction">Construction / Trades</option>
+        <option value="healthcare">Healthcare</option>
+        <option value="technology">Technology</option>
+        <option value="retail">Retail / E-commerce</option>
+        <option value="food">Food & Beverage</option>
+        <option value="creative">Creative / Design</option>
+        <option value="education">Education / Training</option>
+        <option value="nonprofit">Nonprofit</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Brand colors (optional)</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="color" id="biz-color1" value="#0C1220" style="width:40px;height:36px;border:1px solid #ddd;border-radius:6px;cursor:pointer" aria-label="Primary color">
+      <input type="color" id="biz-color2" value="#C9982A" style="width:40px;height:36px;border:1px solid #ddd;border-radius:6px;cursor:pointer" aria-label="Secondary color">
+      <span style="font-size:12px;color:var(--gray)">Pick your primary and accent colors</span>
+    </div>
+  </div>
+  <div>
+    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Anything else we should know?</label>
+    <textarea id="biz-notes" rows="2" placeholder="Special requests, preferred style, key selling points, etc." style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical" aria-label="Additional notes"></textarea>
+  </div>
+  <div id="biz-error" role="alert" aria-live="polite" style="color:#dc2626;font-size:13px;display:none"></div>
+  <button onclick="submitBusinessInfo()" id="biz-submit-btn" style="background:#0C1220;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Build my website &rarr;</button>
+  <div id="biz-success" style="display:none;background:#E8F0E9;border:1px solid #6B8F71;border-radius:8px;padding:16px;text-align:center">
+    <p style="font-size:16px;font-weight:600;color:#2D6A2E;margin:0 0 4px">Website build started!</p>
+    <p style="font-size:13px;color:var(--gray);margin:0">We're creating your professional website now. You'll receive an email when it's ready to preview (typically within 1 hour).</p>
+  </div>
+  <p style="font-size:12px;color:var(--gray)">We'll build your professional website using this information. You can always update it later through your portal or by contacting us.</p>
+</div>
+</div>
+
 <script>
 async function submitDomain() {
-  const name = document.getElementById('dom-name').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
-  const ext = document.getElementById('dom-ext').value;
-  const email = document.getElementById('dom-email').value.trim();
-  const msg = document.getElementById('dom-msg');
+  var name = document.getElementById('dom-name').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  var ext = document.getElementById('dom-ext').value;
+  var email = document.getElementById('dom-email').value.trim();
+  var msg = document.getElementById('dom-msg');
   if (!name || !email) { msg.textContent = 'Please enter a domain name and your email.'; msg.style.display = 'block'; msg.style.color = '#dc2626'; return; }
-  const domain = name + ext;
+  var domain = name + ext;
   try {
-    const res = await fetch('/api/entity-intake', {
+    await fetch('/api/entity-intake', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, entityName: domain, entityType: 'domain-request', notes: 'Domain registration request: ' + domain })
+      body: JSON.stringify({ email: email, entityName: domain, entityType: 'domain-request', notes: 'Domain registration request: ' + domain })
     });
-    msg.textContent = '✓ Domain request submitted! We\'ll register ' + domain + ' and email you when it\'s ready.';
+    msg.textContent = 'Domain request submitted! We will register ' + domain + ' and email you when it is ready.';
     msg.style.display = 'block';
     msg.style.color = '#059669';
   } catch(e) {
-    msg.textContent = 'Error — please email hello@pacropservices.com with your preferred domain.';
+    msg.textContent = 'Error. Please email hello@pacropservices.com with your preferred domain.';
     msg.style.display = 'block';
     msg.style.color = '#dc2626';
   }
 }
+
+async function submitBusinessInfo() {
+  var btn = document.getElementById('biz-submit-btn');
+  var err = document.getElementById('biz-error');
+  var bizName = document.getElementById('biz-name').value.trim();
+  var desc = document.getElementById('biz-description').value.trim();
+  var services = document.getElementById('biz-services').value.trim();
+  var domEmail = document.getElementById('dom-email')?.value?.trim() || '';
+
+  if (!bizName || !desc || !services) {
+    err.textContent = 'Please fill in your business name, description, and services.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  btn.textContent = 'Building your website...';
+  btn.disabled = true;
+
+  var businessInfo = {
+    businessName: bizName,
+    tagline: document.getElementById('biz-tagline').value.trim(),
+    description: desc,
+    services: services.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+    phone: document.getElementById('biz-phone').value.trim(),
+    email: document.getElementById('biz-email').value.trim() || domEmail,
+    address: document.getElementById('biz-address').value.trim(),
+    hours: document.getElementById('biz-hours').value.trim(),
+    industry: document.getElementById('biz-industry').value,
+    primaryColor: document.getElementById('biz-color1').value,
+    accentColor: document.getElementById('biz-color2').value,
+    notes: document.getElementById('biz-notes').value.trim()
+  };
+
+  try {
+    await fetch('/api/entity-intake', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        email: domEmail || businessInfo.email,
+        entityName: bizName,
+        entityType: 'website-build-request',
+        notes: JSON.stringify(businessInfo)
+      })
+    });
+    document.getElementById('biz-success').style.display = 'block';
+    btn.style.display = 'none';
+  } catch(e) {
+    err.textContent = 'Something went wrong. Please email hello@pacropservices.com with your business details.';
+    err.style.display = 'block';
+    btn.textContent = 'Build my website';
+    btn.disabled = false;
+  }
+}
+
+// Show/hide hosting sections based on tier
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var plan = params.get('plan') || '';
+  var hasHosting = plan.includes('starter') || plan.includes('pro') || plan.includes('empire');
+  if (!hasHosting) {
+    var ds = document.getElementById('domain-section');
+    var ws = document.getElementById('website-info-section');
+    if (ds) ds.style.display = 'none';
+    if (ws) ws.style.display = 'none';
+  }
+})();
 </script>
 
 <div class="footer">

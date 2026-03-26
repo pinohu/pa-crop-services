@@ -1967,19 +1967,54 @@ async function loadHostingTab(c) {
     });
     var data = await res.json();
     if (data.package) {
+      var pkg = data.package;
+      var domain = pkg.domain || '(pending)';
       el.innerHTML =
-        '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
-        '<div class="kpi"><div class="kpi-label">Domain</div><div class="t-big">' + (data.package.domain || '(pending)') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Status</div><div style="font-size:16px;font-weight:600;color:' + (data.package.status==='active'?'var(--green)':'var(--gold)') + '">' + (data.package.status || 'Active') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Email boxes</div><div class="t-big">' + (data.package.emails || 0) + '</div></div>' +
+        // Status Overview
+        '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">' +
+        '<div class="kpi"><div class="kpi-label">Domain</div><div style="font-size:15px;font-weight:700;word-break:break-all">' + domain + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Status</div><div style="font-size:15px;font-weight:600;color:' + (pkg.status==='active'?'var(--green)':'var(--gold)') + '">' + (pkg.status || 'Active') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">SSL</div><div style="font-size:15px;font-weight:600;color:var(--green)">' + (pkg.ssl ? 'Active' : 'Pending') + '</div></div>' +
+        '<div class="kpi"><div class="kpi-label">Backups</div><div style="font-size:15px;font-weight:600">Daily (auto)</div></div>' +
         '</div>' +
-        '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">' +
-        '<div class="kpi"><div class="kpi-label">SSL</div><div class="t-big">' + (data.package.ssl ? 'Active' : 'Pending') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Backups</div><div class="t-big">' + (data.package.backups ? 'Daily' : 'Not included') + '</div></div>' +
-        '<div class="kpi"><div class="kpi-label">Managed by</div><div style="font-size:14px;font-weight:600;color:var(--accent)">PA CROP Services</div></div>' +
+
+        // Quick Actions
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">' +
+        '<a href="https://' + domain + '" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--slate);font-size:12px;font-weight:600;transition:all .2s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Visit Site</a>' +
+        '<a href="https://' + domain + '/wp-admin" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--slate);font-size:12px;font-weight:600;transition:all .2s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit WordPress</a>' +
+        '<a href="https://my.20i.com" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--slate);font-size:12px;font-weight:600;transition:all .2s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>Hosting Panel</a>' +
+        '<a href="https://my.20i.com" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--slate);font-size:12px;font-weight:600;transition:all .2s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Webmail</a>' +
+        '</div>' +
+
+        // Email Accounts Section
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h4 style="margin:0;font-size:14px">Email Accounts (' + (pkg.emails || 0) + ')</h4></div>' +
+        '<div style="display:grid;gap:8px" id="email-accounts-list">' +
+        (pkg.emailList || ['info@','hello@','admin@','support@','billing@']).map(function(e) {
+          var addr = typeof e === 'string' ? e : (e.address || e);
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:8px">' +
+            '<div style="font-size:13px;font-weight:600">' + addr + (addr.includes('@') ? '' : '@' + domain) + '</div>' +
+            '<a href="https://my.20i.com" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none;font-weight:600">Manage</a></div>';
+        }).join('') +
+        '</div></div>' +
+
+        // Hosting Details
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">' +
+        '<h4 style="margin:0 0 8px;font-size:14px">Disk Usage</h4>' +
+        '<div style="background:var(--border);border-radius:4px;height:8px;margin-bottom:6px"><div style="background:var(--green);border-radius:4px;height:8px;width:' + Math.min((pkg.diskUsed||10)/(pkg.diskLimit||5000)*100, 100) + '%"></div></div>' +
+        '<div style="font-size:12px;color:var(--ink3)">' + (pkg.diskUsed || '—') + ' MB / ' + (pkg.diskLimit || '5,000') + ' MB</div></div>' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">' +
+        '<h4 style="margin:0 0 8px;font-size:14px">Managed By</h4>' +
+        '<div style="font-size:14px;font-weight:600;color:var(--accent)">PA CROP Services</div>' +
+        '<div style="font-size:12px;color:var(--ink3);margin-top:4px">We handle updates, security, and backups</div></div>' +
         '</div>';
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)"><p>Your hosting package is being set up by our team. Check back shortly.</p><p style="margin-top:8px;font-size:12px">Need help? Call 814-228-2822</p></div>';
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--ink3)">' +
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:.4"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>' +
+        '<p style="font-size:15px;font-weight:600">Your hosting is being set up</p>' +
+        '<p style="font-size:13px;margin-top:4px">Our team is configuring your website, email, and SSL. You will receive an email when everything is ready.</p>' +
+        '<p style="margin-top:12px;font-size:12px">Need help? Call <a href="tel:8142282822">814-228-2822</a></p></div>';
     }
   } catch(e) {
     showError('hosting-content', 'Could not load hosting status.', 'loadHostingTab(CLIENT)');
