@@ -135,10 +135,15 @@ function showSuggestions(items) {
   });
 }
 
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function addMessage(text, role) {
   var div = document.createElement('div');
   div.className = 'crop-msg ' + role;
-  div.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  var safe = role === 'bot' ? text : escapeHtml(text);
+  div.innerHTML = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   body.appendChild(div);
   body.scrollTop = body.scrollHeight;
   return div;
@@ -150,7 +155,7 @@ function typeMessage(text, role) {
   body.appendChild(div);
   body.scrollTop = body.scrollHeight;
 
-  var formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  var formatted = escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   var words = formatted.split(/(?<=\s)/);
   var i = 0;
 

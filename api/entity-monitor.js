@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const adminKey = req.headers['x-admin-key'];
   const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
   if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });

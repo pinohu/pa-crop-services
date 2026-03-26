@@ -2,30 +2,33 @@
 // POST /api/admin/cleanup?action=audit|purge|seed
 // Purges test/garbage data from Neon Postgres, seeds real Dynasty Empire entities.
 
-import { setCors, isAdminRequest } from '../services/auth.js';
+import { setCors, isAdminRequest, generateAccessCode } from '../services/auth.js';
 import * as db from '../services/db.js';
 
-// Real Dynasty Empire entities — Ike's actual PA filings
-const REAL_CLIENTS = [
-  {
+// Real client data loaded from environment at runtime — no PII in source
+// Set SEED_CLIENT_EMAIL, SEED_CLIENT_NAME, SEED_ORG_NAME, SEED_DOS_NUMBER in Vercel env vars
+function getRealClients() {
+  const email = process.env.SEED_CLIENT_EMAIL;
+  if (!email) return [];
+  return [{
     org: {
-      legal_name: 'Dynasty Empire LLC',
-      display_name: 'Dynasty Empire',
+      legal_name: process.env.SEED_ORG_NAME || 'PA Registered Office Services, LLC',
+      display_name: process.env.SEED_ORG_DISPLAY || 'PA CROP Services',
       entity_type: 'domestic_llc',
       jurisdiction: 'PA',
-      dos_number: '0015295203',
+      dos_number: process.env.SEED_DOS_NUMBER || '',
       entity_status: 'active'
     },
     client: {
-      owner_name: 'Ike Ohu',
-      email: 'polycarpohu@gmail.com',
-      phone: '8144800989',
+      owner_name: process.env.SEED_CLIENT_NAME || '',
+      email,
+      phone: process.env.SEED_CLIENT_PHONE || '',
       plan_code: 'business_empire',
       billing_status: 'active',
       onboarding_status: 'completed'
     }
-  }
-];
+  }];
+}
 
 // Known test patterns — emails/names that are clearly garbage
 const TEST_PATTERNS = [
@@ -79,7 +82,7 @@ export default async function handler(req, res) {
       const testOrgs = (orgs || []).filter(o => {
         // Org is test if it has no real client or if its name matches test patterns
         const hasRealClient = realClients.some(c => c.organization_id === o.id);
-        return !hasRealClient && !REAL_CLIENTS.some(r => r.org.dos_number === o.dos_number);
+        return !hasRealClient && !getRealClients().some(r => r.org.dos_number === o.dos_number);
       });
 
       return res.status(200).json({
@@ -94,7 +97,7 @@ export default async function handler(req, res) {
         },
         test_clients: testClients.map(c => ({ id: c.id, name: c.owner_name, email: c.email })),
         real_clients: realClients.map(c => ({ id: c.id, name: c.owner_name, email: c.email })),
-        would_seed: REAL_CLIENTS.map(r => ({ name: r.org.legal_name, email: r.client.email, plan: r.client.plan_code }))
+        would_seed: getRealClients().map(r => ({ name: r.org.legal_name, email: r.client.email, plan: r.client.plan_code }))
       });
     }
 
@@ -148,7 +151,7 @@ export default async function handler(req, res) {
     // ── SEED: Insert real clients ────────────────────────────
     if (action === 'seed') {
       const results = [];
-      for (const entry of REAL_CLIENTS) {
+      for (const entry of getRealClients()) {
         // Check if org already exists
         let org;
         if (entry.org.dos_number) {
@@ -170,7 +173,7 @@ export default async function handler(req, res) {
             ...entry.client,
             organization_id: org?.id,
             referral_code: 'CROP-' + (entry.org.display_name || 'CLIENT').toUpperCase().replace(/\s+/g, '').slice(0, 8),
-            metadata: { access_code: 'CROP2026', source: 'admin_seed' }
+            metadata: { access_code: generateAccessCode(), source: 'admin_seed' }
           });
         } else {
           // Client exists — ensure access code is set (may have been cleared by one-time auth)
@@ -178,7 +181,7 @@ export default async function handler(req, res) {
           if (!meta.access_code) {
             await sql.query(
               "UPDATE clients SET metadata = metadata || $1, updated_at = now() WHERE id = $2",
-              [JSON.stringify({ access_code: 'CROP2026' }), client.id]
+              [JSON.stringify({ access_code: generateAccessCode() }), client.id]
             );
           }
         }
@@ -225,15 +228,15 @@ export default async function handler(req, res) {
     // ── RESET-CODES: Reset access codes for all real clients ──
     if (action === 'reset-codes') {
       const results = [];
-      for (const entry of REAL_CLIENTS) {
+      for (const entry of getRealClients()) {
         const existing = await sql.query('SELECT id, metadata FROM clients WHERE email = $1', [entry.client.email]);
         const client = existing?.[0];
         if (client) {
           await sql.query(
             "UPDATE clients SET metadata = metadata || $1, onboarding_status = 'completed', updated_at = now() WHERE id = $2",
-            [JSON.stringify({ access_code: 'CROP2026' }), client.id]
+            [JSON.stringify({ access_code: generateAccessCode() }), client.id]
           );
-          results.push({ email: entry.client.email, code: 'CROP2026', status: 'reset' });
+          results.push({ email: entry.client.email, status: 'reset' });
         } else {
           results.push({ email: entry.client.email, status: 'not_found' });
         }

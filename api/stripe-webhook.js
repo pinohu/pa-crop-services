@@ -2,6 +2,8 @@
 // POST /api/stripe-webhook
 // Detects tier from Stripe product, auto-provisions everything
 
+import { log, logError, logWarn } from './_log.js';
+
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
   if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
@@ -68,6 +70,7 @@ export default async function handler(req, res) {
 
   const event = req.body;
   const type = event?.type;
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
 
   try {
     // ── CHECKOUT COMPLETED — Full auto-provisioning ────────────────────
@@ -77,10 +80,9 @@ export default async function handler(req, res) {
       const name = session.customer_details?.name || '';
       const tierConfig = detectTier(event);
       
-      console.log(`🎉 New client: ${email} → ${tierConfig.tier} plan ($${(session.amount_total||0)/100})`);
+      log('new_client_checkout', { email, tier: tierConfig.tier, amount: (session.amount_total||0)/100 });
 
       // Step 1: Call /api/provision directly (no n8n dependency)
-      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
       const provisionRes = await fetch(`${baseUrl}/api/provision`, {
         method: 'POST',
         headers: { 
@@ -103,26 +105,26 @@ export default async function handler(req, res) {
           hostingPassword: 'Crop' + Math.random().toString(36).slice(2, 10) + '!',
         })
       }).catch(e => {
-        console.error('Provision call failed:', e.message);
+        logError('provision_call_failed', { email }, new Error(e.message));
         return null;
       });
 
       const provisionData = provisionRes ? await provisionRes.json().catch(() => ({})) : {};
-      console.log('Provision result:', JSON.stringify(provisionData).slice(0, 500));
+      log('provision_result', { email, tier: tierConfig.tier, steps: provisionData.steps?.length || 0 });
 
       // Step 2: Also notify n8n (for any additional workflow steps)
       await fetch('https://n8n.audreysplace.place/webhook/crop-new-client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message }));
 
       // Step 2: Generate branded invoice
       fetch(`${baseUrl}/api/invoice-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ email, name, amount: session.amount_total || 0, tier: tierConfig.tier, stripeSessionId: session.id })
-      }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
+      }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message })); // Fire and forget
 
       // Step 3: Notify Ike
       await _notifyIke(`🎉 New ${tierConfig.tier.toUpperCase()} Client: ${name || email}`,
@@ -150,7 +152,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
           body: JSON.stringify({ to: custEmail, message: `PA CROP Services: Your payment of $${amount} failed. Please update your payment method to keep your compliance monitoring active. Questions? 814-228-2822` })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message }));
       }
 
       // n8n for full dunning workflow
@@ -170,9 +172,9 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log(`Stripe webhook: ${type} (${event?.id})`);
+    log('stripe_webhook_processed', { type, eventId: event?.id });
   } catch (e) {
-    console.error('Webhook routing error:', e);
+    logError('stripe_webhook_error', { type, eventId: event?.id }, e);
   }
 
   return res.status(200).json({ received: true });

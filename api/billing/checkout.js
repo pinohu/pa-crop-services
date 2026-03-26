@@ -1,4 +1,5 @@
 import { setCors } from '../services/auth.js';
+import { isValidEmail, isValidPlanCode } from '../_validate.js';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const PLAN_PRICES = {
@@ -15,6 +16,8 @@ export default async function handler(req, res) {
 
   const { plan_code, email } = req.body || {};
   if (!plan_code || !email) return res.status(400).json({ success: false, error: 'missing_fields' });
+  if (!isValidPlanCode(plan_code)) return res.status(400).json({ success: false, error: 'invalid_plan_code' });
+  if (!isValidEmail(email)) return res.status(400).json({ success: false, error: 'invalid_email' });
   if (!STRIPE_KEY) return res.status(500).json({ success: false, error: 'stripe_not_configured' });
 
   try {
@@ -34,6 +37,7 @@ export default async function handler(req, res) {
     const session = await resp.json();
     return res.status(200).json({ success: true, checkout_url: session.url });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error(JSON.stringify({ ts: new Date().toISOString(), service: 'pa-crop', level: 'error', event: 'checkout_failed', error: err.message }));
+    return res.status(500).json({ success: false, error: 'checkout_failed' });
   }
 }

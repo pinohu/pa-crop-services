@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const adminKey = req.headers['x-admin-key'];
   if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
 
   const type = req.query?.type;

@@ -68,6 +68,15 @@ const FEE_PATTERN = /(?:fee|cost|price)\s+(?:is|of|:)\s+\$(\d+)/gi;
 // Pattern 4: "all entities" + single deadline (should have entity-type breakdown)
 const ALL_ENTITIES_SINGLE = /(?:all|every)\s+(?:PA\s+)?(?:entities|businesses|entity)\s+(?:must|need to|should)\s+file.{0,50}(?:September 30|June 30|December 31)/gi;
 
+// Pattern 5: Wildcard CORS (security)
+const WILDCARD_CORS = /Access-Control-Allow-Origin['":\s]+\*/g;
+
+// Pattern 6: Silent catch swallowing errors
+const SILENT_CATCH = /\.catch\(\s*\(\s*\)\s*=>\s*\{\s*\}\s*\)/g;
+
+// Pattern 7: Raw console.log in API code (should use structured logger)
+const RAW_CONSOLE_LOG = /\bconsole\.log\(/g;
+
 // ── Scan each file ──
 
 for (const filePath of allFiles) {
@@ -106,6 +115,33 @@ for (const filePath of allFiles) {
     if (allEntMatches) {
       addViolation(filePath, lineNum, 'ALL_ENTITIES_SINGLE_DEADLINE',
         `"All entities" paired with single deadline. Should break down by entity type. Context: "${allEntMatches[0].substring(0, 80)}"`);
+    }
+
+    // Only check API JS files for code quality patterns
+    if (filePath.includes('/api/') || filePath.includes('\\api\\')) {
+      // Skip _log.js itself for console.log check
+      if (!filePath.includes('_log.js') && !filePath.includes('validate-content')) {
+        // Pattern 5: Wildcard CORS
+        if (WILDCARD_CORS.test(line)) {
+          WILDCARD_CORS.lastIndex = 0;
+          addViolation(filePath, lineNum, 'WILDCARD_CORS',
+            `Wildcard CORS detected. Must restrict to pacropservices.com origins.`);
+        }
+
+        // Pattern 6: Silent catch
+        if (SILENT_CATCH.test(line)) {
+          SILENT_CATCH.lastIndex = 0;
+          addViolation(filePath, lineNum, 'SILENT_CATCH',
+            `Silent .catch(() => {}) swallows errors. Use structured logging.`);
+        }
+
+        // Pattern 7: Raw console.log (not in logger)
+        if (RAW_CONSOLE_LOG.test(line)) {
+          RAW_CONSOLE_LOG.lastIndex = 0;
+          addViolation(filePath, lineNum, 'RAW_CONSOLE_LOG',
+            `Raw console.log() in API code. Use structured logger from _log.js instead.`);
+        }
+      }
     }
   });
 }

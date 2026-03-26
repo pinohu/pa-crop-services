@@ -15,7 +15,7 @@ const logger = createLogger('entity-status');
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 function isAdmin(req) {
-  const key = req.headers['x-admin-key'] || req.query?.adminKey;
+  const key = req.headers['x-admin-key'];
   return key === ADMIN_KEY;
 }
 

@@ -15,6 +15,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import * as suitedash from './suitedash.js';
+import { logWarn } from '../_log.js';
 
 // ── Neon Connection ────────────────────────────────────────
 
@@ -89,7 +90,7 @@ export async function createOrganization(org) {
         await query('UPDATE organizations SET metadata = metadata || $1 WHERE id = $2',
           [JSON.stringify({ suitedash_uid: sdResult.data.uid }), created.id]);
       }
-    } catch (e) { console.error('SuiteDash company sync failed:', e.message); }
+    } catch (e) { logWarn('suitedash_company_sync_failed', { orgId: created.id, error: e.message }); }
   }
 
   return created;
@@ -183,7 +184,7 @@ export async function createClientRecord(client) {
           compliance_status: 'active'
         }
       });
-    } catch (e) { console.error('SuiteDash contact sync failed:', e.message); }
+    } catch (e) { logWarn('suitedash_contact_sync_failed', { orgId: client.organization_id, error: e.message }); }
   }
 
   return created;
@@ -473,7 +474,7 @@ export async function writeAuditEvent(event) {
        event.reason, event.correlation_id]);
     return rows?.[0] || null;
   } catch (err) {
-    console.log('AUDIT (write failed):', JSON.stringify(event));
+    console.error(JSON.stringify({ ts: new Date().toISOString(), service: 'pa-crop', level: 'error', event: 'audit_write_failed', targetType: event.target_type, targetId: event.target_id, error: err.message }));
     return null;
   }
 }

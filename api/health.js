@@ -71,10 +71,14 @@ export default async function handler(req, res) {
   const overall = statuses.every(s => s === 'healthy' || s === 'not_configured') ? 'healthy' :
     statuses.some(s => s === 'down') ? 'degraded' : 'healthy';
 
+  // Only include env warnings for authenticated admin requests
+  const isAdmin = req.headers['x-admin-key'] && process.env.ADMIN_SECRET_KEY &&
+    req.headers['x-admin-key'] === process.env.ADMIN_SECRET_KEY;
+
   return res.status(overall === 'healthy' ? 200 : 503).json({
     status: overall,
     timestamp: new Date().toISOString(),
-      envWarnings: _envWarnings.length > 0 ? _envWarnings : undefined,
+    ...(isAdmin && _envWarnings.length > 0 && { envWarnings: _envWarnings }),
     totalLatency: (Date.now() - start) + 'ms',
     services: checks
   });

@@ -5,6 +5,7 @@
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { db } from './_db.js';
+import { isValidEmail, isValidString, sanitize } from './_validate.js';
 
 const logger = createLogger('subscribe');
 
@@ -36,8 +37,17 @@ export default async function handler(req, res) {
 
   const { email, source, tag } = req.body || {};
   if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+  if (source !== undefined && !isValidString(source, { minLength: 0, maxLength: 100 })) {
+    return res.status(400).json({ error: 'source must be 100 characters or fewer' });
+  }
+  if (tag !== undefined && !isValidString(tag, { minLength: 0, maxLength: 50 })) {
+    return res.status(400).json({ error: 'tag must be 50 characters or fewer' });
+  }
 
   const cleanEmail = email.toLowerCase().trim();
+  const cleanSource = sanitize(source || 'website');
+  const cleanTag = sanitize(tag || 'newsletter');
 
   // Acumbamail list 1267324 (All Clients / Leads)
   const ACUMBAMAIL_KEY = process.env.ACUMBAMAIL_API_KEY;
@@ -57,8 +67,8 @@ export default async function handler(req, res) {
             list_id: LIST_ID,
             email: cleanEmail,
             extra_fields: {
-              SOURCE: source || 'website',
-              TAG: tag || 'newsletter'
+              SOURCE: cleanSource,
+              TAG: cleanTag
             }
           })
         });
@@ -81,7 +91,7 @@ export default async function handler(req, res) {
       const n8nRes = await fetch('https://n8n.audreysplace.place/webhook/crop-lead-nurture-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, source: source || 'newsletter', tag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
+        body: JSON.stringify({ email: cleanEmail, source: cleanSource, tag: cleanTag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
       });
       if (!n8nRes.ok) {
         const errText = await n8nRes.text().catch(() => 'unknown');
@@ -96,7 +106,7 @@ export default async function handler(req, res) {
     // Track metrics
     await db.incrementMetric('subscribe').catch(e => console.error('Silent failure:', e.message));
     if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(e => console.error('Silent failure:', e.message));
-    logger.info('subscribe_complete', { email: cleanEmail, source: source || 'website', warnings });
+    logger.info('subscribe_complete', { email: cleanEmail, source: cleanSource, warnings });
 
     // Return success with visibility into partial failures
     return res.status(200).json({

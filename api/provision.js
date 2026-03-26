@@ -11,9 +11,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
-  const isStripe = req.headers['stripe-signature'];
-  if (!isStripe && adminKey !== (process.env.ADMIN_SECRET_KEY)) {
+  // Auth: require admin key in header only. stripe-webhook.js calls this with X-Admin-Key.
+  // Never accept admin key from body or bypass via stripe-signature header.
+  const adminKey = req.headers['x-admin-key'];
+  const expectedKey = process.env.ADMIN_SECRET_KEY;
+  if (!adminKey || !expectedKey || adminKey !== expectedKey) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

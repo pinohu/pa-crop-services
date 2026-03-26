@@ -8,6 +8,8 @@ import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { buildChatbotKnowledge, getEntityDeadline, computeDaysUntil } from './_compliance.js';
 import { classifyIntent, shouldRefuse, tryDeterministicAnswer, buildRefusalResponse, buildGuardrailInstructions } from './_guardrails.js';
 import { logConversation } from './_log.js';
+import { fetchWithTimeout, isCircuitOpen, recordFailure, recordSuccess } from './_fetch.js';
+import { isValidString, sanitize } from './_validate.js';
 
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
@@ -35,18 +37,37 @@ export default async function handler(req) {
     });
   }
 
-  const { message, clientContext, clientTier, entityName, history = [], stream } = await req.json();
+  let body;
+  try { body = await req.json(); } catch { return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400, headers: { 'Content-Type': 'application/json' } }); }
+  const { message, clientContext, clientTier, entityName, history = [], stream } = body;
   if (!message) return new Response(JSON.stringify({ error: 'message required' }), { status: 400 });
+  if (!isValidString(message, { minLength: 1, maxLength: 2000 })) {
+    return new Response(JSON.stringify({ error: 'message must be between 1 and 2000 characters' }), { status: 400 });
+  }
+  if (!Array.isArray(history) || history.length > 10) {
+    return new Response(JSON.stringify({ error: 'history must be an array of at most 10 items' }), { status: 400 });
+  }
+  const ALLOWED_ROLES = ['user', 'assistant'];
+  for (const entry of history) {
+    if (!entry || typeof entry.role !== 'string' || typeof entry.content !== 'string') {
+      return new Response(JSON.stringify({ error: 'each history item must have role and content strings' }), { status: 400 });
+    }
+    if (!ALLOWED_ROLES.includes(entry.role)) {
+      return new Response(JSON.stringify({ error: 'history role must be "user" or "assistant"' }), { status: 400 });
+    }
+  }
+
+  const safeMessage = sanitize(message);
 
   // ── Intent Classification + Guardrails ──
-  const intent = classifyIntent(message);
+  const intent = classifyIntent(safeMessage);
   const ctx = clientContext || {};
   const sessionId = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
   // LEGAL_QUESTION: refuse without calling LLM
   if (shouldRefuse(intent)) {
     const refusal = buildRefusalResponse();
-    logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: message, response: refusal.answer, intent, sources: [], confidence: 1.0, escalated: false });
+    logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: safeMessage, response: refusal.answer, intent, sources: [], confidence: 1.0, escalated: false });
     return new Response(JSON.stringify({ success: true, reply: refusal.answer, intent, sources: refusal.sources }), {
       headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
     });
@@ -54,9 +75,9 @@ export default async function handler(req) {
 
   // COMPLIANCE_FACT: try deterministic answer first (no LLM, no hallucination risk)
   if (intent === 'COMPLIANCE_FACT') {
-    const deterministic = tryDeterministicAnswer(message, ctx);
+    const deterministic = tryDeterministicAnswer(safeMessage, ctx);
     if (deterministic) {
-      logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: message, response: deterministic.answer, intent, sources: deterministic.sources, confidence: deterministic.confidence, escalated: false });
+      logConversation({ sessionId, clientEmail: ctx.email, orgId: ctx.entityNumber, entityType: ctx.entityType, userMessage: safeMessage, response: deterministic.answer, intent, sources: deterministic.sources, confidence: deterministic.confidence, escalated: false });
       return new Response(JSON.stringify({ success: true, reply: deterministic.answer, intent, sources: deterministic.sources, confidence: deterministic.confidence }), {
         headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
       });
@@ -118,14 +139,22 @@ RULES:
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history.slice(-6).map(h => ({ role: h.role, content: h.content })),
-    { role: 'user', content: message }
+    ...history.slice(-6).map(h => ({ role: sanitize(h.role), content: sanitize(h.content) })),
+    { role: 'user', content: safeMessage }
   ];
 
   // Streaming response
   if (stream) {
+    if (isCircuitOpen('groq')) {
+      return new Response(JSON.stringify({
+        success: true,
+        reply: "I'm temporarily unavailable. You can reach our team directly at 814-228-2822 or hello@pacropservices.com — we respond within one business day."
+      }), {
+        headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+      });
+    }
     try {
-      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const groqRes = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -135,7 +164,15 @@ RULES:
           max_tokens: 600,
           stream: true
         })
-      });
+      }, 15000);
+
+      if (!groqRes.ok) {
+        recordFailure('groq');
+        return new Response(JSON.stringify({ error: 'AI service temporarily unavailable' }), {
+          status: 502, headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+        });
+      }
+      recordSuccess('groq');
 
       const encoder = new TextEncoder();
       const readable = new ReadableStream({
@@ -186,6 +223,7 @@ RULES:
         }
       });
     } catch(err) {
+      recordFailure('groq');
       return new Response(JSON.stringify({ error: 'Stream failed' }), {
         status: 502,
         headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
@@ -194,18 +232,34 @@ RULES:
   }
 
   // Non-streaming fallback
+  if (isCircuitOpen('groq')) {
+    return new Response(JSON.stringify({
+      success: true,
+      reply: "I'm temporarily unavailable. You can reach our team directly at 814-228-2822 or hello@pacropservices.com — we respond within one business day."
+    }), {
+      headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+    });
+  }
   try {
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const groqRes = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, temperature: 0.4, max_tokens: 600, stream: false })
-    });
+    }, 15000);
+    if (!groqRes.ok) {
+      recordFailure('groq');
+      return new Response(JSON.stringify({ error: 'AI service temporarily unavailable' }), {
+        status: 502, headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
+      });
+    }
     const data = await groqRes.json();
     const reply = data.choices?.[0]?.message?.content || 'I apologize — please try again.';
+    recordSuccess('groq');
     return new Response(JSON.stringify({ success: true, reply }), {
       headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }
     });
   } catch(err) {
+    recordFailure('groq');
     return new Response(JSON.stringify({ error: 'Service unavailable' }), {
       status: 502,
       headers: { 'Access-Control-Allow-Origin': corsOrigin(req), 'Content-Type': 'application/json' }

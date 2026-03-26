@@ -194,7 +194,7 @@ export function buildGuardrailInstructions() {
   return `
 GUARDRAILS — YOU MUST FOLLOW THESE:
 1. CITATION: Every factual claim about PA compliance must reference its source. Use [Rules: section] format.
-   Example: "Your LLC deadline is September 30 [Rules: entityTypes.domestic_llc]"
+   Example: "Your deadline is based on your entity type [Rules: deadlineGroups]"
 2. UNCERTAINTY: If you are not confident about a compliance fact, say: "I'm not certain about that specific detail. I'd recommend confirming directly with the PA DOS at 717-787-1057 or checking file.dos.pa.gov."
 3. LEGAL BOUNDARY: Never give legal advice. If the question involves "should I", "is it legal", "can I sue", "am I liable", "tax strategy", or "contract interpretation", say: "That's a question for your attorney or CPA" and offer to connect them with a partner.
 4. NO INVENTION: Never invent compliance facts. If the knowledge base doesn't cover it, say so honestly.

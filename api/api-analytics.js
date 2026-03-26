@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   }
 
   // GET: View analytics
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const adminKey = req.headers['x-admin-key'];
   if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
 
   const uptimeMs = Date.now() - STATS.startTime;

@@ -3,6 +3,7 @@
 // POST { action, payload, adminKey }
 
 import * as db from '../services/db.js';
+import { fetchWithTimeout } from '../_fetch.js';
 
 import { timingSafeEqual } from 'crypto';
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
@@ -18,44 +19,56 @@ const DOCUMENTERO_KEY = process.env.DOCUMENTERO_API_KEY;
 async function sdFetch(path, opts = {}) {
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const res = await fetch(`${SD_BASE}${path}`, {
-    ...opts,
-    headers: {
-      'X-Public-ID': SD_PUBLIC,
-      'X-Secret-Key': SD_SECRET,
-      'Content-Type': 'application/json',
-      ...(opts.headers || {})
-    }
-  });
-  return res.json();
+  try {
+    const res = await fetchWithTimeout(`${SD_BASE}${path}`, {
+      ...opts,
+      headers: {
+        'X-Public-ID': SD_PUBLIC,
+        'X-Secret-Key': SD_SECRET,
+        'Content-Type': 'application/json',
+        ...(opts.headers || {})
+      }
+    });
+    return res.json();
+  } catch (e) {
+    throw Object.assign(e, { context: `sdFetch ${path}` });
+  }
 }
 
 async function twentyiFetch(path, opts = {}) {
   // 20i requires Bearer token to be base64-encoded general API key
   const GENERAL_KEY = process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN?.split('+')[0];
   if (!GENERAL_KEY) return { error: '20i token not configured' };
-  
+
   // base64-encode the general key as required by 20i API docs
   const BEARER_B64 = Buffer.from(GENERAL_KEY).toString('base64');
-  
-  const res = await fetch(`${TWENTY_I_BASE}${path}`, {
-    ...opts,
-    headers: {
-      'Authorization': `Bearer ${BEARER_B64}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...(opts.headers || {})
-    }
-  });
-  return res.json().catch(() => ({ error: 'Invalid JSON from 20i', status: res.status }));
+
+  try {
+    const res = await fetchWithTimeout(`${TWENTY_I_BASE}${path}`, {
+      ...opts,
+      headers: {
+        'Authorization': `Bearer ${BEARER_B64}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...(opts.headers || {})
+      }
+    });
+    return res.json().catch(() => ({ error: 'Invalid JSON from 20i', status: res.status }));
+  } catch (e) {
+    throw Object.assign(e, { context: `twentyiFetch ${path}` });
+  }
 }
 
 async function stripeFetch(path) {
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
-  const res = await fetch(`https://api.stripe.com/v1${path}`, {
-    headers: { 'Authorization': `Bearer ${STRIPE_KEY}` }
-  });
-  return res.json();
+  try {
+    const res = await fetchWithTimeout(`https://api.stripe.com/v1${path}`, {
+      headers: { 'Authorization': `Bearer ${STRIPE_KEY}` }
+    });
+    return res.json();
+  } catch (e) {
+    throw Object.assign(e, { context: `stripeFetch ${path}` });
+  }
 }
 
 
@@ -198,7 +211,7 @@ export default async function handler(req, res) {
                 id: c.id, name: c.owner_name || c.legal_name || '(unnamed)', email: c.email, phone: c.phone || '',
                 company: c.legal_name || '', plan: c.plan_code || 'compliance_only',
                 since: c.created_at ? new Date(c.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : 'New',
-                accessCode: c.metadata?.access_code || '—', leadScore: c.billing_status === 'active' ? 85 : 30,
+                hasAccessCode: !!c.metadata?.access_code, leadScore: c.billing_status === 'active' ? 85 : 30,
                 referralCode: c.referral_code || '', entityType: c.entity_type || '', tags: [], createdAt: c.created_at
               })),
               total: rows.length
@@ -212,7 +225,7 @@ export default async function handler(req, res) {
         let clients = (data?.data || []).map(c => ({
           id: c.id, name: `${c.first_name} ${c.last_name}`.trim(), email: c.email, phone: c.phone,
           company: c.company, plan: c.custom_fields?.crop_plan || 'compliance_only',
-          since: c.custom_fields?.crop_since, accessCode: c.custom_fields?.portal_access_code,
+          since: c.custom_fields?.crop_since, hasAccessCode: !!c.custom_fields?.portal_access_code,
           leadScore: c.custom_fields?.lead_score || 0, referralCode: c.custom_fields?.referral_code,
           entityType: c.custom_fields?.entity_type, tags: c.tags || [], createdAt: c.created_at,
         }));

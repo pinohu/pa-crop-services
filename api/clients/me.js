@@ -13,7 +13,9 @@ export default async function handler(req, res) {
     const client = await getClientById(session.clientId);
     if (!client) return res.status(404).json({ success: false, error: 'not_found' });
     const org = await getOrganization(client.organization_id);
-    return res.status(200).json({ success: true, client, organization: org });
+    // Never return raw metadata (contains access_code, internal IDs)
+    const { metadata, ...safeClient } = client;
+    return res.status(200).json({ success: true, client: safeClient, organization: org });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });
   }

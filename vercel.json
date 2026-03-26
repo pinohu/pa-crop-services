@@ -36,6 +36,10 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io https://cdn.jsdelivr.net https://www.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.groq.com https://plausible.io https://api.stripe.com https://pacropservices.com https://www.clarity.ms https://*.clarity.ms; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com"
         }
       ]
     },

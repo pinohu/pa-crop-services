@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const generate = req.query?.generate === 'true';
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const adminKey = req.headers['x-admin-key'];
 
   // Static knowledge base (always available)
   const KB = [

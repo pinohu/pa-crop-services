@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
 
-  const key = req.query?.adminKey || req.headers['x-admin-key'];
+  const key = req.headers['x-admin-key'];
   if (key !== ADMIN_KEY) return res.status(403).json({ error: 'Unauthorized' });
 
   try {

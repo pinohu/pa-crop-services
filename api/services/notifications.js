@@ -177,7 +177,7 @@ export async function notifyAdmin(subject, body) {
       headers: { 'Authorization': `Bearer ${EMAILIT_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'PA CROP Ops <ops@pacropservices.com>',
-        to: 'polycarpohu@gmail.com',
+        to: process.env.ADMIN_ALERT_EMAIL || 'hello@pacropservices.com',
         subject: `[PA CROP] ${subject}`,
         html: `<div style="font-family:sans-serif;max-width:600px">${body}</div>`
       })

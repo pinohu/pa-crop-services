@@ -1,6 +1,7 @@
 import { setCors } from '../services/auth.js';
 import { verifyAccessCode, createSession } from '../services/auth.js';
 import { writeAuditEvent } from '../services/db.js';
+import { isValidEmail } from '../_validate.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -9,6 +10,7 @@ export default async function handler(req, res) {
 
   const { email, access_code } = req.body || {};
   if (!email || !access_code) return res.status(400).json({ success: false, error: 'missing_email_or_code' });
+  if (!isValidEmail(email)) return res.status(400).json({ success: false, error: 'invalid_email' });
 
   try {
     const result = await verifyAccessCode(email, access_code);

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
+  const adminKey = req.headers['x-admin-key'];
   if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
