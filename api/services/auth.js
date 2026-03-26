@@ -3,11 +3,22 @@
 // JWT session management, RBAC, access code verification.
 
 import { SignJWT, jwtVerify } from 'jose';
+import { timingSafeEqual, randomBytes } from 'crypto';
 import * as db from './db.js';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'crop-dev-secret-change-in-production');
-const TOKEN_EXPIRY = '24h';
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
+// ── Secrets (fail hard if missing in production) ─────────
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+if (!JWT_SECRET_RAW && process.env.VERCEL) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required in production');
+}
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'dev-only-local-testing-key');
+const TOKEN_EXPIRY = '4h';
+
+const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
+if (!ADMIN_KEY && process.env.VERCEL) {
+  throw new Error('FATAL: ADMIN_SECRET_KEY environment variable is required in production');
+}
+const ADMIN_KEY_VALUE = ADMIN_KEY || 'dev-admin-key';
 
 // ── JWT ────────────────────────────────────────────────────
 
@@ -26,7 +37,7 @@ export async function createSession(client) {
 
   return {
     token,
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
   };
 }
 
@@ -39,7 +50,8 @@ export async function verifySession(token) {
       orgId: payload.org,
       plan: payload.plan,
       roles: payload.roles || ['client'],
-      email: payload.email
+      email: payload.email,
+      exp: payload.exp
     };
   } catch {
     return { valid: false };
@@ -50,14 +62,14 @@ export async function verifySession(token) {
 
 export function generateAccessCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = randomBytes(6);
   let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i++) code += chars[bytes[i] % chars.length];
   return code;
 }
 
 export async function sendAccessCode(email) {
   const code = generateAccessCode();
-  // Store code in client metadata (expires in 15 min)
   const client = await db.getClientByEmail(email);
   if (!client) return { success: false, error: 'not_found' };
 
@@ -69,7 +81,6 @@ export async function sendAccessCode(email) {
     }
   });
 
-  // Send via Emailit
   const emailitKey = process.env.EMAILIT_API_KEY;
   if (emailitKey) {
     await fetch('https://api.emailit.com/v1/emails', {
@@ -94,12 +105,19 @@ export async function sendAccessCode(email) {
   return { success: true };
 }
 
+// Timing-safe string comparison to prevent timing attacks
+function safeCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 export async function verifyAccessCode(email, code) {
   const client = await db.getClientByEmail(email);
   if (!client) return { valid: false, error: 'not_found' };
 
   const meta = client.metadata || {};
-  if (!meta.access_code || meta.access_code !== code) return { valid: false, error: 'invalid_code' };
+  if (!meta.access_code || !safeCompare(meta.access_code, code)) return { valid: false, error: 'invalid_code' };
   if (new Date(meta.access_code_expires) < new Date()) return { valid: false, error: 'expired' };
 
   // Clear used code
@@ -131,7 +149,6 @@ export function requireRole(session, ...roles) {
 // ── Middleware helpers ──────────────────────────────────────
 
 export async function authenticateRequest(req) {
-  // Check Bearer token first
   const authHeader = req.headers.authorization || '';
   if (authHeader.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
@@ -141,18 +158,30 @@ export async function authenticateRequest(req) {
 }
 
 export function isAdminRequest(req) {
-  const key = req.headers['x-admin-key'] || req.query?.adminKey;
-  return key === ADMIN_KEY;
+  // Only accept admin key from header, never from query params or body
+  const key = req.headers['x-admin-key'];
+  if (!key || !ADMIN_KEY_VALUE) return false;
+  return safeCompare(key, ADMIN_KEY_VALUE);
 }
 
 // ── CORS helper ────────────────────────────────────────────
 
-const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com', 'https://pa-crop-services.vercel.app'];
+const ALLOWED_ORIGINS = [
+  'https://pacropservices.com',
+  'https://www.pacropservices.com',
+  'https://pa-crop-services.vercel.app'
+];
 
 export function setCors(req, res) {
   const origin = req.headers.origin || '';
-  if (ALLOWED_ORIGINS.includes(origin) || process.env.NODE_ENV !== 'production') {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development') {
+    // Allow preview deployments for testing only
+    res.setHeader('Access-Control-Allow-Origin', origin || ALLOWED_ORIGINS[0]);
+  } else {
+    // Default to primary domain — never wildcard
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Key');

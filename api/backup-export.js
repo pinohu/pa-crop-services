@@ -3,13 +3,13 @@
 // Exports all client data, configuration, and system state as JSON
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  // No CORS on backup export — admin API only
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) return res.status(401).json({ error: 'Unauthorized' });
+  // Admin key from header only — never query params (they leak in logs)
+  const adminKey = req.headers['x-admin-key'];
+  const expectedKey = process.env.ADMIN_SECRET_KEY;
+  if (!adminKey || !expectedKey || adminKey !== expectedKey) return res.status(401).json({ error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
             subject: `📦 PA CROP Backup — ${new Date().toLocaleDateString()}`,
             html: `<pre style="font-size:11px;max-height:500px;overflow:auto">${JSON.stringify(backup, null, 2).slice(0, 50000)}</pre>`
           })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
         backup.emailed = true;
       }
     }

@@ -2,7 +2,7 @@
 // Secure admin API — reads SuiteDash, 20i, Stripe live data
 // POST { action, payload, adminKey }
 
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
+const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 const SD_BASE = 'https://app.suitedash.com/secure-api';
 const TWENTY_I_BASE = 'https://api.20i.com';
 const ACUMBA_TOKEN = process.env.ACUMBAMAIL_API_KEY;
@@ -71,7 +71,9 @@ async function _notifyIke(subject, body) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -232,13 +234,13 @@ export default async function handler(req, res) {
         await twentyiFetch(`/package/${packageId}/ssl`, {
           method: 'POST',
           body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         // Create StackCP user
         await twentyiFetch('/reseller/user', {
           method: 'POST',
           body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
@@ -310,7 +312,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Internal-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'
+            'X-Internal-Key': process.env.ADMIN_SECRET_KEY
           },
           body: JSON.stringify({
             client_name: clientName,

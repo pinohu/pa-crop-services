@@ -6,7 +6,9 @@
 const STATS = { endpoints: {}, totalRequests: 0, errors: 0, startTime: Date.now() };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
 
   // GET: View analytics
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) return res.status(401).json({ error: 'Unauthorized' });
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
 
   const uptimeMs = Date.now() - STATS.startTime;
   return res.status(200).json({

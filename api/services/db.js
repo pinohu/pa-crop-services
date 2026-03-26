@@ -120,7 +120,7 @@ export async function updateOrganization(id, updates) {
 // Neon stores the client record for compliance engine joins.
 // SuiteDash is the CRM master — portal access, onboarding, invoicing.
 
-export async function getClient_ById(id) {
+export async function getClientById(id) {
   const rows = await query('SELECT * FROM clients WHERE id = $1', [id]);
   return rows?.[0] || null;
 }
@@ -203,7 +203,7 @@ export async function updateClient(id, updates) {
       values.push(JSON.stringify(val));
     }
   }
-  if (!setClauses.length) return await getClient_ById(id);
+  if (!setClauses.length) return await getClientById(id);
   setClauses.push(`updated_at = now()`);
   values.push(id);
   const rows = await query(`UPDATE clients SET ${setClauses.join(', ')} WHERE id = $${i} RETURNING *`, values);
@@ -507,6 +507,73 @@ export async function getFailedJobs(limit = 50) {
   const rows = await query(
     `SELECT * FROM workflow_jobs WHERE job_status IN ('failed','dead_letter') ORDER BY created_at DESC LIMIT $1`,
     [limit]);
+  return rows || [];
+}
+
+// ── Document by ID ────────────────────────────────────────
+
+export async function getDocument(id) {
+  const rows = await query(
+    `SELECT d.*, o.legal_name, o.entity_type, obl.obligation_type, obl.due_date as obligation_due_date
+     FROM documents d
+     LEFT JOIN organizations o ON d.organization_id = o.id
+     LEFT JOIN obligations obl ON d.obligation_id = obl.id
+     WHERE d.id = $1`, [id]);
+  return rows?.[0] || null;
+}
+
+// ── Workflow Job by ID ────────────────────────────────────
+
+export async function getWorkflowJob(id) {
+  const rows = await query('SELECT * FROM workflow_jobs WHERE id = $1', [id]);
+  return rows?.[0] || null;
+}
+
+export async function updateWorkflowJob(id, updates) {
+  const setClauses = [];
+  const values = [];
+  let i = 1;
+  for (const [key, val] of Object.entries(updates)) {
+    if (['job_status', 'attempt_count', 'last_error', 'completed_at'].includes(key)) {
+      setClauses.push(`${key} = $${i++}`);
+      values.push(val);
+    } else if (key === 'payload') {
+      setClauses.push(`payload = $${i++}`);
+      values.push(JSON.stringify(val));
+    }
+  }
+  if (!setClauses.length) return null;
+  setClauses.push(`updated_at = now()`);
+  values.push(id);
+  const rows = await query(`UPDATE workflow_jobs SET ${setClauses.join(', ')} WHERE id = $${i} RETURNING *`, values);
+  return rows?.[0] || null;
+}
+
+// ── Partner Clients ───────────────────────────────────────
+
+export async function getPartnerClients(partnerId) {
+  const rows = await query(
+    `SELECT c.*, o.legal_name, o.entity_type, o.entity_status, o.dos_number,
+            b.plan_code as billing_plan, b.billing_status
+     FROM clients c
+     LEFT JOIN organizations o ON c.organization_id = o.id
+     LEFT JOIN billing_accounts b ON c.id = b.client_id
+     WHERE o.partner_id = $1
+     ORDER BY c.created_at DESC`, [partnerId]);
+  return rows || [];
+}
+
+// ── AI Conversations ──────────────────────────────────────
+
+export async function getAIConversations({ orgId, clientId, escalated, limit = 50 }) {
+  let where = 'WHERE 1=1';
+  const params = [];
+  let i = 1;
+  if (orgId) { where += ` AND organization_id = $${i++}`; params.push(orgId); }
+  if (clientId) { where += ` AND client_id = $${i++}`; params.push(clientId); }
+  if (escalated) { where += ` AND escalation_flag = true`; }
+  params.push(limit);
+  const rows = await query(`SELECT * FROM ai_conversations ${where} ORDER BY created_at DESC LIMIT $${i}`, params);
   return rows || [];
 }
 

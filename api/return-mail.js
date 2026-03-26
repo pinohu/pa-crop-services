@@ -3,14 +3,16 @@
 // When outgoing mail returns undeliverable — flag client, alert, pause
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) return res.status(401).json({ error: 'Unauthorized' });
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
 
   const { clientEmail, returnedTo, reason } = req.body || {};
   if (!clientEmail) return res.status(400).json({ error: 'clientEmail required' });
@@ -56,7 +58,7 @@ export default async function handler(req, res) {
           <p><a href="https://pacropservices.com/portal" style="background:#0C1220;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">Update my address →</a></p>
         </div>`
       })
-    }).catch(() => {});
+    }).catch(e => console.error('Silent failure:', e.message));
     result.clientNotified = true;
   }
 

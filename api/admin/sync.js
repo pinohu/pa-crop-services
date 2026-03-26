@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       const fixed = [];
       for (const c of clients) {
         const entityType = c.entity_type || 'domestic_llc';
-        const deadline = DEADLINES[entityType] || '09-30';
+        const deadline = DEADLINES[entityType] || '12-31';
         const year = new Date().getFullYear();
         const dueDate = `${year}-${deadline}`;
         const due = new Date(dueDate);
@@ -149,7 +149,7 @@ export default async function handler(req, res) {
 
         // Create annual report obligation
         const year = new Date().getFullYear();
-        const deadline = DEADLINES[entityType] || '09-30';
+        const deadline = DEADLINES[entityType] || '12-31';
         const dueDate = `${year}-${deadline}`;
         const now = new Date();
         const due = new Date(dueDate);

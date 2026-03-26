@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   try {
     let client = null;
-    if (clientId) client = await db.getClient_ById(clientId);
+    if (clientId) client = await db.getClientById(clientId);
     else if (email) client = await db.getClientByEmail(email);
 
     if (!client) return res.status(404).json({ success: false, error: 'client_not_found' });

@@ -36,7 +36,13 @@ function collectFiles(dir, extensions) {
   return results;
 }
 
-const rootDir = new URL('..', import.meta.url).pathname;
+// On Windows, import.meta.url gives file:///C:/... which pathname turns into /C:/...
+// Use fileURLToPath for cross-platform correctness
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
 const htmlFiles = collectFiles(join(rootDir, 'public'), ['.html', '.js']);
 const apiFiles = collectFiles(join(rootDir, 'api'), ['.js']);
 const allFiles = [...htmlFiles, ...apiFiles];

@@ -94,8 +94,8 @@ export default async function handler(req, res) {
     }
 
     // Track metrics
-    await db.incrementMetric('subscribe').catch(() => {});
-    if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(() => {});
+    await db.incrementMetric('subscribe').catch(e => console.error('Silent failure:', e.message));
+    if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(e => console.error('Silent failure:', e.message));
     logger.info('subscribe_complete', { email: cleanEmail, source: source || 'website', warnings });
 
     // Return success with visibility into partial failures

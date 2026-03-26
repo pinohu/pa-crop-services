@@ -11,7 +11,9 @@ function _rateLimit(req, res, max, win) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -97,15 +99,15 @@ export default async function handler(req, res) {
             <p>Or call us: <a href="tel:8142282822">814-228-2822</a></p>
           </div>`
         })
-      }).catch(() => {});
+      }).catch(e => console.error('Silent failure:', e.message));
 
       // SMS alert for critical
       const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
       await fetch(`${baseUrl}/api/sms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ to: email, type: 'entity_alert', data: { entity: fileName, status: 'URGENT document received — check portal immediately' } })
-      }).catch(() => {});
+      }).catch(e => console.error('Silent failure:', e.message));
 
       // Alert Ike
       await fetch('https://api.emailit.com/v1/emails', {
@@ -116,7 +118,7 @@ export default async function handler(req, res) {
           subject: `🚨 URGENT DOC: ${result.classification.category} for ${email}`,
           html: `<p><strong>Client:</strong> ${email}<br><strong>File:</strong> ${fileName}<br><strong>Type:</strong> ${result.classification.category}<br><strong>Action:</strong> ${result.classification.action_needed}</p>`
         })
-      }).catch(() => {});
+      }).catch(e => console.error('Silent failure:', e.message));
     }
     result.alertsSent = true;
   }

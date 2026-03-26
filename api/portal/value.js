@@ -163,7 +163,7 @@ export default async function handler(req, res) {
       const obligations = await db.getObligationsForOrg(orgId);
       const documents = await db.getDocumentsForOrg(orgId);
       const notifications = await db.getNotificationsForOrg(orgId);
-      const client = await db.getClient_ById(session.clientId);
+      const client = await db.getClientById(session.clientId);
       const health = computeEntityHealth(org, obligations, documents, notifications, client);
       return res.status(200).json({ success: true, health });
     }

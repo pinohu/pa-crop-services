@@ -11,6 +11,11 @@ export default async function handler(req, res) {
   const id = req.query.id;
   if (!id) return res.status(400).json({ success: false, error: 'missing_id' });
 
+  // Enforce org-level access control
+  if (!isAdminRequest(req) && session.orgId !== id) {
+    return res.status(403).json({ success: false, error: 'access_denied' });
+  }
+
   try {
     if (req.method === 'GET') {
       const org = await db.getOrganization(id);

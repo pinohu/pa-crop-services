@@ -33,21 +33,23 @@ function detectTier(event) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
+  // Stripe webhooks come from Stripe servers, not browsers — no CORS needed
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!whSecret) {
-    console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured — webhook signature verification disabled');
+    console.error('FATAL: STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
+    return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
   const sig = req.headers['stripe-signature'];
-  
-  // Verify signature if secret is configured
-  if (whSecret && sig) {
+  if (!sig) {
+    return res.status(400).json({ error: 'Missing Stripe-Signature header' });
+  }
+
+  // Verify signature — always required
+  {
     try {
       const payload = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       const timestamp = sig.split(',').find(s => s.startsWith('t=')).split('=')[1];
@@ -83,7 +85,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'
+          'X-Admin-Key': process.env.ADMIN_SECRET_KEY
         },
         body: JSON.stringify({
           email,
@@ -113,14 +115,14 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
-      }).catch(() => {});
+      }).catch(e => console.error('Silent failure:', e.message));
 
       // Step 2: Generate branded invoice
       fetch(`${baseUrl}/api/invoice-generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ email, name, amount: session.amount_total || 0, tier: tierConfig.tier, stripeSessionId: session.id })
-      }).catch(() => {}); // Fire and forget
+      }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
 
       // Step 3: Notify Ike
       await _notifyIke(`🎉 New ${tierConfig.tier.toUpperCase()} Client: ${name || email}`,
@@ -146,9 +148,9 @@ export default async function handler(req, res) {
       if (custEmail) {
         fetch(`${baseUrl}/api/sms`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
           body: JSON.stringify({ to: custEmail, message: `PA CROP Services: Your payment of $${amount} failed. Please update your payment method to keep your compliance monitoring active. Questions? 814-228-2822` })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
       }
 
       // n8n for full dunning workflow

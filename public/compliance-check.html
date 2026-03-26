@@ -56,12 +56,14 @@ footer a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
-<header>
+<header role="banner">
 <a href="/">← PA CROP Services</a>
 <h1>PA Compliance Checker</h1>
 <p class="subtitle">Select your entity type to see your exact deadline, fee, and what happens if you miss it.</p>
 </header>
+<main id="main-content" role="main">
 <div class="card">
 <p style="font-weight:600;margin-bottom:12px">What type of Pennsylvania entity do you have?</p>
 <div class="entity-grid" id="eg"></div>
@@ -92,8 +94,9 @@ footer a{color:var(--accent);text-decoration:none}
 <a href="/#plans">See Plans — From $99/year</a>
 </div>
 </div>
+</main>
 <div style="text-align:center;margin-top:24px"><a href="/" style="color:var(--ink3);text-decoration:none;font-size:14px">← Back to PA CROP Services</a></div>
-<footer>
+<footer role="contentinfo">
 <p>PA CROP Services · Licensed Pennsylvania Commercial Registered Office Provider</p>
 <p style="margin-top:4px">Source: <a href="https://www.pa.gov/agencies/dos/programs/business/types-of-filings-and-registrations/annual-reports" target="_blank">PA Department of State</a> · 15 Pa. C.S. § 146</p>
 </footer>

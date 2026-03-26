@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   try {
-    if (!db.isConnected()) return res.status(200).json({ items: [] });
+    if (!db.isConnected()) return res.status(200).json({ success: true, items: [], stats: {} });
     const sql = db.getSql();
     const limit = parseInt(req.query.limit) || 50;
     const filter = req.query.filter;
@@ -15,10 +15,23 @@ export default async function handler(req, res) {
     let where = '';
     if (filter === 'escalated') where = 'WHERE escalation_flag = true';
     else if (filter === 'low_confidence') where = 'WHERE confidence_score < 0.8';
-    else where = 'WHERE escalation_flag = true OR confidence_score < 0.8';
+    else if (filter === 'moderated') where = 'WHERE moderation_flag = true';
+    else where = 'WHERE escalation_flag = true OR confidence_score < 0.8 OR moderation_flag = true';
 
     const rows = await sql.query(`SELECT * FROM ai_conversations ${where} ORDER BY created_at DESC LIMIT $1`, [limit]);
-    return res.status(200).json({ success: true, items: rows || [] });
+    const items = rows || [];
+
+    const stats = {
+      total: items.length,
+      escalated: items.filter(c => c.escalation_flag).length,
+      low_confidence: items.filter(c => c.confidence_score < 0.8).length,
+      moderated: items.filter(c => c.moderation_flag).length,
+      avg_confidence: items.length > 0
+        ? (items.reduce((sum, c) => sum + (c.confidence_score || 0), 0) / items.length).toFixed(2)
+        : null
+    };
+
+    return res.status(200).json({ success: true, items, stats });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });
   }

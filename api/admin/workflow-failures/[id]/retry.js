@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
     await db.writeAuditEvent({
       actor_type: 'admin',
-      actor_id: 'ike',
+      actor_id: req.headers['x-admin-id'] || 'admin',
       event_type: 'workflow.job_retried',
       target_type: 'workflow_job',
       target_id: jobId,

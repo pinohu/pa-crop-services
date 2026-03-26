@@ -4,7 +4,12 @@
 
 import * as db from '../services/db.js';
 
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
+import { timingSafeEqual } from 'crypto';
+const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
+if (!ADMIN_KEY && process.env.VERCEL) {
+  throw new Error('FATAL: ADMIN_SECRET_KEY is required');
+}
+const ADMIN_KEY_VALUE = ADMIN_KEY || 'dev-admin-key';
 const SD_BASE = 'https://app.suitedash.com/secure-api';
 const TWENTY_I_BASE = 'https://api.20i.com';
 const ACUMBA_TOKEN = process.env.ACUMBAMAIL_API_KEY;
@@ -73,14 +78,22 @@ async function _notifyIke(subject, body) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Restrict CORS to admin dashboard origins
+  const origin = req.headers.origin || '';
+  const allowedOrigins = ['https://pacropservices.com', 'https://www.pacropservices.com', 'https://pa-crop-services.vercel.app'];
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (process.env.VERCEL_ENV === 'preview') {
+    res.setHeader('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Auth check
-  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
-  if (adminKey !== ADMIN_KEY) {
+  // Auth check — only from header, timing-safe comparison
+  const adminKey = req.headers['x-admin-key'];
+  if (!adminKey || typeof adminKey !== 'string' || adminKey.length !== ADMIN_KEY_VALUE.length ||
+      !timingSafeEqual(Buffer.from(adminKey), Buffer.from(ADMIN_KEY_VALUE))) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -96,9 +109,9 @@ export default async function handler(req, res) {
         try {
           if (db.isConnected()) {
             const sql = db.getSql();
-            neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC`;
+            neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC LIMIT 500`;
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
 
         if (neonClients && neonClients.length > 0) {
           const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
@@ -112,7 +125,7 @@ export default async function handler(req, res) {
           });
           // Get 20i hosting count
           let hostingCount = 0;
-          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(_) {}
+          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(e) { console.error('Admin query error:', e.message); }
           return res.status(200).json({
             stats: { totalClients: neonClients.length, activeSubscriptions: activeSubs, mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, hostingPackages: hostingCount },
             planBreakdown: Object.fromEntries(Object.entries(planCounts).map(([k,v]) => [planLabels[k] || k, v])),
@@ -191,7 +204,7 @@ export default async function handler(req, res) {
               total: rows.length
             });
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
         // Fallback: SuiteDash
         let url = `/contacts?limit=50&offset=${(page-1)*50}&role=client`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -279,13 +292,13 @@ export default async function handler(req, res) {
         await twentyiFetch(`/package/${packageId}/ssl`, {
           method: 'POST',
           body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         // Create StackCP user
         await twentyiFetch('/reseller/user', {
           method: 'POST',
           body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
@@ -340,7 +353,7 @@ export default async function handler(req, res) {
               cold: leads.filter(l => l.tier === 'cold').length,
             });
           }
-        } catch(_) {}
+        } catch(e) { console.error('Admin query error:', e.message); }
         // Fall back to SuiteDash
         const data = await sdFetch('/contacts?limit=100&role=lead');
         const leads = (data?.data || []).map(c => ({
@@ -370,7 +383,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Internal-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'
+            'X-Internal-Key': process.env.ADMIN_SECRET_KEY
           },
           body: JSON.stringify({
             client_name: clientName,

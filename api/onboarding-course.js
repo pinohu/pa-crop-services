@@ -3,7 +3,9 @@
 // POST /api/onboarding-course { email } (assigns course to client)
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,7 +29,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     // Generate expanded content for each lesson if admin
-    if (adminKey === (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE') && req.query?.expand === 'true' && GROQ_KEY) {
+    if (adminKey === (process.env.ADMIN_SECRET_KEY) && req.query?.expand === 'true' && GROQ_KEY) {
       for (const lesson of COURSE.lessons) {
         try {
           const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {

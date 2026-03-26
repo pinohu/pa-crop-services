@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     for (const ref of referrals) {
       if (!ref.referred_client_id) continue;
-      const client = await db.getClient_ById(ref.referred_client_id);
+      const client = await db.getClientById(ref.referred_client_id);
       if (!client) continue;
       const obligations = client.organization_id ? await db.getObligationsForOrg(client.organization_id) : [];
       const risk = computeRisk(obligations);
