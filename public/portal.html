@@ -712,81 +712,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       </div>
 
       <!-- ══ COMPLIANCE TAB ══ -->
-      <div id="tab-compliance" class="hidden">
-        <div class="page-header"><h1>Compliance Center</h1><p>Real-time obligation tracking and filing status</p></div>
-
-        <!-- Action Center -->
-        <div id="action-center" class="card" style="border-left:4px solid var(--accent);margin-bottom:16px">
-          <div class="card-body" id="action-items">
-            <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
-              <div style="font-size:14px;color:var(--ink2)">Redirecting to Compliance Intel...</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Obligation Timeline -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Obligation Timeline</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadComplianceTimeline()" style="font-size:12px">⟳ Refresh</button>
-          </div>
-          <div class="card-body" id="obligation-timeline">
-            <div style="color:var(--ink3);font-size:13px;padding:12px 0">Loading...</div>
-          </div>
-        </div>
-
-        <!-- Filing Tracker (for managed plans) -->
-        <div class="card" id="filing-tracker-card" style="display:none;margin-top:16px">
-          <div class="card-header"><span class="card-title">Filing Progress</span></div>
-          <div class="card-body" id="filing-tracker"></div>
-        </div>
-
-        <!-- Calendar + Prefill -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
-          <div class="card">
-            <div class="card-body" style="text-align:center;padding:20px">
-              <div style="font-size:24px;margin-bottom:8px">📅</div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">Compliance Calendar</div>
-              <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Subscribe to get all deadlines in your calendar app</p>
-              <button class="btn btn-ghost btn-sm" onclick="subscribeCalendar()">Subscribe to Calendar</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-body" style="text-align:center;padding:20px">
-              <div style="font-size:24px;margin-bottom:8px">📋</div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">Pre-Fill Filing</div>
-              <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Get your entity details pre-filled for the PA DOS filing form</p>
-              <button class="btn btn-ghost btn-sm" onclick="showPrefill()">Get Filing Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Health Report -->
-        <div class="card" style="margin-top:16px">
-          <div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-weight:600;font-size:14px">Compliance Health Report</div>
-              <p style="font-size:12px;color:var(--ink3)">Download a PDF-ready compliance summary for your records or accountant</p>
-            </div>
-            <button class="btn btn-accent btn-sm" onclick="showHealthReport()">View Report</button>
-          </div>
-        </div>
-
-        <!-- Legacy Checklist (collapsed) -->
-        <details style="margin-top:16px">
-          <summary style="font-size:13px;color:var(--ink3);cursor:pointer;padding:8px 0">Compliance Checklist</summary>
-          <div class="card"><div class="card-body">
-          <div class="check-item" id="cl-ro"><div class="check-box done">✓</div><div class="check-text done">Registered office address on file with PA DOS</div></div>
-          <div class="check-item" id="cl-report"><div class="check-box"></div><div class="check-text">Annual report filed for current year</div></div>
-          <div class="check-item" id="cl-crop"><div class="check-box done">✓</div><div class="check-text done">CROP provider license verified (15 Pa. C.S. §109)</div></div>
-          <div class="check-item" id="cl-entity"><div class="check-box"></div><div class="check-text">Entity status verified with PA DOS</div></div>
-          <div class="check-item" id="cl-agreement"><div class="check-box"></div><div class="check-text">Service agreement signed and on file</div></div>
-          <div class="check-item" id="cl-reminders"><div class="check-box done">✓</div><div class="check-text done">Annual report reminders active (90/60/30/14/7 days)</div></div>
-          </div></div>
-        </details>
-      </div>
-
+      <div id="tab-compliance" class="hidden"><div class="loading-state"><p>Redirected to Compliance Intel</p></div></div>
       <!-- ══ ENTITY STATUS TAB ══ -->
       <div id="tab-entity" class="hidden">
         <div class="page-header"><h1>Entity Health</h1><p>7-component compliance health assessment for your PA entity</p></div>
@@ -929,53 +855,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       </div>
 
       <!-- ══ REFERRAL TAB ══ -->
-      <div id="tab-referral" class="hidden">
-        <div class="page-header"><h1>Refer & Earn</h1><p>Share PA CROP Services with other PA business owners</p></div>
-
-        <!-- Stats Row -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700" id="ref-total">0</div><div style="font-size:11px;color:var(--ink3)">Total Referrals</div></div></div>
-          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700;color:var(--green)" id="ref-converted">0</div><div style="font-size:11px;color:var(--ink3)">Converted</div></div></div>
-          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700;color:var(--accent)" id="ref-credit">$0</div><div style="font-size:11px;color:var(--ink3)">Credit Earned</div></div></div>
-          <div class="card"><div class="card-body" style="text-align:center;padding:16px"><div style="font-size:24px;font-weight:700" id="ref-next-milestone">5</div><div style="font-size:11px;color:var(--ink3)">Next Milestone</div></div></div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-header"><span class="card-title">Your referral code</span></div>
-            <div class="card-body" style="text-align:center;padding:28px">
-              <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:16px" id="ref-code"></div>
-              <div style="display:flex;gap:8px;justify-content:center">
-                <button class="btn btn-accent btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('ref-code').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy code',2000)">Copy code</button>
-                <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('https://www.pacropservices.com/?ref='+document.getElementById('ref-code').textContent);this.textContent='Link copied!';setTimeout(()=>this.textContent='Copy link',2000)">Copy link</button>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title">How it works</span></div>
-            <div class="card-body">
-              <div style="display:flex;flex-direction:column;gap:12px">
-                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</div><div style="font-size:13px;color:var(--ink2)">Share your referral code or link with another PA business owner</div></div>
-                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</div><div style="font-size:13px;color:var(--ink2)">They sign up and get a PA registered office</div></div>
-                <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">✓</div><div style="font-size:13px;color:var(--ink2)">You get credit toward your next renewal — they get compliance protection</div></div>
-              </div>
-              <div style="margin-top:16px;padding:12px;background:var(--accent-bg);border-radius:var(--radius);font-size:12px;color:var(--ink2)">
-                <strong>Milestone rewards:</strong> 5 referrals = 1 month free · 10 referrals = 3 months free · 25 referrals = 1 year free
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Referral tracking table -->
-        <div class="card" style="margin-top:16px">
-          <div class="card-header"><span class="card-title">Your referrals</span><button class="btn btn-ghost btn-sm" onclick="loadReferralTracking()" style="font-size:12px">⟳ Refresh</button></div>
-          <div class="card-body" id="referral-list">
-            <div id="referral-data"><div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">Share your code to start tracking referrals here.</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ SETTINGS TAB ══ -->
-      <!-- ══ KNOWLEDGE BASE TAB ══ -->
+      <div id="tab-referral" class="hidden"><div class="loading-state"><p>Redirected to Referral Center</p></div></div>
       <div id="tab-knowledge" class="hidden">
         <div class="page-header"><h1>Knowledge Base</h1><p>25 articles covering everything about PA business compliance</p></div>
         <div style="margin-bottom:16px">
@@ -1145,7 +1025,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Compliance Intel</h2>
           <button onclick="loadPortal_comp_intel()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="comp_intel-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="comp_intel-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
       <div id="tab-filing_actions" class="hidden">
@@ -1153,7 +1033,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Filing Actions</h2>
           <button onclick="loadPortal_filing_actions()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="filing_actions-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="filing_actions-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
       <div id="tab-entity_mgmt" class="hidden">
@@ -1161,7 +1041,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">My Entities</h2>
           <button onclick="loadPortal_entity_mgmt()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="entity_mgmt-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="entity_mgmt-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
       <div id="tab-portal_ai" class="hidden">
@@ -1169,7 +1049,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">AI Tools</h2>
           <button onclick="loadPortal_portal_ai()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_ai-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_ai-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
       <div id="tab-portal_billing" class="hidden">
@@ -1177,7 +1057,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Invoices & Tax</h2>
           <button onclick="loadPortal_portal_billing()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_billing-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_billing-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
       <div id="tab-portal_referrals" class="hidden">
@@ -1185,7 +1065,7 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           <h2 style="font-family:var(--serif);font-size:24px">Referral Center</h2>
           <button onclick="loadPortal_portal_referrals()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border,#eee);border-radius:8px;background:var(--surface,#fff);cursor:pointer">Refresh</button>
         </div>
-        <div id="portal_referrals-body" aria-live="polite"><div style="text-align:center;padding:32px;color:var(--ink3,#999)">Loading...</div></div>
+        <div id="portal_referrals-body" aria-live="polite"><div class="loading-state"><div class="spinner"></div></div></div>
       </div>
 
     </main>
@@ -1328,7 +1208,7 @@ async function loadPortal_filing_actions() {
   const el = document.getElementById('filing_actions-body');
   const org = CLIENT.organization_id;
   if (!org) { el.innerHTML = '<div style="padding:24px;color:var(--ink3,#999)">No organization linked to your account yet.</div>'; return; }
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink3)">Loading obligations...</div>';
+  el.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
   try {
     const r = await portalFetch('/api/organizations/'+org+'/obligations');
     const d = await r.json();
