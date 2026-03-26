@@ -1,4 +1,7 @@
 import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('compliance-check');
 import { getRules, getEntityConfig } from './_compliance.js';
 
 export default async function handler(req, res) {
@@ -57,7 +60,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (err) {
-    console.error('Compliance check error:', err.message);
+    log.error('compliance_check_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

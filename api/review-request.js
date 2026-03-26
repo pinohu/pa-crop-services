@@ -2,6 +2,8 @@
 // GET /api/review-request?key=ADMIN (batch — sends to eligible clients)
 // Requests Google reviews from clients 60+ days in, good standing
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -10,10 +12,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;

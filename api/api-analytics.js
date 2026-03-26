@@ -5,6 +5,8 @@
 
 const STATS = { endpoints: {}, totalRequests: 0, errors: 0, startTime: Date.now() };
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -30,8 +32,7 @@ export default async function handler(req, res) {
   }
 
   // GET: View analytics
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const uptimeMs = Date.now() - STATS.startTime;
   return res.status(200).json({

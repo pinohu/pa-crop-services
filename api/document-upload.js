@@ -1,27 +1,28 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+import { isValidEmail } from './_validate.js';
+
+const log = createLogger('document-upload');
+
 // PA CROP Services — Document Upload + Auto-Classification
 // POST /api/document-upload { email, fileName, fileType, fileContent (base64), notes }
 // Classifies document via Groq, stores metadata in SuiteDash, sends alerts for urgent docs
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim()||'unknown';
-  const k = ip+':'+(req.url||'').split('?')[0]; const now = Date.now();
-  let d = _rl.get(k); if(!d||now-d.s>win){_rl.set(k,{c:1,s:now});return false;}
-  d.c++; if(d.c>max){res.setHeader('Retry-After',String(Math.ceil((d.s+win-now)/1000)));res.status(429).json({error:'Too many requests'});return true;} return false;
-}
+
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (_rateLimit(req, res, 5, 60000)) return;
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
+  const rlResult = await checkRateLimit(getClientIp(req), 'document-upload', 5, '60s');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ success: false, error: 'Too many requests' });
+  }
 
   const { email, fileName, fileType, notes } = req.body || {};
-  if (!email || !fileName) return res.status(400).json({ error: 'email and fileName required' });
+  if (!email || !fileName) return res.status(400).json({ success: false, error: 'email and fileName required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
@@ -99,7 +100,7 @@ export default async function handler(req, res) {
             <p>Or call us: <a href="tel:8142282822">814-228-2822</a></p>
           </div>`
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
 
       // SMS alert for critical
       const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
@@ -107,7 +108,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ to: email, type: 'entity_alert', data: { entity: fileName, status: 'URGENT document received — check portal immediately' } })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
 
       // Alert Ike
       await fetch('https://api.emailit.com/v1/emails', {
@@ -118,7 +119,7 @@ export default async function handler(req, res) {
           subject: `🚨 URGENT DOC: ${result.classification.category} for ${email}`,
           html: `<p><strong>Client:</strong> ${email}<br><strong>File:</strong> ${fileName}<br><strong>Type:</strong> ${result.classification.category}<br><strong>Action:</strong> ${result.classification.action_needed}</p>`
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
     result.alertsSent = true;
   }

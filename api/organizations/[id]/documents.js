@@ -26,6 +26,7 @@ export default async function handler(req, res) {
     if (status) items = items.filter(d => d.review_status === status);
     if (limit) items = items.slice(0, parseInt(limit));
 
+    res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
     return res.status(200).json({ success: true, items, total: items.length });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'internal_error' });

@@ -2,14 +2,14 @@
 // GET /api/backup-export?key=ADMIN&type=clients|config|all
 // Exports all client data, configuration, and system state as JSON
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   // No CORS on backup export — admin API only
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // Admin key from header only — never query params (they leak in logs)
-  const adminKey = req.headers['x-admin-key'];
-  const expectedKey = process.env.ADMIN_SECRET_KEY;
-  if (!adminKey || !expectedKey || adminKey !== expectedKey) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;

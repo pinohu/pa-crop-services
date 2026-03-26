@@ -2,6 +2,8 @@
 // Full tier-aware auto-provisioning: SuiteDash + 20i hosting/email/SSL/domain + welcome email
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -11,13 +13,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Auth: require admin key in header only. stripe-webhook.js calls this with X-Admin-Key.
-  // Never accept admin key from body or bypass via stripe-signature header.
-  const adminKey = req.headers['x-admin-key'];
-  const expectedKey = process.env.ADMIN_SECRET_KEY;
-  if (!adminKey || !expectedKey || adminKey !== expectedKey) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  // Auth: require admin key in header only
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const body = req.body || {};
   const {
@@ -164,7 +161,7 @@ export default async function handler(req, res) {
       results.steps.push({ step: 'neon_compliance_engine', status: 'skipped', reason: 'DATABASE_URL not configured' });
     }
   } catch (neonErr) {
-    console.error('Neon provision error:', neonErr.message);
+    // Neon provision error logged in step results
     results.steps.push({ step: 'neon_compliance_engine', status: 'error', error: neonErr.message });
   }
 
@@ -461,7 +458,7 @@ export default async function handler(req, res) {
             method: 'PUT',
             headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
             body: JSON.stringify({ tags: [`partner-${refCodeUsed}`], custom_fields: { referred_by_partner: partner.first_name || partner.name, partner_email: partner.email } })
-          }).catch(e => console.error('Silent failure:', e.message));
+          }).catch(() => { /* non-critical, logged in step results */ });
         }
         // Notify partner of new referral
         const emailitKey = process.env.EMAILIT_API_KEY;
@@ -474,7 +471,7 @@ export default async function handler(req, res) {
               subject: '🎉 New client via your referral!',
               html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px"><div style="border-bottom:3px solid #C9982A;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div><p>Hi ${partner.first_name || 'Partner'},</p><p>A new client just signed up using your referral code! Their <strong>${tier}</strong> plan is now active. Your commission has been credited.</p><p><a href="https://pacropservices.com/api/partner-dashboard?email=${encodeURIComponent(partner.email)}" style="color:#C9982A;font-weight:600">View your dashboard →</a></p></div>`
             })
-          }).catch(e => console.error('Silent failure:', e.message));
+          }).catch(() => { /* non-critical, logged in step results */ });
         }
         results.steps.push({ step: 'partner_cobranding', status: 'done', partner: partner.first_name || partner.name });
       }

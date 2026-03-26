@@ -2,6 +2,8 @@
 // POST /api/generate-article { keyword, angle, targetWordCount }
 // Generates PA compliance articles in brand voice
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -11,10 +13,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const { keyword, angle, targetWordCount = 1500 } = req.body || {};
   if (!keyword) return res.status(400).json({ error: 'keyword required' });

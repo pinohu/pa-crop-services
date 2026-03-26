@@ -3,12 +3,13 @@
 // Detects tier from Stripe product, auto-provisions everything
 
 import { log, logError, logWarn } from './_log.js';
+import { fetchWithTimeout } from './_fetch.js';
 
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
-  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  if (!key) { logWarn('emailit_key_missing', { subject }); return; }
   try {
-    await fetch('https://api.emailit.com/v1/emails', {
+    await fetchWithTimeout('https://api.emailit.com/v1/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -18,7 +19,7 @@ async function _notifyIke(subject, body) {
         html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
       })
     });
-  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+  } catch (e) { logError('emailit_notify_failed', { subject }, e); }
 }
 
 // Map Stripe amounts (in cents) to tiers
@@ -41,7 +42,7 @@ export default async function handler(req, res) {
 
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!whSecret) {
-    console.error('FATAL: STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
+    logError('webhook_secret_missing', {});
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
@@ -63,7 +64,7 @@ export default async function handler(req, res) {
       const valid = signatures.some(s => crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected)));
       if (!valid) return res.status(400).json({ error: 'Invalid signature' });
     } catch (err) {
-      console.error('Signature verification failed:', err);
+      logError('webhook_signature_failed', {}, err);
       return res.status(400).json({ error: 'Verification failed' });
     }
   }
@@ -83,7 +84,7 @@ export default async function handler(req, res) {
       log('new_client_checkout', { email, tier: tierConfig.tier, amount: (session.amount_total||0)/100 });
 
       // Step 1: Call /api/provision directly (no n8n dependency)
-      const provisionRes = await fetch(`${baseUrl}/api/provision`, {
+      const provisionRes = await fetchWithTimeout(`${baseUrl}/api/provision`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -113,14 +114,14 @@ export default async function handler(req, res) {
       log('provision_result', { email, tier: tierConfig.tier, steps: provisionData.steps?.length || 0 });
 
       // Step 2: Also notify n8n (for any additional workflow steps)
-      await fetch('https://n8n.audreysplace.place/webhook/crop-new-client', {
+      await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-new-client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
       }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message }));
 
       // Step 2: Generate branded invoice
-      fetch(`${baseUrl}/api/invoice-generate`, {
+      fetchWithTimeout(`${baseUrl}/api/invoice-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ email, name, amount: session.amount_total || 0, tier: tierConfig.tier, stripeSessionId: session.id })
@@ -148,7 +149,7 @@ export default async function handler(req, res) {
 
       // Day 1: Immediate SMS alert
       if (custEmail) {
-        fetch(`${baseUrl}/api/sms`, {
+        fetchWithTimeout(`${baseUrl}/api/sms`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
           body: JSON.stringify({ to: custEmail, message: `PA CROP Services: Your payment of $${amount} failed. Please update your payment method to keep your compliance monitoring active. Questions? 814-228-2822` })
@@ -156,7 +157,7 @@ export default async function handler(req, res) {
       }
 
       // n8n for full dunning workflow
-      const pfRes = await fetch('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
+      const pfRes = await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(event)

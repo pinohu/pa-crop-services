@@ -14,6 +14,8 @@ const ENTITY_STATS = {
   topCounties: { Philadelphia: 520000, Allegheny: 285000, Montgomery: 195000, Delaware: 142000, Chester: 135000, Bucks: 155000, Lancaster: 125000, York: 98000, Berks: 82000, Erie: 55000 },
 };
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -22,8 +24,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   if (req.method === 'GET') {
     const action = req.query?.action || 'stats';

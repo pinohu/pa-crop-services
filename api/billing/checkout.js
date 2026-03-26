@@ -1,5 +1,7 @@
 import { setCors } from '../services/auth.js';
 import { isValidEmail, isValidPlanCode } from '../_validate.js';
+import { logError } from '../_log.js';
+import { fetchWithTimeout } from '../_fetch.js';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const PLAN_PRICES = {
@@ -21,7 +23,7 @@ export default async function handler(req, res) {
   if (!STRIPE_KEY) return res.status(500).json({ success: false, error: 'stripe_not_configured' });
 
   try {
-    const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    const resp = await fetchWithTimeout('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${STRIPE_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
     const session = await resp.json();
     return res.status(200).json({ success: true, checkout_url: session.url });
   } catch (err) {
-    console.error(JSON.stringify({ ts: new Date().toISOString(), service: 'pa-crop', level: 'error', event: 'checkout_failed', error: err.message }));
+    logError('checkout_failed', {}, err);
     return res.status(500).json({ success: false, error: 'checkout_failed' });
   }
 }

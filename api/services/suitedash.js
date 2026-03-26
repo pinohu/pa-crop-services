@@ -1,3 +1,4 @@
+import { logError } from '../_log.js';
 // PA CROP Services — SuiteDash CRM Integration
 // Maximally leverages SuiteDash as the CRM source of truth for clients + companies.
 // SuiteDash owns: contacts, companies, onboarding status, portal access, file sharing, invoicing.
@@ -35,7 +36,7 @@ async function sdFetch(method, path, body) {
     const data = await resp.json();
     return { success: resp.ok, status: resp.status, data };
   } catch (err) {
-    console.error(`SuiteDash ${method} ${path} failed:`, err.message);
+    logError("suitedash_request_failed", { method, path }, err);
     return { success: false, error: err.message };
   }
 }

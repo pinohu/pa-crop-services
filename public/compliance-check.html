@@ -6,6 +6,9 @@
 <title>PA Annual Report Compliance Checker | PA CROP Services</title>
 <meta name="description" content="Check your Pennsylvania annual report deadline by entity type. Free compliance checker for LLCs, corporations, LPs, and more.">
 <meta property="og:title" content="PA Annual Report Compliance Checker">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
 <meta property="og:description" content="Enter your entity type to see your exact deadline, fee, and what happens if you miss it.">
 <meta property="og:image" content="https://pacropservices.com/og-image.jpg">
 <link rel="canonical" href="https://www.pacropservices.com/compliance-check">
@@ -21,7 +24,7 @@ h1{font-family:var(--serif);font-size:36px;margin:16px 0 8px;letter-spacing:-.5p
 .subtitle{color:var(--ink3);font-size:16px}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
 .entity-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
-.entity-btn{padding:14px 16px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;text-align:left;font-family:var(--font);font-size:14px;font-weight:500;transition:all .2s}
+.entity-btn{padding:14px 16px;min-height:44px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;text-align:left;font-family:var(--font);font-size:14px;font-weight:500;transition:all .2s}
 .entity-btn:hover{border-color:var(--accent);background:#FFFDF5}
 .entity-btn.selected{border-color:var(--accent);background:#FEF3C7;font-weight:600}
 .entity-btn .dl{font-size:12px;color:var(--ink3);margin-top:2px}
@@ -53,6 +56,7 @@ h1{font-family:var(--serif);font-size:36px;margin:16px 0 8px;letter-spacing:-.5p
 footer{text-align:center;padding:40px 0;color:var(--ink3);font-size:13px}
 footer a{color:var(--accent);text-decoration:none}
 @media(max-width:600px){.entity-grid{grid-template-columns:1fr}h1{font-size:28px}}
+.skip-link{position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none}.skip-link:focus{top:0}
 </style>
 </head>
 <body>
@@ -97,7 +101,7 @@ footer a{color:var(--accent);text-decoration:none}
 </main>
 <div style="text-align:center;margin-top:24px"><a href="/" style="color:var(--ink3);text-decoration:none;font-size:14px">← Back to PA CROP Services</a></div>
 <footer role="contentinfo">
-<p>PA CROP Services · Licensed Pennsylvania Commercial Registered Office Provider</p>
+<p>&copy; 2026 PA CROP Services (PA Registered Office Services, LLC) · Licensed Pennsylvania CROP</p>
 <p style="margin-top:4px">Source: <a href="https://www.pa.gov/agencies/dos/programs/business/types-of-filings-and-registrations/annual-reports" target="_blank">PA Department of State</a> · 15 Pa. C.S. § 146</p>
 </footer>
 </div>
@@ -123,7 +127,7 @@ E.forEach(e=>{const b=document.createElement('button');b.className='entity-btn';
 (function(){const p=new URLSearchParams(window.location.search);const t=p.get('entity_type')||p.get('type');if(t&&btns[t])sel(t,btns[t])})();
 async function sel(k,btn){
 document.querySelectorAll('.entity-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');
-try{const r=await fetch(`/api/compliance-check?entity_type=${k}`);const d=await r.json();if(d.success)show(d.result)}catch(e){console.error(e)}
+try{const r=await fetch('/api/compliance-check?entity_type='+encodeURIComponent(k));if(!r.ok)throw new Error('Server error '+r.status);const d=await r.json();if(d.success)show(d.result);else{var cbox=document.getElementById('cbox');if(cbox){cbox.className='cb cb-w';cbox.innerHTML='<strong>Unable to check compliance.</strong> Please try again or call 814-228-2822.';document.getElementById('result').style.display='block';}}}catch(e){console.error(e);var cbox=document.getElementById('cbox');if(cbox){cbox.className='cb cb-w';cbox.innerHTML='<strong>Connection error.</strong> Please check your internet and try again, or call 814-228-2822.';document.getElementById('result').style.display='block';}}
 }
 function show(r){
 document.getElementById('result').style.display='block';

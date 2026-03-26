@@ -206,6 +206,7 @@ export default async function handler(req, res) {
       ...results
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('Sync error:', err.message);
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

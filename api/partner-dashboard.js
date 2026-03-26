@@ -1,30 +1,31 @@
+
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+import { isValidEmail } from './_validate.js';
+
+const log = createLogger('partner-dashboard');
+
 // PA CROP Services — Partner Dashboard API
 // GET /api/partner-dashboard?email=partner@example.com
 // Returns partner's referred clients, commissions, performance
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim()||'unknown';
-  const k = ip+':'+(req.url||'').split('?')[0]; const now = Date.now();
-  let d = _rl.get(k); if(!d||now-d.s>win){_rl.set(k,{c:1,s:now});return false;}
-  d.c++; if(d.c>max){res.setHeader('Retry-After',String(Math.ceil((d.s+win-now)/1000)));res.status(429).json({error:'Too many requests'});return true;} return false;
-}
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (_rateLimit(req, res, 10, 60000)) return;
+  const rlResult = await checkRateLimit(getClientIp(req), 'partner-dashboard', 10, '60s');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ success: false, error: 'Too many requests' });
+  }
 
   const email = req.query?.email;
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'CRM not configured' });
+  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'CRM not configured' });
 
   try {
     // Find partner
@@ -33,10 +34,10 @@ export default async function handler(req, res) {
     });
     const contacts = (await sdSearch.json())?.data || [];
     const partner = contacts[0];
-    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+    if (!partner) return res.status(404).json({ success: false, error: 'Partner not found' });
 
     const isPartner = partner.tags?.some(t => t.includes('partner'));
-    if (!isPartner) return res.status(403).json({ error: 'Not a registered partner' });
+    if (!isPartner) return res.status(403).json({ success: false, error: 'Not a registered partner' });
 
     const refCode = partner.custom_fields?.referral_code || '';
     const earnings = parseFloat(partner.custom_fields?.referral_earnings || '0');
@@ -65,6 +66,6 @@ export default async function handler(req, res) {
       activeClients: referredSummary.filter(c => c.active).length,
     });
   } catch(e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ success: false, error: e.message });
   }
 }

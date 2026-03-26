@@ -16,15 +16,32 @@ export default async function handler(req, res) {
     if (!db.isConnected()) return res.status(200).json({ success: true, items: [] });
 
     const referrals = await db.getReferrals(session.clientId);
-    const portfolio = [];
+    const activeReferrals = referrals.filter(r => r.referred_client_id);
+    if (activeReferrals.length === 0) return res.status(200).json({ success: true, items: [] });
 
-    for (const ref of referrals) {
-      if (!ref.referred_client_id) continue;
-      const client = await db.getClientById(ref.referred_client_id);
+    // Fetch all clients, orgs, and obligations in parallel — avoids N+1 per referral
+    const [clients, orgsAndObligations] = await Promise.all([
+      Promise.all(activeReferrals.map(r => db.getClientById(r.referred_client_id))),
+      Promise.all(
+        activeReferrals.map(async r => {
+          const client = await db.getClientById(r.referred_client_id);
+          if (!client?.organization_id) return { org: null, obligations: [] };
+          const [org, obligations] = await Promise.all([
+            db.getOrganization(client.organization_id),
+            db.getObligationsForOrg(client.organization_id)
+          ]);
+          return { org, obligations };
+        })
+      )
+    ]);
+
+    const portfolio = [];
+    for (let i = 0; i < activeReferrals.length; i++) {
+      const ref = activeReferrals[i];
+      const client = clients[i];
       if (!client) continue;
-      const obligations = client.organization_id ? await db.getObligationsForOrg(client.organization_id) : [];
+      const { org, obligations } = orgsAndObligations[i];
       const risk = computeRisk(obligations);
-      const org = client.organization_id ? await db.getOrganization(client.organization_id) : null;
 
       portfolio.push({
         client_name: client.owner_name || client.email,

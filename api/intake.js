@@ -1,3 +1,11 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+import { isValidEmail, isValidString, sanitize } from './_validate.js';
+import { fetchWithTimeout } from './_fetch.js';
+
+const log = createLogger('intake');
+
 // PA CROP Services — /api/intake
 // Lead capture from compliance check + embedded widget
 // Implements GAP-07: Lead Scoring
@@ -24,7 +32,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   // Rate limit: Lead capture — 10/min
   if (_rateLimit(req, res, 10, 60000)) return;
@@ -35,7 +43,13 @@ export default async function handler(req, res) {
     planInterest, phone, partnerId
   } = req.body || {};
 
-  if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!email || !isValidEmail(email)) return res.status(400).json({ success: false, error: 'Valid email required' });
+  if (firstName !== undefined && !isValidString(firstName, { minLength: 0, maxLength: 100 })) return res.status(400).json({ success: false, error: 'firstName too long' });
+  if (lastName !== undefined && !isValidString(lastName, { minLength: 0, maxLength: 100 })) return res.status(400).json({ success: false, error: 'lastName too long' });
+  if (source !== undefined && !isValidString(source, { minLength: 0, maxLength: 100 })) return res.status(400).json({ success: false, error: 'source too long' });
+  if (entityType !== undefined && !isValidString(entityType, { minLength: 0, maxLength: 100 })) return res.status(400).json({ success: false, error: 'entityType too long' });
+  if (phone !== undefined && !isValidString(phone, { minLength: 0, maxLength: 30 })) return res.status(400).json({ success: false, error: 'phone too long' });
+  if (partnerId !== undefined && !isValidString(partnerId, { minLength: 0, maxLength: 64 })) return res.status(400).json({ success: false, error: 'partnerId too long' });
 
   const cleanEmail = email.toLowerCase().trim();
 
@@ -68,7 +82,7 @@ export default async function handler(req, res) {
   try {
     // Create SuiteDash contact
     if (SD_PUBLIC && SD_SECRET) {
-      await fetch('https://app.suitedash.com/secure-api/contacts', {
+      await fetchWithTimeout('https://app.suitedash.com/secure-api/contacts', {
         method: 'POST',
         headers: {
           'X-Public-ID': SD_PUBLIC,
@@ -91,7 +105,7 @@ export default async function handler(req, res) {
             partner_id: partnerId || ''
           }
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
 
     // Fire n8n webhook for nurture sequence
@@ -99,22 +113,22 @@ export default async function handler(req, res) {
       ? 'crop-hot-lead-alert'
       : 'crop-lead-nurture-start';
     
-    await fetch(`${N8N_BASE}/${webhookPath}`, {
+    await fetchWithTimeout(`${N8N_BASE}/${webhookPath}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: cleanEmail, firstName, source, score, leadTier,
         entityType, hasForeignEntity, partnerId
       })
-    }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
+    }).catch(e => log.warn('external_call_failed', { error: e.message })); // Fire and forget
 
     // Add to retargeting drip (for leads that don't convert immediately)
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
-    fetch(`${baseUrl}/api/retarget`, {
+    fetchWithTimeout(`${baseUrl}/api/retarget`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: cleanEmail, name: firstName, riskScore: score, source })
-    }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
+    }).catch(e => log.warn('external_call_failed', { error: e.message })); // Fire and forget
 
     return res.status(200).json({
       success: true,
@@ -123,7 +137,7 @@ export default async function handler(req, res) {
       message: 'Lead captured successfully'
     });
   } catch (err) {
-    console.error('Intake error:', err);
+    log.error('intake_error', {}, err);
     return res.status(500).json({ error: 'Something went wrong processing your request. Please try again or call 814-228-2822.' });
   }
 }

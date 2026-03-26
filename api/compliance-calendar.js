@@ -5,17 +5,20 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Allow token as query param for calendar subscription
-  const token = req.query.token || (req.headers.authorization || '').replace('Bearer ', '');
+  // Calendar subscriptions must authenticate via Authorization header only.
+  // Query-param tokens are not accepted — they appear in server logs and browser history.
+  const session = await authenticateRequest(req);
   let orgId = req.query.org;
 
-  if (!orgId && token) {
-    try {
-      const { authenticateRequest: auth } = await import('./services/auth.js');
-      const fakeReq = { headers: { authorization: `Bearer ${token}` } };
-      const session = await auth(fakeReq);
-      if (session.valid) orgId = session.orgId;
-    } catch {}
+  if (session.valid) {
+    // Authenticated users: enforce they can only access their own org's calendar
+    if (!orgId) orgId = session.orgId;
+    if (orgId !== session.orgId) {
+      return res.status(403).json({ success: false, error: 'access_denied' });
+    }
+  } else {
+    // Unauthenticated — require both org param and a valid session
+    return res.status(401).json({ success: false, error: 'unauthenticated' });
   }
 
   if (!orgId) return res.status(400).json({ success: false, error: 'org_id_required' });

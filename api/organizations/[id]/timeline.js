@@ -15,9 +15,11 @@ export default async function handler(req, res) {
     const org = await db.getOrganization(id);
     if (!org) return res.status(404).json({ success: false, error: 'not_found' });
 
-    const obligations = await db.getObligationsForOrg(id);
-    const notifications = await db.getNotificationsForOrg(id);
-    const events = await db.getAuditEvents({ targetType: 'obligation', limit: 100 });
+    const [obligations, notifications] = await Promise.all([
+      db.getObligationsForOrg(id),
+      db.getNotificationsForOrg(id)
+    ]);
+    // Note: audit events are not used in the timeline output — removed unused fetch
 
     // Build timeline entries from obligations + notifications + audit events
     const timeline = [];

@@ -2,6 +2,8 @@
 // POST /api/sms { to, message, type }
 // Types: welcome, reminder_90, reminder_30, reminder_7, renewal, custom
 
+import { isAdminRequest } from './services/auth.js';
+
 const _rl = new Map();
 function _rateLimit(req, res, max, win) {
   const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || 'unknown';
@@ -32,8 +34,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
+  // Admin requests bypass the SMS rate limit; non-admin requests are rate limited
+  const isAdmin = isAdminRequest(req);
+  if (!isAdmin) {
     if (_rateLimit(req, res, 3, 60000)) return;
   }
 

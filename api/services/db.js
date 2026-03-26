@@ -15,7 +15,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import * as suitedash from './suitedash.js';
-import { logWarn } from '../_log.js';
+import { logWarn, logError } from '../_log.js';
 
 // ── Neon Connection ────────────────────────────────────────
 
@@ -45,7 +45,7 @@ async function query(text, params = []) {
   try {
     return await _sql.query(text, params);
   } catch (err) {
-    console.error('DB query error:', err.message, text.slice(0, 80));
+    logError('db_query_error', { query: text.slice(0, 80) }, err);
     throw err;
   }
 }
@@ -53,12 +53,20 @@ async function query(text, params = []) {
 // ── Organizations ──────────────────────────────────────────
 
 export async function getOrganization(id) {
-  const rows = await query('SELECT * FROM organizations WHERE id = $1', [id]);
+  const rows = await query(
+    `SELECT id, legal_name, display_name, entity_type, jurisdiction, dos_number,
+            formation_date, entity_status, principal_address, registered_office_address,
+            partner_id, metadata, created_at, updated_at
+     FROM organizations WHERE id = $1`, [id]);
   return rows?.[0] || null;
 }
 
 export async function getOrganizationByDos(dosNumber) {
-  const rows = await query('SELECT * FROM organizations WHERE dos_number = $1', [dosNumber]);
+  const rows = await query(
+    `SELECT id, legal_name, display_name, entity_type, jurisdiction, dos_number,
+            formation_date, entity_status, principal_address, registered_office_address,
+            partner_id, metadata, created_at, updated_at
+     FROM organizations WHERE dos_number = $1`, [dosNumber]);
   return rows?.[0] || null;
 }
 
@@ -122,7 +130,11 @@ export async function updateOrganization(id, updates) {
 // SuiteDash is the CRM master — portal access, onboarding, invoicing.
 
 export async function getClientById(id) {
-  const rows = await query('SELECT * FROM clients WHERE id = $1', [id]);
+  const rows = await query(
+    `SELECT id, organization_id, owner_name, email, phone, plan_code, billing_status,
+            onboarding_status, referral_code, referred_by_client_id, communication_prefs,
+            metadata, created_at, updated_at
+     FROM clients WHERE id = $1`, [id]);
   return rows?.[0] || null;
 }
 
@@ -222,13 +234,19 @@ export async function getActiveRule(jurisdiction, entityType, obligationType) {
 
 export async function getAllActiveRules(jurisdiction) {
   const rows = await query(
-    'SELECT * FROM rules WHERE jurisdiction = $1 AND is_active = true ORDER BY entity_type',
+    `SELECT id, jurisdiction, entity_type, obligation_type, version, effective_date,
+            is_active, authority_source, authority_url, rule_json, created_at, created_by
+     FROM rules WHERE jurisdiction = $1 AND is_active = true ORDER BY entity_type`,
     [jurisdiction || 'PA']);
   return rows || [];
 }
 
 export async function getAllRules() {
-  const rows = await query('SELECT * FROM rules ORDER BY jurisdiction, entity_type, effective_date');
+  const rows = await query(
+    `SELECT id, jurisdiction, entity_type, obligation_type, version, effective_date,
+            superseded_at, is_active, authority_source, authority_url, rule_json,
+            created_at, created_by
+     FROM rules ORDER BY jurisdiction, entity_type, effective_date LIMIT 500`);
   return rows || [];
 }
 
@@ -259,7 +277,11 @@ export async function publishRule(ruleId) {
 // ── Obligations ────────────────────────────────────────────
 
 export async function getObligationsForOrg(orgId) {
-  const rows = await query('SELECT * FROM obligations WHERE organization_id = $1 ORDER BY due_date', [orgId]);
+  const rows = await query(
+    `SELECT id, organization_id, obligation_type, jurisdiction, rule_id, rule_version,
+            due_date, fee_usd, obligation_status, escalation_level, filing_method,
+            source_reason, metadata, created_at, updated_at, closed_at
+     FROM obligations WHERE organization_id = $1 ORDER BY due_date LIMIT 200`, [orgId]);
   return rows || [];
 }
 
@@ -306,12 +328,14 @@ export async function updateObligation(id, updates) {
 
 export async function getObligationsDueSoon(daysOut, jurisdiction) {
   const rows = await query(
-    `SELECT o.*, org.legal_name, org.entity_type
+    `SELECT o.id, o.organization_id, o.obligation_type, o.jurisdiction, o.due_date,
+            o.fee_usd, o.obligation_status, o.escalation_level, o.filing_method,
+            org.legal_name, org.entity_type
      FROM obligations o LEFT JOIN organizations org ON o.organization_id = org.id
      WHERE o.due_date <= (CURRENT_DATE + $1 * INTERVAL '1 day')
      AND o.obligation_status NOT IN ('filed_confirmed','closed')
      ${jurisdiction ? 'AND o.jurisdiction = $2' : ''}
-     ORDER BY o.due_date`,
+     ORDER BY o.due_date LIMIT 500`,
     jurisdiction ? [daysOut, jurisdiction] : [daysOut]);
   return rows || [];
 }
@@ -319,7 +343,11 @@ export async function getObligationsDueSoon(daysOut, jurisdiction) {
 // ── Documents ──────────────────────────────────────────────
 
 export async function getDocumentsForOrg(orgId) {
-  const rows = await query('SELECT * FROM documents WHERE organization_id = $1 ORDER BY received_at DESC', [orgId]);
+  const rows = await query(
+    `SELECT id, organization_id, obligation_id, document_type, source_channel, filename,
+            mime_type, storage_key, storage_url, urgency, classifier_version, review_status,
+            received_at, processed_at, metadata, created_at
+     FROM documents WHERE organization_id = $1 ORDER BY received_at DESC LIMIT 200`, [orgId]);
   return rows || [];
 }
 
@@ -356,7 +384,11 @@ export async function updateDocument(id, updates) {
 // ── Notifications ──────────────────────────────────────────
 
 export async function getNotificationsForOrg(orgId) {
-  const rows = await query('SELECT * FROM notifications WHERE organization_id = $1 ORDER BY scheduled_for DESC', [orgId]);
+  const rows = await query(
+    `SELECT id, organization_id, obligation_id, client_id, notification_type, channel,
+            template_id, scheduled_for, sent_at, delivery_status, retry_count,
+            provider_message_id, metadata, created_at
+     FROM notifications WHERE organization_id = $1 ORDER BY scheduled_for DESC LIMIT 200`, [orgId]);
   return rows || [];
 }
 
@@ -404,7 +436,10 @@ export async function getPendingNotifications() {
 // ── Billing ────────────────────────────────────────────────
 
 export async function getBillingAccount(clientId) {
-  const rows = await query('SELECT * FROM billing_accounts WHERE client_id = $1', [clientId]);
+  const rows = await query(
+    `SELECT id, client_id, stripe_customer_id, stripe_subscription_id, current_period_end,
+            billing_status, plan_code, entitlements, created_at, updated_at
+     FROM billing_accounts WHERE client_id = $1`, [clientId]);
   return rows?.[0] || null;
 }
 
@@ -430,7 +465,10 @@ export async function upsertBillingAccount(account) {
 // ── Referrals ──────────────────────────────────────────────
 
 export async function getReferrals(clientId) {
-  const rows = await query('SELECT * FROM referrals WHERE referrer_client_id = $1 ORDER BY created_at DESC', [clientId]);
+  const rows = await query(
+    `SELECT id, referrer_client_id, referred_email, referred_client_id, referral_status,
+            conversion_date, credit_amount, metadata, created_at
+     FROM referrals WHERE referrer_client_id = $1 ORDER BY created_at DESC LIMIT 100`, [clientId]);
   return rows || [];
 }
 
@@ -456,7 +494,7 @@ export async function logAIConversation(conv) {
        conv.moderation_flag || false, conv.model_name]);
     return rows?.[0] || null;
   } catch (err) {
-    console.error('AI conversation log failed:', err.message);
+    logError('ai_conversation_log_failed', {}, err);
     return null;
   }
 }

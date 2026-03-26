@@ -1,5 +1,8 @@
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('admin-revenue');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -61,7 +64,7 @@ export default async function handler(req, res) {
       generated_at: new Date().toISOString()
     });
   } catch (err) {
-    console.error("Revenue analytics error:", err.message);
+    log.error("revenue_analytics_error", {}, err);
     return res.status(500).json({ success: false, error: "internal_error" });
   }
 }

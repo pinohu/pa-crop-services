@@ -103,6 +103,8 @@ const GUIDES = {
   }
 };
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -113,8 +115,7 @@ export default async function handler(req, res) {
 
   try {
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const section = req.query?.section || 'all';
 

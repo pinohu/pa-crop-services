@@ -24,6 +24,7 @@ export default async function handler(req, res) {
       if (type) items = items.filter(o => o.obligation_type === type);
       if (limit) items = items.slice(0, parseInt(limit));
 
+      res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
       return res.status(200).json({ success: true, items, total: items.length });
     }
 

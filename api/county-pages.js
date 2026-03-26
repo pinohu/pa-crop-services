@@ -13,16 +13,15 @@ const PA_COUNTIES = [
   'Venango','Warren','Washington','Wayne','Westmoreland','Wyoming','York'
 ];
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
   res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const county = req.query?.county;

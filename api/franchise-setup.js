@@ -2,6 +2,8 @@
 // POST /api/franchise-setup { partnerName, partnerEmail, domain, branding }
 // Generates complete white-label instance config using SuiteDash + 20i
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
@@ -13,8 +15,7 @@ export default async function handler(req, res) {
   try {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const { partnerName, partnerEmail, domain, branding, specialization } = req.body || {};
   if (!partnerName || !partnerEmail) return res.status(400).json({ error: 'partnerName and partnerEmail required' });

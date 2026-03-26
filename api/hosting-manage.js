@@ -446,6 +446,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, data: result.data });
   } catch (err) {
     log.error('hosting_manage_action_failed', { action, isAdmin }, err);
-    return res.status(502).json({ success: false, error: err.message || 'Upstream error' });
+    return res.status(502).json({ success: false, error: 'upstream_error' });
   }
 }

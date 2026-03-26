@@ -1,5 +1,6 @@
 import { setCors, authenticateRequest, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { isValidUUID } from '../_validate.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -9,7 +10,7 @@ export default async function handler(req, res) {
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 
   const id = req.query.id;
-  if (!id) return res.status(400).json({ success: false, error: 'missing_id' });
+  if (!id || !isValidUUID(id)) return res.status(400).json({ success: false, error: 'invalid_id' });
 
   // Enforce org-level access control
   if (!isAdminRequest(req) && session.orgId !== id) {

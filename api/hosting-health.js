@@ -1,25 +1,24 @@
+import { setCors, isAdminRequest } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('hosting-health');
+
 // PA CROP Services — 20i Hosting Health Monitor
 // GET /api/hosting-health?key=ADMIN
 // Checks all client hosting packages: uptime, SSL, disk usage
 
+
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
   const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
   const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID || '10455';
 
-  if (!BEARER) return res.status(500).json({ error: '20i not configured' });
+  if (!BEARER) return res.status(500).json({ success: false, error: '20i not configured' });
 
   const results = { packages: [], alerts: [] };
 
@@ -48,7 +47,7 @@ export default async function handler(req, res) {
       }
     }
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ success: false, error: e.message });
   }
 
   // Send alerts if any
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
           subject: `⚠️ Hosting Health: ${results.alerts.length} issues detected`,
           html: `<div style="font-family:sans-serif"><h2>Hosting Health Alerts</h2><pre>${JSON.stringify(results.alerts, null, 2)}</pre></div>`
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
   }
 

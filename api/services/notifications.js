@@ -2,6 +2,7 @@
 // Tech spec: sections 9.2, 10 (Notification template matrix)
 
 import * as db from './db.js';
+import { logWarn, logError } from '../_log.js';
 
 const EMAILIT_KEY = process.env.EMAILIT_API_KEY;
 
@@ -92,7 +93,7 @@ function reminderHtml(v, days, priority) {
 export async function sendEmail(to, templateId, variables) {
   const template = TEMPLATES[templateId];
   if (!template) throw new Error(`Unknown template: ${templateId}`);
-  if (!EMAILIT_KEY) { console.warn('EMAILIT_API_KEY not set — email skipped'); return { success: false, error: 'no_key' }; }
+  if (!EMAILIT_KEY) { logWarn('emailit_not_configured', { reason: 'EMAILIT_API_KEY not set' }); return { success: false, error: 'no_key' }; }
 
   try {
     const resp = await fetch('https://api.emailit.com/v1/emails', {
@@ -182,7 +183,7 @@ export async function notifyAdmin(subject, body) {
         html: `<div style="font-family:sans-serif;max-width:600px">${body}</div>`
       })
     });
-  } catch (e) { console.error('Admin notification failed:', e.message); }
+  } catch (e) { logError('admin_notification_failed', {}, e); }
 }
 
 // ── SMS Alerts (Feature 12) ────────────────────────────────

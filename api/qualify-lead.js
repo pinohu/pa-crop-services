@@ -1,35 +1,28 @@
+
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('qualify-lead');
 // PA CROP Services — AI Lead Qualifier
 // POST /api/qualify-lead { answers }
 // Scores leads based on conversational intake responses
 
 
-// ── Rate Limiter (in-memory, per-instance) ──
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
-  // Rate limit: AI scoring — 10/min
-  if (_rateLimit(req, res, 10, 60000)) return;
+  const rlResult = await checkRateLimit(getClientIp(req), 'qualify-lead', 10, '60s');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ success: false, error: 'Too many requests' });
+  }
 
   const { answers, email, name } = req.body || {};
-  if (!answers) return res.status(400).json({ error: 'answers required' });
+  if (!answers) return res.status(400).json({ success: false, error: 'answers required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
 
@@ -94,7 +87,7 @@ Respond in JSON:
       qualifiedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error('Qualify error:', err);
-    return res.status(500).json({ error: 'Qualification failed' });
+    log.error('qualify_error', {}, err);
+    return res.status(500).json({ success: false, error: 'Qualification failed' });
   }
 }

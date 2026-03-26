@@ -3,46 +3,34 @@
 // POST { email, source, tag }
 
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
 import { db } from './_db.js';
 import { isValidEmail, isValidString, sanitize } from './_validate.js';
 
 const logger = createLogger('subscribe');
 
-const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
-
-function setCors(req, res) {
-  const origin = req.headers.origin || '';
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Vary', 'Origin');
-}
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   // Rate limit: Newsletter — 5/min (Upstash Redis with in-memory fallback)
   const rlResult = await checkRateLimit(getClientIp(req), 'subscribe', 5, '60s');
   if (rlResult) {
     res.setHeader('Retry-After', String(rlResult.retryAfter));
-    return res.status(429).json({ error: 'Too many requests' });
+    return res.status(429).json({ success: false, error: 'Too many requests' });
   }
 
   const { email, source, tag } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+  if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+  if (!isValidEmail(email)) return res.status(400).json({ success: false, error: 'Invalid email format' });
   if (source !== undefined && !isValidString(source, { minLength: 0, maxLength: 100 })) {
-    return res.status(400).json({ error: 'source must be 100 characters or fewer' });
+    return res.status(400).json({ success: false, error: 'source must be 100 characters or fewer' });
   }
   if (tag !== undefined && !isValidString(tag, { minLength: 0, maxLength: 50 })) {
-    return res.status(400).json({ error: 'tag must be 50 characters or fewer' });
+    return res.status(400).json({ success: false, error: 'tag must be 50 characters or fewer' });
   }
 
   const cleanEmail = email.toLowerCase().trim();
@@ -104,8 +92,8 @@ export default async function handler(req, res) {
     }
 
     // Track metrics
-    await db.incrementMetric('subscribe').catch(e => console.error('Silent failure:', e.message));
-    if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(e => console.error('Silent failure:', e.message));
+    await db.incrementMetric('subscribe').catch(e => logger.warn('metric_update_failed', { error: e.message }));
+    if (warnings.length > 0) await db.incrementMetric('subscribe_partial').catch(e => logger.warn('metric_update_failed', { error: e.message }));
     logger.info('subscribe_complete', { email: cleanEmail, source: cleanSource, warnings });
 
     // Return success with visibility into partial failures
@@ -115,6 +103,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     logger.error('unexpected_error', {}, err);
-    return res.status(500).json({ error: 'Something went wrong processing your request. Please try again or call 814-228-2822.' });
+    return res.status(500).json({ success: false, error: 'Something went wrong processing your request. Please try again or call 814-228-2822.' });
   }
 }

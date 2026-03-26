@@ -1,5 +1,6 @@
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { logError } from '../_log.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -27,47 +28,61 @@ export default async function handler(req, res) {
 
     const sql = db.getSql();
 
-    const obligations = await sql.query("SELECT obligation_status, escalation_level, due_date FROM obligations");
-    const oblStats = { total: 0, current: 0, due_soon: 0, overdue: 0, escalated: 0, filed: 0 };
+    const [oblStats] = await sql.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE obligation_status NOT IN ('filed_confirmed','closed')) AS pending,
+        COUNT(*) FILTER (WHERE obligation_status IN ('filed_confirmed','closed')) AS filed,
+        COUNT(*) FILTER (WHERE obligation_status = 'overdue') AS overdue,
+        COUNT(*) FILTER (WHERE obligation_status = 'escalated') AS escalated,
+        COUNT(*) FILTER (WHERE obligation_status NOT IN ('filed_confirmed','closed','overdue','escalated')
+          AND due_date <= CURRENT_DATE + INTERVAL '30 days') AS due_soon,
+        COUNT(*) FILTER (WHERE obligation_status NOT IN ('filed_confirmed','closed','overdue','escalated')
+          AND due_date > CURRENT_DATE + INTERVAL '30 days') AS current_count,
+        COUNT(*) AS total
+      FROM obligations
+    `);
+    const oblStatsOut = {
+      total: parseInt(oblStats.total || 0),
+      current: parseInt(oblStats.current_count || 0),
+      due_soon: parseInt(oblStats.due_soon || 0),
+      overdue: parseInt(oblStats.overdue || 0),
+      escalated: parseInt(oblStats.escalated || 0),
+      filed: parseInt(oblStats.filed || 0)
+    };
     const now = new Date();
-    for (const o of obligations) {
-      oblStats.total++;
-      if (["filed_confirmed","closed"].includes(o.obligation_status)) oblStats.filed++;
-      else if (o.obligation_status === "overdue") oblStats.overdue++;
-      else if (o.obligation_status === "escalated") oblStats.escalated++;
-      else {
-        const days = Math.ceil((new Date(o.due_date) - now) / 86400000);
-        if (days <= 30) oblStats.due_soon++; else oblStats.current++;
-      }
-    }
 
-    const clientRows = await sql.query("SELECT COUNT(*) as total FROM clients");
-    const activeRows = await sql.query("SELECT COUNT(*) as total FROM clients WHERE billing_status = $1", ["active"]);
     const yesterday = new Date(Date.now() - 86400000).toISOString();
-    const aiConvos = await sql.query("SELECT confidence_score, escalation_flag FROM ai_conversations WHERE created_at >= $1", [yesterday]);
-    const failedNotifs = await sql.query("SELECT COUNT(*) as total FROM notifications WHERE delivery_status = $1", ["failed"]);
-    const failedJobs = await db.getFailedJobs(10);
+    const [clientRows, activeRows, aiConvos, failedNotifs, failedJobs, highRiskOrgs] = await Promise.all([
+      sql.query("SELECT COUNT(*) as total FROM clients"),
+      sql.query("SELECT COUNT(*) as total FROM clients WHERE billing_status = $1", ["active"]),
+      sql.query("SELECT confidence_score, escalation_flag FROM ai_conversations WHERE created_at >= $1 LIMIT 500", [yesterday]),
+      sql.query("SELECT COUNT(*) as total FROM notifications WHERE delivery_status = $1", ["failed"]),
+      db.getFailedJobs(10),
+      sql.query(`
+        SELECT DISTINCT org.id, org.legal_name, org.entity_type, org.entity_status
+        FROM organizations org
+        JOIN obligations o ON o.organization_id = org.id
+        WHERE o.obligation_status IN ('overdue','escalated')
+        LIMIT 5
+      `)
+    ]);
 
-    const orgs = await sql.query("SELECT id, legal_name, entity_type, entity_status FROM organizations LIMIT 100");
-    const highRisk = [];
-    for (const org of orgs.slice(0, 20)) {
-      if (obligations.some(o => ["overdue","escalated"].includes(o.obligation_status))) {
-        highRisk.push({ id: org.id, name: org.legal_name, type: org.entity_type, status: org.entity_status });
-      }
-    }
+    const highRisk = (highRiskOrgs || []).map(org => ({
+      id: org.id, name: org.legal_name, type: org.entity_type, status: org.entity_status
+    }));
 
     return res.status(200).json({
       success: true,
-      compliance: oblStats,
+      compliance: oblStatsOut,
       clients: { total: parseInt(clientRows[0]?.total || 0), active: parseInt(activeRows[0]?.total || 0) },
       ai: { conversations_24h: aiConvos.length, low_confidence: aiConvos.filter(c => c.confidence_score < 0.8).length, escalated: aiConvos.filter(c => c.escalation_flag).length },
       notifications: { failed: parseInt(failedNotifs[0]?.total || 0) },
       workflow: { failed_jobs: failedJobs.length },
-      high_risk_entities: highRisk.slice(0, 5),
+      high_risk_entities: highRisk,
       generated_at: now.toISOString()
     });
   } catch (err) {
-    console.error("Command center error:", err.message);
+    logError('command_center_error', {}, err);
     return res.status(500).json({ success: false, error: "internal_error" });
   }
 }

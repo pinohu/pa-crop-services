@@ -4,6 +4,9 @@
 
 import * as db from '../services/db.js';
 import { fetchWithTimeout } from '../_fetch.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('admin');
 
 import { timingSafeEqual } from 'crypto';
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
@@ -75,9 +78,9 @@ async function stripeFetch(path) {
 // ── Emailit Fallback Notifier ──
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
-  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  if (!key) { log.warn('emailit_not_configured', { subject }); return; }
   try {
-    await fetch('https://api.emailit.com/v1/emails', {
+    await fetchWithTimeout('https://api.emailit.com/v1/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -87,7 +90,7 @@ async function _notifyIke(subject, body) {
         html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
       })
     });
-  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+  } catch (e) { log.error('emailit_fallback_failed', {}, e); }
 }
 
 export default async function handler(req, res) {
@@ -124,7 +127,7 @@ export default async function handler(req, res) {
             const sql = db.getSql();
             neonClients = await sql`SELECT id, owner_name, email, plan_code, billing_status, created_at, referral_code FROM clients ORDER BY created_at DESC LIMIT 500`;
           }
-        } catch(e) { console.error('Admin query error:', e.message); }
+        } catch(e) { log.warn('admin_query_error', { error: e.message }); }
 
         if (neonClients && neonClients.length > 0) {
           const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
@@ -138,7 +141,7 @@ export default async function handler(req, res) {
           });
           // Get 20i hosting count
           let hostingCount = 0;
-          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(e) { console.error('Admin query error:', e.message); }
+          try { const hp = await twentyiFetch('/reseller/web'); hostingCount = Object.keys(hp || {}).length; } catch(e) { log.warn('admin_query_error', { error: e.message }); }
           return res.status(200).json({
             stats: { totalClients: neonClients.length, activeSubscriptions: activeSubs, mrr: Math.round(mrr * 100) / 100, arr: Math.round(mrr * 12 * 100) / 100, hostingPackages: hostingCount },
             planBreakdown: Object.fromEntries(Object.entries(planCounts).map(([k,v]) => [planLabels[k] || k, v])),
@@ -217,7 +220,7 @@ export default async function handler(req, res) {
               total: rows.length
             });
           }
-        } catch(e) { console.error('Admin query error:', e.message); }
+        } catch(e) { log.warn('admin_query_error', { error: e.message }); }
         // Fallback: SuiteDash
         let url = `/contacts?limit=50&offset=${(page-1)*50}&role=client`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -305,13 +308,13 @@ export default async function handler(req, res) {
         await twentyiFetch(`/package/${packageId}/ssl`, {
           method: 'POST',
           body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('silent_failure', { error: e.message }));
 
         // Create StackCP user
         await twentyiFetch('/reseller/user', {
           method: 'POST',
           body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('silent_failure', { error: e.message }));
 
         return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
@@ -366,7 +369,7 @@ export default async function handler(req, res) {
               cold: leads.filter(l => l.tier === 'cold').length,
             });
           }
-        } catch(e) { console.error('Admin query error:', e.message); }
+        } catch(e) { log.warn('admin_query_error', { error: e.message }); }
         // Fall back to SuiteDash
         const data = await sdFetch('/contacts?limit=100&role=lead');
         const leads = (data?.data || []).map(c => ({
@@ -392,7 +395,7 @@ export default async function handler(req, res) {
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'pacropservices.com';
         const baseUrl = `${protocol}://${host}`;
         
-        const pdfRes = await fetch(`${baseUrl}/api/generate-agreement`, {
+        const pdfRes = await fetchWithTimeout(`${baseUrl}/api/generate-agreement`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -416,8 +419,10 @@ export default async function handler(req, res) {
 
       // ── Acumbamail Stats ──────────────────────────────────────────────
       case 'email_stats': {
-        const r1 = await fetch(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267324&response_type=json`);
-        const r2 = await fetch(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267325&response_type=json`);
+        const [r1, r2] = await Promise.all([
+          fetchWithTimeout(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267324&response_type=json`),
+          fetchWithTimeout(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267325&response_type=json`)
+        ]);
         const [allClients, partners] = await Promise.all([r1.json(), r2.json()]);
         return res.status(200).json({
           allClients: { listId: 1267324, ...allClients },
@@ -436,7 +441,7 @@ export default async function handler(req, res) {
       case 'check_entity': {
         const { entityName, entityNumber } = payload;
         try {
-          const r = await fetch('https://n8n.audreysplace.place/webhook/crop-dos-entity-checker', {
+          const r = await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-dos-entity-checker', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ entityName, entityNumber })
@@ -459,7 +464,7 @@ export default async function handler(req, res) {
         
         const emailitKey = process.env.EMAILIT_API_KEY;
         if (!emailitKey) {
-          console.warn('EMAILIT_API_KEY not set — email not sent');
+          log.warn('emailit_not_configured', { subject });
           return res.status(200).json({ success: true, message: 'Email queued (Emailit key not configured — logged only)', to, subject });
         }
         
@@ -472,7 +477,7 @@ export default async function handler(req, res) {
           '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">' +
           'PA Registered Office Services, LLC · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>';
         
-        const emailRes = await fetch('https://api.emailit.com/v1/emails', {
+        const emailRes = await fetchWithTimeout('https://api.emailit.com/v1/emails', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({ from: 'hello@pacropservices.com', to, subject, html: htmlBody })
@@ -490,7 +495,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
   } catch (err) {
-    console.error('Admin API error:', err);
-    return res.status(500).json({ error: 'Something went wrong. Please try again or contact hello@pacropservices.com.' });
+    log.error('admin_api_error', {}, err);
+    return res.status(500).json({ success: false, error: 'Something went wrong. Please try again or contact hello@pacropservices.com.' });
   }
 }

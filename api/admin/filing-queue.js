@@ -3,6 +3,7 @@
 
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { logError } from '../_log.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -73,7 +74,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (err) {
-    console.error('Filing queue error:', err.message);
+    logError('filing_queue_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

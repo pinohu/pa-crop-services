@@ -3,6 +3,7 @@
 
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { logError } from '../_log.js';
 
 const PLAN_PRICING = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
 const PLAN_LABELS = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
@@ -65,9 +66,13 @@ export default async function handler(req, res) {
     const sql = db.getSql();
 
     // Full analysis from Postgres
-    const clients = await sql.query('SELECT * FROM clients ORDER BY created_at DESC');
-    const obligations = await sql.query('SELECT organization_id, obligation_status, due_date FROM obligations');
-    const billing = await sql.query('SELECT * FROM billing_accounts');
+    const clients = await sql.query(
+      'SELECT id, organization_id, owner_name, email, plan_code, billing_status, created_at FROM clients ORDER BY created_at DESC LIMIT 2000'
+    );
+    const obligations = await sql.query('SELECT organization_id, obligation_status, due_date FROM obligations LIMIT 5000');
+    const billing = await sql.query(
+      'SELECT client_id, stripe_customer_id, stripe_subscription_id, current_period_end, billing_status, plan_code FROM billing_accounts LIMIT 2000'
+    );
 
     const now = new Date();
     const planDist = {};
@@ -146,7 +151,7 @@ export default async function handler(req, res) {
       generated_at: now.toISOString()
     });
   } catch (err) {
-    console.error('Billing retention error:', err.message);
+    logError('billing_retention_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

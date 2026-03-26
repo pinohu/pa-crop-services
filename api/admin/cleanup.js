@@ -3,6 +3,9 @@
 // Purges test/garbage data from Neon Postgres, seeds real Dynasty Empire entities.
 
 import { setCors, isAdminRequest, generateAccessCode } from '../services/auth.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('admin-cleanup');
 import * as db from '../services/db.js';
 
 // Real client data loaded from environment at runtime — no PII in source
@@ -113,14 +116,14 @@ export default async function handler(req, res) {
       if (testClientIds.length) {
         // Delete in dependency order
         for (const cid of testClientIds) {
-          await sql.query('DELETE FROM billing_accounts WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
+          await sql.query('DELETE FROM billing_accounts WHERE client_id = $1', [cid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
           deleted.billing_accounts++;
-          await sql.query('DELETE FROM notifications WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
+          await sql.query('DELETE FROM notifications WHERE client_id = $1', [cid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
           deleted.notifications++;
-          await sql.query('DELETE FROM ai_conversations WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
+          await sql.query('DELETE FROM ai_conversations WHERE client_id = $1', [cid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
           deleted.ai_conversations++;
-          await sql.query('DELETE FROM referrals WHERE referrer_client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
-          await sql.query('DELETE FROM clients WHERE id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
+          await sql.query('DELETE FROM referrals WHERE referrer_client_id = $1', [cid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
+          await sql.query('DELETE FROM clients WHERE id = $1', [cid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
           deleted.clients++;
         }
       }
@@ -130,11 +133,11 @@ export default async function handler(req, res) {
           // Check if org still has non-test clients
           const remaining = await sql.query('SELECT COUNT(*) as cnt FROM clients WHERE organization_id = $1', [oid]);
           if (parseInt(remaining?.[0]?.cnt || 0) === 0) {
-            await sql.query('DELETE FROM obligations WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
+            await sql.query('DELETE FROM obligations WHERE organization_id = $1', [oid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
             deleted.obligations++;
-            await sql.query('DELETE FROM notifications WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
-            await sql.query('DELETE FROM documents WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
-            await sql.query('DELETE FROM organizations WHERE id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
+            await sql.query('DELETE FROM notifications WHERE organization_id = $1', [oid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
+            await sql.query('DELETE FROM documents WHERE organization_id = $1', [oid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
+            await sql.query('DELETE FROM organizations WHERE id = $1', [oid]).catch(e => log.warn('cleanup_step_failed', { error: e.message }));
             deleted.organizations++;
           }
         }
@@ -246,7 +249,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ success: false, error: 'Invalid action. Use: audit, purge, seed, reset-codes' });
   } catch (err) {
-    console.error('Cleanup error:', err.message);
-    return res.status(500).json({ success: false, error: 'internal_error', detail: err.message });
+    log.error('cleanup_error', {}, err);
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

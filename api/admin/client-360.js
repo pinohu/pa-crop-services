@@ -3,6 +3,7 @@
 
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { logError } from '../_log.js';
 import { computeRisk } from '../services/obligations.js';
 import { computeEntityHealth } from '../portal/value.js';
 import { getPlanEntitlements } from '../services/entitlements.js';
@@ -23,14 +24,18 @@ export default async function handler(req, res) {
     if (!client) return res.status(404).json({ success: false, error: 'client_not_found' });
 
     const orgId = client.organization_id;
-    const org = orgId ? await db.getOrganization(orgId) : null;
-    const obligations = orgId ? await db.getObligationsForOrg(orgId) : [];
-    const documents = orgId ? await db.getDocumentsForOrg(orgId) : [];
-    const notifications = orgId ? await db.getNotificationsForOrg(orgId) : [];
-    const referrals = await db.getReferrals(client.id);
-    const billing = await db.getBillingAccount(client.id);
-    const auditEvents = await db.getAuditEvents({ targetId: client.id, limit: 30 });
-    const orgEvents = orgId ? await db.getAuditEvents({ targetId: orgId, limit: 30 }) : [];
+
+    // Fetch all independent data in parallel
+    const [org, obligations, documents, notifications, referrals, billing, auditEvents, orgEvents] = await Promise.all([
+      orgId ? db.getOrganization(orgId) : Promise.resolve(null),
+      orgId ? db.getObligationsForOrg(orgId) : Promise.resolve([]),
+      orgId ? db.getDocumentsForOrg(orgId) : Promise.resolve([]),
+      orgId ? db.getNotificationsForOrg(orgId) : Promise.resolve([]),
+      db.getReferrals(client.id),
+      db.getBillingAccount(client.id),
+      db.getAuditEvents({ targetId: client.id, limit: 30 }),
+      orgId ? db.getAuditEvents({ targetId: orgId, limit: 30 }) : Promise.resolve([])
+    ]);
 
     // AI conversations
     let aiConversations = [];
@@ -139,7 +144,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (err) {
-    console.error('Client 360 error:', err.message);
+    logError('client_360_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

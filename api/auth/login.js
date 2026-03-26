@@ -1,4 +1,7 @@
 import { setCors } from '../services/auth.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('auth-login');
 import { verifyAccessCode, createSession } from '../services/auth.js';
 import { writeAuditEvent } from '../services/db.js';
 import { isValidEmail } from '../_validate.js';
@@ -34,7 +37,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (err) {
-    console.error('Login error:', err.message);
+    log.error('login_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

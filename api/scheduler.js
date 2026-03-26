@@ -21,9 +21,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  // Admin key required
-  const key = req.headers['x-admin-key'] || req.body?.adminKey;
-  if (key !== ADMIN_KEY) return res.status(403).json({ error: 'Unauthorized' });
+  // Admin key required — header only, never from request body
+  const key = req.headers['x-admin-key'];
+  if (!key || !ADMIN_KEY || key.length !== ADMIN_KEY.length) return res.status(403).json({ error: 'Unauthorized' });
+  const { timingSafeEqual } = await import('crypto');
+  if (!timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY))) return res.status(403).json({ error: 'Unauthorized' });
 
   const { action, entityIds, year, deadlineGroup } = req.body || {};
   if (!action) return res.status(400).json({ error: 'action required' });

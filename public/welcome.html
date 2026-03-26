@@ -52,13 +52,16 @@ nav .container{display:flex;align-items:center;gap:10px}
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
 <meta name="description" content="Welcome to PA CROP Services. Complete your entity setup and access your compliance portal.">
 <meta property="og:title" content="Welcome — PA CROP Services">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
 <link rel="canonical" href="https://www.pacropservices.com/welcome">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Welcome — PA CROP Services","provider":{"@type":"Organization","name":"PA CROP Services"}}</script>
 </head>
 <body>
 <a href="#main-content" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
 <nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
-  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
@@ -134,16 +137,16 @@ nav .container{display:flex;align-items:center;gap:10px}
 <p style="font-size:14px;color:var(--gray);margin-bottom:16px">If your plan includes hosting, tell us your preferred domain and we'll register and set it up for you.</p>
 <div style="display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;gap:8px">
-  <input type="text" id="dom-name" placeholder="yourbusiness" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-  <select id="dom-ext" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff;width:100px">
+  <input type="text" id="dom-name" placeholder="yourbusiness" aria-label="Domain name" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+  <select id="dom-ext" aria-label="Domain extension" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff;width:100px">
     <option value=".com">.com</option>
     <option value=".net">.net</option>
     <option value=".org">.org</option>
     <option value=".us">.us</option>
   </select>
 </div>
-<input type="email" id="dom-email" placeholder="Your email (same as checkout)" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-<button onclick="submitDomain()" style="background:#0C1220;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Request this domain →</button>
+<input type="email" id="dom-email" placeholder="Your email (same as checkout)" aria-label="Email for domain registration" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<button onclick="submitDomain()" aria-label="Request domain registration" style="background:#0C1220;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Request this domain →</button>
 <p id="dom-msg" style="font-size:13px;display:none"></p>
 <p style="font-size:12px;color:var(--gray)">We'll check availability and register it within 1 business day. Domain registration is included in your plan at no extra cost.</p>
 </div>
@@ -222,7 +225,7 @@ nav .container{display:flex;align-items:center;gap:10px}
     <textarea id="biz-notes" rows="2" placeholder="Special requests, preferred style, key selling points, etc." style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical" aria-label="Additional notes"></textarea>
   </div>
   <div id="biz-error" role="alert" aria-live="polite" style="color:#dc2626;font-size:13px;display:none"></div>
-  <button onclick="submitBusinessInfo()" id="biz-submit-btn" style="background:#0C1220;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Build my website &rarr;</button>
+  <button onclick="submitBusinessInfo()" id="biz-submit-btn" aria-label="Submit business info to build website" style="background:#0C1220;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Build my website &rarr;</button>
   <div id="biz-success" style="display:none;background:#E8F0E9;border:1px solid #6B8F71;border-radius:8px;padding:16px;text-align:center">
     <p style="font-size:16px;font-weight:600;color:#2D6A2E;margin:0 0 4px">Website build started!</p>
     <p style="font-size:13px;color:var(--gray);margin:0">We're creating your professional website now. You'll receive an email when it's ready to preview (typically within 1 hour).</p>
@@ -240,10 +243,11 @@ async function submitDomain() {
   if (!name || !email) { msg.textContent = 'Please enter a domain name and your email.'; msg.style.display = 'block'; msg.style.color = '#dc2626'; return; }
   var domain = name + ext;
   try {
-    await fetch('/api/entity-intake', {
+    var res = await fetch('/api/entity-intake', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email: email, entityName: domain, entityType: 'domain-request', notes: 'Domain registration request: ' + domain })
     });
+    if (!res.ok) throw new Error("Server error");
     msg.textContent = 'Domain request submitted! We will register ' + domain + ' and email you when it is ready.';
     msg.style.display = 'block';
     msg.style.color = '#059669';
@@ -287,7 +291,7 @@ async function submitBusinessInfo() {
   };
 
   try {
-    await fetch('/api/entity-intake', {
+    var res = await fetch('/api/entity-intake', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         email: domEmail || businessInfo.email,
@@ -296,6 +300,7 @@ async function submitBusinessInfo() {
         notes: JSON.stringify(businessInfo)
       })
     });
+    if (!res.ok) throw new Error("Server error");
     document.getElementById('biz-success').style.display = 'block';
     btn.style.display = 'none';
   } catch(e) {
@@ -322,7 +327,7 @@ async function submitBusinessInfo() {
 
 <div class="footer">
   <p>Questions? <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or <a href="tel:8142282822" style="color:var(--accent)">814-228-2822</a></p>
-  <p style="margin-top:8px">PA Registered Office Services, LLC &bull; Licensed PA CROP &bull; 15 Pa. C.S. &sect;109</p>
+  <p style="margin-top:8px">&copy; 2026 PA Registered Office Services, LLC &bull; Licensed PA CROP &bull; 15 Pa. C.S. &sect;109</p>
 </div>
 
 </div>
@@ -350,6 +355,7 @@ async function submitEntityIntake() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, entityName: name, entityType: type, entityNumber: number })
     });
+    if (!res.ok) throw new Error("Server error " + res.status);
     const data = await res.json();
     
     // Show success

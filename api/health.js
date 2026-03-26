@@ -72,8 +72,8 @@ export default async function handler(req, res) {
     statuses.some(s => s === 'down') ? 'degraded' : 'healthy';
 
   // Only include env warnings for authenticated admin requests
-  const isAdmin = req.headers['x-admin-key'] && process.env.ADMIN_SECRET_KEY &&
-    req.headers['x-admin-key'] === process.env.ADMIN_SECRET_KEY;
+  const { isAdminRequest } = await import('./services/auth.js');
+  const isAdmin = isAdminRequest(req);
 
   return res.status(overall === 'healthy' ? 200 : 503).json({
     status: overall,

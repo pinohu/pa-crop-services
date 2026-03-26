@@ -3,6 +3,7 @@
 // This restores the /api/auth endpoint that the portal calls.
 
 import { setCors } from '../services/auth.js';
+import { logError } from '../_log.js';
 
 const _rl = new Map();
 function _rateLimit(req, res, max, win) {

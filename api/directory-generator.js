@@ -9,14 +9,15 @@ const DIRECTORIES = {
   accountants: { name:'PABusinessCPA.com', desc:'PA accountants/CPAs directory', listings:'CPAs, bookkeepers, tax preparers', revenue:'Free listing, Premium $59/mo', leadGen:'CPAs recommend CROP to their business clients', bdLicense:1 },
 };
 
+import { isAdminRequest } from './services/auth.js';
+
 export default async function handler(req, res) {
   const _o = req.headers.origin || '';
   const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
   res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const type = req.query?.type;
   if (!type) return res.status(200).json({ success: true, directories: DIRECTORIES, totalBDLicensesNeeded: 4, bdLicensesAvailable: 100 });

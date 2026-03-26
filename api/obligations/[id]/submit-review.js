@@ -6,6 +6,7 @@ import { setCors, authenticateRequest } from '../../services/auth.js';
 import * as db from '../../services/db.js';
 import { canTransition, transition } from '../../services/obligations.js';
 import { notifyAdmin } from '../../services/notifications.js';
+import { isValidUUID, isValidString } from '../../_validate.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -16,7 +17,25 @@ export default async function handler(req, res) {
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 
   const obligationId = req.query.id;
+  if (!obligationId || !isValidUUID(obligationId)) {
+    return res.status(400).json({ success: false, error: 'invalid_obligation_id' });
+  }
+
   const { notes, supporting_document_ids } = req.body || {};
+  if (notes !== undefined && !isValidString(notes, { minLength: 0, maxLength: 2000 })) {
+    return res.status(400).json({ success: false, error: 'notes_too_long' });
+  }
+  if (supporting_document_ids !== undefined) {
+    if (!Array.isArray(supporting_document_ids)) {
+      return res.status(400).json({ success: false, error: 'supporting_document_ids_must_be_array' });
+    }
+    if (supporting_document_ids.length > 20) {
+      return res.status(400).json({ success: false, error: 'too_many_supporting_documents' });
+    }
+    if (!supporting_document_ids.every(id => isValidUUID(id))) {
+      return res.status(400).json({ success: false, error: 'invalid_document_id_in_array' });
+    }
+  }
 
   try {
     const obl = await db.getObligation(obligationId);
@@ -77,6 +96,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('Submit review error:', err.message);
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

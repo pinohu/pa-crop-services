@@ -52,6 +52,7 @@ export default async function handler(req, res) {
       new_status: 'queued'
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('Job retry error:', err.message);
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

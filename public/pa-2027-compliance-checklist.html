@@ -7,6 +7,9 @@
 <meta name="description" content="Free PA 2027 compliance checklist. 15 things every Pennsylvania business must do before their entity-type filing deadline to avoid administrative dissolution. Download and print.">
 <link rel="canonical" href="https://www.pacropservices.com/pa-2027-compliance-checklist">
 <meta property="og:title" content="PA 2027 Compliance Checklist — Free Download">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
 <meta property="og:description" content="15 things every Pennsylvania business must do before 2027 to avoid dissolution. Free checklist from PA CROP Services.">
 <meta property="og:image" content="https://www.pacropservices.com/og-image.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -256,7 +259,7 @@ async function saveChecklist(){
     document.getElementById("gate-success").style.display="block";
     document.querySelector(".gate form,.email-form").style.display="none";
     if(window.plausible)plausible("Checklist Email Captured");
-  }catch(e){}
+  }catch(e){var ee=document.getElementById("checklist-error");if(ee){ee.textContent="Connection error. Please try again.";ee.style.display="block";}}
 }
 // Restore state
 try{var saved=JSON.parse(localStorage.getItem("pa_checklist")||"{}");Object.keys(saved).forEach(function(k){if(saved[k]){var items=document.querySelectorAll(".check-item");items.forEach(function(i){if(i.textContent.trim().slice(0,30)===k){i.classList.add("done");checkState[k]=true;}});}});updateProgress();}catch(e){}

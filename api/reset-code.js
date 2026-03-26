@@ -2,6 +2,7 @@
 // Self-service portal access code recovery
 // POST { email }
 
+import { isValidEmail } from './_validate.js';
 
 // ── Rate Limiter (in-memory, per-instance) ──
 const _rl = new Map();
@@ -30,6 +31,7 @@ export default async function handler(req, res) {
 
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
 
   const cleanEmail = email.toLowerCase().trim();
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;

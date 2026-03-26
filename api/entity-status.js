@@ -9,34 +9,25 @@ import { getEntityConfig, getEntityDeadline, computeDaysUntil } from './_complia
 import { obligations } from './_obligations.js';
 import { db } from './_db.js';
 import { createLogger } from './_log.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 
 const logger = createLogger('entity-status');
 
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
-
-function isAdmin(req) {
-  const key = req.headers['x-admin-key'];
-  return key === ADMIN_KEY;
-}
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // ── GET: Read entity + obligation status ──
   if (req.method === 'GET') {
     const { entityId, email, year } = req.query || {};
-    if (!entityId && !email) return res.status(400).json({ error: 'entityId or email required' });
+    if (!entityId && !email) return res.status(400).json({ success: false, error: 'entityId or email required' });
 
     const id = entityId || `email:${email}`;
     const entity = await db.getEntity(id);
 
     if (!entity) {
-      return res.status(404).json({ error: 'Entity not found', entityId: id });
+      return res.status(404).json({ success: false, error: 'Entity not found', entityId: id });
     }
 
     const y = parseInt(year) || new Date().getFullYear();
@@ -57,14 +48,14 @@ export default async function handler(req, res) {
   // ── POST: Write operations ──
   if (req.method === 'POST') {
     const { action, entityId, ...payload } = req.body || {};
-    if (!action) return res.status(400).json({ error: 'action required' });
+    if (!action) return res.status(400).json({ success: false, error: 'action required' });
 
     switch (action) {
 
       // ── Register a new entity in the compliance engine ──
       case 'register': {
         const { name, entityType, dosNumber, email, plan, jurisdiction } = payload;
-        if (!name || !entityType) return res.status(400).json({ error: 'name and entityType required' });
+        if (!name || !entityType) return res.status(400).json({ success: false, error: 'name and entityType required' });
 
         const id = entityId || dosNumber || `email:${email}`;
         const config = getEntityConfig(entityType);
@@ -98,7 +89,7 @@ export default async function handler(req, res) {
         await obligations.save(id, year, ob);
 
         await db.logEvent({
-          actor: isAdmin(req) ? 'admin' : 'system',
+          actor: isAdminRequest(req) ? 'admin' : 'system',
           eventType: 'entity_registered',
           targetType: 'organization',
           targetId: id,
@@ -114,17 +105,17 @@ export default async function handler(req, res) {
 
       // ── Transition obligation state ──
       case 'transition': {
-        if (!entityId) return res.status(400).json({ error: 'entityId required' });
+        if (!entityId) return res.status(400).json({ success: false, error: 'entityId required' });
         const { year, newStatus, reason, context } = payload;
         const y = parseInt(year) || new Date().getFullYear();
 
         const entity = await db.getEntity(entityId);
-        if (!entity) return res.status(404).json({ error: 'Entity not found' });
+        if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
 
         const ob = await obligations.load(entityId, y, entity);
-        if (!ob) return res.status(404).json({ error: 'Obligation not found' });
+        if (!ob) return res.status(404).json({ success: false, error: 'Obligation not found' });
 
-        const updated = obligations.transition(ob, newStatus, context || {}, isAdmin(req) ? 'admin' : 'system');
+        const updated = obligations.transition(ob, newStatus, context || {}, isAdminRequest(req) ? 'admin' : 'system');
         if (!updated) {
           return res.status(400).json({
             error: `Invalid transition: ${ob.status} → ${newStatus}`,
@@ -145,25 +136,25 @@ export default async function handler(req, res) {
 
       // ── Record a filing ──
       case 'file': {
-        if (!entityId) return res.status(400).json({ error: 'entityId required' });
+        if (!entityId) return res.status(400).json({ success: false, error: 'entityId required' });
         const { year, confirmationNumber, filedBy } = payload;
         const y = parseInt(year) || new Date().getFullYear();
 
         const entity = await db.getEntity(entityId);
-        if (!entity) return res.status(404).json({ error: 'Entity not found' });
+        if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
 
         const ob = await obligations.load(entityId, y, entity);
-        if (!ob) return res.status(404).json({ error: 'Obligation not found' });
+        if (!ob) return res.status(404).json({ success: false, error: 'Obligation not found' });
 
         const filed = obligations.transition(ob, 'FILED', {
           filedAt: new Date().toISOString(),
-          filedBy: filedBy || (isAdmin(req) ? 'admin' : 'client'),
+          filedBy: filedBy || (isAdminRequest(req) ? 'admin' : 'client'),
           confirmationNum: confirmationNumber || null,
           reason: 'Annual report filed'
-        }, isAdmin(req) ? 'admin' : 'client');
+        }, isAdminRequest(req) ? 'admin' : 'client');
 
         if (!filed) {
-          return res.status(400).json({ error: `Cannot file from status: ${ob.status}`, currentStatus: ob.status });
+          return res.status(400).json({ success: false, error: `Cannot file from status: ${ob.status}`, currentStatus: ob.status });
         }
 
         await obligations.save(entityId, y, filed);
@@ -176,15 +167,15 @@ export default async function handler(req, res) {
 
       // ── Evaluate (read-only: what actions are needed?) ──
       case 'evaluate': {
-        if (!entityId) return res.status(400).json({ error: 'entityId required' });
+        if (!entityId) return res.status(400).json({ success: false, error: 'entityId required' });
         const { year } = payload;
         const y = parseInt(year) || new Date().getFullYear();
 
         const entity = await db.getEntity(entityId);
-        if (!entity) return res.status(404).json({ error: 'Entity not found' });
+        if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
 
         const ob = await obligations.load(entityId, y, entity);
-        if (!ob) return res.status(404).json({ error: 'Obligation not found' });
+        if (!ob) return res.status(404).json({ success: false, error: 'Obligation not found' });
 
         const evaluation = obligations.evaluate(ob);
 
@@ -193,15 +184,15 @@ export default async function handler(req, res) {
 
       // ── Record reminder sent ──
       case 'reminder_sent': {
-        if (!entityId) return res.status(400).json({ error: 'entityId required' });
+        if (!entityId) return res.status(400).json({ success: false, error: 'entityId required' });
         const { year, daysBeforeDeadline, channel } = payload;
         const y = parseInt(year) || new Date().getFullYear();
 
         const entity = await db.getEntity(entityId);
-        if (!entity) return res.status(404).json({ error: 'Entity not found' });
+        if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
 
         const ob = await obligations.load(entityId, y, entity);
-        if (!ob) return res.status(404).json({ error: 'Obligation not found' });
+        if (!ob) return res.status(404).json({ success: false, error: 'Obligation not found' });
 
         // Transition to REMINDER_SENT if not already past that state
         let updated = ob;
@@ -234,17 +225,17 @@ export default async function handler(req, res) {
 
       // ── Get event history ──
       case 'events': {
-        if (!entityId) return res.status(400).json({ error: 'entityId required' });
+        if (!entityId) return res.status(400).json({ success: false, error: 'entityId required' });
         const events = await db.getEvents(entityId, payload.limit || 50);
         return res.status(200).json({ success: true, events });
       }
 
       default:
-        return res.status(400).json({ error: `Unknown action: ${action}`, validActions: ['register', 'transition', 'file', 'evaluate', 'reminder_sent', 'events'] });
+        return res.status(400).json({ success: false, error: `Unknown action: ${action}`, validActions: ['register', 'transition', 'file', 'evaluate', 'reminder_sent', 'events'] });
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ success: false, error: 'Method not allowed' });
 }
 
 // Map obligation status to entity-level status

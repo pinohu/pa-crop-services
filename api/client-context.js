@@ -4,6 +4,12 @@
 // Called by portal before first AI interaction
 
 import { getEntityDeadline, computeDaysUntil, getEntityConfig } from './_compliance.js';
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+import { isValidEmail } from './_validate.js';
+
+const log = createLogger('client-context');
 
 // ── Rate Limiter (in-memory, per-instance) ──
 const _rl = new Map();
@@ -25,13 +31,13 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   // Rate limit: Client context — 15/min
   if (_rateLimit(req, res, 15, 60000)) return;
 
   const { email } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email || !isValidEmail(email)) return res.status(400).json({ success: false, error: 'Valid email required' });
 
   // Demo client
   if (email === 'demo@pacropservices.com') {
@@ -144,7 +150,7 @@ export default async function handler(req, res) {
         }
       }
     } catch (e) {
-      console.error('SuiteDash lookup failed:', e.message);
+      log.warn('suitedash_lookup_failed', { email, error: e.message });
     }
   }
 

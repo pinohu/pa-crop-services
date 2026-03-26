@@ -16,9 +16,11 @@ export default async function handler(req, res) {
     const org = await db.getOrganization(id);
     if (!org) return res.status(404).json({ success: false, error: 'not_found' });
 
-    const obligations = await db.getObligationsForOrg(id);
-    const documents = await db.getDocumentsForOrg(id);
-    const notifications = await db.getNotificationsForOrg(id);
+    const [obligations, documents, notifications] = await Promise.all([
+      db.getObligationsForOrg(id),
+      db.getDocumentsForOrg(id),
+      db.getNotificationsForOrg(id)
+    ]);
 
     const risk = computeRisk(obligations);
     const now = new Date();
@@ -35,6 +37,7 @@ export default async function handler(req, res) {
     // Verification status
     const verified = org.entity_status === 'active';
 
+    res.setHeader('Cache-Control', 'private, max-age=300, stale-while-revalidate=600');
     return res.status(200).json({
       success: true,
       report: {
