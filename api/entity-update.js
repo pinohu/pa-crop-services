@@ -11,7 +11,9 @@ function _rateLimit(req, res, max, win) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -61,9 +63,9 @@ export default async function handler(req, res) {
         const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
         fetch(`${baseUrl}/api/entity-monitor`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
           body: JSON.stringify({ entityName: entityName || contact.custom_fields?.entity_name, dosNumber: dosNumber || contact.custom_fields?.dos_number, email })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
         result.reverificationTriggered = true;
       }
     }

@@ -51,7 +51,7 @@ export default async function handler(req, res) {
             subject: `📦 PA CROP Backup — ${new Date().toLocaleDateString()}`,
             html: `<pre style="font-size:11px;max-height:500px;overflow:auto">${JSON.stringify(backup, null, 2).slice(0, 50000)}</pre>`
           })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
         backup.emailed = true;
       }
     }

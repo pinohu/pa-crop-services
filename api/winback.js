@@ -3,13 +3,15 @@
 // Finds expired clients, sends escalating win-back: email → SMS → flag for AI call
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -55,7 +57,7 @@ export default async function handler(req, res) {
                 <p style="font-size:13px;color:#7A7A7A">Or call 814-228-2822 — we'll get you back online in minutes.</p>
               </div>`
             })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
         await updateWinback(c.id, '1', SD_PUBLIC, SD_SECRET);
         results.day1_emails++;
@@ -67,9 +69,9 @@ export default async function handler(req, res) {
         if (phone) {
           await fetch(`${baseUrl}/api/sms`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
             body: JSON.stringify({ to: phone, message: `PA CROP Services: Your plan expired 7 days ago. Your entity compliance monitoring is paused. Renew now: pacropservices.com/#pricing or call 814-228-2822` })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
         await updateWinback(c.id, '2', SD_PUBLIC, SD_SECRET);
         results.day7_sms++;
@@ -87,7 +89,7 @@ export default async function handler(req, res) {
           method: 'PUT',
           headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
           body: JSON.stringify({ tags: ['crop-expired', 'crop-churned'] })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
         await updateWinback(c.id, 'removed', SD_PUBLIC, SD_SECRET);
         results.day30_removed++;
       }

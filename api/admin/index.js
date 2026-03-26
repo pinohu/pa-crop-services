@@ -292,13 +292,13 @@ export default async function handler(req, res) {
         await twentyiFetch(`/package/${packageId}/ssl`, {
           method: 'POST',
           body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         // Create StackCP user
         await twentyiFetch('/reseller/user', {
           method: 'POST',
           body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
@@ -383,7 +383,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Internal-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'
+            'X-Internal-Key': process.env.ADMIN_SECRET_KEY
           },
           body: JSON.stringify({
             client_name: clientName,

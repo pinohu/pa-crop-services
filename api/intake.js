@@ -18,7 +18,9 @@ function _rateLimit(req, res, max, win) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -89,7 +91,7 @@ export default async function handler(req, res) {
             partner_id: partnerId || ''
           }
         })
-      }).catch(() => {});
+      }).catch(e => console.error('Silent failure:', e.message));
     }
 
     // Fire n8n webhook for nurture sequence
@@ -104,7 +106,7 @@ export default async function handler(req, res) {
         email: cleanEmail, firstName, source, score, leadTier,
         entityType, hasForeignEntity, partnerId
       })
-    }).catch(() => {}); // Fire and forget
+    }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
 
     // Add to retargeting drip (for leads that don't convert immediately)
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
@@ -112,7 +114,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: cleanEmail, name: firstName, riskScore: score, source })
-    }).catch(() => {}); // Fire and forget
+    }).catch(e => console.error('Silent failure:', e.message)); // Fire and forget
 
     return res.status(200).json({
       success: true,

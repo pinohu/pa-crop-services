@@ -3,13 +3,15 @@
 // Analyzes client behavior and sends tier upgrade suggestions
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -80,7 +82,7 @@ export default async function handler(req, res) {
               <p style="font-size:13px;color:#7A7A7A">Call us at 814-228-2822 to upgrade — we'll handle the switch immediately.</p>
             </div>`
           })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
       }
       results.emails_sent = Math.min(results.opportunities.length, 10);
     }

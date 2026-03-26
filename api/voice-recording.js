@@ -36,7 +36,9 @@ export default async function handler(req, res) {
   // Rate limit: Voice recording — 20/min
   if (_rateLimit(req, res, 20, 60000)) return;
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
   // Try AI transcription if Twilio didn't provide one
@@ -97,7 +99,7 @@ export default async function handler(req, res) {
     }
   } catch (e) {
     console.error('Voicemail error:', e);
-    await _notifyIke('Voicemail Error', '<p>Voicemail processing failed: ' + (e.message || 'unknown') + '</p>').catch(() => {});
+    await _notifyIke('Voicemail Error', '<p>Voicemail processing failed: ' + (e.message || 'unknown') + '</p>').catch(e => console.error('Silent failure:', e.message));
   }
 
   res.setHeader('Content-Type', 'text/xml');

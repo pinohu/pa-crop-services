@@ -13,7 +13,9 @@ const _envWarnings = [];
 if (_envWarnings.length) console.warn('⚠️ Missing env vars:', _envWarnings.join(', '));
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
 
   const checks = {};

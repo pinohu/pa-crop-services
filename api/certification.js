@@ -12,7 +12,9 @@ function _rateLimit(req, res, max, win) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
                 <code style="display:block;background:#FAF9F6;padding:12px;border-radius:8px;font-size:11px;word-break:break-all;text-align:left">&lt;a href="https://pacropservices.com"&gt;&lt;img src="https://pacropservices.com/badge-image.svg" alt="PA Compliance Certified" width="150"&gt;&lt;/a&gt;</code>
               </div>`
             })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
       }
       await fetch(`https://app.suitedash.com/secure-api/contacts/${contact.id}`, {

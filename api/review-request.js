@@ -3,13 +3,15 @@
 // Requests Google reviews from clients 60+ days in, good standing
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'] || req.query?.key;
-  if (adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
+  if (adminKey !== (process.env.ADMIN_SECRET_KEY)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -46,7 +48,7 @@ export default async function handler(req, res) {
               <p style="font-size:13px;color:#7A7A7A;margin-top:16px">It takes about 30 seconds and helps other PA business owners find us. Thank you!</p>
             </div>`
           })
-        }).catch(() => {});
+        }).catch(e => console.error('Silent failure:', e.message));
 
         // Mark as sent in SuiteDash
         if (c.id) {
@@ -54,7 +56,7 @@ export default async function handler(req, res) {
             method: 'PUT',
             headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
             body: JSON.stringify({ custom_fields: { review_requested: 'yes', review_requested_date: new Date().toISOString() } })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
         results.sent++;
       } else {

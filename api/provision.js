@@ -3,7 +3,9 @@
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const _o = req.headers.origin || '';
+  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
+  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -11,7 +13,7 @@ export default async function handler(req, res) {
 
   const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
   const isStripe = req.headers['stripe-signature'];
-  if (!isStripe && adminKey !== (process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE')) {
+  if (!isStripe && adminKey !== (process.env.ADMIN_SECRET_KEY)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -288,7 +290,7 @@ export default async function handler(req, res) {
       const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
       await fetch(`${baseUrl}/api/sms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ to: phone, type: 'welcome', data: { code: accessCode } })
       });
       results.steps.push({ step: 'welcome_sms', status: 'done', to: phone });
@@ -304,7 +306,7 @@ export default async function handler(req, res) {
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
     const agreeRes = await fetch(`${baseUrl}/api/generate-agreement`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
       body: JSON.stringify({ email, name, entityName: body.entityName || '', entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
     });
     const agreeData = await agreeRes.json().catch(() => ({}));
@@ -319,7 +321,7 @@ export default async function handler(req, res) {
       const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
       const verifyRes = await fetch(`${baseUrl}/api/entity-monitor`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ entityName: body.entityName, dosNumber: body.dosNumber, email })
       });
       const verifyData = await verifyRes.json().catch(() => ({}));
@@ -336,7 +338,7 @@ export default async function handler(req, res) {
       const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
       await fetch(`${baseUrl}/api/referral-track`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
         body: JSON.stringify({ newClientEmail: email, refCode: refCodeUsed, tier })
       });
       results.steps.push({ step: 'referral_commission', status: 'done', refCode: refCodeUsed });
@@ -368,7 +370,7 @@ export default async function handler(req, res) {
             method: 'PUT',
             headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
             body: JSON.stringify({ tags: [`partner-${refCodeUsed}`], custom_fields: { referred_by_partner: partner.first_name || partner.name, partner_email: partner.email } })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
         // Notify partner of new referral
         const emailitKey = process.env.EMAILIT_API_KEY;
@@ -381,7 +383,7 @@ export default async function handler(req, res) {
               subject: '🎉 New client via your referral!',
               html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px"><div style="border-bottom:3px solid #C9982A;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div><p>Hi ${partner.first_name || 'Partner'},</p><p>A new client just signed up using your referral code! Their <strong>${tier}</strong> plan is now active. Your commission has been credited.</p><p><a href="https://pacropservices.com/api/partner-dashboard?email=${encodeURIComponent(partner.email)}" style="color:#C9982A;font-weight:600">View your dashboard →</a></p></div>`
             })
-          }).catch(() => {});
+          }).catch(e => console.error('Silent failure:', e.message));
         }
         results.steps.push({ step: 'partner_cobranding', status: 'done', partner: partner.first_name || partner.name });
       }

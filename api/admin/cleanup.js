@@ -110,14 +110,14 @@ export default async function handler(req, res) {
       if (testClientIds.length) {
         // Delete in dependency order
         for (const cid of testClientIds) {
-          await sql.query('DELETE FROM billing_accounts WHERE client_id = $1', [cid]).catch(() => {});
+          await sql.query('DELETE FROM billing_accounts WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
           deleted.billing_accounts++;
-          await sql.query('DELETE FROM notifications WHERE client_id = $1', [cid]).catch(() => {});
+          await sql.query('DELETE FROM notifications WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
           deleted.notifications++;
-          await sql.query('DELETE FROM ai_conversations WHERE client_id = $1', [cid]).catch(() => {});
+          await sql.query('DELETE FROM ai_conversations WHERE client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
           deleted.ai_conversations++;
-          await sql.query('DELETE FROM referrals WHERE referrer_client_id = $1', [cid]).catch(() => {});
-          await sql.query('DELETE FROM clients WHERE id = $1', [cid]).catch(() => {});
+          await sql.query('DELETE FROM referrals WHERE referrer_client_id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
+          await sql.query('DELETE FROM clients WHERE id = $1', [cid]).catch(e => console.error('Silent failure:', e.message));
           deleted.clients++;
         }
       }
@@ -127,11 +127,11 @@ export default async function handler(req, res) {
           // Check if org still has non-test clients
           const remaining = await sql.query('SELECT COUNT(*) as cnt FROM clients WHERE organization_id = $1', [oid]);
           if (parseInt(remaining?.[0]?.cnt || 0) === 0) {
-            await sql.query('DELETE FROM obligations WHERE organization_id = $1', [oid]).catch(() => {});
+            await sql.query('DELETE FROM obligations WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
             deleted.obligations++;
-            await sql.query('DELETE FROM notifications WHERE organization_id = $1', [oid]).catch(() => {});
-            await sql.query('DELETE FROM documents WHERE organization_id = $1', [oid]).catch(() => {});
-            await sql.query('DELETE FROM organizations WHERE id = $1', [oid]).catch(() => {});
+            await sql.query('DELETE FROM notifications WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
+            await sql.query('DELETE FROM documents WHERE organization_id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
+            await sql.query('DELETE FROM organizations WHERE id = $1', [oid]).catch(e => console.error('Silent failure:', e.message));
             deleted.organizations++;
           }
         }
