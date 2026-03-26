@@ -3,6 +3,9 @@
 
 import { setCors, isAdminRequest } from '../../../services/auth.js';
 import * as db from '../../../services/db.js';
+import { createLogger } from '../../../_log.js';
+
+const log = createLogger('retry');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
       new_status: 'queued'
     });
   } catch (err) {
-    console.error('Job retry error:', err.message);
+    log.error('job_retry_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

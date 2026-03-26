@@ -1,6 +1,9 @@
 import { setCors, authenticateRequest } from '../../services/auth.js';
 import { transition } from '../../services/obligations.js';
 import { isValidUUID } from '../../_validate.js';
+import { createLogger } from '../../_log.js';
+
+const log = createLogger('acknowledge');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -28,7 +31,7 @@ export default async function handler(req, res) {
       { type: 'client', id: session.clientId }, 'Client acknowledged obligation');
     return res.status(200).json({ success: true, obligation: obl });
   } catch (err) {
-    console.error('Acknowledge error:', err.message);
+    log.error('acknowledge_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(400).json({ success: false, error: 'transition_failed' });
   }
 }

@@ -10,7 +10,6 @@ import { isValidEmail, isValidString, sanitize } from './_validate.js';
 
 const logger = createLogger('subscribe');
 
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();

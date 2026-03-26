@@ -1,6 +1,9 @@
 import { setCors, authenticateRequest, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
 import { isValidUUID } from '../_validate.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('[id]');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -40,7 +43,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ success: false, error: 'method_not_allowed' });
   } catch (err) {
-    console.error('Org error:', err.message);
+    log.error('org_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

@@ -1,7 +1,11 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('health');
+
 // PA CROP Services — System Health Check
 // GET /api/health
 // Tests: Groq AI, SuiteDash CRM, 20i hosting, email deliverability
-
 
 // ── Env Var Validation ──
 const _envWarnings = [];
@@ -10,13 +14,11 @@ const _envWarnings = [];
  'EMAILIT_API_KEY','STRIPE_WEBHOOK_SECRET','TWENTY_I_RESELLER_ID'].forEach(k => {
   if (!process.env[k]) _envWarnings.push(k);
 });
-if (_envWarnings.length) console.warn('⚠️ Missing env vars:', _envWarnings.join(', '));
+if (_envWarnings.length) log.warn('missing_env_vars', { vars: _envWarnings.join(', ') });
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
+  setCors(req, res);
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'GET only' });
 
   const checks = {};
   const start = Date.now();

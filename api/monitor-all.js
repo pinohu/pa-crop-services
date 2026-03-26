@@ -4,23 +4,23 @@
 // Designed to be called by n8n cron (weekly) or admin dashboard
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('monitor-all');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
   const GROQ_KEY = process.env.GROQ_API_KEY;
 
   if (!SD_PUBLIC || !SD_SECRET) {
-    return res.status(500).json({ error: 'SuiteDash not configured' });
+    return res.status(500).json({ success: false, error: 'SuiteDash not configured' });
   }
 
   const results = { checked: 0, alerts: [], errors: [] };
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
                       <p>Or call us: <a href="tel:8142282822">814-228-2822</a></p>
                     </div>`
                   })
-                }).catch(e => console.error('Silent failure:', e.message));
+                }).catch(e => log.warn('external_call_failed', { error: e.message }));
               }
 
               // Send SMS alert if phone available
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
                   body: JSON.stringify({ to: phone, type: 'entity_alert', data: { entity: entityName, status: parsed.status } })
-                }).catch(e => console.error('Silent failure:', e.message));
+                }).catch(e => log.warn('external_call_failed', { error: e.message }));
               }
             }
 
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
                 method: 'PUT',
                 headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ custom_fields: { entity_status: parsed.status, last_status_check: new Date().toISOString() } })
-              }).catch(e => console.error('Silent failure:', e.message));
+              }).catch(e => log.warn('external_call_failed', { error: e.message }));
             }
           } catch (parseErr) { /* non-JSON response, skip */ }
         }
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
       }
     }
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 
   return res.status(200).json({ success: true, ...results });

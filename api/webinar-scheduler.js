@@ -3,23 +3,23 @@
 // Generates webinar content + books via Trafft OAuth
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('webinar-scheduler');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const TRAFFT_CLIENT_ID = '380067799445b9b14ebbad232d7a8dbf';
 
   if (req.method === 'GET') {
     // Generate next webinar topic
-    if (!GROQ_KEY) return res.status(500).json({ error: 'Groq not configured' });
+    if (!GROQ_KEY) return res.status(500).json({ success: false, error: 'Groq not configured' });
     try {
       const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       let plan;
       try { plan = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch(e) { plan = {}; }
       return res.status(200).json({ success: true, nextWebinar: plan, trafft_booking_url: `https://app.trafft.com/booking?client_id=${TRAFFT_CLIENT_ID}` });
-    } catch(e) { return res.status(500).json({ error: e.message }); }
+    } catch(e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
   }
 
   // POST: Schedule specific webinar

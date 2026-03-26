@@ -1,24 +1,25 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('classify-document');
+
 // PA CROP Services — Document Classifier
 // POST /api/classify-document { text, filename, clientEmail }
 // Classifies scanned documents and generates plain-English summaries
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Internal-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   const internalKey = req.headers['x-internal-key'];
   if (internalKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const { text, filename, clientEmail, ocrText } = req.body || {};
   const docText = text || ocrText || '';
-  if (!docText) return res.status(400).json({ error: 'text or ocrText required' });
+  if (!docText) return res.status(400).json({ success: false, error: 'text or ocrText required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
 
@@ -79,7 +80,7 @@ Respond in JSON:
       classifiedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error('Classify error:', err);
-    return res.status(500).json({ error: 'Classification failed' });
+    log.error('classify_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: 'Classification failed' });
   }
 }

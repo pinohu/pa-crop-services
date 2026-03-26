@@ -7,6 +7,9 @@ import { setCors, authenticateRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
 import { computeRisk } from '../services/obligations.js';
 import { getPlanEntitlements, getFilingMethod } from '../services/entitlements.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('value');
 
 // ═══════════════════════════════════════════════════════════
 // SAVINGS CALCULATOR — "What you would pay elsewhere"
@@ -280,7 +283,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ success: false, error: 'unknown_action', valid_actions: ['savings', 'health', 'activity', 'filing-readiness', 'business-stack'] });
   } catch (err) {
-    console.error('Portal value API error:', err.message);
+    log.error('portal_value_api_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

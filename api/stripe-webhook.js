@@ -43,12 +43,12 @@ export default async function handler(req, res) {
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!whSecret) {
     logError('webhook_secret_missing', {});
-    return res.status(500).json({ error: 'Webhook secret not configured' });
+    return res.status(500).json({ success: false, error: 'Webhook secret not configured' });
   }
 
   const sig = req.headers['stripe-signature'];
   if (!sig) {
-    return res.status(400).json({ error: 'Missing Stripe-Signature header' });
+    return res.status(400).json({ success: false, error: 'Missing Stripe-Signature header' });
   }
 
   // Verify signature — always required
@@ -58,14 +58,14 @@ export default async function handler(req, res) {
       const timestamp = sig.split(',').find(s => s.startsWith('t=')).split('=')[1];
       const signatures = sig.split(',').filter(s => s.startsWith('v1=')).map(s => s.split('=')[1]);
       const age = Math.floor(Date.now() / 1000) - parseInt(timestamp);
-      if (age > 300) return res.status(400).json({ error: 'Webhook timestamp too old' });
+      if (age > 300) return res.status(400).json({ success: false, error: 'Webhook timestamp too old' });
       const crypto = await import('crypto');
       const expected = crypto.createHmac('sha256', whSecret).update(`${timestamp}.${payload}`).digest('hex');
       const valid = signatures.some(s => crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected)));
-      if (!valid) return res.status(400).json({ error: 'Invalid signature' });
+      if (!valid) return res.status(400).json({ success: false, error: 'Invalid signature' });
     } catch (err) {
       logError('webhook_signature_failed', {}, err);
-      return res.status(400).json({ error: 'Verification failed' });
+      return res.status(400).json({ success: false, error: 'Verification failed' });
     }
   }
 

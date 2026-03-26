@@ -6,13 +6,13 @@
 const STATS = { endpoints: {}, totalRequests: 0, errors: 0, startTime: Date.now() };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('api-analytics');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   // POST: Log a request (called by other APIs or middleware)
   if (req.method === 'POST') {
     const { endpoint, method, status, latency } = req.body || {};
-    if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+    if (!endpoint) return res.status(400).json({ success: false, error: 'endpoint required' });
     if (!STATS.endpoints[endpoint]) STATS.endpoints[endpoint] = { calls: 0, errors: 0, totalLatency: 0, avgLatency: 0 };
     const ep = STATS.endpoints[endpoint];
     ep.calls++;
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   // GET: View analytics
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const uptimeMs = Date.now() - STATS.startTime;
   return res.status(200).json({
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     note: 'In-memory stats — resets on cold start. For persistent analytics, use Vercel Analytics or external service.'
   });
   } catch (err) {
-    console.error("api-analytics error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    log.error('api_analytics_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

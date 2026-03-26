@@ -3,21 +3,21 @@
 // Analyzes client behavior and sends tier upgrade suggestions
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('upsell');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
   const GROQ_KEY = process.env.GROQ_API_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'SuiteDash not configured' });
+  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'SuiteDash not configured' });
 
   const results = { opportunities: [], total_checked: 0 };
 
@@ -81,12 +81,12 @@ export default async function handler(req, res) {
               <p style="font-size:13px;color:#7A7A7A">Call us at 814-228-2822 to upgrade — we'll handle the switch immediately.</p>
             </div>`
           })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
       }
       results.emails_sent = Math.min(results.opportunities.length, 10);
     }
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 
   return res.status(200).json({ success: true, ...results });

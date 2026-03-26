@@ -3,17 +3,17 @@
 // For physical mail: scan → OCR → classify → route → notify
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('mail-process');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { sender, recipientEntity, textContent, scanDate } = req.body || {};
   const GROQ_KEY = process.env.GROQ_API_KEY;
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
                   <p>View in your portal: <a href="https://pacropservices.com/portal">pacropservices.com/portal</a></p>
                 </div>`
               })
-            }).catch(e => console.error('Silent failure:', e.message));
+            }).catch(e => log.warn('external_call_failed', { error: e.message }));
           }
         }
 
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
               body: JSON.stringify({ to: phone, message: `🚨 PA CROP: URGENT mail received for ${recipientEntity} from ${sender || 'unknown'}. Category: ${classification.category?.replace(/_/g,' ')}. Check portal NOW: pacropservices.com/portal` })
-            }).catch(e => console.error('Silent failure:', e.message));
+            }).catch(e => log.warn('external_call_failed', { error: e.message }));
           }
         }
 
@@ -105,7 +105,7 @@ export default async function handler(req, res) {
           method: 'PUT',
           headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
           body: JSON.stringify({ custom_fields: { document_count: String(docCount), last_mail_date: new Date().toISOString(), last_mail_type: classification.category || 'unknown' } })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
       }
     } catch(e) { result.clientError = e.message; }
   }

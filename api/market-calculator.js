@@ -1,3 +1,8 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('market-calculator');
+
 // PA CROP Services — Market Size Calculator by PA County
 // GET /api/market-calculator?county=Erie (or ?all=true for summary)
 // Estimates addressable market using PA entity density data
@@ -20,11 +25,7 @@ const PA_COUNTY_DATA = {
 };
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
 
   if (county) {
     const entities = PA_COUNTY_DATA[county];
-    if (!entities) return res.status(404).json({ error: `County "${county}" not found` });
+    if (!entities) return res.status(404).json({ success: false, error: `County "${county}" not found` });
     const cropMarket = Math.round(entities * CROP_ADOPTION_RATE);
     return res.status(200).json({
       success: true, county,
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
     note: 'Based on PA DOS filing patterns. Philadelphia alone represents ~15% of the addressable market.'
   });
   } catch (err) {
-    console.error("market-calculator error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    log.error('market_calculator_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

@@ -1,5 +1,8 @@
 import { setCors, authenticateRequest } from '../services/auth.js';
 import { query } from '../services/assistant.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('query');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -21,7 +24,7 @@ export default async function handler(req, res) {
     );
     return res.status(200).json({ success: true, ...answer });
   } catch (err) {
-    console.error('Assistant error:', err.message);
+    log.error('assistant_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'assistant_error' });
   }
 }

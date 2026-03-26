@@ -1,5 +1,8 @@
 import { setCors, isAdminRequest, authenticateRequest } from '../../services/auth.js';
 import * as db from '../../services/db.js';
+import { createLogger } from '../../_log.js';
+
+const log = createLogger('publish');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -41,20 +44,20 @@ export default async function handler(req, res) {
               await computeObligations(org.id, year);
               updated++;
             } catch (e) {
-              console.error(`Recompute failed for org ${org.id}:`, e.message);
+              log.error('recompute_failed_for_org_org_id', {}, e instanceof Error ? e : new Error(String(e)));
             }
           }
           recomputeResult = { entities_affected: orgs.length, obligations_updated: updated };
         }
       } catch (e) {
-        console.error('Obligation recompute failed:', e.message);
+        log.error('obligation_recompute_failed', {}, e instanceof Error ? e : new Error(String(e)));
         recomputeResult = { error: e.message };
       }
     }
 
     return res.status(200).json({ success: true, rule, recompute: recomputeResult });
   } catch (err) {
-    console.error('Rule publish error:', err.message);
+    log.error('rule_publish_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

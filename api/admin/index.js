@@ -9,11 +9,12 @@ import { createLogger } from '../_log.js';
 const log = createLogger('admin');
 
 import { timingSafeEqual } from 'crypto';
+import { setCors } from '../services/auth.js';
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
-if (!ADMIN_KEY && process.env.VERCEL) {
+if (!ADMIN_KEY && process.env.NODE_ENV !== 'test') {
   throw new Error('FATAL: ADMIN_SECRET_KEY is required');
 }
-const ADMIN_KEY_VALUE = ADMIN_KEY || 'dev-admin-key';
+const ADMIN_KEY_VALUE = ADMIN_KEY || '';
 const SD_BASE = 'https://app.suitedash.com/secure-api';
 const TWENTY_I_BASE = 'https://api.20i.com';
 const ACUMBA_TOKEN = process.env.ACUMBAMAIL_API_KEY;
@@ -74,7 +75,6 @@ async function stripeFetch(path) {
   }
 }
 
-
 // ── Emailit Fallback Notifier ──
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
@@ -94,6 +94,7 @@ async function _notifyIke(subject, body) {
 }
 
 export default async function handler(req, res) {
+  setCors(req, res);
   // Restrict CORS to admin dashboard origins
   const origin = req.headers.origin || '';
   const allowedOrigins = ['https://pacropservices.com', 'https://www.pacropservices.com', 'https://pa-crop-services.vercel.app'];
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
   const adminKey = req.headers['x-admin-key'];
   if (!adminKey || typeof adminKey !== 'string' || adminKey.length !== ADMIN_KEY_VALUE.length ||
       !timingSafeEqual(Buffer.from(adminKey), Buffer.from(ADMIN_KEY_VALUE))) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const { action, payload = {} } = req.body || {};
@@ -302,7 +303,7 @@ export default async function handler(req, res) {
         });
 
         const packageId = pkg?.result?.id || pkg?.id;
-        if (!packageId) return res.status(500).json({ error: 'Provisioning failed', pkg });
+        if (!packageId) return res.status(500).json({ success: false, error: 'Provisioning failed', pkg });
 
         // Enable SSL
         await twentyiFetch(`/package/${packageId}/ssl`, {
@@ -460,7 +461,7 @@ export default async function handler(req, res) {
       // ── Send Email via Emailit ─────────────────────────────────────
       case 'send_email': {
         const { to, subject, body: emailBody } = payload;
-        if (!to || !subject || !emailBody) return res.status(400).json({ error: 'to, subject, and body required' });
+        if (!to || !subject || !emailBody) return res.status(400).json({ success: false, error: 'to, subject, and body required' });
         
         const emailitKey = process.env.EMAILIT_API_KEY;
         if (!emailitKey) {
@@ -492,7 +493,7 @@ export default async function handler(req, res) {
       }
 
       default:
-        return res.status(400).json({ error: `Unknown action: ${action}` });
+        return res.status(400).json({ success: false, error: `Unknown action: ${action}` });
     }
   } catch (err) {
     log.error('admin_api_error', {}, err);

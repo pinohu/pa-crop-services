@@ -1,5 +1,8 @@
 import { setCors, authenticateRequest, isAdminRequest } from '../services/auth.js';
 import { sendEmail } from '../services/notifications.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('test');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -28,7 +31,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, sent_to: targetEmail, template: templateId, ...result });
   } catch (err) {
-    console.error('Test notification error:', err.message);
+    log.error('test_notification_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

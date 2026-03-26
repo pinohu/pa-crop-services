@@ -2,6 +2,7 @@ import { setCors } from '../services/auth.js';
 import { isValidEmail, isValidPlanCode } from '../_validate.js';
 import { logError } from '../_log.js';
 import { fetchWithTimeout } from '../_fetch.js';
+import { checkRateLimit, getClientIp } from '../_ratelimit.js';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const PLAN_PRICES = {
@@ -15,6 +16,13 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
+
+  // Rate limit: checkout — 10 per 10 minutes per IP to prevent session flood
+  const rlResult = await checkRateLimit(getClientIp(req), 'billing-checkout', 10, '10m');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ success: false, error: 'too_many_requests' });
+  }
 
   const { plan_code, email } = req.body || {};
   if (!plan_code || !email) return res.status(400).json({ success: false, error: 'missing_fields' });

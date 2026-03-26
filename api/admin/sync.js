@@ -5,6 +5,9 @@
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
 import * as suitedash from '../services/suitedash.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('sync');
 
 // Map SuiteDash entity types to our canonical types
 const ENTITY_MAP = {
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
       }
       return res.status(200).json({ success: true, mode: 'fix-obligations', fixed });
     } catch (e) {
-      return res.status(500).json({ success: false, error: e.message });
+      log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
     }
   }
   const results = { synced: 0, skipped: 0, errors: [], created_orgs: [], created_clients: [], created_obligations: [] };
@@ -206,7 +209,7 @@ export default async function handler(req, res) {
       ...results
     });
   } catch (err) {
-    console.error('Sync error:', err.message);
+    log.error('sync_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

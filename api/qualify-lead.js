@@ -8,8 +8,6 @@ const log = createLogger('qualify-lead');
 // POST /api/qualify-lead { answers }
 // Scores leads based on conversational intake responses
 
-
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();

@@ -4,11 +4,10 @@
 // Public endpoint — used by portal, chatbot, and partner widgets
 
 import { getRules, getEntityDeadline, computeDaysUntil, getEntityConfig, buildDeadlineSummary } from './_compliance.js';
+import { setCors } from './services/auth.js';
 
 export default function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]); // Public reference data
+  setCors(req, res);
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
   if (req.method === 'OPTIONS') {
@@ -43,7 +42,7 @@ export default function handler(req, res) {
     const rules = getRules();
     const value = rules[field];
     if (value === undefined) {
-      return res.status(404).json({ error: `Field '${field}' not found in rules` });
+      return res.status(404).json({ success: false, error: `Field '${field}' not found in rules` });
     }
     return res.status(200).json({ success: true, field, value });
   }

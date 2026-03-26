@@ -1,23 +1,13 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
 
-
-// ── Rate Limiter (in-memory, per-instance) ──
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
-
+const log = createLogger('voice-recording');
 
 // ── Emailit Fallback Notifier ──
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
-  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  if (!key) { log.warn('emailit_api_key_not_set_notification_skipped', { error: String(subject) }); return; }
   try {
     await fetch('https://api.emailit.com/v1/emails', {
       method: 'POST',
@@ -29,16 +19,14 @@ async function _notifyIke(subject, body) {
         html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
       })
     });
-  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+  } catch (e) { log.error('emailit_fallback_failed', {}, e instanceof Error ? e : new Error(String(e))); }
 }
 
 export default async function handler(req, res) {
+  setCors(req, res);
   // Rate limit: Voice recording — 20/min
-  if (_rateLimit(req, res, 20, 60000)) return;
-
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
+  const blocked = await checkRateLimit(getClientIp(req), 'voice-recording', 20, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
   // Try AI transcription if Twilio didn't provide one
@@ -98,8 +86,8 @@ export default async function handler(req, res) {
       );
     }
   } catch (e) {
-    console.error('Voicemail error:', e);
-    await _notifyIke('Voicemail Error', '<p>Voicemail processing failed: ' + (e.message || 'unknown') + '</p>').catch(e => console.error('Silent failure:', e.message));
+    log.error('voicemail_error', {}, e instanceof Error ? e : new Error(String(e)));
+    await _notifyIke('Voicemail Error', '<p>Voicemail processing failed: ' + (e.message || 'unknown') + '</p>').catch(e => log.warn('external_call_failed', { error: e.message }));
   }
 
   res.setHeader('Content-Type', 'text/xml');

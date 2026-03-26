@@ -4,23 +4,23 @@
 // Returns structured script + API-ready payload for video tools
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('video-generate');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { articleTitle, articleContent, format = 'short' } = req.body || {};
-  if (!articleTitle) return res.status(400).json({ error: 'articleTitle required' });
+  if (!articleTitle) return res.status(400).json({ success: false, error: 'articleTitle required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
-  if (!GROQ_KEY) return res.status(500).json({ error: 'Groq not configured' });
+  if (!GROQ_KEY) return res.status(500).json({ success: false, error: 'Groq not configured' });
 
   const durations = { short: '60 seconds (TikTok/Reels)', medium: '3-5 minutes (YouTube)', long: '8-12 minutes (YouTube deep-dive)' };
 
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     const text = (await groqRes.json())?.choices?.[0]?.message?.content || '';
     let script;
     try { script = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch(e) {
-      return res.status(500).json({ error: 'Script generation failed' });
+      return res.status(500).json({ success: false, error: 'Script generation failed' });
     }
 
     // Build Vadoo-compatible payload
@@ -70,5 +70,5 @@ export default async function handler(req, res) {
         manual: 'Copy script.scenes to any video editor for manual production',
       }
     });
-  } catch(e) { return res.status(500).json({ error: e.message }); }
+  } catch(e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
 }

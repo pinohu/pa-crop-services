@@ -1,26 +1,17 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('entity-request');
+
 // PA CROP Services — /api/entity-request
 // Entity formation / add-entity lead capture
 // POST { entityName, entityType, email, phone, notes, clientEmail }
 
-
-// ── Rate Limiter (in-memory, per-instance) ──
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
-
-
 // ── Emailit Fallback Notifier ──
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
-  if (!key) { console.warn('EMAILIT_API_KEY not set — notification skipped:', subject); return; }
+  if (!key) { log.warn('emailit_api_key_not_set_notification_skipped', { error: String(subject) }); return; }
   try {
     await fetch('https://api.emailit.com/v1/emails', {
       method: 'POST',
@@ -32,24 +23,21 @@ async function _notifyIke(subject, body) {
         html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
       })
     });
-  } catch (e) { console.error('Emailit fallback failed:', e.message); }
+  } catch (e) { log.error('emailit_fallback_failed', {}, e instanceof Error ? e : new Error(String(e))); }
 }
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   // Rate limit: Entity request — 5/min
-  if (_rateLimit(req, res, 5, 60000)) return;
+  const blocked = await checkRateLimit(getClientIp(req), 'entity-request', 5, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
 
   const { entityName, entityType, email, phone, notes, clientEmail } = req.body || {};
   const contactEmail = email || clientEmail;
-  if (!contactEmail) return res.status(400).json({ error: 'Email required' });
+  if (!contactEmail) return res.status(400).json({ success: false, error: 'Email required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -69,7 +57,7 @@ export default async function handler(req, res) {
           method: 'PUT',
           headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
           body: JSON.stringify({ tags: ['entity-formation-request'] })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
       }
     }
 
@@ -95,7 +83,7 @@ export default async function handler(req, res) {
       message: 'Entity formation request received. We will contact you within 1 business day.'
     });
   } catch (err) {
-    console.error('Entity request error:', err);
-    return res.status(500).json({ error: 'Internal error. Please call 814-228-2822.' });
+    log.error('entity_request_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: 'Internal error. Please call 814-228-2822.' });
   }
 }

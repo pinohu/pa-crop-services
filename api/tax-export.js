@@ -3,18 +3,18 @@
 // Exports revenue data in CSV format for tax preparation
 
 import { authenticateRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('tax-export');
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'];
   const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
-  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -70,6 +70,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, ...summary });
   } catch(e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

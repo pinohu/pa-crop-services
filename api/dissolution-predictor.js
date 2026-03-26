@@ -3,18 +3,15 @@
 // Predicts dissolution risk trends for PA entities
 
 import { authenticateRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'];
   const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
-  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
 

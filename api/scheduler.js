@@ -10,25 +10,24 @@ import { getRules } from './_compliance.js';
 import { obligations } from './_obligations.js';
 import { db } from './_db.js';
 import { createLogger } from './_log.js';
+import { setCors } from './services/auth.js';
 
 const logger = createLogger('scheduler');
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
   // Admin key required — header only, never from request body
   const key = req.headers['x-admin-key'];
-  if (!key || !ADMIN_KEY || key.length !== ADMIN_KEY.length) return res.status(403).json({ error: 'Unauthorized' });
+  if (!key || !ADMIN_KEY || key.length !== ADMIN_KEY.length) return res.status(403).json({ success: false, error: 'Unauthorized' });
   const { timingSafeEqual } = await import('crypto');
-  if (!timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY))) return res.status(403).json({ error: 'Unauthorized' });
+  if (!timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY))) return res.status(403).json({ success: false, error: 'Unauthorized' });
 
   const { action, entityIds, year, deadlineGroup } = req.body || {};
-  if (!action) return res.status(400).json({ error: 'action required' });
+  if (!action) return res.status(400).json({ success: false, error: 'action required' });
 
   const y = parseInt(year) || new Date().getFullYear();
   const rules = getRules();
@@ -40,7 +39,7 @@ export default async function handler(req, res) {
     // and returns which reminders need to be sent.
     case 'process_reminders': {
       if (!entityIds || !Array.isArray(entityIds)) {
-        return res.status(400).json({ error: 'entityIds array required' });
+        return res.status(400).json({ success: false, error: 'entityIds array required' });
       }
 
       const results = [];
@@ -115,7 +114,7 @@ export default async function handler(req, res) {
     // ── Evaluate all entities and return a compliance summary ──
     case 'evaluate_all': {
       if (!entityIds || !Array.isArray(entityIds)) {
-        return res.status(400).json({ error: 'entityIds array required' });
+        return res.status(400).json({ success: false, error: 'entityIds array required' });
       }
 
       const summary = {
@@ -162,7 +161,7 @@ export default async function handler(req, res) {
     // ── Overdue escalation check ──
     case 'overdue_check': {
       if (!entityIds || !Array.isArray(entityIds)) {
-        return res.status(400).json({ error: 'entityIds array required' });
+        return res.status(400).json({ success: false, error: 'entityIds array required' });
       }
 
       const escalations = [];
@@ -203,6 +202,6 @@ export default async function handler(req, res) {
     }
 
     default:
-      return res.status(400).json({ error: `Unknown action: ${action}`, validActions: ['process_reminders', 'evaluate_all', 'overdue_check'] });
+      return res.status(400).json({ success: false, error: `Unknown action: ${action}`, validActions: ['process_reminders', 'evaluate_all', 'overdue_check'] });
   }
 }

@@ -9,6 +9,9 @@
 
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { createLogger } from './_log.js';
+
+const log = createLogger('_ratelimit');
 
 // ── Upstash Redis (durable, cross-instance) ──
 let _redis = null;
@@ -110,7 +113,7 @@ export async function checkRateLimit(ip, prefix, maxRequests, window) {
       return null;
     } catch (err) {
       // If Redis fails, fall through to in-memory
-      console.warn('[ratelimit] Upstash error, falling back to memory:', err.message);
+      log.warn('ratelimit_upstash_error_falling_back_to_memory', { error: err.message });
     }
   }
 

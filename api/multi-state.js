@@ -1,3 +1,8 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('multi-state');
+
 // PA CROP Services — Multi-State Entity Monitoring
 // POST /api/multi-state { email, states: [{state, entityName, fileNumber}] }
 // GET /api/multi-state?email=x (list monitored states)
@@ -13,15 +18,11 @@ const STATE_INFO = {
 };
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const email = req.query?.email || req.body?.email;
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -37,14 +38,14 @@ export default async function handler(req, res) {
         let states = [];
         try { states = JSON.parse(contact?.custom_fields?.multistate_json || '[]'); } catch(e) {}
         return res.status(200).json({ success: true, monitoredStates: states, availableStates: STATE_INFO });
-      } catch(e) { return res.status(500).json({ error: e.message }); }
+      } catch(e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
     }
     return res.status(200).json({ availableStates: STATE_INFO });
   }
 
   // POST: Add/update monitored states
   const { states } = req.body || {};
-  if (!states || !Array.isArray(states)) return res.status(400).json({ error: 'states array required' });
+  if (!states || !Array.isArray(states)) return res.status(400).json({ success: false, error: 'states array required' });
 
   const enriched = states.map(s => ({
     ...s,
@@ -68,7 +69,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({ custom_fields: { multistate_json: JSON.stringify(enriched), multistate_count: String(enriched.length) } })
         });
       }
-    } catch(e) { return res.status(500).json({ error: e.message }); }
+    } catch(e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
   }
 
   return res.status(200).json({ success: true, monitoredStates: enriched });

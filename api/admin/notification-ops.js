@@ -3,6 +3,9 @@
 
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('notification-ops');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -93,7 +96,7 @@ export default async function handler(req, res) {
       }))
     });
   } catch (err) {
-    console.error('Notification ops error:', err.message);
+    log.error('notification_ops_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

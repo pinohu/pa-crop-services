@@ -1,30 +1,25 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('notification-preferences');
+
 // PA CROP Services — Client Notification Preferences
 // GET /api/notification-preferences?email=x (read)
 // POST /api/notification-preferences { email, prefs } (update)
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim()||'unknown';
-  const k = ip+':'+(req.url||'').split('?')[0]; const now = Date.now();
-  let d = _rl.get(k); if(!d||now-d.s>win){_rl.set(k,{c:1,s:now});return false;}
-  d.c++; if(d.c>max){res.setHeader('Retry-After',String(Math.ceil((d.s+win-now)/1000)));res.status(429).json({error:'Too many requests'});return true;} return false;
-}
-
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (_rateLimit(req, res, 10, 60000)) return;
+  const blocked = await checkRateLimit(getClientIp(req), 'notification-preferences', 10, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'CRM not configured' });
+  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'CRM not configured' });
 
   const email = req.query?.email || req.body?.email;
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   try {
     // Find contact
@@ -32,7 +27,7 @@ export default async function handler(req, res) {
       headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
     });
     const contacts = (await searchRes.json())?.data || [];
-    if (!contacts.length) return res.status(404).json({ error: 'Client not found' });
+    if (!contacts.length) return res.status(404).json({ success: false, error: 'Client not found' });
     const contact = contacts[0];
 
     if (req.method === 'GET') {
@@ -67,6 +62,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, message: 'Preferences updated', updates });
 
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

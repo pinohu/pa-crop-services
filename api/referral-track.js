@@ -3,24 +3,24 @@
 // Called during provisioning when new client has a referral code
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('referral-track');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { newClientEmail, refCode, tier, amount } = req.body || {};
-  if (!newClientEmail || !refCode) return res.status(400).json({ error: 'newClientEmail and refCode required' });
+  if (!newClientEmail || !refCode) return res.status(400).json({ success: false, error: 'newClientEmail and refCode required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'SuiteDash not configured' });
+  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'SuiteDash not configured' });
 
   try {
     // Find the referrer by their referral code
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
             <p>Keep sharing your code to earn more! Your portal has your referral link and code.</p>
           </div>`
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
 
     return res.status(200).json({ 
@@ -83,6 +83,6 @@ export default async function handler(req, res) {
       total_earnings: currentEarnings + commission, total_referrals: currentCount + 1 
     });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

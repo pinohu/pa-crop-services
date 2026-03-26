@@ -7,7 +7,6 @@ const log = createLogger('hosting-health');
 // GET /api/hosting-health?key=ADMIN
 // Checks all client hosting packages: uptime, SSL, disk usage
 
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -47,7 +46,7 @@ export default async function handler(req, res) {
       }
     }
   } catch (e) {
-    return res.status(500).json({ success: false, error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 
   // Send alerts if any

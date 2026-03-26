@@ -17,6 +17,8 @@ import { neon } from '@neondatabase/serverless';
 import * as suitedash from './suitedash.js';
 import { logWarn, logError } from '../_log.js';
 
+const log = createLogger('db');
+
 // ── Neon Connection ────────────────────────────────────────
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -512,7 +514,7 @@ export async function writeAuditEvent(event) {
        event.reason, event.correlation_id]);
     return rows?.[0] || null;
   } catch (err) {
-    console.error(JSON.stringify({ ts: new Date().toISOString(), service: 'pa-crop', level: 'error', event: 'audit_write_failed', targetType: event.target_type, targetId: event.target_id, error: err.message }));
+    logError('audit_write_failed', { targetType: event.target_type, targetId: event.target_id }, err instanceof Error ? err : new Error(String(err)));
     return null;
   }
 }

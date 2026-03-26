@@ -13,7 +13,6 @@ import { setCors, isAdminRequest } from './services/auth.js';
 
 const logger = createLogger('entity-status');
 
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -118,7 +117,7 @@ export default async function handler(req, res) {
         const updated = obligations.transition(ob, newStatus, context || {}, isAdminRequest(req) ? 'admin' : 'system');
         if (!updated) {
           return res.status(400).json({
-            error: `Invalid transition: ${ob.status} → ${newStatus}`,
+            success: false, error: `Invalid transition: ${ob.status} → ${newStatus}`,
             validTransitions: obligations.TRANSITIONS[ob.status] || []
           });
         }

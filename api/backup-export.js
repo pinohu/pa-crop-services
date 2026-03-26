@@ -3,13 +3,16 @@
 // Exports all client data, configuration, and system state as JSON
 
 import { isAdminRequest } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('backup-export');
 
 export default async function handler(req, res) {
   // No CORS on backup export — admin API only
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // Admin key from header only — never query params (they leak in logs)
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -51,11 +54,11 @@ export default async function handler(req, res) {
             subject: `📦 PA CROP Backup — ${new Date().toLocaleDateString()}`,
             html: `<pre style="font-size:11px;max-height:500px;overflow:auto">${JSON.stringify(backup, null, 2).slice(0, 50000)}</pre>`
           })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
         backup.emailed = true;
       }
     }
 
     return res.status(200).json({ success: true, ...backup });
-  } catch(e) { return res.status(500).json({ error: e.message }); }
+  } catch(e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
 }

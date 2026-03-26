@@ -4,6 +4,9 @@
 
 import { setCors, isAdminRequest } from './services/auth.js';
 import * as db from './services/db.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('mrr-dashboard');
 
 const PRICES = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
 const LABELS = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
@@ -11,7 +14,7 @@ const LABELS = { compliance_only: 'Compliance Only', business_starter: 'Business
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   try {
     if (db.isConnected()) {
@@ -47,5 +50,5 @@ export default async function handler(req, res) {
       });
     }
     return res.status(200).json({ success: true, source: 'none', mrr: 0, arr: 0, clients: { total: 0, by_tier: {} } });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
+  } catch (e) { log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' }); }
 }

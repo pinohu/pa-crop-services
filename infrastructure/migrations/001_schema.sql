@@ -40,6 +40,8 @@ create table organizations (
 create index idx_organizations_jurisdiction on organizations(jurisdiction);
 create index idx_organizations_entity_type on organizations(entity_type);
 create index idx_organizations_dos_number on organizations(dos_number);
+create index idx_organizations_partner_id on organizations(partner_id);
+create index idx_organizations_entity_status on organizations(entity_status);
 
 comment on table organizations is 'Business entities tracked by the compliance engine';
 comment on column organizations.entity_type is 'e.g. domestic_llc, foreign_business_corp, domestic_nonprofit_corp';
@@ -128,6 +130,8 @@ create index idx_obligations_org on obligations(organization_id);
 create index idx_obligations_due_date on obligations(due_date);
 create index idx_obligations_status on obligations(obligation_status);
 create index idx_obligations_escalation on obligations(escalation_level);
+create index idx_obligations_due_status on obligations(due_date, obligation_status);
+create index idx_obligations_org_status on obligations(organization_id, obligation_status);
 
 comment on table obligations is 'Compliance obligations generated from rules. This is the state machine.';
 comment on column obligations.obligation_status is 'created, upcoming, reminder_scheduled, reminder_sent, awaiting_client_input, ready_to_file, filed_pending_confirmation, filed_confirmed, overdue, escalated, closed';
@@ -191,6 +195,8 @@ create table notifications (
 create index idx_notifications_sched on notifications(scheduled_for);
 create index idx_notifications_delivery on notifications(delivery_status);
 create index idx_notifications_org on notifications(organization_id);
+create index idx_notifications_client on notifications(client_id);
+create index idx_notifications_delivery_sched on notifications(delivery_status, scheduled_for);
 
 comment on table notifications is 'Scheduled and sent communications';
 comment on column notifications.delivery_status is 'scheduled, sent, delivered, failed, bounced';

@@ -1,4 +1,7 @@
 import { setCors, authenticateRequest } from '../services/auth.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('summarize-document');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -31,6 +34,6 @@ export default async function handler(req, res) {
     const summary = d.choices?.[0]?.message?.content || 'Could not generate summary.';
     return res.status(200).json({ success: true, summary });
   } catch (e) {
-    return res.status(500).json({ success: false, error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

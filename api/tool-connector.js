@@ -81,16 +81,13 @@ const TOOLS = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   // GET: List all tools and their connection status
   if (req.method === 'GET') {
@@ -114,18 +111,18 @@ export default async function handler(req, res) {
 
   // POST: Execute tool action
   const { tool, action, data } = req.body || {};
-  if (!tool || !action) return res.status(400).json({ error: 'tool and action required' });
+  if (!tool || !action) return res.status(400).json({ success: false, error: 'tool and action required' });
 
   const toolConfig = TOOLS[tool];
-  if (!toolConfig) return res.status(400).json({ error: `Unknown tool: ${tool}. Available: ${Object.keys(TOOLS).join(', ')}` });
+  if (!toolConfig) return res.status(400).json({ success: false, error: `Unknown tool: ${tool}. Available: ${Object.keys(TOOLS).join(', ')}` });
 
   const actionConfig = toolConfig.actions[action];
-  if (!actionConfig) return res.status(400).json({ error: `Unknown action: ${action}. Available: ${Object.keys(toolConfig.actions).join(', ')}` });
+  if (!actionConfig) return res.status(400).json({ success: false, error: `Unknown action: ${action}. Available: ${Object.keys(toolConfig.actions).join(', ')}` });
 
   const apiKey = process.env[toolConfig.envKey];
   if (!apiKey) {
     return res.status(503).json({
-      error: `${toolConfig.name} not connected`,
+      success: false, error: `${toolConfig.name} not connected`,
       envKey: toolConfig.envKey,
       instruction: `Add ${toolConfig.envKey} to Vercel environment variables to enable this tool.`,
       vercelUrl: 'https://vercel.com/polycarpohu-gmailcoms-projects/pa-crop-services/settings/environment-variables'
@@ -143,6 +140,6 @@ export default async function handler(req, res) {
     const result = await r.json().catch(() => ({}));
     return res.status(r.ok ? 200 : r.status).json({ success: r.ok, tool: toolConfig.name, action, result });
   } catch (e) {
-    return res.status(502).json({ error: `${toolConfig.name} API error: ${e.message}` });
+    return res.status(502).json({ success: false, error: `${toolConfig.name} API error: ${e.message}` });
   }
 }

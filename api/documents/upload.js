@@ -1,6 +1,11 @@
 import { setCors, authenticateRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
 import { notifyAdmin } from '../services/notifications.js';
+import { checkRateLimit, getClientIp } from '../_ratelimit.js';
+import { isValidUUID, isValidString } from '../_validate.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('upload');
 
 // Keywords that indicate service of process (needs immediate fast-lane alert)
 const SOP_KEYWORDS = ['service of process', 'summons', 'complaint', 'subpoena', 'court order'];
@@ -10,12 +15,31 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
 
+  // Rate limit: document uploads — 20 per minute per IP
+  const rlResult = await checkRateLimit(getClientIp(req), 'doc-upload', 20, '60s');
+  if (rlResult) {
+    res.setHeader('Retry-After', String(rlResult.retryAfter));
+    return res.status(429).json({ success: false, error: 'too_many_requests' });
+  }
+
   const session = await authenticateRequest(req);
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 
   const { organization_id, filename, mime_type, source_channel, extracted_text } = req.body || {};
   if (!organization_id || !filename || !mime_type) {
     return res.status(400).json({ success: false, error: 'missing_required_fields' });
+  }
+  if (!isValidUUID(organization_id)) {
+    return res.status(400).json({ success: false, error: 'invalid_organization_id' });
+  }
+  if (!isValidString(filename, { minLength: 1, maxLength: 255 })) {
+    return res.status(400).json({ success: false, error: 'invalid_filename' });
+  }
+  if (!isValidString(mime_type, { minLength: 1, maxLength: 100 })) {
+    return res.status(400).json({ success: false, error: 'invalid_mime_type' });
+  }
+  if (extracted_text !== undefined && !isValidString(extracted_text, { minLength: 0, maxLength: 50000 })) {
+    return res.status(400).json({ success: false, error: 'extracted_text_too_long' });
   }
 
   if (organization_id !== session.orgId) {
@@ -62,7 +86,7 @@ export default async function handler(req, res) {
       await notifyAdmin('URGENT: Service of Process Received',
         `A service of process document was uploaded for org ${organization_id}.\n` +
         `Filename: ${filename}\nThis requires immediate attention within the legal response window.`
-      ).catch(e => console.error('SOP notification failed:', e.message));
+      ).catch(e => log.error('sop_notification_failed', {}, e instanceof Error ? e : new Error(String(e))));
     }
 
     return res.status(200).json({
@@ -72,7 +96,7 @@ export default async function handler(req, res) {
       upload_url: null
     });
   } catch (err) {
-    console.error('Document upload error:', err.message);
+    log.error('document_upload_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

@@ -10,7 +10,6 @@ const log = createLogger('partner-dashboard');
 // GET /api/partner-dashboard?email=partner@example.com
 // Returns partner's referred clients, commissions, performance
 
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -66,6 +65,6 @@ export default async function handler(req, res) {
       activeClients: referredSummary.filter(c => c.active).length,
     });
   } catch(e) {
-    return res.status(500).json({ success: false, error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

@@ -9,8 +9,6 @@ const log = createLogger('document-upload');
 // POST /api/document-upload { email, fileName, fileType, fileContent (base64), notes }
 // Classifies document via Groq, stores metadata in SuiteDash, sends alerts for urgent docs
 
-
-
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();

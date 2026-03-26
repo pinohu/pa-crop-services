@@ -1,13 +1,11 @@
+import { setCors } from './services/auth.js';
+
 // PA CROP Services — Auto-Generated Knowledge Base
 // GET /api/knowledge-base (public — returns all KB articles)
 // GET /api/knowledge-base?key=ADMIN&generate=true (generates new entries)
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const GROQ_KEY = process.env.GROQ_API_KEY;

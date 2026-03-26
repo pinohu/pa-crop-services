@@ -1,5 +1,8 @@
 import { setCors, isAdminRequest } from '../services/auth.js';
 import { getAllRules, createRule } from '../services/db.js';
+import { createLogger } from '../_log.js';
+
+const log = createLogger('rules');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -17,7 +20,7 @@ export default async function handler(req, res) {
     }
     return res.status(405).json({ success: false, error: 'method_not_allowed' });
   } catch (err) {
-    console.error('Rules handler error:', err.message);
+    log.error('rules_handler_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

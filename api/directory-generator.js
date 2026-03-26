@@ -10,20 +10,19 @@ const DIRECTORIES = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const type = req.query?.type;
   if (!type) return res.status(200).json({ success: true, directories: DIRECTORIES, totalBDLicensesNeeded: 4, bdLicensesAvailable: 100 });
 
   const dir = DIRECTORIES[type];
-  if (!dir) return res.status(400).json({ error: `Type not found. Use: ${Object.keys(DIRECTORIES).join(', ')}` });
+  if (!dir) return res.status(400).json({ success: false, error: `Type not found. Use: ${Object.keys(DIRECTORIES).join(', ')}` });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   let content = {};

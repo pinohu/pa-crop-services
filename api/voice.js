@@ -1,28 +1,17 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
 
-// ── Rate Limiter (in-memory, per-instance) ──
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || req.headers['x-real-ip'] || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
+const log = createLogger('voice');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
 
   // Rate limit: Voice — 20/min
-  if (_rateLimit(req, res, 20, 60000)) return;
+  const blocked = await checkRateLimit(getClientIp(req), 'voice', 20, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Matthew">Thank you for calling PA CROP Services. Please try again.</Say></Response>');
   }
@@ -101,7 +90,7 @@ export default async function handler(req, res) {
     ].join('\n'));
 
   } catch (err) {
-    console.error('Voice AI error:', err);
+    log.error('voice_ai_error', {}, err instanceof Error ? err : new Error(String(err)));
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send([
       '<?xml version="1.0" encoding="UTF-8"?>',

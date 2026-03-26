@@ -3,16 +3,16 @@
 // Pings all critical endpoints, reports health status
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('uptime-monitor');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
   const endpoints = [
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
           subject: `🚨 DOWNTIME: ${downList}`,
           html: `<pre>${JSON.stringify(results, null, 2)}</pre>`
         })
-      }).catch(e => console.error('Silent failure:', e.message));
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
   }
 

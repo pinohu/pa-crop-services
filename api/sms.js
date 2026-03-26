@@ -3,18 +3,11 @@
 // Types: welcome, reminder_90, reminder_30, reminder_7, renewal, custom
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || 'unknown';
-  const k = ip + ':' + (req.url||'').split('?')[0];
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
+const log = createLogger('sms');
 
 const TEMPLATES = {
   welcome: (data) => `Welcome to PA CROP Services! Your portal is ready: pacropservices.com/portal\n\nAccess code: ${data.code || '[check email]'}\n\nQuestions? Call 814-228-2822`,
@@ -26,27 +19,24 @@ const TEMPLATES = {
 };
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
   // Admin requests bypass the SMS rate limit; non-admin requests are rate limited
   const isAdmin = isAdminRequest(req);
   if (!isAdmin) {
-    if (_rateLimit(req, res, 3, 60000)) return;
+    const blocked = await checkRateLimit(getClientIp(req), 'sms', 3, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
   }
 
   const { to, message, type, data = {} } = req.body || {};
-  if (!to) return res.status(400).json({ error: 'to (phone number) required' });
+  if (!to) return res.status(400).json({ success: false, error: 'to (phone number) required' });
 
   const SMSIT_KEY = process.env.SMSIT_API_KEY;
-  if (!SMSIT_KEY) return res.status(503).json({ error: 'SMSIT_API_KEY not configured. Add to Vercel env vars.' });
+  if (!SMSIT_KEY) return res.status(503).json({ success: false, error: 'SMSIT_API_KEY not configured. Add to Vercel env vars.' });
   const smsBody = message || (TEMPLATES[type] ? TEMPLATES[type](data) : null);
-  if (!smsBody) return res.status(400).json({ error: 'message or valid type required' });
+  if (!smsBody) return res.status(400).json({ success: false, error: 'message or valid type required' });
 
   try {
     const smsRes = await fetch('https://aicpanel.smsit.ai/api/v2/sms/send', {
@@ -75,11 +65,11 @@ export default async function handler(req, res) {
         const twilioData = await twilioRes.json();
         return res.status(200).json({ success: true, sms_id: twilioData?.sid, to, type: type || 'custom', via: 'twilio_fallback' });
       } catch (te) {
-        console.error('Twilio fallback also failed:', te.message);
-        return res.status(502).json({ error: 'Both SMS-iT and Twilio failed', detail: te.message });
+        log.error('twilio_fallback_also_failed', {}, te instanceof Error ? te : new Error(String(te)));
+        return res.status(502).json({ success: false, error: 'Both SMS-iT and Twilio failed', detail: te.message });
       }
     }
-    console.error('SMS-iT failed and no Twilio configured:', e.message);
-    return res.status(502).json({ error: 'SMS delivery failed', detail: e.message });
+    log.error('sms_it_failed_and_no_twilio_configured', {}, e instanceof Error ? e : new Error(String(e)));
+    return res.status(502).json({ success: false, error: 'SMS delivery failed', detail: e.message });
   }
 }

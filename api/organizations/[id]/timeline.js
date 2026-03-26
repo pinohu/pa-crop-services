@@ -1,6 +1,7 @@
 import { setCors, authenticateRequest } from '../../services/auth.js';
 import * as db from '../../services/db.js';
 import { computeRisk } from '../../services/obligations.js';
+import { logError } from '../../_log.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -113,7 +114,7 @@ export default async function handler(req, res) {
       notifications_sent: notifications.filter(n => n.sent_at).length
     });
   } catch (err) {
-    console.error('Timeline error:', err.message);
+    logError('timeline_error', {}, err);
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

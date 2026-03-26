@@ -1,5 +1,8 @@
 import { setCors, authenticateRequest } from '../../../services/auth.js';
 import { computeObligations } from '../../../services/obligations.js';
+import { createLogger } from '../../../_log.js';
+
+const log = createLogger('recompute');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -15,7 +18,7 @@ export default async function handler(req, res) {
     const result = await computeObligations(id, year);
     return res.status(200).json({ success: true, ...result });
   } catch (err) {
-    console.error('Recompute error:', err.message);
+    log.error('recompute_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

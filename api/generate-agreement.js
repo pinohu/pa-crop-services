@@ -3,20 +3,20 @@
 // Uses Documentero API to generate branded service agreement PDF
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('generate-agreement');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { email, name, entityName, entityType, tier, dosNumber, phone } = req.body || {};
-  if (!email || !entityName) return res.status(400).json({ error: 'email and entityName required' });
+  if (!email || !entityName) return res.status(400).json({ success: false, error: 'email and entityName required' });
 
   const DOCUMENTERO_KEY = process.env.DOCUMENTERO_API_KEY;
   const tierLabel = { compliance: 'Compliance Only ($99/yr)', starter: 'Business Starter ($199/yr)', pro: 'Business Pro ($349/yr)', empire: 'Business Empire ($699/yr)' }[tier] || tier;
@@ -63,8 +63,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, html, agreement: agreementData, note: 'PDF generation unavailable — HTML agreement returned' });
     
   } catch (e) {
-    console.error('Agreement generation error:', e);
-    return res.status(500).json({ error: e.message });
+    log.error('agreement_generation_error', {}, e instanceof Error ? e : new Error(String(e)));
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }
 

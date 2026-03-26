@@ -3,19 +3,19 @@
 // Generates monthly compliance newsletter via Groq, sends via Acumbamail
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('newsletter-generate');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
-  if (!GROQ_KEY) return res.status(500).json({ error: 'Groq not configured' });
+  if (!GROQ_KEY) return res.status(500).json({ success: false, error: 'Groq not configured' });
 
   const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     const text = genData?.choices?.[0]?.message?.content || '';
     let content;
     try { content = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch(e) {
-      return res.status(500).json({ error: 'Failed to generate newsletter content' });
+      return res.status(500).json({ success: false, error: 'Failed to generate newsletter content' });
     }
 
     // Build HTML
@@ -91,6 +91,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, ...result });
   } catch(e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

@@ -1,23 +1,24 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('email-triage');
+
 // PA CROP Services — AI Email Triage
 // POST /api/email-triage { from, subject, body, messageId }
 // Classifies email, drafts response, routes to correct handler
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Internal-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   const internalKey = req.headers['x-internal-key'];
   if (internalKey !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const { from, subject, body, messageId } = req.body || {};
-  if (!body && !subject) return res.status(400).json({ error: 'subject or body required' });
+  if (!body && !subject) return res.status(400).json({ success: false, error: 'subject or body required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
 
@@ -79,7 +80,7 @@ CONTEXT: PA CROP Services provides PA registered office services. Plans: $99-$69
       processedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error('Email triage error:', err);
-    return res.status(500).json({ error: 'Triage failed', detail: err.message });
+    log.error('email_triage_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: 'Triage failed', detail: err.message });
   }
 }

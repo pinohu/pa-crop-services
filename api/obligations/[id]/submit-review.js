@@ -7,6 +7,9 @@ import * as db from '../../services/db.js';
 import { canTransition, transition } from '../../services/obligations.js';
 import { notifyAdmin } from '../../services/notifications.js';
 import { isValidUUID, isValidString } from '../../_validate.js';
+import { createLogger } from '../../_log.js';
+
+const log = createLogger('submit-review');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -95,7 +98,7 @@ export default async function handler(req, res) {
       obligation_status: 'ready_to_file'
     });
   } catch (err) {
-    console.error('Submit review error:', err.message);
+    log.error('submit_review_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

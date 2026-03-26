@@ -1,3 +1,9 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('client-upgrade');
+
 // PA CROP Services — Client Self-Service Tier Upgrade
 // POST /api/client-upgrade { email, currentTier, targetTier }
 // Generates Stripe upgrade checkout link, provisions additional features
@@ -10,32 +16,21 @@ const STRIPE_LINKS = {
   empire: 'https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b',
 };
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim()||'unknown';
-  const k = ip+':'+(req.url||'').split('?')[0]; const now = Date.now();
-  let d = _rl.get(k); if(!d||now-d.s>win){_rl.set(k,{c:1,s:now});return false;}
-  d.c++; if(d.c>max){res.setHeader('Retry-After',String(Math.ceil((d.s+win-now)/1000)));res.status(429).json({error:'Too many requests'});return true;} return false;
-}
-
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (_rateLimit(req, res, 5, 60000)) return;
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
+  const blocked = await checkRateLimit(getClientIp(req), 'client-upgrade', 5, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
 
   try {
   const { email, currentTier, targetTier } = req.body || {};
-  if (!email || !targetTier) return res.status(400).json({ error: 'email and targetTier required' });
+  if (!email || !targetTier) return res.status(400).json({ success: false, error: 'email and targetTier required' });
 
   const currentPrice = TIER_PRICES[currentTier] || 0;
   const targetPrice = TIER_PRICES[targetTier];
-  if (!targetPrice) return res.status(400).json({ error: 'Invalid target tier' });
-  if (targetPrice <= currentPrice) return res.status(400).json({ error: 'Can only upgrade to a higher tier' });
+  if (!targetPrice) return res.status(400).json({ success: false, error: 'Invalid target tier' });
+  if (targetPrice <= currentPrice) return res.status(400).json({ success: false, error: 'Can only upgrade to a higher tier' });
 
   const checkoutUrl = STRIPE_LINKS[targetTier];
   const priceDiff = (targetPrice - currentPrice) / 100;
@@ -52,7 +47,7 @@ export default async function handler(req, res) {
         subject: `⬆️ Upgrade Intent: ${email} → ${tierLabels[targetTier]}`,
         html: `<div style="font-family:sans-serif"><h2>Client Upgrade Intent</h2><p><strong>Client:</strong> ${email}<br><strong>Current:</strong> ${tierLabels[currentTier] || currentTier}<br><strong>Target:</strong> ${tierLabels[targetTier]}<br><strong>Diff:</strong> +$${priceDiff}/yr</p></div>`
       })
-    }).catch(e => console.error('Silent failure:', e.message));
+    }).catch(e => log.warn('external_call_failed', { error: e.message }));
   }
 
   return res.status(200).json({
@@ -63,5 +58,5 @@ export default async function handler(req, res) {
     priceDifference: `+$${priceDiff}/yr`,
     message: `Complete your upgrade to ${tierLabels[targetTier]} at the checkout link.`
   });
-  } catch(e) { return res.status(500).json({ error: 'Something went wrong with the upgrade. Please call 814-228-2822.' }); }
+  } catch(e) { return res.status(500).json({ success: false, error: 'Something went wrong with the upgrade. Please call 814-228-2822.' }); }
 }

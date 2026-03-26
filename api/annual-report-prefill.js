@@ -4,22 +4,22 @@
 // Uses entity data from SuiteDash + PA DOS lookup via Groq
 
 import { authenticateRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('annual-report-prefill');
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, Authorization');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
   const adminKey = req.headers['x-admin-key'];
   const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
-  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { email, entityName, dosNumber, entityType } = req.body || {};
-  if (!email || !entityName) return res.status(400).json({ error: 'email and entityName required' });
+  if (!email || !entityName) return res.status(400).json({ success: false, error: 'email and entityName required' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const DOCUMENTERO_KEY = process.env.DOCUMENTERO_API_KEY;
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
           <p style="font-size:13px;color:#7A7A7A">Your plan includes annual report filing. The $7 state fee is paid from your account.</p>
         </div>`
       })
-    }).catch(e => console.error('Silent failure:', e.message));
+    }).catch(e => log.warn('external_call_failed', { error: e.message }));
   }
 
   return res.status(200).json({ success: true, form_data: formData });

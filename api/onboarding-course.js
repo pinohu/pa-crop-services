@@ -1,13 +1,11 @@
+import { setCors } from './services/auth.js';
+
 // PA CROP Services — Client Onboarding Course Generator
 // GET /api/onboarding-course?key=ADMIN (generates 5-lesson course)
 // POST /api/onboarding-course { email } (assigns course to client)
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const adminKey = req.headers['x-admin-key'];
@@ -52,7 +50,7 @@ export default async function handler(req, res) {
 
   // POST: Assign course to client
   const { email } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;

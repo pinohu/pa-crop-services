@@ -1,27 +1,22 @@
+import { setCors } from './services/auth.js';
+import { checkRateLimit, getClientIp } from './_ratelimit.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('entity-update');
+
 // PA CROP Services — Client Entity Info Self-Update
 // POST /api/entity-update { email, entityName, entityType, address, officers, dosNumber }
 // Updates SuiteDash, triggers re-verification, generates change form if needed
 
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim()||'unknown';
-  const k = ip+':'+(req.url||'').split('?')[0]; const now = Date.now();
-  let d = _rl.get(k); if(!d||now-d.s>win){_rl.set(k,{c:1,s:now});return false;}
-  d.c++; if(d.c>max){res.setHeader('Retry-After',String(Math.ceil((d.s+win-now)/1000)));res.status(429).json({error:'Too many requests'});return true;} return false;
-}
-
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (_rateLimit(req, res, 5, 60000)) return;
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
+  const blocked = await checkRateLimit(getClientIp(req), 'entity-update', 5, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
 
   const { email, entityName, entityType, address, officers, dosNumber, phone } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
@@ -34,7 +29,7 @@ export default async function handler(req, res) {
       });
       const contacts = (await sdSearch.json())?.data || [];
       const contact = contacts[0];
-      if (!contact) return res.status(404).json({ error: 'Client not found' });
+      if (!contact) return res.status(404).json({ success: false, error: 'Client not found' });
 
       const updates = {};
       if (entityName) { updates.entity_name = entityName; result.updated.push('entityName'); }
@@ -65,13 +60,13 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
           body: JSON.stringify({ entityName: entityName || contact.custom_fields?.entity_name, dosNumber: dosNumber || contact.custom_fields?.dos_number, email })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
         result.reverificationTriggered = true;
       }
     }
 
     return res.status(200).json({ success: true, ...result });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

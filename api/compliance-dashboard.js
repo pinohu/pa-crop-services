@@ -8,19 +8,18 @@
 import { getRules, buildDeadlineSummary } from './_compliance.js';
 import { db } from './_db.js';
 import { createLogger } from './_log.js';
+import { setCors } from './services/auth.js';
 
 const logger = createLogger('compliance-dashboard');
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'GET only' });
 
   const key = req.headers['x-admin-key'];
-  if (key !== ADMIN_KEY) return res.status(403).json({ error: 'Unauthorized' });
+  if (key !== ADMIN_KEY) return res.status(403).json({ success: false, error: 'Unauthorized' });
 
   try {
     const rules = getRules();
@@ -92,6 +91,6 @@ export default async function handler(req, res) {
     return res.status(200).json(dashboard);
   } catch (err) {
     logger.error('dashboard_error', {}, err);
-    return res.status(500).json({ error: 'Dashboard generation failed' });
+    return res.status(500).json({ success: false, error: 'Dashboard generation failed' });
   }
 }

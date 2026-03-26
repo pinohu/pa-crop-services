@@ -13,16 +13,18 @@ const STATES = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('state-config');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const state = req.query?.state?.toUpperCase();
   const all = req.query?.all === 'true';
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true, available: Object.keys(STATES), implemented: Object.entries(STATES).filter(([k,v]) => v.implemented).map(([k]) => k) });
   } catch (err) {
-    console.error("state-config error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    log.error('state_config_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

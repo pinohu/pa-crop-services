@@ -10,29 +10,29 @@ const TEMPLATES = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('whatsapp');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { to, message, type, data = {} } = req.body || {};
-  if (!to) return res.status(400).json({ error: 'to (phone) required' });
+  if (!to) return res.status(400).json({ success: false, error: 'to (phone) required' });
 
   const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
   const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
   const WA_FROM = 'whatsapp:+18142282822';
 
-  if (!TWILIO_SID || !TWILIO_TOKEN) return res.status(500).json({ error: 'Twilio not configured' });
+  if (!TWILIO_SID || !TWILIO_TOKEN) return res.status(500).json({ success: false, error: 'Twilio not configured' });
 
   const body = message || (TEMPLATES[type] ? TEMPLATES[type](data) : null);
-  if (!body) return res.status(400).json({ error: 'message or valid type required' });
+  if (!body) return res.status(400).json({ success: false, error: 'message or valid type required' });
 
   const recipient = to.startsWith('whatsapp:') ? to : `whatsapp:${to.startsWith('+') ? to : '+1' + to.replace(/\D/g,'')}`;
 
@@ -45,6 +45,6 @@ export default async function handler(req, res) {
     const result = await r.json();
     return res.status(200).json({ success: true, sid: result?.sid, to: recipient });
   } catch(e) {
-    return res.status(502).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(502).json({ success: false, error: 'internal_error' });
   }
 }

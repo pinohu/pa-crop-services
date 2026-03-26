@@ -7,6 +7,9 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { setCors, isAdminRequest } from './services/auth.js';
 import { getEntityConfig, getEntityDeadline, getRules } from './_compliance.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('generate-compliance-package');
 
 // ── Brand colors (sRGB 0-1) ───────────────────────────────
 const C = {
@@ -624,10 +627,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
   if (!isAdminRequest(req)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const {
@@ -644,7 +647,7 @@ export default async function handler(req, res) {
   } = req.body || {};
 
   if (!email || !entityName) {
-    return res.status(400).json({ error: 'email and entityName are required' });
+    return res.status(400).json({ success: false, error: 'email and entityName are required' });
   }
 
   const enrolledDate = new Date().toLocaleDateString('en-US', {
@@ -711,7 +714,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).end(Buffer.from(pdfBytes));
   } catch (err) {
-    console.error('Compliance package generation error:', err);
-    return res.status(500).json({ error: 'PDF generation failed', detail: err.message });
+    log.error('compliance_package_generation_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: 'PDF generation failed', detail: err.message });
   }
 }

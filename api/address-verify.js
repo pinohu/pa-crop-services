@@ -1,18 +1,16 @@
+import { setCors } from './services/auth.js';
+
 // PA CROP Services — Address Verification
 // POST /api/address-verify { address, city, state, zip }
 // Validates business address exists and is suitable for entity registration
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
   const { address, city, state, zip } = req.body || {};
-  if (!address) return res.status(400).json({ error: 'address required' });
+  if (!address) return res.status(400).json({ success: false, error: 'address required' });
 
   const fullAddress = `${address}, ${city || 'Erie'}, ${state || 'PA'} ${zip || ''}`.trim();
   const GROQ_KEY = process.env.GROQ_API_KEY;

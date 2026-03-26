@@ -4,24 +4,14 @@
 
 import { setCors } from '../services/auth.js';
 import { logError } from '../_log.js';
-
-const _rl = new Map();
-function _rateLimit(req, res, max, win) {
-  const ip = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || 'unknown';
-  const k = ip + ':auth';
-  const now = Date.now();
-  let d = _rl.get(k);
-  if (!d || now - d.s > win) { _rl.set(k, {c:1,s:now,w:win}); return false; }
-  d.c++;
-  if (d.c > max) { res.setHeader('Retry-After', String(Math.ceil((d.s+win-now)/1000))); res.status(429).json({error:'Too many requests'}); return true; }
-  return false;
-}
+import { checkRateLimit, getClientIp } from '../_ratelimit.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
-  if (_rateLimit(req, res, 10, 60000)) return;
+  const blocked = await checkRateLimit(getClientIp(req), 'index', 10, '60s');
+  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
 
   const { email, code } = req.body || {};
   if (!email || !code) return res.status(400).json({ success: false, error: 'Missing email or code' });
@@ -95,7 +85,7 @@ export default async function handler(req, res) {
       }
     }
   } catch (e) {
-    console.error('SuiteDash auth error:', e.message);
+    logError('suitedash_auth_error', {}, e);
   }
 
   // ── Neon lookup ──────────────────────────────────────────
@@ -146,7 +136,7 @@ export default async function handler(req, res) {
       }
     }
   } catch (e) {
-    console.error('Neon auth error:', e.message);
+    logError('neon_auth_error', {}, e);
   }
 
   return res.status(401).json({ success: false, error: 'Invalid email or access code.' });

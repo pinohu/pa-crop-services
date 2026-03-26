@@ -104,18 +104,18 @@ const GUIDES = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('setup-guide');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const section = req.query?.section || 'all';
 
@@ -124,11 +124,11 @@ export default async function handler(req, res) {
   }
 
   const guide = GUIDES[section];
-  if (!guide) return res.status(400).json({ error: `Unknown section. Available: ${Object.keys(GUIDES).join(', ')}` });
+  if (!guide) return res.status(400).json({ success: false, error: `Unknown section. Available: ${Object.keys(GUIDES).join(', ')}` });
 
   return res.status(200).json({ success: true, ...guide });
   } catch (err) {
-    console.error("setup-guide error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    log.error('setup_guide_error', {}, err instanceof Error ? err : new Error(String(err)));
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

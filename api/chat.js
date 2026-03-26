@@ -10,7 +10,6 @@ import { classifyIntent, shouldRefuse, tryDeterministicAnswer, buildRefusalRespo
 import { logConversation } from './_log.js';
 import { fetchWithTimeout, isCircuitOpen, recordFailure, recordSuccess } from './_fetch.js';
 import { isValidString, sanitize } from './_validate.js';
-
 const ALLOWED_ORIGINS = ['https://pacropservices.com', 'https://www.pacropservices.com'];
 
 function corsOrigin(req) {

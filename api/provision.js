@@ -3,13 +3,10 @@
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -25,7 +22,7 @@ export default async function handler(req, res) {
     suggestedDomain = '', accountSlug: rawSlug = '', hostingPassword: rawPw = ''
   } = body;
 
-  if (!email) return res.status(400).json({ error: 'email required' });
+  if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
   // Auto-generate missing params
   const accountSlug = rawSlug || email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);

@@ -3,23 +3,23 @@
 // Checks PA DOS entity status via web search scraping
 
 import { authenticateRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('entity-monitor');
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, X-Internal-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   const adminKey = req.headers['x-admin-key'];
   const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
-  if (!isAdmin && !session.valid) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const { entityName, entityNumber, clientEmail } = req.body || {};
   if (!entityName && !entityNumber) {
-    return res.status(400).json({ error: 'entityName or entityNumber required' });
+    return res.status(400).json({ success: false, error: 'entityName or entityNumber required' });
   }
 
   try {
@@ -118,7 +118,7 @@ export default async function handler(req, res) {
       checkedAt: new Date().toISOString()
     });
   } catch (err) {
-    console.error('Entity monitor error:', err);
+    log.error('entity_monitor_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(200).json({
       success: true,
       entityName, entityNumber, clientEmail,

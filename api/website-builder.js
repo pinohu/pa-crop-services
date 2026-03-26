@@ -4,6 +4,9 @@
 // Auth: admin key only (x-admin-key header), never called directly by clients.
 
 import { isAdminRequest, setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('website-builder');
 
 // ── WordPress REST API helpers ────────────────────────────────────────────────
 
@@ -437,10 +440,10 @@ async function buildProSite(wpBase, wpAuth, businessInfo) {
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   if (!isAdminRequest(req)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const {
@@ -455,14 +458,14 @@ export default async function handler(req, res) {
 
   if (!domain || !wpUser || !wpPassword || !businessInfo) {
     return res.status(400).json({
-      error: 'missing_required_fields',
+      success: false, error: 'missing_required_fields',
       required: ['domain', 'wpUser', 'wpPassword', 'businessInfo']
     });
   }
 
   const { businessName, tagline, services } = businessInfo;
   if (!businessName) {
-    return res.status(400).json({ error: 'businessInfo.businessName is required' });
+    return res.status(400).json({ success: false, error: 'businessInfo.businessName is required' });
   }
 
   // Normalize businessInfo with safe defaults
@@ -518,7 +521,7 @@ export default async function handler(req, res) {
       results.success = false;
     }
   } catch (e) {
-    console.error('[website-builder] Unhandled error:', e.message);
+    log.error('website_builder_unhandled_error', {}, e instanceof Error ? e : new Error(String(e)));
     return res.status(500).json({
       success: false,
       error: 'internal_error',

@@ -3,21 +3,21 @@
 // Finds expired clients, sends escalating win-back: email → SMS → flag for AI call
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('winback');
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
   const emailitKey = process.env.EMAILIT_API_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ error: 'SuiteDash not configured' });
+  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'SuiteDash not configured' });
 
   const results = { day1_emails: 0, day7_sms: 0, day14_call_flags: 0, day30_removed: 0 };
   const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
                 <p style="font-size:13px;color:#7A7A7A">Or call 814-228-2822 — we'll get you back online in minutes.</p>
               </div>`
             })
-          }).catch(e => console.error('Silent failure:', e.message));
+          }).catch(e => log.warn('external_call_failed', { error: e.message }));
         }
         await updateWinback(c.id, '1', SD_PUBLIC, SD_SECRET);
         results.day1_emails++;
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
             body: JSON.stringify({ to: phone, message: `PA CROP Services: Your plan expired 7 days ago. Your entity compliance monitoring is paused. Renew now: pacropservices.com/#pricing or call 814-228-2822` })
-          }).catch(e => console.error('Silent failure:', e.message));
+          }).catch(e => log.warn('external_call_failed', { error: e.message }));
         }
         await updateWinback(c.id, '2', SD_PUBLIC, SD_SECRET);
         results.day7_sms++;
@@ -88,13 +88,13 @@ export default async function handler(req, res) {
           method: 'PUT',
           headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
           body: JSON.stringify({ tags: ['crop-expired', 'crop-churned'] })
-        }).catch(e => console.error('Silent failure:', e.message));
+        }).catch(e => log.warn('external_call_failed', { error: e.message }));
         await updateWinback(c.id, 'removed', SD_PUBLIC, SD_SECRET);
         results.day30_removed++;
       }
     }
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
   }
 
   return res.status(200).json({ success: true, ...results });

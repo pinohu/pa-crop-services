@@ -5,20 +5,24 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { timingSafeEqual, randomBytes } from 'crypto';
 import * as db from './db.js';
-
-// ── Secrets (fail hard if missing in production) ─────────
+// ── Secrets (fail hard if missing) ──────────────────────
+// No default fallbacks — any missing secret is a fatal configuration error.
 const JWT_SECRET_RAW = process.env.JWT_SECRET;
-if (!JWT_SECRET_RAW && process.env.VERCEL) {
-  throw new Error('FATAL: JWT_SECRET environment variable is required in production');
+if (!JWT_SECRET_RAW) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('FATAL: JWT_SECRET environment variable is required');
+  }
 }
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'dev-only-local-testing-key');
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'test-only-key-not-for-production');
 const TOKEN_EXPIRY = '4h';
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
-if (!ADMIN_KEY && process.env.VERCEL) {
-  throw new Error('FATAL: ADMIN_SECRET_KEY environment variable is required in production');
+if (!ADMIN_KEY) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('FATAL: ADMIN_SECRET_KEY environment variable is required');
+  }
 }
-const ADMIN_KEY_VALUE = ADMIN_KEY || 'dev-admin-key';
+const ADMIN_KEY_VALUE = ADMIN_KEY || '';
 
 // ── JWT ────────────────────────────────────────────────────
 
@@ -187,4 +191,10 @@ export function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Key');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Vary', 'Origin');
+
+  // Security headers applied to all API responses
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 }

@@ -1,19 +1,20 @@
+import { setCors } from './services/auth.js';
+import { createLogger } from './_log.js';
+
+const log = createLogger('client-health');
+
 // PA CROP Services — Client Health Score Calculator
 // POST /api/client-health { clientId, metrics }
 // Calculates health score and churn probability
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Internal-Key, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   const key = req.headers['x-admin-key'] || req.headers['x-internal-key'];
   if (key !== (process.env.ADMIN_SECRET_KEY)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const { clientEmail, clientName, metrics = {} } = req.body || {};
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
     calculatedAt: new Date().toISOString()
   });
   } catch (err) {
-    console.error('Health score error:', err);
+    log.error('health_score_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(500).json({ success: false, error: 'Failed to calculate health score' });
   }
 }

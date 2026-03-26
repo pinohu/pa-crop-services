@@ -2,6 +2,9 @@ import { setCors, authenticateRequest } from '../../services/auth.js';
 import { markFiled } from '../../services/obligations.js';
 import { writeAuditEvent } from '../../services/db.js';
 import { isValidUUID, isValidString } from '../../_validate.js';
+import { createLogger } from '../../_log.js';
+
+const log = createLogger('mark-filed');
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -38,7 +41,7 @@ export default async function handler(req, res) {
       { type: 'client', id: session.clientId });
     return res.status(200).json({ success: true, obligation: obl });
   } catch (err) {
-    console.error('Mark filed error:', err.message);
+    log.error('mark_filed_error', {}, err instanceof Error ? err : new Error(String(err)));
     return res.status(400).json({ success: false, error: 'transition_failed' });
   }
 }

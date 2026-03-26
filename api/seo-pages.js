@@ -26,16 +26,13 @@ const PAGE_TYPES = {
 };
 
 import { isAdminRequest } from './services/auth.js';
+import { setCors } from './services/auth.js';
 
 export default async function handler(req, res) {
-  const _o = req.headers.origin || '';
-  const _origins = ['https://pacropservices.com','https://www.pacropservices.com','https://pa-crop-services.vercel.app'];
-  res.setHeader('Access-Control-Allow-Origin', _origins.includes(_o) ? _o : _origins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const type = req.query?.type;
   const generate = req.query?.generate === 'true';
@@ -44,7 +41,7 @@ export default async function handler(req, res) {
   if (!type) return res.status(200).json({ success: true, types: Object.keys(PAGE_TYPES), totalPages: Object.values(PAGE_TYPES).flat().length });
 
   const pages = PAGE_TYPES[type];
-  if (!pages) return res.status(400).json({ error: `Invalid type. Use: ${Object.keys(PAGE_TYPES).join(', ')}` });
+  if (!pages) return res.status(400).json({ success: false, error: `Invalid type. Use: ${Object.keys(PAGE_TYPES).join(', ')}` });
 
   if (!generate) return res.status(200).json({ success: true, type, pages, count: pages.length });
 
