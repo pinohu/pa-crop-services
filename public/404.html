@@ -9,23 +9,17 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230C1220'/><path d='M12 4L4 8.5v7L12 20l8-4.5v-7L12 4z' fill='white'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/site.css">
+<!-- H8: Removed duplicate CSS reset and nav overrides already in site.css -->
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);color:var(--slate);background:#fff;display:flex;flex-direction:column;min-height:100vh}
-h1{font-family:var(--serif)}
-a{color:var(--gold-muted)}
-nav{padding:16px 24px;border-bottom:1px solid #eee;text-align:center}
-.logo{font-family:var(--serif);font-size:20px;color:var(--slate)}
-.logo span{color:var(--gold-muted)}
+body{display:flex;flex-direction:column;min-height:100vh}
 main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
 .code{font-size:120px;font-weight:700;color:#eee;line-height:1;font-family:var(--serif)}
-h1{font-size:28px;margin:16px 0 12px}
-p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto}
 .btn{display:inline-block;background:var(--gold-muted);color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px}
 .btn:hover{background:var(--slate)}
-.links{margin-top:32px;font-size:14px;color:#6B7280}
-.links a{margin:0 12px}
-*:focus-visible{outline:2px solid #C9982A;outline-offset:2px;border-radius:4px}
+/* H9: Links section for error recovery navigation */
+.links{margin-top:32px;font-size:14px;color:#6B7280;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.links a{padding:6px 14px;border:1px solid #e5e7eb;border-radius:6px;color:var(--gold-muted);transition:all .2s}
+.links a:hover{background:var(--gold-light,#F5EDDA);border-color:var(--gold-muted)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">
@@ -43,30 +37,40 @@ p{color:#6B7280;font-size:16px;margin-bottom:24px;max-width:400px;margin-left:au
 <link rel="canonical" href="https://www.pacropservices.com/404">
 </head>
 <body>
-<a href="#main-content" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
 <div class="mobile-menu" id="mm"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a></div>
-<main>
+<main id="main-content">
 <div>
-<div class="code">404</div>
+<!-- H9: Clear error message explaining what happened and how to recover -->
+<div class="code" aria-hidden="true">404</div>
 <h1>Page not found</h1>
-<p>The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+<p>The URL you typed or followed doesn't exist or may have been moved. Use one of the links below to find what you need.</p>
 <a href="/" class="btn">Go to homepage</a>
-<div class="links">
-<a href="/compliance-check">Check My Compliance</a>
-<a href="/what-is-a-pennsylvania-crop">What is a CROP?</a>
-<a href="/pa-annual-report-requirement-guide">Annual Report Guide</a>
-<a href="/#pricing">Pricing</a>
-<a href="/portal">Client Login</a>
-</div>
-<p style="margin-top:24px;font-size:13px;color:#9CA3AF">Need help? Call <a href="tel:8142282822" style="color:var(--gold-muted)">814-228-2822</a> or email <a href="mailto:hello@pacropservices.com" style="color:var(--gold-muted)">hello@pacropservices.com</a></p>
+<!-- H9: Curated recovery links so users can find what they were likely looking for -->
+<nav aria-label="Helpful links" class="links">
+  <a href="/compliance-check">Check My Compliance</a>
+  <a href="/what-is-a-pennsylvania-crop">What is a CROP?</a>
+  <a href="/pa-annual-report-requirement-guide">Annual Report Guide</a>
+  <a href="/#pricing">View Pricing</a>
+  <a href="/portal">Client Login</a>
+  <a href="/about">About Us</a>
+</nav>
+<!-- H10: Contact info always visible on error page -->
+<p style="margin-top:24px;font-size:13px;color:#9CA3AF">Still can't find it? Call <a href="tel:+18142282822" style="color:var(--gold-muted)">814-228-2822</a> or email <a href="mailto:hello@pacropservices.com" style="color:var(--gold-muted)">hello@pacropservices.com</a></p>
 </div>
 </main>
-<footer class="site-footer" role="contentinfo"><div class="footer-inner"><div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div><div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></div></div></footer>
+<footer class="site-footer" role="contentinfo"><div class="footer-inner">
+  <div>
+    <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+    <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:hello@pacropservices.com" style="color:rgba(255,255,255,.7)">hello@pacropservices.com</a></div>
+  </div>
+  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
+</div></footer>
 <script src="/embed/chatbot.js" defer></script>
 <script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 <script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove("open")});</script>

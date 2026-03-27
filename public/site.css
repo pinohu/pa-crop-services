@@ -45,11 +45,27 @@ img{max-width:100%;height:auto}
 .nav-links{display:flex;align-items:center;gap:28px}
 .nav-links a{font-size:14px;font-weight:500;color:var(--ink2);transition:color .2s;min-height:44px;display:inline-flex;align-items:center}
 .nav-links a:hover{color:var(--ink)}
+/* H6: Active page indicator in nav */
+.nav-links a[aria-current="page"]{color:var(--slate);font-weight:700;border-bottom:2px solid var(--gold);padding-bottom:2px}
 .nav-cta{background:var(--slate);color:var(--white)!important;padding:10px 20px;min-height:44px;display:inline-flex;align-items:center;border-radius:8px;font-weight:600;font-size:13px;transition:all .25s var(--ease)}
 .nav-cta:hover{background:var(--slate2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(12,18,32,.15)}
 .nav-mobile{display:none;width:36px;height:36px;background:none;border:none;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px}
 .nav-mobile span{display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;transition:all .3s}
 @media(max-width:768px){.nav-links{display:none}.nav-mobile{display:flex}}
+
+/* H6: Visited link differentiation */
+.article-body a:visited{color:var(--gold-muted);opacity:.8}
+
+/* H6: Visual breadcrumb shared style */
+.breadcrumb-nav{font-size:13px;color:var(--ink3);padding:12px 0;margin-bottom:4px}
+.breadcrumb-nav ol{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0;margin:0}
+.breadcrumb-nav li{display:flex;align-items:center;gap:6px}
+.breadcrumb-nav li+li::before{content:'›';color:var(--ink4);font-size:14px}
+.breadcrumb-nav a{color:var(--gold-muted);font-weight:500}
+.breadcrumb-nav a:hover{color:var(--gold)}
+.breadcrumb-nav [aria-current="page"]{color:var(--ink2);font-weight:600}
+
+/* H7: Skip link is defined above in the Accessibility section */
 
 /* ── Shared Footer ── */
 .site-footer{background:var(--slate);padding:40px 0;border-top:1px solid rgba(255,255,255,.06)}
@@ -98,10 +114,18 @@ img{max-width:100%;height:auto}
 /* ── Buttons ── */
 .btn-p{background:var(--slate);color:var(--white);padding:13px 28px;border-radius:var(--radius);font-size:15px;font-weight:600;font-family:var(--font);border:none;cursor:pointer;transition:all .25s var(--ease);display:inline-flex;align-items:center;gap:8px}
 .btn-p:hover{background:var(--slate2);transform:translateY(-1px);box-shadow:0 6px 24px rgba(12,18,32,.15)}
+.btn-p:disabled,.btn-g:disabled,.btn-gold:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .btn-g{background:transparent;border:1.5px solid var(--cream3);color:var(--ink);padding:13px 28px;border-radius:var(--radius);font-size:15px;font-weight:500;font-family:var(--font);cursor:pointer;transition:all .25s var(--ease)}
 .btn-g:hover{border-color:var(--ink4);background:var(--white)}
 .btn-gold{background:var(--gold);color:var(--white);padding:13px 28px;border-radius:var(--radius);font-size:15px;font-weight:600;font-family:var(--font);border:none;cursor:pointer;transition:all .25s var(--ease)}
 .btn-gold:hover{background:#D4A843;box-shadow:0 6px 24px rgba(201,152,42,.25)}
+
+/* ── Required field indicator ── */
+.field label .required-mark{color:var(--red);margin-left:2px;font-weight:700}
+
+/* ── Form error inline message ── */
+.field-error{color:var(--red);font-size:12px;margin-top:5px;display:none}
+.field-error.show{display:block}
 
 /* ── Cards ── */
 .card{background:var(--white);border:1px solid var(--cream3);border-radius:14px;padding:28px;transition:all .3s var(--ease)}

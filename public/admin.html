@@ -204,7 +204,7 @@ tr:hover td{background:#fafafa}
     <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>
     <h1>PA CROP Admin</h1>
     <p>Operations Dashboard — Dynasty Empire</p>
-    <input type="password" id="admin-key-input" placeholder="Admin key" autocomplete="off" aria-label="Admin key" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <input type="password" id="admin-key-input" placeholder="Admin key" autocomplete="off" aria-label="Admin key" maxlength="128" onkeydown="if(event.key==='Enter')doAdminLogin()">
     <button onclick="doAdminLogin()" aria-label="Sign in to admin dashboard">Sign In →</button>
     <p style="font-size:11px;color:var(--gray);margin-top:16px">Secured · Dynasty Empire LLC</p>
   </div>
@@ -870,10 +870,16 @@ let clientData = {};
 function doAdminLogin() {
   const key = document.getElementById('admin-key-input').value.trim();
   if (!key) return;
+  const btn = document.querySelector('#login-screen button[onclick="doAdminLogin()"]');
+  if (btn) { btn.textContent = 'Signing in...'; btn.disabled = true; btn.setAttribute('aria-busy','true'); }
   ADMIN_KEY = key;
   // Test with a quick dashboard call
   callAPI('dashboard', {}).then(d => {
-    if (d.error === 'Unauthorized') { toast('Invalid admin key', 'error'); return; }
+    if (d.error === 'Unauthorized') {
+      toast('Invalid admin key', 'error');
+      if (btn) { btn.textContent = 'Sign In →'; btn.disabled = false; btn.setAttribute('aria-busy','false'); }
+      return;
+    }
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-app').style.display = 'block';
     loadDashboard();
@@ -1924,6 +1930,16 @@ async function loadRenewals() {
 }
 
 document.getElementById('admin-key-input').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+// H3: Escape key closes any open modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('client-modal');
+    if (modal && modal.style.display !== 'none') {
+      closeClientModal();
+    }
+  }
+});
 
 // ── Article Generator ───────────────────────────────────────────────
 async function generateArticle() {

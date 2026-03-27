@@ -22,7 +22,7 @@
 </script>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}:root{--primary:var(--slate);--accent:var(--gold-muted);--dark:var(--slate);--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--radius:12px}
+:root{--primary:var(--slate);--accent:var(--gold-muted);--dark:var(--slate);--light:#F7F6F3;--white:#FFFFFF;--gray:#6B7280;--green:#059669;--radius:12px}
 body{font-family:var(--font);color:var(--dark);background:var(--white);line-height:1.7}
 .container{max-width:720px;margin:0 auto;padding:0 24px}
 h1,h2,h3{font-family:var(--serif);line-height:1.3}
@@ -75,7 +75,7 @@ nav .nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;justif
 .faq-a{display:none;padding:0 20px 16px;font-size:15px;color:var(--gray);line-height:1.7}.faq-item.open .faq-a{display:block}
 footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-size:13px;text-align:center;margin-top:60px}footer a{color:rgba(255,255,255,.8)}
 @media print{nav,.gate,.cta-box,footer,.guide-section{display:none}.check-item{break-inside:avoid}}
-*:focus-visible{outline:2px solid #C9982A;outline-offset:2px;border-radius:4px}
+
 </style>
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
@@ -87,13 +87,23 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"PA 2027 Business Compliance Checklist","author":{"@type":"Organization","name":"PA CROP Services","url":"https://www.pacropservices.com"},"publisher":{"@type":"Organization","name":"PA CROP Services"},"datePublished":"2026-03-20","dateModified":"2026-03-21"}</script>
 </head>
 <body>
-<a href="#main-content" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
   <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></nav>
 <div class="mobile-menu" id="mm"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity &#8594;</a></div>
+
+<!-- H6: Visual breadcrumb -->
+<div class="container">
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">PA CROP Services</a></li>
+      <li><span aria-current="page">PA 2027 Compliance Checklist</span></li>
+    </ol>
+  </nav>
+</div>
 
 <div class="container" id="main-content">
 <div class="hero">
@@ -344,7 +354,7 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 0;font-siz
 </div>
 
 <footer class="site-footer" role="contentinfo"><div class="footer-inner">
-  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP &middot; 924 W 23rd St, Erie, PA 16502 &middot; 814-228-2822</div></div>
+  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP &middot; 924 W 23rd St, Erie, PA 16502 &middot; <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> &middot; <a href="mailto:hello@pacropservices.com" style="color:rgba(255,255,255,.7)">hello@pacropservices.com</a></div></div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></footer>
 

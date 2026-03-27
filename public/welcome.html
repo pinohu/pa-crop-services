@@ -6,17 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome — let's get you set up</title>
 <meta name="robots" content="noindex">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!-- H8: Single font import (removed duplicate), removed duplicate CSS reset/body/nav/container overrides -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#A68A3E;--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--radius:12px;--font:'Outfit',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--mono:'JetBrains Mono',monospace}
-body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6}
-.container{max-width:640px;margin:0 auto;padding:0 24px}
-nav{padding:16px 0;border-bottom:1px solid var(--border);background:var(--bg2)}
-nav .container{display:flex;align-items:center;gap:10px}
-.mark{width:28px;height:28px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center}
-.mark svg{width:14px;height:14px;fill:#fff}
-.brand{font-family:var(--serif);font-weight:700;font-size:16px}
+:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#A68A3E;--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--mono:'JetBrains Mono',monospace}
 .hero{padding:60px 0 40px;text-align:center}
 .check-circle{width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
 .check-circle svg{width:32px;height:32px;color:var(--green)}
@@ -31,11 +24,6 @@ nav .container{display:flex;align-items:center;gap:10px}
 .step-num.done{background:var(--green)}
 .step-text{font-size:14px;color:var(--ink2)}
 .step-text strong{display:block;color:var(--ink);margin-bottom:2px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:5px}
-.field input,.field select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--bg);outline:none}
-.field input:focus,.field select:focus{border-color:var(--accent);background:var(--bg2)}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;width:100%}
 .btn-primary{background:var(--ink);color:#fff}
 .btn-primary:hover{background:#333}
@@ -43,11 +31,9 @@ nav .container{display:flex;align-items:center;gap:10px}
 .btn-accent{background:var(--accent);color:#fff}
 .success-msg{display:none;text-align:center;padding:20px;color:var(--green);font-weight:600}
 .access-code{font-family:var(--mono);font-size:18px;letter-spacing:3px;background:var(--bg);padding:12px 20px;border-radius:8px;border:1px solid var(--border);text-align:center;margin:12px 0}
-.footer{text-align:center;padding:40px 0;font-size:13px;color:var(--ink3)}
-*:focus-visible{outline:2px solid #C9982A;outline-offset:2px;border-radius:4px}
+.welcome-footer{text-align:center;padding:40px 0;font-size:13px;color:var(--ink3)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/site.css">
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
 <meta name="description" content="Welcome to PA CROP Services. Complete your entity setup and access your compliance portal.">
@@ -59,13 +45,13 @@ nav .container{display:flex;align-items:center;gap:10px}
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Welcome — PA CROP Services","provider":{"@type":"Organization","name":"PA CROP Services"}}</script>
 </head>
 <body>
-<a href="#main-content" class="skip-link" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to main content</a>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
   <a href="/" class="nav-brand"><div class="nav-mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
-  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
-  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
+  <button class="nav-mobile" id="wl-hamburger" onclick="(function(){var m=document.getElementById('mm'),b=document.getElementById('wl-hamburger'),o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false');})()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mm"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
 </div></nav>
-<div class="mobile-menu" id="mm"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a></div>
+<div class="mobile-menu" id="mm" role="region" aria-label="Mobile navigation"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/about" onclick="document.getElementById('mm').classList.remove('open')">About</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a></div>
 
 <section id="main-content" class="hero">
 <div class="container">
@@ -82,13 +68,14 @@ nav .container{display:flex;align-items:center;gap:10px}
   <div class="card-header">Your entity details</div>
   <div class="card-body">
     <div class="field">
-      <label>Entity name (as registered with PA DOS)</label>
-      <input type="text" id="ei-name" placeholder="Acme Consulting LLC" aria-label="Entity name">
+      <label for="ei-name">Entity name (as registered with PA DOS) <span aria-hidden="true" style="color:#dc2626">*</span></label>
+      <!-- H7: Autofocus on primary input when page loads -->
+      <input type="text" id="ei-name" placeholder="Acme Consulting LLC" autocomplete="organization" maxlength="200" required aria-required="true" autofocus>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Entity type</label>
-        <select id="ei-type">
+        <label for="ei-type">Entity type</label>
+        <select id="ei-type" aria-label="Entity type">
           <option value="LLC">LLC</option>
           <option value="Corporation">Corporation</option>
           <option value="LP">Limited Partnership</option>
@@ -99,13 +86,13 @@ nav .container{display:flex;align-items:center;gap:10px}
         </select>
       </div>
       <div class="field">
-        <label>PA DOS file number (if known)</label>
-        <input type="text" id="ei-number" placeholder="e.g. 7654321" aria-label="PA DOS file number">
+        <label for="ei-number">PA DOS file number (optional)</label>
+        <input type="text" id="ei-number" placeholder="e.g. 7654321" maxlength="20" aria-label="PA DOS file number">
       </div>
     </div>
     <div class="field">
-      <label>Your email (used for checkout)</label>
-      <input type="email" id="ei-email" placeholder="you@business.com" aria-label="Email address" autocomplete="email">
+      <label for="ei-email">Your email (used for checkout) <span aria-hidden="true" style="color:#dc2626">*</span></label>
+      <input type="email" id="ei-email" placeholder="you@business.com" autocomplete="email" maxlength="254" required aria-required="true">
     </div>
     <div id="welcome-error" role="alert" aria-live="polite" style="color:#dc2626;font-size:13px;margin-top:8px;display:none"></div>
     <button class="btn btn-primary" onclick="submitEntityIntake()" id="ei-btn">Save and continue</button>
@@ -137,7 +124,7 @@ nav .container{display:flex;align-items:center;gap:10px}
 <p style="font-size:14px;color:var(--gray);margin-bottom:16px">If your plan includes hosting, tell us your preferred domain and we'll register and set it up for you.</p>
 <div style="display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;gap:8px">
-  <input type="text" id="dom-name" placeholder="yourbusiness" aria-label="Domain name" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+  <input type="text" id="dom-name" placeholder="yourbusiness" aria-label="Domain name" maxlength="63" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
   <select id="dom-ext" aria-label="Domain extension" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff;width:100px">
     <option value=".com">.com</option>
     <option value=".net">.net</option>
@@ -145,7 +132,7 @@ nav .container{display:flex;align-items:center;gap:10px}
     <option value=".us">.us</option>
   </select>
 </div>
-<input type="email" id="dom-email" placeholder="Your email (same as checkout)" aria-label="Email for domain registration" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+<input type="email" id="dom-email" placeholder="Your email (same as checkout)" aria-label="Email for domain registration" autocomplete="email" maxlength="254" required aria-required="true" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
 <button onclick="submitDomain()" aria-label="Request domain registration" style="background:#0C1220;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Request this domain →</button>
 <p id="dom-msg" style="font-size:13px;display:none"></p>
 <p style="font-size:12px;color:var(--gray)">We'll check availability and register it within 1 business day. Domain registration is included in your plan at no extra cost.</p>
@@ -158,20 +145,20 @@ nav .container{display:flex;align-items:center;gap:10px}
 <p style="font-size:14px;color:var(--gray);margin-bottom:16px">We'll use this to create your professional website. The more detail you provide, the better your site will look.</p>
 <div style="display:flex;flex-direction:column;gap:12px">
   <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business name *</label>
-    <input type="text" id="biz-name" placeholder="e.g., ABC Consulting LLC" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business name">
+    <label for="biz-name" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business name <span aria-hidden="true" style="color:#dc2626">*</span></label>
+    <input type="text" id="biz-name" placeholder="e.g., ABC Consulting LLC" maxlength="200" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
   </div>
   <div>
     <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Tagline / Slogan</label>
     <input type="text" id="biz-tagline" placeholder="e.g., Professional consulting for PA businesses" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business tagline">
   </div>
   <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">What does your business do? *</label>
-    <textarea id="biz-description" rows="3" placeholder="Describe your business in 2-3 sentences. What services do you offer? Who are your customers?" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical" aria-label="Business description"></textarea>
+    <label for="biz-description" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">What does your business do? <span aria-hidden="true" style="color:#dc2626">*</span></label>
+    <textarea id="biz-description" rows="3" placeholder="Describe your business in 2-3 sentences. What services do you offer? Who are your customers?" maxlength="1000" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical"></textarea>
   </div>
   <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Services offered (comma-separated) *</label>
-    <input type="text" id="biz-services" placeholder="e.g., Tax Advisory, Bookkeeping, Business Formation, Compliance" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Services offered">
+    <label for="biz-services" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Services offered (comma-separated) <span aria-hidden="true" style="color:#dc2626">*</span></label>
+    <input type="text" id="biz-services" placeholder="e.g., Tax Advisory, Bookkeeping, Business Formation, Compliance" maxlength="500" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div>
@@ -179,8 +166,8 @@ nav .container{display:flex;align-items:center;gap:10px}
       <input type="tel" id="biz-phone" placeholder="814-555-1234" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business phone">
     </div>
     <div>
-      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business email</label>
-      <input type="email" id="biz-email" placeholder="info@yourbusiness.com" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business email">
+      <label for="biz-email" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business email</label>
+      <input type="email" id="biz-email" placeholder="info@yourbusiness.com" autocomplete="email" maxlength="254" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
     </div>
   </div>
   <div>
@@ -240,8 +227,18 @@ async function submitDomain() {
   var ext = document.getElementById('dom-ext').value;
   var email = document.getElementById('dom-email').value.trim();
   var msg = document.getElementById('dom-msg');
-  if (!name || !email) { msg.textContent = 'Please enter a domain name and your email.'; msg.style.display = 'block'; msg.style.color = '#dc2626'; return; }
+  var btn = document.querySelector('#domain-section button[onclick="submitDomain()"]');
+  if (!name || !email) {
+    msg.textContent = 'Please enter a domain name and your email.';
+    msg.style.display = 'block'; msg.style.color = '#dc2626'; return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.textContent = 'Please enter a valid email address.';
+    msg.style.display = 'block'; msg.style.color = '#dc2626'; return;
+  }
   var domain = name + ext;
+  if (btn) { btn.textContent = 'Requesting...'; btn.disabled = true; btn.setAttribute('aria-busy','true'); }
+  msg.style.display = 'none';
   try {
     var res = await fetch('/api/entity-intake', {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -249,12 +246,12 @@ async function submitDomain() {
     });
     if (!res.ok) throw new Error("Server error");
     msg.textContent = 'Domain request submitted! We will register ' + domain + ' and email you when it is ready.';
-    msg.style.display = 'block';
-    msg.style.color = '#059669';
+    msg.style.display = 'block'; msg.style.color = '#059669';
+    if (btn) { btn.style.display = 'none'; }
   } catch(e) {
     msg.textContent = 'Error. Please email hello@pacropservices.com with your preferred domain.';
-    msg.style.display = 'block';
-    msg.style.color = '#dc2626';
+    msg.style.display = 'block'; msg.style.color = '#dc2626';
+    if (btn) { btn.textContent = 'Request this domain →'; btn.disabled = false; btn.setAttribute('aria-busy','false'); }
   }
 }
 
@@ -325,10 +322,14 @@ async function submitBusinessInfo() {
 })();
 </script>
 
-<div class="footer">
-  <p>Questions? <a href="mailto:hello@pacropservices.com" style="color:var(--accent)">hello@pacropservices.com</a> or <a href="tel:8142282822" style="color:var(--accent)">814-228-2822</a></p>
-  <p style="margin-top:8px">&copy; 2026 PA Registered Office Services, LLC &bull; Licensed PA CROP &bull; 15 Pa. C.S. &sect;109</p>
-</div>
+<!-- H10: Standard footer with terms, privacy, and contact info -->
+<footer class="site-footer" role="contentinfo"><div class="footer-inner">
+  <div>
+    <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+    <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:hello@pacropservices.com" style="color:rgba(255,255,255,.7)">hello@pacropservices.com</a></div>
+  </div>
+  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
+</div></footer>
 
 </div>
 
@@ -344,7 +345,8 @@ async function submitEntityIntake() {
   const number = document.getElementById('ei-number').value.trim();
   const email = document.getElementById('ei-email').value.trim();
   
-  if (!name || !email) { var we=document.getElementById('welcome-error');if(we){we.textContent='Please enter your entity name and email.';we.style.display='block';}return; }
+  // H9: Specific error — say what is wrong and focus the problem field
+  if (!name || !email) { var we=document.getElementById('welcome-error');if(we){we.textContent=(!name&&!email)?'Entity name and email are both required.':((!name)?'Entity name is required — enter the name as registered with PA DOS.':'Email is required so we can send your portal access code.');we.style.display='block';}document.getElementById(!name?'ei-name':'ei-email').focus();return; }
   
   const btn = document.getElementById('ei-btn');
   btn.textContent = 'Saving...'; btn.disabled = true;
@@ -364,7 +366,8 @@ async function submitEntityIntake() {
     document.getElementById('ei-success').style.display = 'block';
   } catch(e) {
     btn.textContent = 'Save and continue'; btn.disabled = false;
-    var we=document.getElementById('welcome-error');if(we){we.textContent='Connection error. Please try again.';we.style.display='block';};
+    // H9: Specific recovery suggestion on network failure
+    var we=document.getElementById('welcome-error');if(we){we.textContent='Could not save your details — check your internet connection and try again. If this continues, email hello@pacropservices.com or call 814-228-2822.';we.style.display='block';};
   }
 }
 </script>
@@ -384,6 +387,6 @@ if (plan && planLabels[plan]) {
 </script>
 <script src="/embed/chatbot.js" defer></script>
 <script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
-<script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove("open")});</script>
+<script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target)){m.classList.remove("open");if(b)b.setAttribute("aria-expanded","false");}});document.addEventListener("keydown",function(e){if(e.key==="Escape"){var m=document.getElementById("mm"),b=document.getElementById("wl-hamburger");if(m){m.classList.remove("open");if(b)b.setAttribute("aria-expanded","false");}}});</script>
 </body>
 </html>

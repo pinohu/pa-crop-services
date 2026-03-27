@@ -178,7 +178,8 @@ section h2{font-size:32px;margin-bottom:32px;color:var(--dark)}
     <p class="sub">We review all applications within 1 business day and reach out to approved partners directly.</p>
     <div class="partner-form">
       <div class="form-row">
-        <div class="form-group"><label for="p-first">First Name</label><input type="text" id="p-first" placeholder="First name" autocomplete="given-name"></div>
+        <!-- H7: Autofocus on primary input when page loads -->
+        <div class="form-group"><label for="p-first">First Name</label><input type="text" id="p-first" placeholder="First name" autocomplete="given-name" autofocus></div>
         <div class="form-group"><label for="p-last">Last Name</label><input type="text" id="p-last" placeholder="Last name" autocomplete="family-name"></div>
       </div>
       <div class="form-group"><label for="p-firm">Firm Name</label><input type="text" id="p-firm" placeholder="Smith &amp; Associates CPA" required autocomplete="organization"></div>
@@ -224,8 +225,12 @@ section h2{font-size:32px;margin-bottom:32px;color:var(--dark)}
   </div>
 </div>
 
+<!-- H10: Footer with full contact info -->
 <footer class="site-footer" role="contentinfo"><div class="footer-inner">
-  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
+  <div>
+    <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+    <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:partners@pacropservices.com" style="color:rgba(255,255,255,.7)">partners@pacropservices.com</a></div>
+  </div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></footer>
 
@@ -240,7 +245,7 @@ async function submitPartnerForm(){
   var btn=document.getElementById("partner-submit-btn");
   var firmName=document.getElementById("p-firm").value.trim();
   var email=document.getElementById("p-email").value.trim();
-  if(!firmName||!email){var pe=document.getElementById("partner-error");if(pe){pe.textContent="Please enter your firm name and email.";pe.style.display="block";}return;}
+  if(!firmName||!email){var pe=document.getElementById("partner-error");if(pe){pe.textContent="Firm name and email are required. Please fill in both fields and try again.";pe.style.display="block";}document.getElementById(!firmName?"p-firm":"p-email").focus();return;}
   btn.textContent="Submitting...";btn.disabled=true;
   try{
     var res=await fetch("/api/partner-intake",{
@@ -256,7 +261,7 @@ async function submitPartnerForm(){
     document.getElementById("partner-success").style.display="block";
     document.getElementById("partner-submit-btn").style.display="none";
     if(window.plausible)plausible("Partner Application",{props:{firmType:document.getElementById("p-type").value}});
-  }catch(e){btn.textContent="Submit Partner Application →";btn.disabled=false;var pe=document.getElementById("partner-error");if(pe){pe.textContent="Something went wrong. Please email partners@pacropservices.com directly.";pe.style.display="block";};}
+  }catch(e){btn.textContent="Submit Partner Application →";btn.disabled=false;var pe=document.getElementById("partner-error");if(pe){pe.textContent="Could not submit the form — check your internet connection and try again. If the problem continues, email partners@pacropservices.com directly.";pe.style.display="block";};}
 }
 </script>
 <script src="/embed/chatbot.js" defer></script>
