@@ -22,17 +22,46 @@ async function _notifyIke(subject, body) {
   } catch (e) { logError('emailit_notify_failed', { subject }, e); }
 }
 
-// Map Stripe amounts (in cents) to tiers
+// 4-tier pricing: $99 / $199 / $349 / $699
+const TIER_CONFIGS = {
+  business_empire:  { tier: 'empire',     planCode: 'business_empire',  includesHosting: true,  includesVPS: true,  emailCount: 99, domainCount: 10, websitePages: 3, includesFiling: true,  includesNotary: true  },
+  business_pro:     { tier: 'pro',        planCode: 'business_pro',     includesHosting: true,  includesVPS: false, emailCount: 99, domainCount: 3,  websitePages: 5, includesFiling: true,  includesNotary: false },
+  business_starter: { tier: 'starter',    planCode: 'business_starter', includesHosting: true,  includesVPS: false, emailCount: 5,  domainCount: 1,  websitePages: 1, includesFiling: false, includesNotary: false },
+  compliance_only:  { tier: 'compliance', planCode: 'compliance_only',  includesHosting: false, includesVPS: false, emailCount: 0,  domainCount: 0,  websitePages: 0, includesFiling: false, includesNotary: false }
+};
+
+// Map Stripe product metadata or price amounts to tiers.
+// Primary: Stripe product metadata.plan_code or price nickname.
+// Fallback: amount brackets matching $99/$199/$349/$699 pricing.
 function detectTier(event) {
   const session = event?.data?.object;
+
+  // Check product metadata from line items (most reliable)
+  const lineItems = session?.line_items?.data || [];
+  for (const item of lineItems) {
+    const planCode = item?.price?.product?.metadata?.plan_code
+      || item?.price?.metadata?.plan_code
+      || item?.price?.nickname?.toLowerCase()?.replace(/\s+/g, '_');
+    if (planCode && TIER_CONFIGS[planCode]) return TIER_CONFIGS[planCode];
+  }
+
+  // Check session metadata
+  const sessionPlanCode = session?.metadata?.plan_code;
+  if (sessionPlanCode && TIER_CONFIGS[sessionPlanCode]) return TIER_CONFIGS[sessionPlanCode];
+
+  // Fallback: amount-based detection using actual PA CROP pricing
   const amount = session?.amount_total || session?.amount_due || 0;
   const amountDollars = amount / 100;
-  
-  // Match by amount
-  if (amountDollars >= 650) return { tier: 'empire', includesHosting: true, includesVPS: true, emailCount: 99, domainCount: 10, websitePages: 3, includesFiling: true, includesNotary: true };
-  if (amountDollars >= 300) return { tier: 'pro', includesHosting: true, includesVPS: false, emailCount: 99, domainCount: 3, websitePages: 5, includesFiling: true, includesNotary: false };
-  if (amountDollars >= 150) return { tier: 'starter', includesHosting: true, includesVPS: false, emailCount: 5, domainCount: 1, websitePages: 1, includesFiling: false, includesNotary: false };
-  return { tier: 'compliance', includesHosting: false, includesVPS: false, emailCount: 0, domainCount: 0, websitePages: 0, includesFiling: false, includesNotary: false };
+
+  // Use midpoints between tiers to handle rounding/tax/discount
+  if (amountDollars >= 524) return TIER_CONFIGS.business_empire;   // $699 tier ($524 midpoint between $349 and $699)
+  if (amountDollars >= 274) return TIER_CONFIGS.business_pro;       // $349 tier ($274 midpoint between $199 and $349)
+  if (amountDollars >= 149) return TIER_CONFIGS.business_starter;   // $199 tier ($149 midpoint between $99 and $199)
+  if (amountDollars >= 50)  return TIER_CONFIGS.compliance_only;    // $99 tier
+
+  // Unknown amount — default to compliance tier and log for manual review
+  logWarn('unknown_stripe_amount', { amountDollars, eventId: event?.id });
+  return TIER_CONFIGS.compliance_only;
 }
 
 export default async function handler(req, res) {

@@ -15,7 +15,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import * as suitedash from './suitedash.js';
-import { logWarn, logError } from '../_log.js';
+import { logWarn, logError, createLogger } from '../_log.js';
 
 const log = createLogger('db');
 
