@@ -291,7 +291,7 @@ Partners page → Partner intake form → n8n crop-partner-onboarding
 | SUITEDASH_PUBLIC_ID | SuiteDash CRM | ✅ Set |
 | SUITEDASH_SECRET_KEY | SuiteDash CRM | ✅ Set |
 | STRIPE_SECRET_KEY | Stripe Payments | ✅ Set |
-| ADMIN_SECRET_KEY | Admin Dashboard | ✅ Set (CROP-ADMIN-2026-IKE) |
+| ADMIN_SECRET_KEY | Admin Dashboard | ✅ Set ([ADMIN_SECRET_KEY from env]) |
 | TWENTY_I_TOKEN | 20i Hosting | ✅ Set |
 | TWENTY_I_GENERAL | 20i Hosting | ✅ Set |
 | TWENTY_I_OAUTH | 20i Hosting | ✅ Set |

@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     // 20i
     const twentyStart = Date.now();
     const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
-    const twentyRes = await fetch('https://api.20i.com/reseller/' + (process.env.TWENTY_I_RESELLER_ID || '10455'), {
+    const twentyRes = await fetch('https://api.20i.com/reseller/' + (process.env.TWENTY_I_RESELLER_ID), {
       headers: { 'Authorization': `Bearer ${TWENTY_GENERAL ? Buffer.from(TWENTY_GENERAL).toString('base64') : ''}` }
     }).catch(() => null);
     services['20i'] = { status: twentyRes?.ok ? 'healthy' : 'degraded', latency: Date.now() - twentyStart };

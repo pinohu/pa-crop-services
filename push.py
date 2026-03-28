@@ -7,7 +7,10 @@ Usage: python3 push.py "your commit message"
 """
 import sys, os, urllib.request, json, base64, glob, time
 
-TOKEN = "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"
+TOKEN = os.environ.get("GITHUB_TOKEN", "")
+if not TOKEN:
+    print("ERROR: Set GITHUB_TOKEN environment variable")
+    sys.exit(1)
 REPO = "pinohu/pa-crop-services"
 
 def get_sha(path):

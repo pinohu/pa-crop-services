@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run validate
+      - run: npm test
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for hardcoded secrets
+        run: |
+          # Fail if any hardcoded secrets are found
+          if grep -rn "ghp_\|CROP-ADMIN-2026\|4d5ff31e033888d1" --include="*.js" --include="*.json" --include="*.py" --include="*.md" .; then
+            echo "ERROR: Hardcoded secrets found in source code!"
+            exit 1
+          fi
+          echo "No hardcoded secrets found."
+      - name: Check for Math.random in security contexts
+        run: |
+          if grep -rn "Math\.random" --include="*.js" api/ scripts/ | grep -i "password\|token\|secret\|code\|key"; then
+            echo "WARNING: Math.random() used in security context"
+            exit 1
+          fi
+          echo "No insecure random usage found."

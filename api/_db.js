@@ -10,6 +10,7 @@
 //   await db.getObligation('sd_abc123', 2026);
 
 import { Redis } from '@upstash/redis';
+import crypto from 'crypto';
 import { logWarn } from './_log.js';
 
 // ── Redis client (lazy init) ──
@@ -107,7 +108,7 @@ async function logEvent({ actor, eventType, targetType, targetId, orgId, beforeS
   if (!redis) return false;
   try {
     const event = {
-      id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `evt_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
       ts: new Date().toISOString(),
       actor,
       eventType,

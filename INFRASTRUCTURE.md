@@ -11,7 +11,7 @@
 | Resource | URL | Notes |
 |----------|-----|-------|
 | Live site | https://pacropservices.com | Production |
-| Admin dashboard | https://pacropservices.com/admin | Key: `CROP-ADMIN-2026-IKE` |
+| Admin dashboard | https://pacropservices.com/admin | Key: `[ADMIN_SECRET_KEY from env]` |
 | Client portal | https://pacropservices.com/portal | Email + access code |
 | GitHub repo | https://github.com/pinohu/pa-crop-services | Private |
 | Vercel project | https://vercel.com/polycarpohu-gmailcoms-projects/pa-crop-services | Auto-deploys on push to main |
@@ -201,7 +201,7 @@ python3 push_to_github.py  # uses token from INFRASTRUCTURE.md
 | `TWENTY_I_GENERAL` | 20i general key (base64 → bearer) | `c2387393b8125d868` |
 | `TWENTY_I_OAUTH` | 20i OAuth key | `c0471cadcfe5a7837` |
 | `ACUMBAMAIL_API_KEY` | Acumbamail email lists | `0cdbad074aa140a5bf7274027a53f780` |
-| `ADMIN_SECRET_KEY` | Admin dashboard auth | `CROP-ADMIN-2026-IKE` |
+| `ADMIN_SECRET_KEY` | Admin dashboard auth | `[ADMIN_SECRET_KEY from env]` |
 | `GROQ_API_KEY` | AI chatbot + email triage + lead scoring | `gsk_4Rns...` (set in code, add to env for security) |
 | `DOCUMENTERO_API_KEY` | PDF agreement generation (replaced by native) | `R6OL3LQ-HSKETSA-RSNQ3TA-77PJH3A` |
 | `DOCUMENTERO_TEMPLATE_ID` | Service agreement template | Set after Documentero template created |
@@ -417,8 +417,8 @@ GET  /reseller/domain-search    → check domain availability
 ## Admin Dashboard
 
 **URL:** `https://pacropservices.com/admin`  
-**Auth key:** `CROP-ADMIN-2026-IKE` (or `ADMIN_SECRET_KEY` env var)  
-**API:** `POST /api/admin` with header `X-Admin-Key: CROP-ADMIN-2026-IKE`  
+**Auth key:** `[ADMIN_SECRET_KEY from env]` (or `ADMIN_SECRET_KEY` env var)  
+**API:** `POST /api/admin` with header `X-Admin-Key: [ADMIN_SECRET_KEY from env]`  
 
 ### Available actions
 
@@ -441,7 +441,7 @@ GET  /reseller/domain-search    → check domain availability
 
 ```bash
 POST /api/provision
-X-Admin-Key: CROP-ADMIN-2026-IKE
+X-Admin-Key: [ADMIN_SECRET_KEY from env]
 
 {
   "email": "client@example.com",
@@ -546,7 +546,7 @@ Extended to full Nielsen heuristic + WCAG accessibility compliance across 12 com
 
 *CORS restricted on `chat.js` and `subscribe.js` (2026-03-24):* Previously all APIs set `Access-Control-Allow-Origin: *`. The compliance audit identified this as an abuse vector when combined with in-memory rate limiting. `chat.js` and `subscribe.js` (the two public-facing endpoints) now restrict CORS to `pacropservices.com` and `www.pacropservices.com` with dynamic origin checking. The remaining 88 API files still use `*` — acceptable since they are all authenticated (admin key) or internal-only (n8n webhooks).
 
-*Admin key fallback in 62 files:* Pattern `process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE'` exists as a local-dev fallback. In production, the env var is always set so the fallback is never reached. Acceptable for a private repo.
+*Admin key fallback in 62 files:* Pattern `process.env.ADMIN_SECRET_KEY || '[ADMIN_SECRET_KEY from env]'` exists as a local-dev fallback. In production, the env var is always set so the fallback is never reached. Acceptable for a private repo.
 
 *`console.log` in production:* Only `stripe-webhook.js` (3 instances) — acceptable for payment debugging.
 
@@ -907,7 +907,7 @@ Applied 2026-03-23 across 12 commits. Every public page now complies with Nielse
 
 **P0 Security (RESOLVED):**
 - Created `/api/portal-health.js` — calculates health score using email verification, no admin key
-- Removed `CROP-ADMIN-2026-IKE` from portal.html — was exposed in client-side JS
+- Removed `[ADMIN_SECRET_KEY from env]` from portal.html — was exposed in client-side JS
 - Portal now calls `/api/portal-health` instead of `/api/client-health`
 - Unverified emails rejected with HTTP 403 when SuiteDash is configured
 

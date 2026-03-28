@@ -15,7 +15,11 @@
 const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
 const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
 const API_BASE = process.env.API_BASE || 'https://pa-crop-services.vercel.app';
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'CROP-ADMIN-2026-IKE';
+const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
+if (!ADMIN_KEY) {
+  console.error('  ERROR: Set ADMIN_SECRET_KEY environment variable');
+  process.exit(1);
+}
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');

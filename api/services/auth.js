@@ -3,7 +3,7 @@
 // JWT session management, RBAC, access code verification.
 
 import { SignJWT, jwtVerify } from 'jose';
-import { timingSafeEqual, randomBytes } from 'crypto';
+import { timingSafeEqual, randomBytes, createHmac } from 'crypto';
 import * as db from './db.js';
 // ── Secrets (fail hard if missing) ──────────────────────
 // No default fallbacks — any missing secret is a fatal configuration error.
@@ -109,11 +109,12 @@ export async function sendAccessCode(email) {
   return { success: true };
 }
 
-// Timing-safe string comparison to prevent timing attacks
+// Timing-safe string comparison — hash both values to prevent length leaking
 function safeCompare(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  const ha = createHmac('sha256', 'crop-compare').update(a).digest();
+  const hb = createHmac('sha256', 'crop-compare').update(b).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 export async function verifyAccessCode(email, code) {

@@ -57,7 +57,7 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "X-Admin-Key", "value": "{{ $env.ADMIN_SECRET_KEY }}" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -123,7 +123,7 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Admin-Key", "value": "CROP-ADMIN-2026-IKE" },
+            { "name": "X-Admin-Key", "value": "{{ $env.ADMIN_SECRET_KEY }}" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },

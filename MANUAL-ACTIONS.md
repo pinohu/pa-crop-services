@@ -46,11 +46,11 @@
 **Validates:**
 ```bash
 # Should return rules from Postgres instead of empty array
-curl -s "https://pacropservices.com/api/admin/rules" -H "X-Admin-Key: CROP-ADMIN-2026-IKE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Rules: {len(d.get(\"items\",[]))}')"
+curl -s "https://pacropservices.com/api/admin/rules" -H "X-Admin-Key: [ADMIN_SECRET_KEY from env]" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Rules: {len(d.get(\"items\",[]))}')"
 # Should show 12 rules
 
 # Command center should show mode: 'connected' instead of 'suitedash_only'
-curl -s "https://pacropservices.com/api/admin/command-center" -H "X-Admin-Key: CROP-ADMIN-2026-IKE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','connected'))"
+curl -s "https://pacropservices.com/api/admin/command-center" -H "X-Admin-Key: [ADMIN_SECRET_KEY from env]" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('mode','connected'))"
 ```
 
 **Free tier limits:** 0.5 GB storage per project, 100 compute-hours/month, scale-to-zero. PA CROP will use a tiny fraction of this — 12 rules + a few hundred entities/obligations fit in megabytes.
@@ -290,7 +290,7 @@ TWENTY_I_OAUTH             ✅
 TWENTY_I_RESELLER_ID       ✅
 TWENTY_I_DEFAULT_TYPE_REF  ✅
 ACUMBAMAIL_API_KEY         ✅
-ADMIN_SECRET_KEY           ✅ (CROP-ADMIN-2026-IKE)
+ADMIN_SECRET_KEY           ✅ ([ADMIN_SECRET_KEY from env])
 DOCUMENTERO_API_KEY        ✅
 SUITEDASH_PUBLIC_ID        ✅ → SuiteDash CRM API (live, returning data)
 SUITEDASH_SECRET_KEY       ✅ → SuiteDash CRM API (live, returning data)

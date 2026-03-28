@@ -19,13 +19,27 @@ export default async function handler(req, res) {
     return res.status(429).json({ success: false, error: 'Too many requests' });
   }
 
-  const { email, fileName, fileType, notes } = req.body || {};
+  const { email, fileName, fileType, fileContent, notes } = req.body || {};
   if (!email || !fileName) return res.status(400).json({ success: false, error: 'email and fileName required' });
+  if (!isValidEmail(email)) return res.status(400).json({ success: false, error: 'invalid email' });
+
+  // File validation: allowed types and size limit
+  const ALLOWED_EXTENSIONS = /\.(pdf|doc|docx|xls|xlsx|jpg|jpeg|png|tif|tiff|txt|csv)$/i;
+  if (!ALLOWED_EXTENSIONS.test(fileName)) {
+    return res.status(400).json({ success: false, error: 'File type not allowed. Accepted: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, TIF, TXT, CSV' });
+  }
+  if (fileName.length > 255) return res.status(400).json({ success: false, error: 'fileName too long (max 255)' });
+  if (fileContent && fileContent.length > 10_000_000) { // ~7.5MB decoded
+    return res.status(413).json({ success: false, error: 'File too large (max 7.5MB)' });
+  }
+
+  // Sanitize fileName for use in HTML emails
+  const safeFileName = fileName.replace(/[<>"'&]/g, '_');
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const result = { fileName, classified: false };
+  const result = { fileName: safeFileName, classified: false };
 
   // Step 1: Classify document
   if (GROQ_KEY) {

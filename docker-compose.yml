@@ -28,7 +28,7 @@ services:
     depends_on:
       - paperless-redis
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - paperless-data:/usr/src/paperless/data
       - paperless-media:/usr/src/paperless/media
@@ -53,7 +53,7 @@ services:
       PAPERLESS_URL: http://localhost:8000
       PAPERLESS_TIME_ZONE: America/New_York
       # Enable API for n8n integration
-      PAPERLESS_CORS_ALLOWED_HOSTS: "*"
+      PAPERLESS_CORS_ALLOWED_HOSTS: "https://pacropservices.com,https://www.pacropservices.com"
 
   # Tika — extracts text from Office docs (Word, Excel, etc.)
   tika:
@@ -79,7 +79,7 @@ services:
     container_name: crop-uptime-kuma
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     volumes:
       - uptime-kuma-data:/app/data
 
@@ -91,11 +91,11 @@ services:
     container_name: crop-stirling-pdf
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - stirling-data:/usr/share/stirling-pdf/data
     environment:
-      DOCKER_ENABLE_SECURITY: "false"
+      DOCKER_ENABLE_SECURITY: "true"
 
 volumes:
   paperless-redis-data:
