@@ -28,7 +28,7 @@ services:
     depends_on:
       - paperless-redis
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - paperless-data:/usr/src/paperless/data
       - paperless-media:/usr/src/paperless/media
@@ -79,7 +79,7 @@ services:
     container_name: crop-uptime-kuma
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     volumes:
       - uptime-kuma-data:/app/data
 
@@ -91,7 +91,7 @@ services:
     container_name: crop-stirling-pdf
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - stirling-data:/usr/share/stirling-pdf/data
     environment:

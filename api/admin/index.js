@@ -109,8 +109,13 @@ export default async function handler(req, res) {
 
   // Auth check — only from header, timing-safe comparison
   const adminKey = req.headers['x-admin-key'];
-  if (!adminKey || typeof adminKey !== 'string' || adminKey.length !== ADMIN_KEY_VALUE.length ||
-      !timingSafeEqual(Buffer.from(adminKey), Buffer.from(ADMIN_KEY_VALUE))) {
+  if (!adminKey || typeof adminKey !== 'string') {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  // Hash both values to prevent length-based timing leaks
+  const ha = (await import('crypto')).createHmac('sha256', 'crop-admin').update(adminKey).digest();
+  const hb = (await import('crypto')).createHmac('sha256', 'crop-admin').update(ADMIN_KEY_VALUE).digest();
+  if (!timingSafeEqual(ha, hb)) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

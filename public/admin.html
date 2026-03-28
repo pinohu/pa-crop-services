@@ -1313,7 +1313,7 @@ async function loadClient360() {
           ${new Date(e.timestamp).toLocaleString()} · <span style="color:#374151">${e.event}</span> · ${e.actor} ${e.reason ? '· ' + e.reason : ''}
         </div>`).join('') || '<div style="color:var(--gray);font-size:12px">No audit events</div>'}
       </div>`;
-  } catch (e) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Error: ' + e.message + '</div>'; }
+  } catch (e) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Error: ' + escHtml(e.message) + '</div>'; }
 }
 
 // ── Filing Queue ───────────────────────────────────────────────────────
@@ -1455,7 +1455,7 @@ async function loadClients() {
           <td><button class="btn btn-outline btn-sm" onclick="openClientModal(${c.id})">View</button></td>
         </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray)">No clients found</td></tr>'}
       </tbody></table></div>`;
-  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${escHtml(e.message)}</div>`; }
 }
 
 // ── Leads Pipeline ─────────────────────────────────────────────────────
@@ -1483,7 +1483,7 @@ async function loadLeads() {
       <div class="kanban-col hot"><h4>🔥 Hot (${hot.length})</h4>${renderCards(hot)}</div>
       <div class="kanban-col warm"><h4>🌡️ Warm (${warm.length})</h4>${renderCards(warm)}</div>
       <div class="kanban-col cold"><h4>❄️ Cold (${cold.length})</h4>${renderCards(cold)}</div>`;
-  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div class="loading" style="color:var(--red)">Error: ${escHtml(e.message)}</div>`; }
 }
 
 // ── Hosting ────────────────────────────────────────────────────────────
@@ -1582,7 +1582,7 @@ async function loadCompliance() {
         </tr>`;
       }).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray)">No clients to track yet</td></tr>'}
       </tbody></table></div>`;
-  } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:16px">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:16px">Error: ${escHtml(e.message)}</div>`; }
 }
 
 // ── Domain Check ───────────────────────────────────────────────────────
@@ -1602,7 +1602,7 @@ async function checkDomain() {
     } else {
       el.innerHTML = `<pre style="font-size:11px;background:#f8f9fa;padding:12px;border-radius:6px;overflow:auto">${JSON.stringify(data,null,2)}</pre>`;
     }
-  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${escHtml(e.message)}</div>`; }
 }
 
 // ── Generate Agreement ─────────────────────────────────────────────────
@@ -1630,7 +1630,7 @@ async function generateAgreement() {
     } else {
       el.innerHTML = `<div style="color:var(--red);font-size:13px">Generation failed: ${JSON.stringify(data.document || data)}</div>`;
     }
-  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${escHtml(e.message)}</div>`; }
 }
 
 // ── Provision Wizard ───────────────────────────────────────────────────
@@ -1725,7 +1725,7 @@ async function executeProvision() {
       document.getElementById('provision-result').innerHTML = `<div style="color:var(--red)"><div style="font-size:32px;margin-bottom:12px">⚠️</div><p>Partial completion: ${data.error || JSON.stringify(data)}</p><div style="margin-top:12px;font-size:12px;color:var(--gray)">${(data.steps||[]).map(s => `${s.step}: ${s.status}`).join(' · ')}</div></div>`;
     }
   } catch(e) {
-    document.getElementById('provision-result').innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`;
+    document.getElementById('provision-result').innerHTML = `<div style="color:var(--red)">Error: ${escHtml(e.message)}</div>`;
   }
 }
 
@@ -1841,7 +1841,7 @@ async function runBulkOp() {
       body.innerHTML = '<span style="color:var(--gray)">Operation "' + action + '" executed. Tag: ' + (tag || 'n/a') + '</span>';
       toast('Operation complete', 'success');
     }
-  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + e.message + '</span>'; }
+  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(e.message) + '</span>'; }
 }
 
 // ── Email Compose ───────────────────────────────────────────────
@@ -1871,7 +1871,7 @@ async function sendAdminEmail() {
   try {
     const res = await callAPI('send_email', { to, subject, body: emailBody });
     if (res.error && res.error !== 'Unknown action: send_email') {
-      document.getElementById('email-result').innerHTML = '<span style="color:var(--red)">Error: ' + res.error + '</span>';
+      document.getElementById('email-result').innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(res.error) + '</span>';
     } else {
       document.getElementById('email-result').innerHTML = '<span style="color:var(--green)">✓ Email queued for delivery to ' + to + '</span>';
       toast('Email sent', 'success');
@@ -1926,7 +1926,7 @@ async function loadRenewals() {
     });
     html += '</table>';
     body.innerHTML = html;
-  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + e.message + '</span>'; }
+  } catch (e) { body.innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(e.message) + '</span>'; }
 }
 
 document.getElementById('admin-key-input').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
@@ -1959,7 +1959,7 @@ async function generateArticle() {
       body: JSON.stringify({ keyword, angle, targetWordCount: parseInt(wordcount), author })
     });
     const data = await res.json();
-    if (data.error) { document.getElementById('article-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    if (data.error) { document.getElementById('article-result').innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(data.error) + '</span>'; return; }
     
     const slug = data.slug || keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     document.getElementById('article-result').innerHTML = '<span style="color:var(--green)">✓ Article generated!</span> Slug: <code>' + slug + '</code> &nbsp; <button class="btn btn-outline btn-sm" onclick="publishArticle()">Publish to Site</button>';
@@ -2055,7 +2055,7 @@ async function classifyDocument() {
       body: JSON.stringify({ text, clientEmail: email, filename })
     });
     const data = await res.json();
-    if (data.error) { document.getElementById('doc-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    if (data.error) { document.getElementById('doc-result').innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(data.error) + '</span>'; return; }
     
     let html = '<div style="background:#f8f9fa;border-radius:8px;padding:20px;border:1px solid #e5e7eb">';
     html += '<div style="font-weight:700;font-size:16px;margin-bottom:12px">Classification Result</div>';
@@ -2096,7 +2096,7 @@ async function triageEmail() {
       body: JSON.stringify({ from, subject, body })
     });
     const data = await res.json();
-    if (data.error) { document.getElementById('triage-result').innerHTML = '<span style="color:var(--red)">Error: ' + data.error + '</span>'; return; }
+    if (data.error) { document.getElementById('triage-result').innerHTML = '<span style="color:var(--red)">Error: ' + escHtml(data.error) + '</span>'; return; }
     
     const routeColors = { auto_reply: 'var(--green)', escalate: 'var(--red)', archive: 'var(--gray)', follow_up: 'var(--yellow)' };
     let html = '<div style="background:#f8f9fa;border-radius:8px;padding:20px;border:1px solid #e5e7eb">';
@@ -2207,7 +2207,9 @@ async function adminFetch(url, opts={}) {
   const r = await fetch(url, {headers:{'X-Admin-Key':ADMIN_KEY,'Content-Type':'application/json'},...opts});
   return r.json();
 }
-function card(title,body,color){return `<div class="a-card"${color?' style="background:'+color+'"':''}><div class="a-card-title">${title}</div>${body}</div>`}
+// XSS prevention: escape HTML entities before inserting into innerHTML
+function escHtml(s){if(typeof s!=='string')return '';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function card(title,body,color){return `<div class="a-card"${color?' style="background:'+color+'"':''}><div class="a-card-title">${escHtml(title)}</div>${body}</div>`}
 function metric(label,val,color){return `<div class="a-metric"><div class="a-metric-val"${color?' style="color:'+color+'"':''}>${val}</div><div class="a-metric-lbl">${label}</div></div>`}
 function testBtn(route){const id='tb-'+route.replace(/[^a-z0-9]/gi,'_');return `<button onclick="testEndpoint('${route}','${id}')" style="font-size:11px;padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:var(--panel);cursor:pointer;margin-top:6px;transition:all .2s">⚡ Fetch Data</button><div id="${id}" style="margin-top:8px;display:none"></div>`}
 async function testEndpoint(route,containerId){const el=document.getElementById(containerId);if(!el)return;if(el.style.display==='block'){el.style.display='none';return}el.style.display='block';el.innerHTML='<div style="padding:12px;color:var(--gray);font-size:12px"><div class="spinner" style="display:inline-block;width:14px;height:14px;border-width:2px;margin-right:6px;vertical-align:middle"></div>Fetching...</div>';try{const r=await fetch(route,{headers:{'X-Admin-Key':ADMIN_KEY}});const d=await r.json();el.innerHTML=renderAPIResult(d)}catch(e){el.innerHTML='<div style="padding:12px;color:#dc2626;font-size:12px;background:#fef2f2;border-radius:8px">Error: '+e.message+'</div>'}}
