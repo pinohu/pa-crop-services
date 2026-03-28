@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
   const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
-  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID || '10455';
+  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID;
 
   if (!BEARER) return res.status(500).json({ success: false, error: '20i not configured' });
 

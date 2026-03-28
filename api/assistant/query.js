@@ -16,10 +16,14 @@ export default async function handler(req, res) {
   if (!question) return res.status(400).json({ success: false, error: 'missing_question' });
 
   try {
+    // Session-authenticated values always win over client-supplied IDs (prevent IDOR)
+    const effectiveClientId = session.valid ? session.clientId : (client_id || null);
+    const effectiveOrgId = session.valid ? session.orgId : (organization_id || null);
+
     const answer = await query(
       question,
-      client_id || session.clientId || null,
-      organization_id || session.orgId || null,
+      effectiveClientId,
+      effectiveOrgId,
       channel || (session.valid ? 'portal' : 'public')
     );
     return res.status(200).json({ success: true, ...answer });

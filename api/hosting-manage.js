@@ -23,7 +23,7 @@ function getBearer() {
 }
 
 function getResellerId() {
-  return process.env.TWENTY_I_RESELLER_ID || '10455';
+  return process.env.TWENTY_I_RESELLER_ID;
 }
 
 // ── 20i fetch wrapper ────────────────────────────────────

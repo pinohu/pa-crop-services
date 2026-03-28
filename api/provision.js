@@ -2,8 +2,9 @@
 // Full tier-aware auto-provisioning: SuiteDash + 20i hosting/email/SSL/domain + welcome email
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
-import { isAdminRequest } from './services/auth.js';
+import { isAdminRequest, generateAccessCode as _genCode } from './services/auth.js';
 import { setCors } from './services/auth.js';
+import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -33,14 +34,14 @@ export default async function handler(req, res) {
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
   const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
   const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
-  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID || '10455';
+  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID;
   const N8N = 'https://n8n.audreysplace.place/webhook';
 
   const results = { email, tier, steps: [], warnings: [] };
 
   // ── STEP 1: Generate access credentials ──────────────────────────────
   const local = email.split('@')[0].replace(/[^a-z0-9]/gi,'').toUpperCase();
-  const accessCode = 'CROP' + local.slice(-4) + Math.floor(1000 + Math.random() * 9000);
+  const accessCode = 'CROP' + local.slice(-4) + randomBytes(2).readUInt16BE(0).toString().padStart(5, '0').slice(0, 5);
   const refCode = 'CROP-' + Date.now().toString(36).toUpperCase().slice(-6);
   results.accessCode = accessCode;
   results.refCode = refCode;

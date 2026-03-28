@@ -132,7 +132,7 @@ export default async function handler(req, res) {
           includesFiling: tierConfig.includesFiling,
           // Auto-generate what we can
           accountSlug: email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20),
-          hostingPassword: 'Crop' + Math.random().toString(36).slice(2, 10) + '!',
+          hostingPassword: 'Crop' + (await import('crypto')).randomBytes(6).toString('base64url') + '!',
         })
       }).catch(e => {
         logError('provision_call_failed', { email }, new Error(e.message));

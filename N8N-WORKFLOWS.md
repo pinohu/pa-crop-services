@@ -2,7 +2,7 @@
 
 Base URL: https://n8n.audreysplace.place
 API Base: https://pacropservices.com/api
-Admin Key: CROP-ADMIN-2026-IKE
+Admin Key: [ADMIN_SECRET_KEY from env]
 
 ---
 
@@ -10,37 +10,37 @@ Admin Key: CROP-ADMIN-2026-IKE
 
 ### 1. Daily Ops Digest (8:00 AM ET)
 - **Trigger:** Cron → 0 8 * * * (8am daily)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/ops-digest?key=CROP-ADMIN-2026-IKE&send=true`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/ops-digest?key=[ADMIN_SECRET_KEY from env]&send=true`
 - **Result:** Email digest sent to hello@pacropservices.com with client counts, system health, pending actions
 
 ### 2. Weekly Entity Monitor (Monday 6:00 AM)
 - **Trigger:** Cron → 0 6 * * 1 (6am Monday)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/monitor-all?key=CROP-ADMIN-2026-IKE`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/monitor-all?key=[ADMIN_SECRET_KEY from env]`
 - **Result:** All client entities checked against PA DOS, alerts sent for status changes via email + SMS
 
 ### 3. Weekly Hosting Health (Monday 7:00 AM)
 - **Trigger:** Cron → 0 7 * * 1 (7am Monday)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/hosting-health?key=CROP-ADMIN-2026-IKE`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/hosting-health?key=[ADMIN_SECRET_KEY from env]`
 - **Result:** All 20i hosting packages checked for SSL status, alerts emailed
 
 ### 4. Monthly Churn Check (1st of month, 9:00 AM)
 - **Trigger:** Cron → 0 9 1 * * (9am, 1st of month)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/churn-check?key=CROP-ADMIN-2026-IKE`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/churn-check?key=[ADMIN_SECRET_KEY from env]`
 - **Result:** At-risk clients identified, retention emails auto-sent
 
 ### 5. Monthly Upsell Engine (5th of month, 10:00 AM)
 - **Trigger:** Cron → 0 10 5 * * (10am, 5th of month)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/upsell?key=CROP-ADMIN-2026-IKE&send=true`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/upsell?key=[ADMIN_SECRET_KEY from env]&send=true`
 - **Result:** Upsell opportunities identified, upgrade emails sent to top candidates
 
 ### 6. Monthly Review Requests (15th of month, 11:00 AM)
 - **Trigger:** Cron → 0 11 15 * * (11am, 15th of month)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/review-request?key=CROP-ADMIN-2026-IKE`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/review-request?key=[ADMIN_SECRET_KEY from env]`
 - **Result:** Google review request emails sent to clients 60-90 days in
 
 ### 7. Daily Win-Back Check (9:00 AM)
 - **Trigger:** Cron → 0 9 * * * (9am daily)
-- **Action:** HTTP Request → GET `https://pacropservices.com/api/winback?key=CROP-ADMIN-2026-IKE`
+- **Action:** HTTP Request → GET `https://pacropservices.com/api/winback?key=[ADMIN_SECRET_KEY from env]`
 - **Result:** Expired clients get escalating win-back: Day 1 email → Day 7 SMS → Day 14 AI call flag → Day 30 remove
 
 ### 8. Retargeting Drip (webhook-triggered)

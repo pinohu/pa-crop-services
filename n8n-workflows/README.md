@@ -52,7 +52,7 @@ For each JSON file:
 
 After activating all 5 workflows:
 - Check n8n Executions page the next day
-- The compliance dashboard (`/api/compliance-dashboard?adminKey=CROP-ADMIN-2026-IKE`) should show recent events
+- The compliance dashboard (`/api/compliance-dashboard?adminKey=[ADMIN_SECRET_KEY from env]`) should show recent events
 - Ike should receive the weekly digest email on Monday
 
 ## How It Works

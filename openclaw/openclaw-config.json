@@ -69,7 +69,7 @@
     "bind": "loopback",
     "auth": {
       "mode": "token",
-      "token": "4d5ff31e033888d1135c3f3ddbdde52d629fa2bfdc9460d3"
+      "token": "REPLACE_WITH_SECURE_TOKEN_FROM_ENV"
     }
   },
   "meta": {
