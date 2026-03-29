@@ -59,8 +59,8 @@ body{font-family:'Outfit',system-ui,sans-serif;background:#f0f2f5;color:var(--da
 .btn-danger{background:var(--red);color:#fff}.btn-sm{padding:5px 12px;font-size:12px}
 .content{padding:24px 28px;flex:1}
 
-/* Stats grid */
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+/* Stats grid — 5 cols desktop, responsive via media queries */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px}
 .stat-card{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid #e9eaec}
 .stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:8px}
 .stat-card .value{font-size:28px;font-weight:700;color:var(--navy);line-height:1}
@@ -131,6 +131,25 @@ tr:hover td{background:#fafafa}
 /* Section pages */
 .page{display:none}.page.active{display:block}
 
+/* Summary grid — auto-fills, min 120px per cell */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.summary-grid > div{text-align:center;padding:12px;border-radius:8px}
+
+/* Wizard button row — wrap on mobile */
+.wizard-btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.wizard-btn-row .btn{flex:1;min-width:120px}
+
+/* Panel header filter row — flex with wrap */
+.panel-filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.panel-filter-row input,.panel-filter-row select{flex:1;min-width:140px}
+
+/* Domain check row */
+.domain-check-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.domain-check-row input{flex:1;min-width:200px}
+
+/* Compose/email button row */
+.action-btn-row{display:flex;gap:12px;flex-wrap:wrap}
+
 /* Hosting card */
 .hosting-card{background:#f8f9fa;border:1px solid #e9eaec;border-radius:8px;padding:16px;margin-bottom:12px}
 .hosting-card .domain{font-weight:700;color:var(--navy);font-size:15px}
@@ -178,18 +197,77 @@ tr:hover td{background:#fafafa}
 .a-empty{text-align:center;padding:24px;color:var(--gray);font-size:13px}
 /* ─── Mobile Responsive ─── */
 @media(max-width:900px){
+  /* Sidebar: slide off-canvas */
   .sidebar{transform:translateX(-100%);position:fixed;z-index:200;height:100vh;transition:transform .3s ease}
   .sidebar.open{transform:translateX(0)}
-  .content{margin-left:0!important}
-  .stat-grid{grid-template-columns:repeat(2,1fr)!important}
-  #admin-menu-btn{display:inline-block!important}
+  /* Main content: remove sidebar gutter */
+  .main{margin-left:0!important}
+  /* Stats grid: 2 columns */
+  .stats-grid{grid-template-columns:repeat(2,1fr)!important}
+  /* Two/three col layouts: stack */
+  .two-col,.three-col{grid-template-columns:1fr!important}
+  /* Kanban: stack columns */
+  .kanban{grid-template-columns:1fr!important}
+  /* Form rows: stack fields */
+  .form-row{grid-template-columns:1fr!important}
+  /* Utility grids: stack */
+  .a-grid-2,.a-grid-3,.a-grid-4{grid-template-columns:1fr!important}
+  /* Show hamburger button */
+  #admin-menu-btn{display:inline-flex!important;align-items:center}
+  /* Overlay */
   #admin-overlay.show{opacity:1;pointer-events:auto}
+  /* Panel header: allow wrapping */
+  .panel-header{flex-wrap:wrap;gap:8px}
+  /* Search inputs in panel headers: flexible */
+  .panel-header input[type="text"],.panel-header select{width:100%!important;min-width:0!important}
+  /* Topbar: smaller padding */
+  .topbar{padding:0 12px;gap:8px}
+  .topbar-title{font-size:15px}
+  .topbar-actions{gap:6px}
+  /* Topbar actions: hide refresh label on mobile */
+  .topbar-actions .at-label{display:none}
+  /* Content padding */
+  .content{padding:16px 12px}
+  /* Filing/notif summary: 3 columns on tablet */
+  #filing-summary,#notif-summary{grid-template-columns:repeat(3,1fr)!important}
+  /* Wizard step indicator: compact */
+  .step-indicator{gap:0;overflow-x:auto}
+  .step-dot{font-size:10px;min-width:60px}
+}
+@media(max-width:600px){
+  /* Stats: single column */
+  .stats-grid{grid-template-columns:1fr!important}
+  /* Topbar actions: hide refresh button text */
+  .topbar-actions .btn-outline.btn-sm:first-of-type{display:none}
+  /* Filing/notif summary: 2 columns */
+  #filing-summary,#notif-summary{grid-template-columns:repeat(2,1fr)!important}
 }
 @media(max-width:480px){
-  .stat-grid{grid-template-columns:1fr!important}
+  .stats-grid{grid-template-columns:1fr!important}
   .panel-body{padding:12px!important}
   .a-grid-2,.a-grid-3,.a-grid-4{grid-template-columns:1fr!important}
+  /* Filing/notif summary: single column on small phones */
+  #filing-summary,#notif-summary{grid-template-columns:1fr 1fr!important}
+  /* Login card: full width with padding */
+  .login-card{width:calc(100vw - 32px);padding:32px 20px}
+  /* Modal: full width */
+  .modal{padding:20px;width:calc(100vw - 24px)}
+  /* Provision buttons: stack */
+  .wizard-step > div[style*="flex"]{flex-direction:column!important}
+  /* Content: minimal padding */
+  .content{padding:12px 8px}
+  /* Topbar: minimal */
+  .topbar{padding:0 8px}
+  .topbar-title{font-size:14px}
 }
+/* Nav section headers (sidebar) */
+.nav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);padding:16px 20px 6px;margin-top:8px}
+/* Table: horizontal scroll on all screens */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{min-width:480px}
+/* Ensure flex rows in panel headers don't break on narrow */
+.panel-header > div[style*="flex"]{flex-wrap:wrap;gap:8px}
+.panel-header > div[style*="flex"] input,.panel-header > div[style*="flex"] select{min-width:0;flex-shrink:1}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
@@ -347,9 +425,9 @@ tr:hover td{background:#fafafa}
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">All Clients</div>
-            <div style="display:flex;gap:10px">
-              <input type="text" id="client-search" placeholder="Search by name or email..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;width:240px;font-family:inherit" oninput="loadClients()">
-              <select id="plan-filter" onchange="loadClients()" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+            <div class="panel-filter-row">
+              <input type="text" id="client-search" placeholder="Search by name or email..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit" oninput="loadClients()">
+              <select id="plan-filter" onchange="loadClients()" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;flex-shrink:0">
                 <option value="">All plans</option>
                 <option value="compliance_only">Compliance Only</option>
                 <option value="business_starter">Business Starter</option>
@@ -397,9 +475,9 @@ tr:hover td{background:#fafafa}
             <button class="btn-sm" onclick="loadObligationExplorer()" style="font-size:11px;padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer">⟳ Load from Engine</button>
           </div>
           <div class="panel-body">
-            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-              <input type="text" id="obl-search" placeholder="Search entity name or ID..." style="flex:1;min-width:200px;padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
-              <select id="obl-status-filter" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+            <div class="panel-filter-row" style="margin-bottom:12px">
+              <input type="text" id="obl-search" placeholder="Search entity name or ID..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit">
+              <select id="obl-status-filter" style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;flex-shrink:0">
                 <option value="">All statuses</option>
                 <option value="overdue">Overdue</option>
                 <option value="escalated">Escalated</option>
@@ -493,7 +571,7 @@ tr:hover td{background:#fafafa}
                 </select>
               </div>
               <div class="form-group"><label>Notes</label><textarea id="prov-notes" rows="3" placeholder="Any special requirements..." style="width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:7px;font-family:inherit"></textarea></div>
-              <div style="display:flex;gap:10px">
+              <div class="wizard-btn-row">
                 <button class="btn btn-outline" onclick="wizardNext(1)">← Back</button>
                 <button class="btn btn-primary" onclick="wizardNext(3)">Next: Review →</button>
               </div>
@@ -501,7 +579,7 @@ tr:hover td{background:#fafafa}
 
             <div class="wizard-step" id="step-3">
               <div id="provision-review" style="background:#f8f9fa;border-radius:8px;padding:20px;margin-bottom:20px;font-size:14px"></div>
-              <div style="display:flex;gap:10px">
+              <div class="wizard-btn-row">
                 <button class="btn btn-outline" onclick="wizardNext(2)">← Back</button>
                 <button class="btn btn-gold" onclick="executeProvision()">🚀 Provision Client Now</button>
               </div>
@@ -519,8 +597,8 @@ tr:hover td{background:#fafafa}
         <div class="panel">
           <div class="panel-header"><div class="panel-title">🌐 Domain Availability Check (20i)</div></div>
           <div class="panel-body">
-            <div style="display:flex;gap:12px;margin-bottom:20px">
-              <input type="text" id="domain-input" placeholder="businessname.com" style="flex:1;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:15px;font-family:inherit">
+            <div class="domain-check-row">
+              <input type="text" id="domain-input" placeholder="businessname.com" style="padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:15px;font-family:inherit">
               <button class="btn btn-primary" onclick="checkDomain()">Check Domain</button>
             </div>
             <div id="domain-result"></div>
@@ -531,7 +609,7 @@ tr:hover td{background:#fafafa}
       <!-- REVENUE PAGE -->
       <div class="page" id="page-revenue">
         <!-- Revenue KPIs -->
-        <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="stats-grid">
           <div class="stat-card green"><div class="label">MRR</div><div class="value" id="rev-mrr">—</div></div>
           <div class="stat-card gold"><div class="label">ARR</div><div class="value" id="rev-arr">—</div></div>
           <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="rev-active">—</div></div>
@@ -629,7 +707,7 @@ tr:hover td{background:#fafafa}
           <div class="panel-header">
             <div class="panel-title">👤 Client 360</div>
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="text" id="c360-search" placeholder="Email or client ID..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;width:240px;font-family:inherit" onkeydown="if(event.key==='Enter')loadClient360()">
+              <input type="text" id="c360-search" placeholder="Email or client ID..." style="padding:7px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:13px;width:100%;max-width:240px;font-family:inherit" onkeydown="if(event.key==='Enter')loadClient360()">
               <button class="btn btn-primary btn-sm" onclick="loadClient360()">Load</button>
             </div>
           </div>
@@ -647,7 +725,7 @@ tr:hover td{background:#fafafa}
             <button class="btn btn-primary btn-sm" onclick="loadFilingQueue()">⟳ Refresh</button>
           </div>
           <div class="panel-body">
-            <div id="filing-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
+            <div id="filing-summary" class="summary-grid" style="margin-bottom:16px">
               <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="fq-total">—</div><div class="at-xs">Total</div></div>
               <div style="text-align:center;padding:12px;background:#fef2f2;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#dc2626" id="fq-overdue">—</div><div class="at-xs">Overdue</div></div>
               <div style="text-align:center;padding:12px;background:#fffbeb;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#92400e" id="fq-critical">—</div><div class="at-xs">Critical</div></div>
@@ -668,7 +746,7 @@ tr:hover td{background:#fafafa}
           </div>
           <div class="panel-body">
             <!-- Summary stats -->
-            <div id="notif-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
+            <div id="notif-summary" class="summary-grid" style="margin-bottom:16px">
               <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px"><div style="font-size:18px;font-weight:700" id="no-total">—</div><div class="at-xs">Total</div></div>
               <div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#15803d" id="no-sent">—</div><div class="at-xs">Sent</div></div>
               <div style="text-align:center;padding:12px;background:#eff6ff;border-radius:8px"><div style="font-size:18px;font-weight:700;color:#3b82f6" id="no-scheduled">—</div><div class="at-xs">Scheduled</div></div>
@@ -809,7 +887,7 @@ tr:hover td{background:#fafafa}
             </div>
             <div class="form-group"><label>Subject</label><input type="text" id="email-subject" placeholder="Subject line"></div>
             <div class="form-group"><label>Body (HTML supported)</label><textarea id="email-body" rows="10" placeholder="Email body..." style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
-            <div style="display:flex;gap:12px">
+            <div class="action-btn-row">
               <button class="btn btn-gold" onclick="sendAdminEmail()">✉️ Send Email</button>
               <button class="btn btn-outline" onclick="previewEmail()">Preview</button>
             </div>

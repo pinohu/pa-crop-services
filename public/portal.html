@@ -485,23 +485,78 @@ body { font-family: var(--font); background: var(--bg); color: var(--ink); line-
 @media (max-width: 1024px) {
   .grid-4 { grid-template-columns: repeat(2,1fr); }
   .grid-3 { grid-template-columns: 1fr 1fr; }
-  .quick-actions { grid-template-columns: repeat(4,1fr); }
+  .quick-actions { grid-template-columns: repeat(2,1fr); }
 }
 @media (max-width: 768px) {
-  .sidebar { display: none; position: fixed; left: 0; top: var(--topbar-h); z-index: 160; box-shadow: var(--shadow-lg); height: calc(100vh - var(--topbar-h)); }
+  /* Sidebar: off-canvas */
+  .sidebar { display: none; position: fixed; left: 0; top: var(--topbar-h); z-index: 160; box-shadow: var(--shadow-lg); height: calc(100vh - var(--topbar-h)); width: var(--sidebar-w); }
   .sidebar.open { display: flex; }
   .menu-btn { display: flex; }
+  /* Main: add bottom padding for mobile nav */
   .main { padding: 16px 16px 80px; }
+  /* All grids: single column */
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .quick-actions { grid-template-columns: repeat(2,1fr); }
+  /* Mobile nav visible */
   .mobile-nav { display: block; }
+  /* Page header */
   .page-header h1 { font-size: 22px; }
   .plan-hero-price { font-size: 28px; }
+  /* Topbar: hide page title text to save space */
+  .topbar-page { display: none; }
+  /* Topbar padding */
+  .topbar { padding: 0 12px; }
+  /* Settings row: allow wrapping */
+  .settings-row { flex-wrap: wrap; gap: 12px; }
+  /* Entity card meta: tighter gap */
+  .entity-card-meta { gap: 10px; }
+  /* Card body: reduce padding */
+  .card-body { padding: 14px; }
+  /* Card header: allow wrap */
+  .card-header { flex-wrap: wrap; gap: 8px; }
+  /* Notif panel: constrain width */
+  #notif-panel { width: min(320px, calc(100vw - 24px)); right: -8px; }
+  /* Plan hero */
+  .plan-hero { padding: 20px; }
+  /* Obligation row: tighten on tablet */
+  .obligation-row { gap: 10px; }
+}
+@media (max-width: 560px) {
+  /* Topbar right: hide plan badge and divider to prevent overflow */
+  .plan-badge { display: none; }
+  .topbar-divider { display: none; }
+  /* Logout button: icon only hint — shrink text */
+  #logout-btn { font-size: 12px; padding: 6px 10px; }
+  /* Topbar: minimal padding */
+  .topbar { padding: 0 10px; }
 }
 @media (max-width: 480px) {
-  .login-card { padding: 36px 24px; }
+  /* Login card */
+  .login-card { padding: 32px 20px; }
+  /* Filter bar: stack */
   .filter-bar { flex-direction: column; align-items: stretch; }
   .search-input { min-width: unset; }
+  /* Quick actions: 2 columns */
+  .quick-actions { grid-template-columns: repeat(2,1fr); }
+  /* Card body */
+  .card-body { padding: 12px; }
+  /* Obligation date block: smaller */
+  .obligation-date-block { min-width: 44px; padding: 4px 6px; }
+  .obligation-day { font-size: 18px; }
+  /* Doc row: adjust spacing */
+  .doc-row { gap: 10px; }
+  .doc-icon { width: 32px; height: 32px; font-size: 15px; }
+  /* Invoice row */
+  .invoice-row { flex-wrap: wrap; gap: 8px; }
+  /* Page header */
+  .page-header { margin-bottom: 16px; }
+  .page-header h1 { font-size: 20px; }
+  /* Main padding */
+  .main { padding: 12px 12px 80px; }
+  /* KPI value: slightly smaller */
+  .kpi-value { font-size: 24px; }
+  /* Section gap */
+  .section { margin-bottom: 16px; }
 }
 
 /* ─── REDUCED MOTION ─── */
