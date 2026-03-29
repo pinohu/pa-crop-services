@@ -7,17 +7,14 @@
     "validate": "node scripts/validate-content.js",
     "precommit": "node scripts/validate-content.js",
     "test": "node --test tests/compliance.test.js tests/validate.test.js tests/guardrails.test.js",
-    "lint": "eslint api/ scripts/ --ext .js",
+    "lint": "npx eslint api/ scripts/ --ext .js",
     "check": "npm run lint && npm run validate"
   },
   "dependencies": {
-    "@neondatabase/serverless": "1.0.2",
-    "@upstash/ratelimit": "2.0.8",
-    "@upstash/redis": "1.37.0",
-    "jose": "6.2.2",
-    "pdf-lib": "1.17.1"
-  },
-  "devDependencies": {
-    "eslint": "9.39.4"
+    "@neondatabase/serverless": "^1.0.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "jose": "^6.2.2",
+    "pdf-lib": "^1.17.1"
   }
 }
