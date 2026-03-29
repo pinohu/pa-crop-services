@@ -280,6 +280,10 @@ table{min-width:480px}
 @media(max-width:480px){
   .content [style*="grid-template-columns"]{grid-template-columns:1fr!important;gap:8px!important}
 }
+/* Wired API section pages: fill viewport so loading state has no bare background */
+#page-compliance_intel .panel-body,#page-entity_ops .panel-body,#page-obligation_mgmt .panel-body,
+#page-revenue_intel .panel-body,#page-partner_channel .panel-body,#page-content_engine .panel-body,
+#page-comms_center .panel-body,#page-ops_monitor .panel-body,#page-doc_pipeline .panel-body{min-height:calc(100vh - 145px)}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
@@ -1003,7 +1007,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${name}`)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.textContent.toLowerCase().includes(name.replace('_',' '))) n.classList.add('active');
+    if (n.getAttribute('onclick') === `showPage('${name}')`) n.classList.add('active');
   });
   const titles = { dashboard:'Dashboard', clients:'All Clients', leads:'Lead Pipeline', compliance:'Compliance Tracker', hosting:'20i Hosting', provision:'Provision Client', domains:'Domain Check', revenue:'Revenue', email_stats:'Email Lists', agreements:'Service Agreements', articles:'Article Generator', health:'Client Health', documents:'Doc Classifier', email_triage:'Email Triage', webhooks:'Webhook Status', bulk:'Bulk Operations', compose:'Send Email', renewals:'Renewal Reminders', client360:'Client 360', filing:'Filing Queue', notif_ops:'Notification Ops', billing:'Billing & Retention', compliance_intel:'Compliance Intel', entity_ops:'Entity Operations', obligation_mgmt:'Obligation Manager', revenue_intel:'Revenue Intel', partner_channel:'Partner Channel', content_engine:'Content Engine', comms_center:'Communications', ops_monitor:'Ops Monitor', doc_pipeline:'Doc Pipeline' };
   document.getElementById('page-title').textContent = titles[name] || name;
