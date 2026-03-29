@@ -17,6 +17,7 @@ export default async function handler(req, res) {
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_KEY) return res.status(500).json({ success: false, error: 'Groq not configured' });
+  const adminKey = process.env.ADMIN_SECRET_KEY || '';
 
   const requestedTopic = req.body?.topic;
   const results = { steps: [] };

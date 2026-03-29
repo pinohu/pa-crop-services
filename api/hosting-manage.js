@@ -159,7 +159,7 @@ async function createEmail({ packageId, domain, address, password, quota }) {
     return { error: 'Password must be at least 8 characters' };
   }
 
-  const quotaMb = quota != null ? Number(quota) : 1000;
+  const quotaMb = quota != null ? Number(quota) : 1000; // eslint-disable-line eqeqeq
   if (!Number.isInteger(quotaMb) || quotaMb < 1 || quotaMb > 50000) {
     return { error: 'Quota must be between 1 and 50000 MB' };
   }
@@ -221,7 +221,7 @@ async function addDns({ packageId, domain, type, host, data: recordData, priorit
   }
 
   const body = { type: normalizedType, host, data: recordData };
-  if (normalizedType === 'MX' && priority != null) body.priority = Number(priority);
+  if (normalizedType === 'MX' && priority != null) body.priority = Number(priority); // eslint-disable-line eqeqeq
 
   const { ok, status, data: respData } = await twentyiFetch(`/package/${packageId}/web/domainDns`, {
     method: 'POST',

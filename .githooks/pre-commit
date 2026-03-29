@@ -1,0 +1,13 @@
+#!/bin/sh
+# PA CROP Services — pre-commit hook
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "[pre-commit] Validating compliance content..."
+node scripts/validate-content.js
+
+echo "[pre-commit] Running unit tests..."
+node --test tests/compliance.test.js tests/validate.test.js tests/guardrails.test.js
+
+echo "[pre-commit] All checks passed."

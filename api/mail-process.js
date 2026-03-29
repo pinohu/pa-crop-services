@@ -17,6 +17,7 @@ export default async function handler(req, res) {
 
   const { sender, recipientEntity, textContent, scanDate } = req.body || {};
   const GROQ_KEY = process.env.GROQ_API_KEY;
+  const adminKey = process.env.ADMIN_SECRET_KEY || '';
 
   const result = { sender, recipientEntity, scanDate: scanDate || new Date().toISOString() };
 

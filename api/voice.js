@@ -4,21 +4,26 @@ import { createLogger } from './_log.js';
 
 const log = createLogger('voice');
 
+const SYSTEM_PROMPT = 'You are the PA CROP Services phone concierge. You answer calls for a licensed Pennsylvania Commercial Registered Office Provider. You sound like a warm, knowledgeable advisor.\n\nRULES:\n- Keep answers to 2-3 sentences maximum. This is a phone call, not a lecture.\n- Never say you are an AI. You are the compliance team.\n- Use the callers name if they give it.\n- For legal or tax questions say: That is really a question for your attorney or CPA. Would you like me to transfer you to our team?\n- If they want to speak to a person, say: Let me transfer you now.\n- If they want to sign up, say: I would love to help you get started. Visit pacropservices.com or I can transfer you to our team.\n\nWHAT YOU KNOW:\n- PA CROP Services is licensed under 15 Pa. C.S. section 109\n- Address: 924 W 23rd St, Erie, PA 16502\n- Phone: 814-228-2822\n- Every PA entity needs a registered office on file with the Department of State\n- Annual report deadlines vary by entity type: corporations June 30, LLCs September 30, all others December 31. Fee is $7, file at file.dos.pa.gov\n- Starting with 2027 reports, entities that fail to file face dissolution six months after their deadline. Foreign entities cannot reinstate.\n- Plans: Compliance Only $99/year, Business Starter $199/year, Business Pro $349/year, Business Empire $699/year\n- All plans include registered office, same-day document scanning, compliance reminders, entity monitoring, client portal\n- Business Pro and Empire include annual report filing\n- Website: pacropservices.com\n\nGOALS:\n1. Answer their question concisely\n2. Learn their name and entity name if natural\n3. Offer to help them get started or transfer to a person\n4. Never end without a clear next step';
+
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
-
-  // Rate limit: Voice — 20/min
-  const blocked = await checkRateLimit(getClientIp(req), 'voice', 20, '60s');
-  if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Matthew">Thank you for calling PA CROP Services. Please try again.</Say></Response>');
   }
 
-  const { SpeechResult, CallSid, From, To, Digits } = req.body || {};
+  // Rate limit: Voice — 20/min
+  const blocked = await checkRateLimit(getClientIp(req), 'voice', 20, '60s');
+  if (blocked) {
+    res.setHeader('Retry-After', String(blocked.retryAfter));
+    return res.status(429).json({ success: false, error: 'Too many requests' });
+  }
 
-  if (!SpeechResult && !Digits) {
+  const { SpeechResult, To } = req.body || {};
+
+  if (!SpeechResult) {
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send([
       '<?xml version="1.0" encoding="UTF-8"?>',
@@ -31,12 +36,10 @@ export default async function handler(req, res) {
     ].join('\n'));
   }
 
-  var userMessage = SpeechResult || '';
-
-  var systemPrompt = 'You are the PA CROP Services phone concierge. You answer calls for a licensed Pennsylvania Commercial Registered Office Provider. You sound like a warm, knowledgeable advisor.\n\nRULES:\n- Keep answers to 2-3 sentences maximum. This is a phone call, not a lecture.\n- Never say you are an AI. You are the compliance team.\n- Use the callers name if they give it.\n- For legal or tax questions say: That is really a question for your attorney or CPA. Would you like me to transfer you to our team?\n- If they want to speak to a person, say: Let me transfer you now.\n- If they want to sign up, say: I would love to help you get started. Visit pacropservices.com or I can transfer you to our team.\n\nWHAT YOU KNOW:\n- PA CROP Services is licensed under 15 Pa. C.S. section 109\n- Address: 924 W 23rd St, Erie, PA 16502\n- Phone: 814-228-2822\n- Every PA entity needs a registered office on file with the Department of State\n- Annual report deadlines vary by entity type: corporations June 30, LLCs September 30, all others December 31. Fee is $7, file at file.dos.pa.gov\n- Starting with 2027 reports, entities that fail to file face dissolution six months after their deadline. Foreign entities cannot reinstate.\n- Plans: Compliance Only $99/year, Business Starter $199/year, Business Pro $349/year, Business Empire $699/year\n- All plans include registered office, same-day document scanning, compliance reminders, entity monitoring, client portal\n- Business Pro and Empire include annual report filing\n- Website: pacropservices.com\n\nGOALS:\n1. Answer their question concisely\n2. Learn their name and entity name if natural\n3. Offer to help them get started or transfer to a person\n4. Never end without a clear next step';
+  const userMessage = SpeechResult;
 
   try {
-    var groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + process.env.GROQ_API_KEY,
@@ -45,7 +48,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userMessage }
         ],
         max_tokens: 200,
@@ -53,21 +56,21 @@ export default async function handler(req, res) {
       })
     });
 
-    var data = await groqRes.json();
-    var aiResponse = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'I apologize, I am having trouble right now. Please call back or visit pacropservices.com for help.';
+    const data = await groqRes.json();
+    let aiResponse = (data.choices?.[0]?.message?.content) || 'I apologize, I am having trouble right now. Please call back or visit pacropservices.com for help.';
 
     aiResponse = aiResponse.replace(/[*#_]/g, '').replace(/\n/g, ' ').trim();
 
-    var wantsTransfer = /transfer|speak to|talk to|real person|human|someone else/i.test(userMessage);
+    const wantsTransfer = /transfer|speak to|talk to|real person|human|someone else/i.test(userMessage);
 
     if (wantsTransfer) {
-      var transferTo = To || '+18146163024';
+      const transferTo = To || '+18146163024';
       res.setHeader('Content-Type', 'text/xml');
       return res.status(200).send([
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<Response>',
         '  <Say voice="Polly.Matthew">Absolutely, let me connect you with our team right now. One moment please.</Say>',
-        '  <Dial timeout="30" callerId="' + transferTo + '">',
+        `  <Dial timeout="30" callerId="${transferTo}">`,
         '    <Number>+18144800989</Number>',
         '  </Dial>',
         '  <Say voice="Polly.Matthew">I am sorry, our team is not available right now. Please leave a message after the tone.</Say>',
@@ -76,14 +79,14 @@ export default async function handler(req, res) {
       ].join('\n'));
     }
 
-    var safeResponse = aiResponse.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const safeResponse = aiResponse.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send([
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<Response>',
       '  <Gather input="speech" timeout="6" speechTimeout="auto" action="/api/voice" method="POST" language="en-US">',
-      '    <Say voice="Polly.Matthew">' + safeResponse + '</Say>',
+      `    <Say voice="Polly.Matthew">${safeResponse}</Say>`,
       '  </Gather>',
       '  <Say voice="Polly.Matthew">It sounds like we got disconnected. Feel free to call back anytime at 814-228-2822, or visit pacropservices.com. Have a great day.</Say>',
       '</Response>'

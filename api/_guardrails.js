@@ -17,7 +17,7 @@ const INTENT_PATTERNS = {
   COMPLIANCE_FACT: [
     /when\s+(?:is|are)\s+(?:my|the|our)\s+(?:annual\s+report|report|filing|deadline)/i,
     /(?:what|when)\s+(?:is|are)\s+the\s+deadline/i,
-    /how much\s+(?:does|is)\s+(?:the|it|annual)\s+(?:report|filing|fee)/i,
+    /how much\s+(?:does|is)\s+(?:the\s+)?(?:annual\s+report|annual)\s+(?:report\s+)?(?:filing|fee|cost)/i,
     /(?:what|how much)\s+(?:is|are)\s+the\s+fee/i,
     /(?:what|which)\s+entity\s+types?\s+(?:need|must|have)\s+to\s+file/i,
     /(?:do|does|will)\s+(?:I|we|my)\s+(?:need|have)\s+to\s+file/i,

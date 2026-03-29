@@ -1,5 +1,7 @@
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 import { createLogger } from './_log.js';
+import { isConnected as isDbConnected } from './services/db.js';
+import { isUpstashConfigured } from './_ratelimit.js';
 
 const log = createLogger('health');
 
@@ -22,6 +24,16 @@ export default async function handler(req, res) {
 
   const checks = {};
   const start = Date.now();
+
+  // 0. Database (Neon Postgres) — most critical dependency
+  checks.database = isDbConnected()
+    ? { status: 'configured' }
+    : { status: 'not_configured', note: 'DATABASE_URL missing' };
+
+  // 0b. Redis (Upstash) — rate limiting and caching
+  checks.redis = isUpstashConfigured()
+    ? { status: 'configured' }
+    : { status: 'not_configured', note: 'rate limiting uses in-memory fallback' };
 
   // 1. Groq AI
   try {
@@ -74,7 +86,6 @@ export default async function handler(req, res) {
     statuses.some(s => s === 'down') ? 'degraded' : 'healthy';
 
   // Only include env warnings for authenticated admin requests
-  const { isAdminRequest } = await import('./services/auth.js');
   const isAdmin = isAdminRequest(req);
 
   return res.status(overall === 'healthy' ? 200 : 503).json({

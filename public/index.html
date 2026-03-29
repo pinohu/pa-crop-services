@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="PA CROP Services">
-<meta property="og:title" content="PA CROP Services — Pennsylvania's Registered Office, Handled">
-<meta property="og:description" content="Licensed Pennsylvania CROP provider. Registered office address, compliance monitoring, annual report filing. Plans from $99/year.">
-<meta property="og:image" content="https://www.pacropservices.com/og-image.jpg">
-<meta property="og:url" content="https://www.pacropservices.com/">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PA CROP Services — Pennsylvania's Registered Office, Handled">
-<meta name="twitter:description" content="Licensed Pennsylvania CROP provider. From $99/year.">
-<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA CROP Services — Pennsylvania Commercial Registered Office Provider</title>
 <meta name="description" content="Licensed Pennsylvania CROP provider. Registered office address, same-day document scanning, compliance calendar, annual report filing. Plans from $99/year.">
 <meta name="keywords" content="Pennsylvania CROP, PA registered agent, commercial registered office provider, PA annual report, Pennsylvania registered office">
 <link rel="canonical" href="https://www.pacropservices.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PA CROP Services">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="PA CROP Services — Pennsylvania's Registered Office, Handled">
+<meta property="og:description" content="Licensed Pennsylvania CROP provider. Registered office address, compliance monitoring, annual report filing. Plans from $99/year.">
+<meta property="og:image" content="https://www.pacropservices.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PA CROP Services — Pennsylvania Commercial Registered Office Provider">
+<meta property="og:url" content="https://www.pacropservices.com/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@pacropservices">
+<meta name="twitter:title" content="PA CROP Services — Pennsylvania's Registered Office, Handled">
+<meta name="twitter:description" content="Licensed Pennsylvania CROP provider. From $99/year.">
+<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
+<meta name="twitter:image:alt" content="PA CROP Services — Pennsylvania Commercial Registered Office Provider">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230C1220'/><path d='M12 4L4 8.5v7L12 20l8-4.5v-7L12 4z' fill='white'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,11 +62,14 @@
 
 /* FAQ KEYBOARD */
 .faq-item:focus-within{background:var(--white)}.faq-q[role="button"]{outline:none}.faq-q[role="button"]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;border-radius:4px}
+/* WCAG 2.1: fallback for browsers without :focus-visible support */
+@supports not selector(:focus-visible){.faq-q[role="button"]:focus{outline:2px solid var(--gold);outline-offset:-2px;border-radius:4px}}
 
 :root{--slate:#0C1220;--slate2:#1A2332;--gold:#C9982A;--gold-light:#F5EDDA;--gold-muted:#A68A3E;--sage:#6B8F71;--sage-light:#E8F0E9;--cream:#FAF9F6;--cream2:#F3F1EC;--cream3:#EBE8E2;--ink:#1C1C1C;--ink2:#4A4A4A;--ink3:#7A7A7A;--ink4:#A8A8A8;--white:#fff;--red:#FF6B5B;--radius:10px;--font:'Outfit',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--ease:cubic-bezier(.22,.61,.36,1)}
 html{scroll-behavior:smooth}body{font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 ::selection{background:var(--gold-light);color:var(--slate)}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.reveal{opacity:1;transform:none;transition:none}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
 @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -339,7 +348,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   </div>
 
   <!-- PLAN COMPARISON TABLE -->
-  <div class="compare-toggle reveal"><button onclick="document.getElementById('compare-wrap').classList.toggle('open');this.textContent=this.textContent.includes('Compare')?'Hide comparison':'Compare all plans side by side'" aria-expanded="false">Compare all plans side by side</button></div>
+  <div class="compare-toggle reveal"><button onclick="const w=document.getElementById('compare-wrap');w.classList.toggle('open');const open=w.classList.contains('open');this.setAttribute('aria-expanded',open);this.textContent=open?'Hide comparison':'Compare all plans side by side'" aria-expanded="false" aria-controls="compare-wrap">Compare all plans side by side</button></div>
   <div class="compare-wrap" id="compare-wrap">
   <div class="compare-table reveal">
     <table role="table" aria-label="Plan comparison">
@@ -430,13 +439,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 <section class="faq" id="faq" aria-label="Frequently asked questions"><div class="container">
   <div class="faq-header reveal"><div class="section-tag">Common Questions</div><h2>Questions we hear a lot</h2></div>
   <div class="faq-grid" role="list">
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Is a CROP the same as a registered agent?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What happens if I don't have a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is the PA annual report requirement?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Starting 2025, all PA entities must file annually. The fee is $7. Deadlines depend on entity type: corporations by June 30, LLCs by September 30, and all others (LPs, LLPs, business trusts) by December 31. Starting with 2027 reports, failure to file results in administrative dissolution, termination, or cancellation six months after the applicable deadline.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">How quickly do you forward documents?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Same-day scanning and portal upload with immediate email notification.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Can I switch from another CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Do you file my annual report?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" role="region">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-1" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-1" role="region" aria-label="What is a CROP answer">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-2" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Is a CROP the same as a registered agent?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-2" role="region" aria-label="Is a CROP the same as a registered agent answer">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-3" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What happens if I don't have a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-3" role="region" aria-label="What happens if I don't have a CROP answer">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-4" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is the PA annual report requirement?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-4" role="region" aria-label="What is the PA annual report requirement answer">Starting 2025, all PA entities must file annually. The fee is $7. Deadlines depend on entity type: corporations by June 30, LLCs by September 30, and all others (LPs, LLPs, business trusts) by December 31. Starting with 2027 reports, failure to file results in administrative dissolution, termination, or cancellation six months after the applicable deadline.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-5" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">How quickly do you forward documents?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-5" role="region" aria-label="How quickly do you forward documents answer">Same-day scanning and portal upload with immediate email notification.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-6" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Can I switch from another CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-6" role="region" aria-label="Can I switch from another CROP answer">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
+    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-7" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Do you file my annual report?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-7" role="region" aria-label="Do you file my annual report answer">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
   </div>
 </div></section>
 

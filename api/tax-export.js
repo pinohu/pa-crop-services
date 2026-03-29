@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       const amount = TIER_PRICES[tier] || 99;
       
       // Check if signup falls in this quarter
-      if (since.getFullYear() == year && months.includes(since.getMonth())) {
+      if (since.getFullYear() === year && months.includes(since.getMonth())) {
         csv += `${since.toISOString().split('T')[0]},${c.email},"${c.first_name || ''} ${c.last_name || ''}",${tier},${amount},Service Revenue,1099-MISC\n`;
         totalRevenue += amount;
       }
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       totalRevenue,
       clientCount: clients.filter(c => {
         const s = c.custom_fields?.crop_since ? new Date(c.custom_fields.crop_since) : null;
-        return s && s.getFullYear() == year && months.includes(s.getMonth());
+        return s && s.getFullYear() === year && months.includes(s.getMonth());
       }).length,
       csv
     };
