@@ -13,7 +13,9 @@ import {
   isValidString,
   isValidPlanCode,
   sanitize,
-  requestId
+  requestId,
+  requireJson,
+  rejectOversizedBody
 } from '../api/_validate.js';
 
 describe('isValidEmail', () => {
@@ -165,5 +167,89 @@ describe('requestId', () => {
   test('returns unique IDs on successive calls', () => {
     const ids = new Set(Array.from({ length: 100 }, requestId));
     assert.equal(ids.size, 100, 'all 100 request IDs should be unique');
+  });
+});
+
+describe('requireJson', () => {
+  function mockRes() {
+    let code; let body;
+    return {
+      status(c) { code = c; return this; },
+      json(b) { body = b; return this; },
+      get code() { return code; },
+      get body() { return body; }
+    };
+  }
+
+  test('passes GET requests without checking Content-Type', () => {
+    const req = { method: 'GET', headers: {} };
+    const res = mockRes();
+    assert.equal(requireJson(req, res), false);
+  });
+
+  test('passes POST with application/json', () => {
+    const req = { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' } };
+    const res = mockRes();
+    assert.equal(requireJson(req, res), false);
+  });
+
+  test('rejects POST without Content-Type', () => {
+    const req = { method: 'POST', headers: {} };
+    const res = mockRes();
+    assert.equal(requireJson(req, res), true);
+    assert.equal(res.code, 415);
+    assert.equal(res.body.success, false);
+  });
+
+  test('rejects POST with text/plain Content-Type', () => {
+    const req = { method: 'POST', headers: { 'content-type': 'text/plain' } };
+    const res = mockRes();
+    assert.equal(requireJson(req, res), true);
+    assert.equal(res.code, 415);
+  });
+
+  test('passes PUT with application/json', () => {
+    const req = { method: 'PUT', headers: { 'content-type': 'application/json' } };
+    const res = mockRes();
+    assert.equal(requireJson(req, res), false);
+  });
+});
+
+describe('rejectOversizedBody', () => {
+  function mockRes() {
+    let code; let body;
+    return {
+      status(c) { code = c; return this; },
+      json(b) { body = b; return this; },
+      get code() { return code; },
+      get body() { return body; }
+    };
+  }
+
+  test('passes when Content-Length is within limit', () => {
+    const req = { headers: { 'content-length': '1000' } };
+    const res = mockRes();
+    assert.equal(rejectOversizedBody(req, res, 4096), false);
+  });
+
+  test('passes when Content-Length is absent', () => {
+    const req = { headers: {} };
+    const res = mockRes();
+    assert.equal(rejectOversizedBody(req, res, 4096), false);
+  });
+
+  test('rejects when Content-Length exceeds limit', () => {
+    const req = { headers: { 'content-length': '10000' } };
+    const res = mockRes();
+    assert.equal(rejectOversizedBody(req, res, 4096), true);
+    assert.equal(res.code, 413);
+    assert.equal(res.body.success, false);
+  });
+
+  test('uses 1 MB default limit', () => {
+    const req = { headers: { 'content-length': String(1_048_577) } };
+    const res = mockRes();
+    assert.equal(rejectOversizedBody(req, res), true);
+    assert.equal(res.code, 413);
   });
 });

@@ -31,3 +31,27 @@ export function sanitize(str) {
 export function requestId() {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
+
+// Enforce Content-Type: application/json on POST/PUT/PATCH requests.
+// Returns true and sends a 415 response if the check fails.
+export function requireJson(req, res) {
+  if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return false;
+  const ct = req.headers['content-type'] || '';
+  if (!ct.includes('application/json')) {
+    res.status(415).json({ success: false, error: 'Content-Type must be application/json' });
+    return true;
+  }
+  return false;
+}
+
+// Reject request if Content-Length exceeds maxBytes (default 1 MB).
+// Vercel enforces a 4.5 MB hard cap; this adds a tighter per-endpoint guard.
+// Returns true and sends a 413 response if the check fails.
+export function rejectOversizedBody(req, res, maxBytes = 1_048_576) {
+  const len = parseInt(req.headers['content-length'] || '0', 10);
+  if (len > maxBytes) {
+    res.status(413).json({ success: false, error: 'Request body too large' });
+    return true;
+  }
+  return false;
+}

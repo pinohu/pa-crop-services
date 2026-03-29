@@ -10,6 +10,7 @@ const log = createLogger('admin');
 
 import { timingSafeEqual } from 'crypto';
 import { setCors } from '../services/auth.js';
+import { requireJson, rejectOversizedBody } from '../_validate.js';
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 if (!ADMIN_KEY && process.env.NODE_ENV !== 'test') {
   throw new Error('FATAL: ADMIN_SECRET_KEY is required');
@@ -106,6 +107,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'POST') {
+    if (requireJson(req, res)) return;
+    if (rejectOversizedBody(req, res, 524_288)) return; // 512 KB — admin actions don't need large bodies
+  }
 
   // Auth check — only from header, timing-safe comparison
   const adminKey = req.headers['x-admin-key'];

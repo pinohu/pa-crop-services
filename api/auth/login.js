@@ -1,7 +1,7 @@
 import { setCors, verifyAccessCode, createSession } from '../services/auth.js';
 import { createLogger } from '../_log.js';
 import { writeAuditEvent } from '../services/db.js';
-import { isValidEmail } from '../_validate.js';
+import { isValidEmail, requireJson, rejectOversizedBody } from '../_validate.js';
 import { checkRateLimit, getClientIp } from '../_ratelimit.js';
 
 const log = createLogger('auth-login');
@@ -10,6 +10,8 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
+  if (requireJson(req, res)) return;
+  if (rejectOversizedBody(req, res, 4096)) return;
 
   // Rate limit: login — 5 attempts per minute per IP to mitigate brute-force
   const rlResult = await checkRateLimit(getClientIp(req), 'auth-login', 5, '60s');

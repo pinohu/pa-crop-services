@@ -2,7 +2,7 @@ import { setCors, authenticateRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
 import { notifyAdmin } from '../services/notifications.js';
 import { checkRateLimit, getClientIp } from '../_ratelimit.js';
-import { isValidUUID, isValidString } from '../_validate.js';
+import { isValidUUID, isValidString, requireJson, rejectOversizedBody } from '../_validate.js';
 import { createLogger } from '../_log.js';
 
 const log = createLogger('upload');
@@ -14,6 +14,8 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
+  if (requireJson(req, res)) return;
+  if (rejectOversizedBody(req, res, 5_242_880)) return; // 5 MB — extracted text can be large
 
   // Rate limit: document uploads — 20 per minute per IP
   const rlResult = await checkRateLimit(getClientIp(req), 'doc-upload', 20, '60s');

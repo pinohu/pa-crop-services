@@ -268,15 +268,24 @@ table{min-width:480px}
 /* Ensure flex rows in panel headers don't break on narrow */
 .panel-header > div[style*="flex"]{flex-wrap:wrap;gap:8px}
 .panel-header > div[style*="flex"] input,.panel-header > div[style*="flex"] select{min-width:0;flex-shrink:1}
+/* Skip link (accessibility) */
+.skip-link{position:absolute;top:-100px;left:16px;z-index:10000;background:var(--navy);color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none}
+.skip-link:focus{top:0}
+/* Catch-all: collapse JS-rendered inline grids to 1-col on mobile */
+@media(max-width:900px){
+  .content [style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .content [style*="grid-template-columns"] > *{min-width:0}
+}
+/* On very small screens ensure no grid child overflows */
+@media(max-width:480px){
+  .content [style*="grid-template-columns"]{grid-template-columns:1fr!important;gap:8px!important}
+}
 </style>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PA CROP Admin Dashboard"}</script>
 </head>
 <body>
-<a href="#admin-main" class="skip-link">Skip to main content</a>
-
-<!-- LOGIN -->
-<a href="#admin-main" style="position:absolute;top:-100px;left:16px;z-index:10000;background:#0C1220;color:#fff;padding:12px 24px;border-radius:0 0 8px 8px;font-weight:600;font-size:14px;transition:top .2s;text-decoration:none" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Skip to dashboard</a>
+<a href="#admin-main" class="skip-link">Skip to dashboard</a>
 <div id="login-screen">
   <div class="login-card">
     <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>
