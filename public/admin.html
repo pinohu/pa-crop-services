@@ -949,7 +949,8 @@ table{min-width:480px}
 </div>
 
 <script>
-const API = '/api/admin';
+const ORIGIN = window.location.origin;
+const API = ORIGIN + '/api/admin';
 let ADMIN_KEY = '';
 let currentPage = 'dashboard';
 let clientData = {};
@@ -1095,7 +1096,7 @@ async function loadDashboard() {
 async function loadCommandCenter() {
   const el = document.getElementById('command-center-body');
   try {
-    const r = await fetch('/api/admin/command-center', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/command-center', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="font-size:13px;color:#6b7280">Command center requires Neon Postgres. Using legacy dashboard.</div>'; return; }
     const c = d.compliance;
@@ -1123,7 +1124,7 @@ async function loadCommandCenter() {
 async function loadAIReviewQueue() {
   const el = document.getElementById('ai-review-body');
   try {
-    const r = await fetch('/api/admin/ai-review?limit=10', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/ai-review?limit=10', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No conversations need review</div>'; return; }
     el.innerHTML = d.items.map(c => `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
@@ -1140,7 +1141,7 @@ async function loadAIReviewQueue() {
 async function loadDocReviewQueue() {
   const el = document.getElementById('doc-review-body');
   try {
-    const r = await fetch('/api/admin/document-review?urgency=high', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/document-review?urgency=high', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:8px 0">✅ No documents need review</div>'; return; }
     el.innerHTML = d.items.map(doc => {
@@ -1162,7 +1163,7 @@ async function loadDocReviewQueue() {
 async function loadWorkflowFailures() {
   const el = document.getElementById('workflow-failures-body');
   try {
-    const r = await fetch('/api/admin/workflow-failures', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/workflow-failures', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.items?.length) { el.innerHTML = '<div style="font-size:13px;color:#15803d;padding:8px 0">✅ No workflow failures</div>'; return; }
     el.innerHTML = d.items.map(j => `<div style="padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px">
@@ -1177,7 +1178,7 @@ async function loadObligationExplorer() {
   const el = document.getElementById('obligation-explorer');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading obligations...</div>';
   try {
-    const r = await fetch('/api/admin/audit?event_type=obligation.status_changed&limit=100', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/audit?event_type=obligation.status_changed&limit=100', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     const items = d.items || [];
     if (!items.length) {
@@ -1212,12 +1213,12 @@ async function loadRulesAdmin() {
   const el = document.getElementById('rules-admin-list');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading rules...</div>';
   try {
-    const r = await fetch('/api/admin/rules', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/rules', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     const items = d.items || [];
     if (!items.length) {
       // Fall back to showing rules from the compliance-rules API
-      const r2 = await fetch('/api/compliance-rules');
+      const r2 = await fetch(ORIGIN + '/api/compliance-rules');
       const d2 = await r2.json();
       if (d2.rules) {
         const types = Object.entries(d2.rules.entityTypes || {});
@@ -1255,7 +1256,7 @@ async function loadRulesAdmin() {
 // ── Revenue Page ───────────────────────────────────────────────────────
 async function loadRevenuePage() {
   try {
-    const r = await fetch('/api/admin/revenue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/revenue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { toast('Revenue data unavailable', 'error'); return; }
 
@@ -1317,7 +1318,7 @@ async function loadClient360() {
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading client profile...</div>';
 
   try {
-    const r = await fetch('/api/admin/client-360?email=' + encodeURIComponent(search), { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/client-360?email=' + encodeURIComponent(search), { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Client not found: ' + (d.error || '') + '</div>'; return; }
 
@@ -1406,7 +1407,7 @@ async function loadClient360() {
 // ── Filing Queue ───────────────────────────────────────────────────────
 async function loadFilingQueue() {
   try {
-    const r = await fetch('/api/admin/filing-queue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/filing-queue', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) return;
 
@@ -1450,7 +1451,7 @@ async function loadFilingQueue() {
 // ── Notification Ops ───────────────────────────────────────────────────
 async function loadNotifOps() {
   try {
-    const r = await fetch('/api/admin/notification-ops', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/notification-ops', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) return;
 
@@ -1483,7 +1484,7 @@ async function loadNotifOps() {
 async function loadBillingRetention() {
   const el = document.getElementById('billing-body');
   try {
-    const r = await fetch('/api/admin/billing-retention', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    const r = await fetch(ORIGIN + '/api/admin/billing-retention', { headers: { 'X-Admin-Key': ADMIN_KEY } });
     const d = await r.json();
     if (!d.success) { el.innerHTML = '<div style="color:var(--gray)">Billing data unavailable</div>'; return; }
 
@@ -1789,7 +1790,7 @@ async function executeProvision() {
   document.getElementById('provision-result').innerHTML = '<div class="loading"><div class="spinner"></div>Provisioning... this may take 10-15 seconds</div>';
 
   try {
-    const data = await fetch('/api/provision', {
+    const data = await fetch(ORIGIN + '/api/provision', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
       body: JSON.stringify(payload)
@@ -2040,7 +2041,7 @@ async function generateArticle() {
   document.getElementById('article-preview').style.display = 'none';
   
   try {
-    const res = await fetch('/api/generate-article', {
+    const res = await fetch(ORIGIN + '/api/generate-article', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
       body: JSON.stringify({ keyword, angle, targetWordCount: parseInt(wordcount), author })
@@ -2063,7 +2064,7 @@ async function publishArticle() {
   if (!window._lastArticle) { toast('Generate an article first', 'error'); return; }
   const a = window._lastArticle;
   try {
-    const res = await fetch('/api/publish-article', {
+    const res = await fetch(ORIGIN + '/api/publish-article', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
       body: JSON.stringify({ title: a.title, slug: a.slug, html: a.html || a.content, metaDescription: a.metaDescription, author: a.author })
@@ -2099,7 +2100,7 @@ async function loadHealthScores() {
     
     for (const c of clients.slice(0, 50)) {
       try {
-        const hRes = await fetch('/api/client-health', {
+        const hRes = await fetch(ORIGIN + '/api/client-health', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY, 'X-Internal-Key': ADMIN_KEY },
           body: JSON.stringify({ clientEmail: c.email, clientName: c.name || c.first_name, metrics: { planTier: c.tier || 'compliance_only', monthsAsClient: 3 } })
@@ -2136,7 +2137,7 @@ async function classifyDocument() {
   document.getElementById('doc-result').innerHTML = '<div class="loading"><div class="spinner"></div>Classifying document...</div>';
   
   try {
-    const res = await fetch('/api/classify-document', {
+    const res = await fetch(ORIGIN + '/api/classify-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
       body: JSON.stringify({ text, clientEmail: email, filename })
@@ -2177,7 +2178,7 @@ async function triageEmail() {
   document.getElementById('triage-result').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing email...</div>';
   
   try {
-    const res = await fetch('/api/email-triage', {
+    const res = await fetch(ORIGIN + '/api/email-triage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
       body: JSON.stringify({ from, subject, body })
@@ -2253,7 +2254,7 @@ async function runSystemHealth() {
   body.innerHTML = '<div class="loading"><div class="spinner"></div>Running health checks (may take 10-15 seconds)...</div>';
   
   try {
-    const res = await fetch('/api/health');
+    const res = await fetch(ORIGIN + '/api/health');
     const data = await res.json();
     
     let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
@@ -2291,7 +2292,8 @@ async function runSystemHealth() {
 
 // Helper: fetch JSON with admin key
 async function adminFetch(url, opts={}) {
-  const r = await fetch(url, {headers:{'X-Admin-Key':ADMIN_KEY,'Content-Type':'application/json'},...opts});
+  const absUrl = url.startsWith('http') ? url : ORIGIN + url;
+  const r = await fetch(absUrl, {headers:{'X-Admin-Key':ADMIN_KEY,'Content-Type':'application/json'},...opts});
   return r.json();
 }
 // XSS prevention: escape HTML entities before inserting into innerHTML
@@ -2299,7 +2301,7 @@ function escHtml(s){if(typeof s!=='string')return '';return s.replace(/&/g,'&amp
 function card(title,body,color){return `<div class="a-card"${color?' style="background:'+color+'"':''}><div class="a-card-title">${escHtml(title)}</div>${body}</div>`}
 function metric(label,val,color){return `<div class="a-metric"><div class="a-metric-val"${color?' style="color:'+color+'"':''}>${val}</div><div class="a-metric-lbl">${label}</div></div>`}
 function testBtn(route){const id='tb-'+route.replace(/[^a-z0-9]/gi,'_');return `<button onclick="testEndpoint('${route}','${id}')" style="font-size:11px;padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:var(--panel);cursor:pointer;margin-top:6px;transition:all .2s">⚡ Fetch Data</button><div id="${id}" style="margin-top:8px;display:none"></div>`}
-async function testEndpoint(route,containerId){const el=document.getElementById(containerId);if(!el)return;if(el.style.display==='block'){el.style.display='none';return}el.style.display='block';el.innerHTML='<div style="padding:12px;color:var(--gray);font-size:12px"><div class="spinner" style="display:inline-block;width:14px;height:14px;border-width:2px;margin-right:6px;vertical-align:middle"></div>Fetching...</div>';try{const r=await fetch(route,{headers:{'X-Admin-Key':ADMIN_KEY}});const d=await r.json();el.innerHTML=renderAPIResult(d)}catch(e){el.innerHTML='<div style="padding:12px;color:#dc2626;font-size:12px;background:#fef2f2;border-radius:8px">Error: '+e.message+'</div>'}}
+async function testEndpoint(route,containerId){const el=document.getElementById(containerId);if(!el)return;if(el.style.display==='block'){el.style.display='none';return}el.style.display='block';el.innerHTML='<div style="padding:12px;color:var(--gray);font-size:12px"><div class="spinner" style="display:inline-block;width:14px;height:14px;border-width:2px;margin-right:6px;vertical-align:middle"></div>Fetching...</div>';try{const absRoute=route.startsWith('http')?route:ORIGIN+route;const r=await fetch(absRoute,{headers:{'X-Admin-Key':ADMIN_KEY}});const d=await r.json();el.innerHTML=renderAPIResult(d)}catch(e){el.innerHTML='<div style="padding:12px;color:#dc2626;font-size:12px;background:#fef2f2;border-radius:8px">Error: '+e.message+'</div>'}}
 function renderAPIResult(d){if(!d||typeof d!=='object')return '<div style="padding:12px;color:var(--gray);font-size:13px">No data returned</div>';const keys=Object.keys(d);let html='<div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;max-height:320px;overflow-y:auto">';if(d.success===false)html+='<div style="color:#dc2626;font-weight:600;margin-bottom:8px">⚠ '+( d.error||'Request failed')+'</div>';const skip=new Set(['success','html','csv']);keys.forEach(k=>{if(skip.has(k))return;const v=d[k];if(v===null||v===undefined)return;if(typeof v==='object'&&!Array.isArray(v)){html+='<div style="margin-bottom:10px"><div style="font-weight:600;color:var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">'+k+'</div>';Object.entries(v).forEach(([sk,sv])=>{html+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">'+sk+'</span><span style="font-weight:500">'+( typeof sv==='object'?JSON.stringify(sv):sv)+'</span></div>'});html+='</div>'}else if(Array.isArray(v)){html+='<div style="margin-bottom:10px"><div style="font-weight:600;color:var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">'+k+' ('+v.length+')</div>';v.slice(0,5).forEach(item=>{if(typeof item==='object'){html+='<div style="background:#f9fafb;padding:8px;border-radius:6px;margin-bottom:4px;font-size:12px">';Object.entries(item).forEach(([ik,iv])=>{html+='<span style="color:var(--gray)">'+ik+':</span> <strong>'+(typeof iv==='object'?JSON.stringify(iv):iv)+'</strong> · '});html+='</div>'}else html+='<div style="padding:2px 0">'+item+'</div>'});if(v.length>5)html+='<div style="color:var(--gray);font-size:11px;margin-top:4px">+ '+(v.length-5)+' more</div>';html+='</div>'}else{html+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--gray)">'+k+'</span><span style="font-weight:500">'+v+'</span></div>'}});if(d.html){html+='<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11px;color:var(--accent)">View rendered HTML</summary><div style="margin-top:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden"><iframe srcdoc="'+d.html.replace(/"/g,'&quot;')+'" style="width:100%;height:300px;border:none"></iframe></div></details>'}if(d.csv){html+='<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11px;color:var(--accent)">View CSV data</summary><pre style="margin-top:8px;font-size:11px;padding:10px;background:#f9fafb;border-radius:8px;overflow-x:auto;max-height:200px">'+d.csv+'</pre></details>'}html+='</div>';return html}
 
 // ── 1. COMPLIANCE INTEL ──────────────────────────────────────
