@@ -12,11 +12,11 @@ export default async function handler(req, res) {
   try {
     const client = await getClientById(session.clientId);
 
-    // Check if token is close to expiry (< 2 hours remaining) and refresh
+    // Check if token is close to expiry (< 20 minutes remaining) and refresh
     let refreshedToken = null;
     if (session.exp) {
-      const hoursRemaining = (session.exp * 1000 - Date.now()) / (1000 * 60 * 60);
-      if (hoursRemaining < 2 && client) {
+      const minutesRemaining = (session.exp * 1000 - Date.now()) / (1000 * 60);
+      if (minutesRemaining < 20 && client) {
         const newSession = await createSession({
           id: client.id,
           organization_id: client.organization_id,

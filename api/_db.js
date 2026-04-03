@@ -12,6 +12,7 @@
 import { Redis } from '@upstash/redis';
 import crypto from 'crypto';
 import { logWarn } from './_log.js';
+import { writeAuditEvent as writeAuditToNeon, logAIConversation as logConvToNeon, isConnected as isNeonConnected } from './services/db.js';
 
 // ── Redis client (lazy init) ──
 let _redis = null;
@@ -104,34 +105,53 @@ async function updateObligation(entityId, year, patch) {
 // ── Event log (append-only) ──
 
 async function logEvent({ actor, eventType, targetType, targetId, orgId, beforeState, afterState, reason, metadata }) {
+  const event = {
+    id: `evt_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
+    ts: new Date().toISOString(),
+    actor,
+    eventType,
+    targetType,
+    targetId,
+    orgId,
+    beforeState,
+    afterState,
+    reason,
+    metadata
+  };
+
+  // ── Primary: persist to Neon Postgres (durable) ──────────
+  if (isNeonConnected()) {
+    try {
+      await writeAuditToNeon({
+        actor_type: typeof actor === 'string' ? 'user' : (actor?.type || 'system'),
+        actor_id: typeof actor === 'string' ? actor : (actor?.id || 'unknown'),
+        event_type: eventType,
+        target_type: targetType,
+        target_id: targetId,
+        before_json: beforeState || null,
+        after_json: afterState || null,
+        reason: reason || (metadata ? JSON.stringify(metadata) : null),
+        correlation_id: event.id
+      });
+    } catch (err) {
+      logWarn('audit_neon_persist_failed', { eventType, targetId, error: err.message });
+    }
+  }
+
+  // ── Secondary: cache in Redis for fast reads ─────────────
   const redis = getRedis();
-  if (!redis) return false;
+  if (!redis) return isNeonConnected(); // success if Neon wrote it
   try {
-    const event = {
-      id: `evt_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
-      ts: new Date().toISOString(),
-      actor,
-      eventType,
-      targetType,
-      targetId,
-      orgId,
-      beforeState,
-      afterState,
-      reason,
-      metadata
-    };
-    // Append to org-specific event list (capped at 1000 events per org)
     if (orgId) {
       await redis.lpush(`events:${orgId}`, JSON.stringify(event));
       await redis.ltrim(`events:${orgId}`, 0, 999);
     }
-    // Also append to global event stream (capped at 5000)
     await redis.lpush('events:global', JSON.stringify(event));
     await redis.ltrim('events:global', 0, 4999);
     return true;
   } catch (err) {
     logWarn('db_log_event_failed', { eventType, targetId, error: err.message });
-    return false;
+    return isNeonConnected(); // partial success if Neon wrote it
   }
 }
 
@@ -151,25 +171,46 @@ async function getEvents(orgId, limit = 50) {
 // ── Conversation audit log ──
 
 async function logConversationToDb({ sessionId, clientEmail, orgId, entityType, userMessage, response, intent, sources, confidence, escalated }) {
+  const entry = {
+    ts: new Date().toISOString(),
+    sessionId,
+    clientEmail,
+    entityType,
+    userMessage: userMessage?.substring(0, 500),
+    response: response?.substring(0, 500),
+    intent,
+    sources,
+    confidence,
+    escalated: !!escalated
+  };
+
+  // ── Primary: persist to Neon Postgres (durable) ──────────
+  if (isNeonConnected()) {
+    try {
+      await logConvToNeon({
+        organization_id: orgId || null,
+        client_id: null,
+        channel: 'chat',
+        user_message: userMessage?.substring(0, 2000),
+        assistant_answer: response?.substring(0, 2000),
+        source_refs: sources || [],
+        confidence_score: confidence,
+        escalation_flag: !!escalated,
+        moderation_flag: false,
+        model_name: 'groq-llama-3.3-70b'
+      });
+    } catch (err) {
+      logWarn('conversation_neon_persist_failed', { sessionId, error: err.message });
+    }
+  }
+
+  // ── Secondary: cache in Redis for fast reads ─────────────
   const redis = getRedis();
-  if (!redis) return false;
+  if (!redis) return isNeonConnected();
   try {
-    const entry = {
-      ts: new Date().toISOString(),
-      sessionId,
-      clientEmail,
-      entityType,
-      userMessage: userMessage?.substring(0, 500),
-      response: response?.substring(0, 500),
-      intent,
-      sources,
-      confidence,
-      escalated: !!escalated
-    };
     const key = orgId ? `conversations:${orgId}` : `conversations:anon:${sessionId}`;
     await redis.lpush(key, JSON.stringify(entry));
-    await redis.ltrim(key, 0, 199); // Keep last 200 per org
-    // Daily counter
+    await redis.ltrim(key, 0, 199);
     const today = new Date().toISOString().split('T')[0];
     await redis.incr(`metric:chat_questions:${today}`);
     if (escalated) await redis.incr(`metric:chat_escalations:${today}`);
@@ -177,7 +218,7 @@ async function logConversationToDb({ sessionId, clientEmail, orgId, entityType, 
     return true;
   } catch (err) {
     logWarn('db_log_conversation_failed', { sessionId, error: err.message });
-    return false;
+    return isNeonConnected();
   }
 }
 
