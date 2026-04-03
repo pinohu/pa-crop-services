@@ -19,9 +19,11 @@ export default async function handler(req, res) {
   const cleanEmail = email.toLowerCase().trim();
   const cleanCode = code.toUpperCase().trim();
 
-  // ── Demo account (disabled in production) ────────────────
+  // ── Demo account (only enabled when DEMO_ACCESS_CODE is set AND env is explicitly preview/development) ──
   const DEMO_CODE = process.env.DEMO_ACCESS_CODE || '';
-  if (DEMO_CODE && cleanEmail === 'demo@pacropservices.com' && cleanCode === DEMO_CODE && process.env.VERCEL_ENV !== 'production') {
+  const vercelEnv = process.env.VERCEL_ENV || '';
+  const isDemoAllowed = DEMO_CODE && (vercelEnv === 'preview' || vercelEnv === 'development');
+  if (isDemoAllowed && cleanEmail === 'demo@pacropservices.com' && cleanCode === DEMO_CODE) {
     const { createSession } = await import('../services/auth.js');
     const session = await createSession({ id: 'demo', organization_id: 'demo-org', plan_code: 'business_pro', email: cleanEmail, roles: ['client'] });
     return res.status(200).json({

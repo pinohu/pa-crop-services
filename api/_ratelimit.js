@@ -16,6 +16,7 @@ const log = createLogger('_ratelimit');
 // ── Upstash Redis (durable, cross-instance) ──
 let _redis = null;
 let _limiters = {};
+const _fallbackWarned = new Set();
 
 function getRedis() {
   if (_redis) return _redis;
@@ -42,15 +43,38 @@ function getUpstashLimiter(prefix, maxRequests, window) {
   return _limiters[key];
 }
 
+// ── Startup check ──
+if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  log.warn('ratelimit_no_redis_configured', {
+    note: 'Rate limiting will use in-memory fallback — resets on cold start, not shared across instances'
+  });
+}
+
 // ── In-memory fallback (per-instance, resets on cold start) ──
 const _memMap = new Map();
+const MEM_MAP_MAX_SIZE = 10000; // Prevent unbounded growth
+let _lastCleanup = Date.now();
 
 function memoryRateLimit(ip, prefix, max, windowMs) {
   const k = prefix + ':' + ip;
   const now = Date.now();
+
+  // Periodic cleanup: evict expired entries every 60s
+  if (now - _lastCleanup > 60000) {
+    _lastCleanup = now;
+    for (const [key, val] of _memMap) {
+      if (now - val.s > val.w) _memMap.delete(key);
+    }
+  }
+  // Hard cap: if map is too large, clear it (cold-start-like reset)
+  if (_memMap.size > MEM_MAP_MAX_SIZE) {
+    _memMap.clear();
+    log.warn('ratelimit_memory_map_cleared', { reason: 'exceeded_max_size', max: MEM_MAP_MAX_SIZE });
+  }
+
   let d = _memMap.get(k);
   if (!d || now - d.s > windowMs) {
-    _memMap.set(k, { c: 1, s: now });
+    _memMap.set(k, { c: 1, s: now, w: windowMs });
     return { limited: false };
   }
   d.c++;
@@ -118,6 +142,10 @@ export async function checkRateLimit(ip, prefix, maxRequests, window) {
   }
 
   // In-memory fallback
+  if (!_fallbackWarned.has(prefix)) {
+    _fallbackWarned.add(prefix);
+    log.warn('ratelimit_using_memory_fallback', { prefix, note: 'Not durable — resets on cold start' });
+  }
   const windowMs = parseWindow(window);
   const result = memoryRateLimit(ip, prefix, maxRequests, windowMs);
   if (result.limited) {

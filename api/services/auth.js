@@ -28,7 +28,7 @@ if (!JWT_SECRET_RAW) {
   }
 }
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'test-only-key-not-for-production');
-const TOKEN_EXPIRY = '4h';
+const TOKEN_EXPIRY = '1h';
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 if (!ADMIN_KEY) {
@@ -57,7 +57,7 @@ export async function createSession(client) {
 
   return {
     token,
-    expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+    expires_at: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString()
   };
 }
 

@@ -430,10 +430,13 @@ export default async function handler(req, res) {
 
       // ── Acumbamail Stats ──────────────────────────────────────────────
       case 'email_stats': {
-        const [r1, r2] = await Promise.all([
-          fetchWithTimeout(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267324&response_type=json`),
-          fetchWithTimeout(`https://acumbamail.com/api/1/getListStats/?auth_token=${ACUMBA_TOKEN}&list_id=1267325&response_type=json`)
-        ]);
+        // Use POST to avoid leaking auth_token in URL/query params
+        const acumbaPost = (listId) => fetchWithTimeout('https://acumbamail.com/api/1/getListStats/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auth_token: ACUMBA_TOKEN, list_id: listId, response_type: 'json' })
+        });
+        const [r1, r2] = await Promise.all([acumbaPost(1267324), acumbaPost(1267325)]);
         const [allClients, partners] = await Promise.all([r1.json(), r2.json()]);
         return res.status(200).json({
           allClients: { listId: 1267324, ...allClients },
