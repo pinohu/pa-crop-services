@@ -1,88 +1,143 @@
-// PA CROP Services — Referral Commission Tracker
-// POST /api/referral-track { newClientEmail, refCode }
-// Called during provisioning when new client has a referral code
+// PA CROP Services — Referral Conversion Tracker
+// POST /api/referral-track { newClientEmail, refCode, tier }
+// Called during provisioning when a new client has a referral code.
+// Records the conversion in Neon, creates a commission, and notifies the referrer.
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
+import * as db from './services/db.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('referral-track');
+
+const PLAN_PRICES = {
+  compliance_only: 99,
+  business_starter: 199,
+  business_pro: 349,
+  business_empire: 699
+};
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
+  if (!db.isConnected()) return res.status(503).json({ success: false, error: 'database_unavailable' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
-
-  const { newClientEmail, refCode, tier, amount } = req.body || {};
+  const { newClientEmail, refCode, tier, clientId, orgId } = req.body || {};
   if (!newClientEmail || !refCode) return res.status(400).json({ success: false, error: 'newClientEmail and refCode required' });
 
-  const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
-  const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'SuiteDash not configured' });
-
   try {
-    // Find the referrer by their referral code
-    const searchRes = await fetch(`https://app.suitedash.com/secure-api/contacts?limit=500&role=client`, {
-      headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
-    });
-    const clients = (await searchRes.json())?.data || [];
-    const referrer = clients.find(c => c.custom_fields?.referral_code === refCode);
+    // Find the referrer client by referral_code
+    const sql = db.getSql();
+    if (!sql) return res.status(503).json({ success: false, error: 'database_unavailable' });
+
+    const referrers = await sql`
+      SELECT c.id, c.email, c.owner_name, c.referral_code, c.organization_id,
+             p.id as partner_id, p.commission_rate, p.name as partner_name
+      FROM clients c
+      LEFT JOIN partners p ON p.email = c.email AND p.is_active = true
+      WHERE c.referral_code = ${refCode}
+      LIMIT 1
+    `;
+    const referrer = referrers?.[0];
 
     if (!referrer) {
+      log.info('referral_code_not_found', { refCode, newClientEmail });
       return res.status(200).json({ success: false, message: 'Referral code not found', refCode });
     }
 
-    // Calculate commission (10% of annual plan value)
-    const commissionRates = { compliance: 9.90, starter: 19.90, pro: 34.90, empire: 69.90 };
-    const commission = commissionRates[tier] || amount * 0.10 || 9.90;
-
-    // Update referrer's SuiteDash record
-    const currentEarnings = parseFloat(referrer.custom_fields?.referral_earnings || '0');
-    const currentCount = parseInt(referrer.custom_fields?.referral_count || '0');
-
-    await fetch(`https://app.suitedash.com/secure-api/contacts/${referrer.id}`, {
-      method: 'PUT',
-      headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        custom_fields: {
-          referral_earnings: (currentEarnings + commission).toFixed(2),
-          referral_count: currentCount + 1,
-          last_referral_date: new Date().toISOString()
-        }
-      })
+    // Create referral record
+    const referral = await db.createReferral({
+      referrer_client_id: referrer.id,
+      referred_email: newClientEmail,
+      referral_status: 'converted',
+      metadata: { tier: tier || 'compliance_only', ref_code: refCode }
     });
 
-    // Notify referrer
+    // Mark conversion with client linkage
+    if (referral && clientId) {
+      await db.convertReferral(referral.id, {
+        referred_client_id: clientId,
+        partner_id: referrer.partner_id || null,
+        credit_amount: 0 // will be set by commission
+      });
+    }
+
+    // Create commission if referrer is a partner or has a partner record
+    const plan = tier || 'compliance_only';
+    const planAmount = PLAN_PRICES[plan] || PLAN_PRICES.compliance_only;
+    const rate = referrer.partner_id ? (parseFloat(referrer.commission_rate) || 0.20) : 0.10;
+    const commissionUsd = +(planAmount * rate).toFixed(2);
+
+    let commission = null;
+    if (referrer.partner_id) {
+      commission = await db.createCommission({
+        partner_id: referrer.partner_id,
+        referral_id: referral?.id,
+        client_id: clientId || null,
+        organization_id: orgId || null,
+        plan_code: plan,
+        plan_amount_usd: planAmount,
+        commission_rate: rate,
+        commission_usd: commissionUsd,
+        commission_status: 'pending'
+      });
+    }
+
+    // Update referral credit amount
+    if (referral) {
+      await db.convertReferral(referral.id, {
+        referred_client_id: clientId || null,
+        partner_id: referrer.partner_id || null,
+        credit_amount: commissionUsd
+      });
+    }
+
+    // Audit trail
+    db.writeAuditEvent({
+      actor_type: 'system', actor_id: 'referral-track',
+      event_type: 'referral.converted',
+      target_type: 'referral', target_id: referral?.id,
+      after_json: { referrer_email: referrer.email, new_client_email: newClientEmail, commission_usd: commissionUsd, plan },
+      reason: 'new_client_signup'
+    }).catch(() => {});
+
+    // Notify referrer via email
     const emailitKey = process.env.EMAILIT_API_KEY;
     if (emailitKey) {
-      await fetch('https://api.emailit.com/v1/emails', {
+      const referrerName = referrer.owner_name || referrer.partner_name || 'Partner';
+      fetch('https://api.emailit.com/v1/emails', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'hello@pacropservices.com', to: referrer.email,
-          subject: `You earned $${commission.toFixed(2)} — referral commission!`,
+          subject: `You earned $${commissionUsd.toFixed(2)} — referral commission!`,
           html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
             <div style="border-bottom:3px solid #C9982A;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">PA CROP Services</strong></div>
-            <h2 style="color:#0C1220">🎉 Referral Commission Earned!</h2>
-            <p>Someone signed up using your referral code, and you've earned <strong>$${commission.toFixed(2)}</strong>.</p>
+            <h2 style="color:#0C1220">Referral Commission Earned!</h2>
+            <p>Hi ${referrerName}, someone signed up using your referral code and you've earned <strong>$${commissionUsd.toFixed(2)}</strong>.</p>
             <div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:16px 0">
-              <p style="margin:0"><strong>This referral:</strong> $${commission.toFixed(2)}<br>
-              <strong>Total earned:</strong> $${(currentEarnings + commission).toFixed(2)}<br>
-              <strong>Total referrals:</strong> ${currentCount + 1}</p>
+              <p style="margin:0"><strong>This referral:</strong> $${commissionUsd.toFixed(2)}<br>
+              <strong>Plan:</strong> ${plan.replace(/_/g, ' ')}</p>
             </div>
-            <p>Keep sharing your code to earn more! Your portal has your referral link and code.</p>
+            <p>Keep sharing your referral code to earn more!</p>
           </div>`
         })
-      }).catch(e => log.warn('external_call_failed', { error: e.message }));
+      }).catch(e => log.warn('email_send_failed', { error: e.message }));
     }
 
-    return res.status(200).json({ 
-      success: true, referrer: referrer.email, commission, 
-      total_earnings: currentEarnings + commission, total_referrals: currentCount + 1 
+    log.info('referral_converted', { refCode, referrer: referrer.email, commissionUsd });
+    return res.status(200).json({
+      success: true,
+      referrer: referrer.email,
+      referral_id: referral?.id,
+      commission_id: commission?.id,
+      commission_usd: commissionUsd,
+      commission_rate: rate,
+      plan_code: plan
     });
   } catch (e) {
-    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
+    log.error('referral_track_error', {}, e instanceof Error ? e : new Error(String(e)));
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }

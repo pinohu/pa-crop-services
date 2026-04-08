@@ -618,6 +618,129 @@ export async function getAIConversations({ orgId, clientId, escalated, limit = 5
   return rows || [];
 }
 
+// ── Partners ──────────────────────────────────────────────
+
+export async function getPartnerById(id) {
+  const rows = await query('SELECT * FROM partners WHERE id = $1', [id]);
+  return rows?.[0] || null;
+}
+
+export async function getPartnerByEmail(email) {
+  const rows = await query('SELECT * FROM partners WHERE email = $1', [email]);
+  return rows?.[0] || null;
+}
+
+export async function createPartner(partner) {
+  const rows = await query(
+    `INSERT INTO partners (name, email, partner_type, commission_rate, is_active, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+    [partner.name, partner.email, partner.partner_type || 'cpa',
+     partner.commission_rate || 0.20, partner.is_active ?? true,
+     JSON.stringify(partner.metadata || {})]);
+  return rows?.[0] || null;
+}
+
+export async function updatePartner(id, updates) {
+  const setClauses = [];
+  const values = [];
+  let i = 1;
+  for (const [key, val] of Object.entries(updates)) {
+    if (['name','email','partner_type','commission_rate','is_active'].includes(key)) {
+      setClauses.push(`${key} = $${i++}`);
+      values.push(val);
+    } else if (key === 'metadata') {
+      setClauses.push(`metadata = $${i++}`);
+      values.push(JSON.stringify(val));
+    }
+  }
+  if (!setClauses.length) return null;
+  setClauses.push(`updated_at = now()`);
+  values.push(id);
+  const rows = await query(`UPDATE partners SET ${setClauses.join(', ')} WHERE id = $${i} RETURNING *`, values);
+  return rows?.[0] || null;
+}
+
+export async function getActivePartners() {
+  const rows = await query(
+    `SELECT id, name, email, partner_type, commission_rate, is_active, metadata, created_at
+     FROM partners WHERE is_active = true ORDER BY name`);
+  return rows || [];
+}
+
+// ── Commissions ───────────────────────────────────────────
+
+export async function createCommission(comm) {
+  const rows = await query(
+    `INSERT INTO commissions (partner_id, referral_id, client_id, organization_id, plan_code, plan_amount_usd, commission_rate, commission_usd, commission_status, period_start, period_end, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    [comm.partner_id, comm.referral_id || null, comm.client_id || null,
+     comm.organization_id || null, comm.plan_code, comm.plan_amount_usd,
+     comm.commission_rate, comm.commission_usd,
+     comm.commission_status || 'pending',
+     comm.period_start || null, comm.period_end || null,
+     JSON.stringify(comm.metadata || {})]);
+  return rows?.[0] || null;
+}
+
+export async function getCommissionsForPartner(partnerId, { status, since, limit = 100 } = {}) {
+  let where = 'WHERE partner_id = $1';
+  const params = [partnerId];
+  let i = 2;
+  if (status) { where += ` AND commission_status = $${i++}`; params.push(status); }
+  if (since) { where += ` AND created_at >= $${i++}`; params.push(since); }
+  params.push(limit);
+  const rows = await query(
+    `SELECT c.*, p.name as partner_name, cl.email as client_email, cl.owner_name as client_name
+     FROM commissions c
+     LEFT JOIN partners p ON c.partner_id = p.id
+     LEFT JOIN clients cl ON c.client_id = cl.id
+     ${where} ORDER BY c.created_at DESC LIMIT $${i}`, params);
+  return rows || [];
+}
+
+export async function getPartnerEarningsSummary(partnerId) {
+  const rows = await query(
+    `SELECT
+       COUNT(*) as total_commissions,
+       COUNT(*) FILTER (WHERE commission_status = 'pending') as pending_count,
+       COUNT(*) FILTER (WHERE commission_status = 'paid') as paid_count,
+       COALESCE(SUM(commission_usd), 0) as total_earned,
+       COALESCE(SUM(commission_usd) FILTER (WHERE commission_status = 'pending'), 0) as pending_amount,
+       COALESCE(SUM(commission_usd) FILTER (WHERE commission_status = 'paid'), 0) as paid_amount
+     FROM commissions WHERE partner_id = $1`, [partnerId]);
+  return rows?.[0] || { total_commissions: 0, pending_count: 0, paid_count: 0, total_earned: 0, pending_amount: 0, paid_amount: 0 };
+}
+
+export async function updateCommission(id, updates) {
+  const setClauses = [];
+  const values = [];
+  let i = 1;
+  for (const [key, val] of Object.entries(updates)) {
+    if (['commission_status','paid_at','payout_reference'].includes(key)) {
+      setClauses.push(`${key} = $${i++}`);
+      values.push(val);
+    } else if (key === 'metadata') {
+      setClauses.push(`metadata = $${i++}`);
+      values.push(JSON.stringify(val));
+    }
+  }
+  if (!setClauses.length) return null;
+  setClauses.push(`updated_at = now()`);
+  values.push(id);
+  const rows = await query(`UPDATE commissions SET ${setClauses.join(', ')} WHERE id = $${i} RETURNING *`, values);
+  return rows?.[0] || null;
+}
+
+// Update referral with conversion data
+export async function convertReferral(referralId, { referred_client_id, partner_id, credit_amount }) {
+  const rows = await query(
+    `UPDATE referrals SET referral_status = 'converted', referred_client_id = $1, partner_id = $2,
+            credit_amount = $3, conversion_date = now()
+     WHERE id = $4 RETURNING *`,
+    [referred_client_id, partner_id || null, credit_amount || 0, referralId]);
+  return rows?.[0] || null;
+}
+
 // ── SuiteDash passthrough for direct CRM operations ────────
 
 export { suitedash };

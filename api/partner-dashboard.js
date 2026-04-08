@@ -1,70 +1,95 @@
+// PA CROP Services — Partner Dashboard API
+// GET /api/partner-dashboard
+// Returns authenticated partner's referred clients, commissions, performance.
+// Source of truth: Neon Postgres (no SuiteDash dependency).
 
-import { setCors } from './services/auth.js';
+import { setCors, authenticateRequest } from './services/auth.js';
+import * as db from './services/db.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
-import { isValidEmail } from './_validate.js';
 
 const log = createLogger('partner-dashboard');
-
-// PA CROP Services — Partner Dashboard API
-// GET /api/partner-dashboard?email=partner@example.com
-// Returns partner's referred clients, commissions, performance
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  const rlResult = await checkRateLimit(getClientIp(req), 'partner-dashboard', 10, '60s');
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'method_not_allowed' });
+
+  const rlResult = await checkRateLimit(getClientIp(req), 'partner-dashboard', 20, '60s');
   if (rlResult) {
     res.setHeader('Retry-After', String(rlResult.retryAfter));
     return res.status(429).json({ success: false, error: 'Too many requests' });
   }
 
-  const email = req.query?.email;
-  if (!email) return res.status(400).json({ success: false, error: 'email required' });
+  // Require authenticated session with partner role
+  const session = await authenticateRequest(req);
+  if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
+  if (!session.roles?.includes('partner') && !session.roles?.includes('ops_admin')) {
+    return res.status(403).json({ success: false, error: 'partner_role_required' });
+  }
 
-  const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
-  const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  if (!SD_PUBLIC || !SD_SECRET) return res.status(500).json({ success: false, error: 'CRM not configured' });
+  if (!db.isConnected()) return res.status(503).json({ success: false, error: 'database_unavailable' });
 
   try {
-    // Find partner
-    const sdSearch = await fetch(`https://app.suitedash.com/secure-api/contacts?email=${encodeURIComponent(email)}&limit=1`, {
-      headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
-    });
-    const contacts = (await sdSearch.json())?.data || [];
-    const partner = contacts[0];
-    if (!partner) return res.status(404).json({ success: false, error: 'Partner not found' });
+    // Resolve partner record from session
+    const client = await db.getClientById(session.clientId);
+    const partner = client?.email ? await db.getPartnerByEmail(client.email) : null;
 
-    const isPartner = partner.tags?.some(t => t.includes('partner'));
-    if (!isPartner) return res.status(403).json({ success: false, error: 'Not a registered partner' });
+    if (!partner) {
+      return res.status(404).json({ success: false, error: 'partner_record_not_found' });
+    }
 
-    const refCode = partner.custom_fields?.referral_code || '';
-    const earnings = parseFloat(partner.custom_fields?.referral_earnings || '0');
-    const count = parseInt(partner.custom_fields?.referral_count || '0');
+    // Fetch data in parallel
+    const [earnings, commissions, clients, referrals] = await Promise.all([
+      db.getPartnerEarningsSummary(partner.id),
+      db.getCommissionsForPartner(partner.id, { limit: 20 }),
+      db.getPartnerClients(partner.id),
+      db.getReferrals(session.clientId)
+    ]);
 
-    // Find referred clients
-    const allClients = await fetch('https://app.suitedash.com/secure-api/contacts?limit=500&role=client', {
-      headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
-    });
-    const clients = (await allClients.json())?.data || [];
-    const referred = clients.filter(c => c.custom_fields?.lead_source === refCode || c.tags?.some(t => t === `ref-${refCode}`));
-
-    const referredSummary = referred.map(c => ({
-      signupDate: c.custom_fields?.crop_since || '',
-      tier: c.custom_fields?.crop_plan || 'compliance',
-      active: c.tags?.some(t => t.includes('crop-active')) || false,
-    }));
+    const referralCode = client?.referral_code || session.clientId?.slice(0, 8);
 
     return res.status(200).json({
       success: true,
-      partner: { name: partner.first_name || partner.name, email: partner.email },
-      referralCode: refCode,
-      referralLink: `https://pacropservices.com?ref=${refCode}`,
-      earnings: { total: earnings, count, average: count > 0 ? (earnings/count).toFixed(2) : '0' },
-      referredClients: referredSummary,
-      activeClients: referredSummary.filter(c => c.active).length,
+      partner: {
+        id: partner.id,
+        name: partner.name,
+        email: partner.email,
+        partner_type: partner.partner_type,
+        commission_rate: partner.commission_rate,
+        member_since: partner.created_at
+      },
+      referral_code: referralCode,
+      referral_link: `https://pacropservices.com/?ref=${referralCode}`,
+      earnings,
+      recent_commissions: commissions.map(c => ({
+        id: c.id,
+        client_email: c.client_email,
+        client_name: c.client_name,
+        plan_code: c.plan_code,
+        commission_usd: c.commission_usd,
+        status: c.commission_status,
+        created_at: c.created_at
+      })),
+      clients: {
+        total: clients.length,
+        items: clients.map(c => ({
+          name: c.owner_name || c.email,
+          entity_name: c.legal_name,
+          entity_type: c.entity_type,
+          plan: c.billing_plan || c.plan_code,
+          status: c.entity_status,
+          billing_status: c.billing_status
+        }))
+      },
+      referrals: {
+        total: referrals.length,
+        converted: referrals.filter(r => r.referral_status === 'converted').length,
+        pending: referrals.filter(r => r.referral_status === 'invited').length
+      }
     });
-  } catch(e) {
-    log.error('api_error', {}, e instanceof Error ? e : new Error(String(e))); return res.status(500).json({ success: false, error: 'internal_error' });
+  } catch (e) {
+    log.error('partner_dashboard_error', {}, e instanceof Error ? e : new Error(String(e)));
+    return res.status(500).json({ success: false, error: 'internal_error' });
   }
 }
