@@ -4,6 +4,7 @@
 
 import { log, logError, logWarn } from './_log.js';
 import { fetchWithTimeout } from './_fetch.js';
+import { N8N_BASE } from './_config.js';
 
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
@@ -143,11 +144,15 @@ export default async function handler(req, res) {
       log('provision_result', { email, tier: tierConfig.tier, steps: provisionData.steps?.length || 0 });
 
       // Step 2: Also notify n8n (for any additional workflow steps)
-      await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-new-client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
-      }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message }));
+      if (N8N_BASE) {
+        await fetchWithTimeout(`${N8N_BASE}/crop-new-client`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...event, tierConfig, provisionResult: provisionData })
+        }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message }));
+      } else {
+        logWarn('n8n_not_configured', { step: 'new_client', reason: 'N8N_WEBHOOK_URL not set' });
+      }
 
       // Step 2: Generate branded invoice
       fetchWithTimeout(`${baseUrl}/api/invoice-generate`, {
@@ -186,12 +191,17 @@ export default async function handler(req, res) {
       }
 
       // n8n for full dunning workflow
-      const pfRes = await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-payment-failed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(event)
-      }).catch(() => null);
-      
+      let pfRes = null;
+      if (N8N_BASE) {
+        pfRes = await fetchWithTimeout(`${N8N_BASE}/crop-payment-failed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(event)
+        }).catch(() => null);
+      } else {
+        logWarn('n8n_not_configured', { step: 'payment_failed', reason: 'N8N_WEBHOOK_URL not set' });
+      }
+
       if (!pfRes || !pfRes.ok) {
         await _notifyIke('Payment Failed — Action Required',
           '<h2>⚠️ Payment Failed</h2>' +

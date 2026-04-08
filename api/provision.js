@@ -5,6 +5,7 @@
 import { isAdminRequest, generateAccessCode as _genCode } from './services/auth.js';
 import { setCors } from './services/auth.js';
 import { randomBytes } from 'crypto';
+import { N8N_BASE } from './_config.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
   const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
   const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
   const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID;
-  const N8N = 'https://n8n.audreysplace.place/webhook';
+  // N8N_BASE imported from _config.js
 
   const results = { email, tier, steps: [], warnings: [] };
 
@@ -290,11 +291,14 @@ export default async function handler(req, res) {
   const emailitKey = process.env.EMAILIT_API_KEY;
   try {
     // Try n8n first
-    const n8nRes = await fetch(`${N8N}/crop-new-client`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name, accessCode, tier, refCode, includesHosting, hostingPassword: includesHosting ? hostingPassword : undefined })
-    }).catch(() => null);
+    let n8nRes = null;
+    if (N8N_BASE) {
+      n8nRes = await fetch(`${N8N_BASE}/crop-new-client`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, accessCode, tier, refCode, includesHosting, hostingPassword: includesHosting ? hostingPassword : undefined })
+      }).catch(() => null);
+    }
 
     if (n8nRes && n8nRes.ok) {
       results.steps.push({ step: 'welcome_email', status: 'done', via: 'n8n' });
@@ -480,25 +484,29 @@ export default async function handler(req, res) {
 
   // ── STEP 11: WordPress starter content + theme configuration ─────────
   if (websitePages > 0 && results.steps.find(s => s.step === '20i_wordpress_install' && s.status === 'done')) {
-    try {
-      await fetch(`${N8N}/crop-wordpress-setup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          packageId: results.packageId,
-          domain: suggestedDomain || `${accountSlug}.pacrophosting.com`,
-          entityName: body.entityName || name || '',
-          phone: body.phone || '814-228-2822',
-          tier,
-          websitePages,
-          adminUser: accountSlug,
-          adminPassword: hostingPassword
-        })
-      }).catch(() => null);
-      results.steps.push({ step: 'wordpress_starter_content', status: 'done', pages: websitePages });
-    } catch (e) {
-      results.steps.push({ step: 'wordpress_starter_content', status: 'warning', error: e.message });
+    if (N8N_BASE) {
+      try {
+        await fetch(`${N8N_BASE}/crop-wordpress-setup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            packageId: results.packageId,
+            domain: suggestedDomain || `${accountSlug}.pacrophosting.com`,
+            entityName: body.entityName || name || '',
+            phone: body.phone || '814-228-2822',
+            tier,
+            websitePages,
+            adminUser: accountSlug,
+            adminPassword: hostingPassword
+          })
+        }).catch(() => null);
+        results.steps.push({ step: 'wordpress_starter_content', status: 'done', pages: websitePages });
+      } catch (e) {
+        results.steps.push({ step: 'wordpress_starter_content', status: 'warning', error: e.message });
+      }
+    } else {
+      results.steps.push({ step: 'wordpress_starter_content', status: 'skipped', reason: 'N8N_WEBHOOK_URL not configured' });
     }
   }
 

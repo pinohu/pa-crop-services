@@ -6,6 +6,7 @@ import { isValidEmail } from './_validate.js';
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('reset-code');
 
@@ -46,11 +47,15 @@ export default async function handler(req, res) {
       
       if (code) {
         // Fire n8n to send the code via email
-        await fetch('https://n8n.audreysplace.place/webhook/crop-portal-reset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: cleanEmail, code, firstName })
-        }).catch(e => log.warn('external_call_failed', { error: e.message }));
+        if (N8N_BASE) {
+          await fetch(`${N8N_BASE}/crop-portal-reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: cleanEmail, code, firstName })
+          }).catch(e => log.warn('external_call_failed', { error: e.message }));
+        } else {
+          log.warn('n8n_not_configured', { step: 'portal_reset', reason: 'N8N_WEBHOOK_URL not set' });
+        }
       }
     }
 

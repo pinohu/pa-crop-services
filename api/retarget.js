@@ -1,6 +1,7 @@
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('retarget');
 
@@ -42,11 +43,15 @@ export default async function handler(req, res) {
     });
 
     // Also trigger n8n for immediate Day-1 email
-    await fetch('https://n8n.audreysplace.place/webhook/crop-retarget-start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name, riskScore, source, day: 1 })
-    }).catch(e => log.warn('external_call_failed', { error: e.message }));
+    if (N8N_BASE) {
+      await fetch(`${N8N_BASE}/crop-retarget-start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, riskScore, source, day: 1 })
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
+    } else {
+      log.warn('n8n_not_configured', { step: 'retarget_start', reason: 'N8N_WEBHOOK_URL not set' });
+    }
 
     return res.status(200).json({ success: true, message: 'Added to retargeting sequence', email });
   } catch (e) {

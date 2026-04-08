@@ -7,6 +7,7 @@ import { setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
 import { db } from './_db.js';
 import { isValidEmail, isValidString, sanitize } from './_validate.js';
+import { N8N_BASE } from './_config.js';
 
 const logger = createLogger('subscribe');
 
@@ -74,19 +75,24 @@ export default async function handler(req, res) {
     }
 
     // ── n8n nurture sequence webhook ──
-    try {
-      const n8nRes = await fetch('https://n8n.audreysplace.place/webhook/crop-lead-nurture-start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, source: cleanSource, tag: cleanTag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
-      });
-      if (!n8nRes.ok) {
-        const errText = await n8nRes.text().catch(() => 'unknown');
-        logger.error('n8n_webhook_failed', { status: n8nRes.status, errText, email: cleanEmail });
+    if (N8N_BASE) {
+      try {
+        const n8nRes = await fetch(`${N8N_BASE}/crop-lead-nurture-start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, source: cleanSource, tag: cleanTag, leadTier: 'warm', guideUrl: 'https://pacropservices.com/pa-annual-report-compliance-checklist.pdf' })
+        });
+        if (!n8nRes.ok) {
+          const errText = await n8nRes.text().catch(() => 'unknown');
+          logger.error('n8n_webhook_failed', { status: n8nRes.status, errText, email: cleanEmail });
+          warnings.push('nurture_sequence');
+        }
+      } catch (n8nErr) {
+        logger.error('n8n_webhook_error', { email: cleanEmail }, n8nErr);
         warnings.push('nurture_sequence');
       }
-    } catch (n8nErr) {
-      logger.error('n8n_webhook_error', { email: cleanEmail }, n8nErr);
+    } else {
+      logger.warn('n8n_not_configured', { step: 'lead_nurture', reason: 'N8N_WEBHOOK_URL not set' });
       warnings.push('nurture_sequence');
     }
 

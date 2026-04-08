@@ -5,6 +5,7 @@
 import * as db from '../services/db.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { createLogger } from '../_log.js';
+import { N8N_BASE } from '../_config.js';
 
 const log = createLogger('admin');
 
@@ -454,14 +455,18 @@ export default async function handler(req, res) {
       // ── DOS Entity Check (trigger n8n) ────────────────────────────────
       case 'check_entity': {
         const { entityName, entityNumber } = payload;
-        try {
-          const r = await fetchWithTimeout('https://n8n.audreysplace.place/webhook/crop-dos-entity-checker', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entityName, entityNumber })
-          });
-          if (r.ok) return res.status(200).json(await r.json().catch(() => ({})));
-        } catch (e) { /* n8n unreachable */ }
+        if (N8N_BASE) {
+          try {
+            const r = await fetchWithTimeout(`${N8N_BASE}/crop-dos-entity-checker`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ entityName, entityNumber })
+            });
+            if (r.ok) return res.status(200).json(await r.json().catch(() => ({})));
+          } catch (e) { /* n8n unreachable */ }
+        } else {
+          log.warn('n8n_not_configured', { action: 'check_entity', reason: 'N8N_WEBHOOK_URL not set' });
+        }
         // Fallback: return manual check instructions
         return res.status(200).json({
           status: 'manual_check_required',

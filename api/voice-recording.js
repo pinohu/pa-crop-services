@@ -1,6 +1,7 @@
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('voice-recording');
 
@@ -71,11 +72,16 @@ export default async function handler(req, res) {
 
   // Log voicemail and notify via n8n
   try {
-    const vmRes = await fetch('https://n8n.audreysplace.place/webhook/crop-voicemail', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription, timestamp: new Date().toISOString() })
-    }).catch(() => null);
+    let vmRes = null;
+    if (N8N_BASE) {
+      vmRes = await fetch(`${N8N_BASE}/crop-voicemail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription, timestamp: new Date().toISOString() })
+      }).catch(() => null);
+    } else {
+      log.warn('n8n_not_configured', { step: 'voicemail', reason: 'N8N_WEBHOOK_URL not set' });
+    }
     if (!vmRes || !vmRes.ok) {
       await _notifyIke('New Voicemail',
         '<h2>📞 Voicemail Received</h2>' +
