@@ -5,7 +5,7 @@
 // DELETE: Revoke a key by ID
 
 import { setCors, isAdminRequest, generateApiKey } from '../services/auth.js';
-import { getSql, isConnected } from '../services/db.js';
+import { getSql, isConnected, writeAuditEvent } from '../services/db.js';
 import { createLogger } from '../_log.js';
 
 const log = createLogger('admin/api-keys');
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
         RETURNING id, label, scopes, rate_limit, expires_at, created_at
       `;
       log.info('api_key_created', { orgId: organization_id, keyId: rows[0].id });
+      writeAuditEvent({ actor_type: 'admin', actor_id: 'admin_key', event_type: 'api_key.created', target_type: 'api_key', target_id: rows[0].id, after_json: { organization_id, label: label || 'default', scopes: scopes || ['read'] }, reason: 'admin_created' }).catch(() => {});
       return res.status(201).json({
         success: true,
         api_key: raw,  // Only time the raw key is returned
@@ -92,6 +93,7 @@ export default async function handler(req, res) {
       await sql`UPDATE api_keys SET expires_at = ${oldExpiresAt}, updated_at = now() WHERE id = ${id}`;
 
       log.info('api_key_rotated', { oldKeyId: id, newKeyId: newRows[0].id, gracePeriodHours: gracePeriod });
+      writeAuditEvent({ actor_type: 'admin', actor_id: 'admin_key', event_type: 'api_key.rotated', target_type: 'api_key', target_id: id, before_json: { old_key_id: id }, after_json: { new_key_id: newRows[0].id, grace_period_hours: gracePeriod }, reason: 'admin_rotated' }).catch(() => {});
       return res.status(200).json({
         success: true,
         new_api_key: raw,
@@ -114,6 +116,7 @@ export default async function handler(req, res) {
     try {
       await sql`UPDATE api_keys SET is_active = false, updated_at = now() WHERE id = ${keyId}`;
       log.info('api_key_revoked', { keyId });
+      writeAuditEvent({ actor_type: 'admin', actor_id: 'admin_key', event_type: 'api_key.revoked', target_type: 'api_key', target_id: keyId, reason: 'admin_revoked' }).catch(() => {});
       return res.status(200).json({ success: true });
     } catch (err) {
       log.error('api_key_revoke_failed', {}, err);

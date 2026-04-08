@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { isValidEmail, isValidString, sanitize } from './_validate.js';
 import { fetchWithTimeout } from './_fetch.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('intake');
 
@@ -60,8 +61,6 @@ export default async function handler(req, res) {
 
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const N8N_BASE  = 'https://n8n.audreysplace.place/webhook';
-
   try {
     // Create SuiteDash contact
     if (SD_PUBLIC && SD_SECRET) {
@@ -91,19 +90,21 @@ export default async function handler(req, res) {
       }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
 
-    // Fire n8n webhook for nurture sequence
-    const webhookPath = leadTier === 'hot' 
-      ? 'crop-hot-lead-alert'
-      : 'crop-lead-nurture-start';
-    
-    await fetchWithTimeout(`${N8N_BASE}/${webhookPath}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: cleanEmail, firstName, source, score, leadTier,
-        entityType, hasForeignEntity, partnerId
-      })
-    }).catch(e => log.warn('external_call_failed', { error: e.message })); // Fire and forget
+    // Fire n8n webhook for nurture sequence (skip if n8n not configured)
+    if (N8N_BASE) {
+      const webhookPath = leadTier === 'hot'
+        ? 'crop-hot-lead-alert'
+        : 'crop-lead-nurture-start';
+
+      await fetchWithTimeout(`${N8N_BASE}/${webhookPath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail, firstName, source, score, leadTier,
+          entityType, hasForeignEntity, partnerId
+        })
+      }).catch(e => log.warn('external_call_failed', { error: e.message })); // Fire and forget
+    }
 
     // Add to retargeting drip (for leads that don't convert immediately)
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';

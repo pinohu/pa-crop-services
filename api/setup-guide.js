@@ -26,10 +26,10 @@ const GUIDES = {
     title: 'n8n — Create 17 Cron Workflows',
     priority: 'HIGH — activates all scheduled automations',
     estimatedTime: '45 minutes',
-    url: 'https://n8n.audreysplace.place',
+    url: null, // set dynamically from N8N_BASE
     quickMethod: 'Import JSON from /api/n8n-export?key=<YOUR_ADMIN_KEY>&workflow=<id>',
     steps: [
-      { step: 1, action: 'Go to n8n dashboard: https://n8n.audreysplace.place' },
+      { step: 1, action: null }, // set dynamically from N8N_BASE
       { step: 2, action: 'For each workflow: Click + New Workflow → Import from JSON → Paste JSON from /api/n8n-export' },
       { step: 3, action: 'Activate each workflow (toggle ON)' },
       { step: 4, action: 'Test each by clicking "Execute Workflow" manually once' },
@@ -74,7 +74,7 @@ const GUIDES = {
     steps: [
       { step: 1, action: 'Login to CallScaler dashboard' },
       { step: 2, action: 'Set up tracking number forwarding to 814-228-2822' },
-      { step: 3, action: 'Configure webhook: POST to https://n8n.audreysplace.place/webhook/crop-call-log on call complete' },
+      { step: 3, action: null }, // set dynamically from N8N_BASE
       { step: 4, action: 'n8n workflow: receive call data → match caller to SuiteDash contact → log activity' },
     ]
   },
@@ -106,6 +106,7 @@ const GUIDES = {
 import { isAdminRequest } from './services/auth.js';
 import { setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('setup-guide');
 
@@ -119,12 +120,24 @@ export default async function handler(req, res) {
 
   const section = req.query?.section || 'all';
 
-  if (section === 'all') {
-    return res.status(200).json({ success: true, guides: GUIDES, sections: Object.keys(GUIDES), totalConfigItems: 25 });
+  // Patch n8n URLs dynamically from env
+  const n8nUrl = N8N_BASE ? N8N_BASE.replace(/\/webhook\/?$/, '') : '(configure N8N_WEBHOOK_URL)';
+  const n8nWebhook = N8N_BASE || '(configure N8N_WEBHOOK_URL)';
+  const guides = JSON.parse(JSON.stringify(GUIDES));
+  if (guides.n8n) {
+    guides.n8n.url = n8nUrl;
+    if (guides.n8n.steps?.[0]) guides.n8n.steps[0].action = `Go to n8n dashboard: ${n8nUrl}`;
+  }
+  if (guides.callscaler?.steps?.[2]) {
+    guides.callscaler.steps[2].action = `Configure webhook: POST to ${n8nWebhook}/crop-call-log on call complete`;
   }
 
-  const guide = GUIDES[section];
-  if (!guide) return res.status(400).json({ success: false, error: `Unknown section. Available: ${Object.keys(GUIDES).join(', ')}` });
+  if (section === 'all') {
+    return res.status(200).json({ success: true, guides, sections: Object.keys(guides), totalConfigItems: 25 });
+  }
+
+  const guide = guides[section];
+  if (!guide) return res.status(400).json({ success: false, error: `Unknown section. Available: ${Object.keys(guides).join(', ')}` });
 
   return res.status(200).json({ success: true, ...guide });
   } catch (err) {

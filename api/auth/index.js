@@ -5,6 +5,7 @@
 import { setCors } from '../services/auth.js';
 import { logError } from '../_log.js';
 import { checkRateLimit, getClientIp } from '../_ratelimit.js';
+import { db } from '../_db.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -26,6 +27,7 @@ export default async function handler(req, res) {
   if (isDemoAllowed && cleanEmail === 'demo@pacropservices.com' && cleanCode === DEMO_CODE) {
     const { createSession } = await import('../services/auth.js');
     const session = await createSession({ id: 'demo', organization_id: 'demo-org', plan_code: 'business_pro', email: cleanEmail, roles: ['client'] });
+    db.logEvent({ actor: cleanEmail, eventType: 'auth.login', targetType: 'client', targetId: 'demo', orgId: 'demo-org', reason: 'demo_account', metadata: { ip: getClientIp(req) } }).catch(() => {});
     return res.status(200).json({
       success: true,
       token: session.token,
@@ -63,6 +65,7 @@ export default async function handler(req, res) {
         if (storedCode && storedCode.toUpperCase() === cleanCode) {
           const { createSession } = await import('../services/auth.js');
           const session = await createSession({ id: sdClient.uid, organization_id: sdClient.custom_fields?.neon_org_id || null, plan_code: sdClient.custom_fields?.plan_code || 'compliance_only', email: sdClient.email, roles: ['client'] });
+          db.logEvent({ actor: cleanEmail, eventType: 'auth.login', targetType: 'client', targetId: sdClient.uid, orgId: sdClient.custom_fields?.neon_org_id || null, reason: 'suitedash_lookup', metadata: { ip: getClientIp(req) } }).catch(() => {});
           return res.status(200).json({
             success: true,
             token: session.token,
@@ -101,6 +104,7 @@ export default async function handler(req, res) {
         const storedCode = meta.access_code || '';
         if (storedCode && storedCode.toUpperCase() === cleanCode) {
           if (meta.access_code_expires && new Date(meta.access_code_expires) < new Date()) {
+            db.logEvent({ actor: cleanEmail, eventType: 'auth.code_expired', targetType: 'client', targetId: client.id, orgId: client.organization_id, metadata: { ip: getClientIp(req) } }).catch(() => {});
             return res.status(401).json({ success: false, error: 'Code expired. Request a new one.' });
           }
           // Only clear one-time codes (those with an expiry). Permanent codes persist.
@@ -116,6 +120,7 @@ export default async function handler(req, res) {
             email: client.email,
             roles: meta.roles || ['client']
           });
+          db.logEvent({ actor: cleanEmail, eventType: 'auth.login', targetType: 'client', targetId: client.id, orgId: client.organization_id, reason: 'neon_lookup', metadata: { ip: getClientIp(req) } }).catch(() => {});
           return res.status(200).json({
             success: true,
             token: session.token,
@@ -142,5 +147,6 @@ export default async function handler(req, res) {
     logError('neon_auth_error', {}, e);
   }
 
+  db.logEvent({ actor: cleanEmail, eventType: 'auth.login_failed', targetType: 'client', targetId: null, reason: 'invalid_credentials', metadata: { ip: getClientIp(req) } }).catch(() => {});
   return res.status(401).json({ success: false, error: 'Invalid email or access code.' });
 }

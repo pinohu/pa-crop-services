@@ -6,6 +6,8 @@ import { SignJWT, jwtVerify } from 'jose';
 import { timingSafeEqual, randomBytes, createHmac } from 'crypto';
 import { Redis } from '@upstash/redis';
 import * as db from './db.js';
+import { logWarn } from '../_log.js';
+import { checkRateLimit } from '../_ratelimit.js';
 
 // ── Redis for session blocklist ────────────────────────────
 let _redis = null;
@@ -72,10 +74,16 @@ export async function verifySession(token) {
         try {
           const revoked = await redis.get(`revoked:${payload.jti}`);
           if (revoked) return { valid: false, error: 'token_revoked' };
-        } catch {
-          // Redis failure — fail open to avoid locking out all users.
-          // Rate limiting + short TTL mitigate risk.
+        } catch (err) {
+          // Redis failure — fail CLOSED. Revocation check is security-critical.
+          // Short token TTL (1h) limits blast radius. Users re-authenticate.
+          logWarn('session_revocation_check_failed', { jti: payload.jti, error: err.message });
+          return { valid: false, error: 'revocation_check_unavailable' };
         }
+      } else if (process.env.NODE_ENV !== 'test') {
+        // Redis not configured — revocation cannot be enforced.
+        // Log once per cold start. In production this is a misconfiguration.
+        logWarn('session_revocation_no_redis', { jti: payload.jti, note: 'Redis not configured — revocation bypass possible' });
       }
     }
 
@@ -314,6 +322,37 @@ export async function authenticateAny(req) {
   if (isAdminRequest(req)) return { valid: true, authMethod: 'admin_key', roles: ['admin'] };
 
   return { valid: false };
+}
+
+// ── API Key Middleware ─────────────────────────────────────
+// Wraps auth + scope check + per-key rate limiting for machine-to-machine endpoints.
+
+/**
+ * Middleware that authenticates via X-API-Key, checks scopes, enforces per-key rate limits.
+ * @param {object} req
+ * @param {object} res
+ * @param {{ requiredScopes?: string[], handler: Function }} opts
+ */
+export async function withApiKeyAuth(req, res, { requiredScopes = [], handler }) {
+  const apiKey = await authenticateApiKey(req);
+  if (!apiKey?.valid) return res.status(401).json({ success: false, error: 'invalid_api_key' });
+
+  // Scope check
+  if (requiredScopes.length) {
+    const scopeCheck = requireScope(apiKey, ...requiredScopes);
+    if (!scopeCheck.authorized) return res.status(403).json({ success: false, error: scopeCheck.error });
+  }
+
+  // Per-key rate limiting (uses key ID as identifier, not IP)
+  const rateLimited = await checkRateLimit(`apikey:${apiKey.keyId}`, 'api_key', apiKey.rateLimit, '60s');
+  if (rateLimited) {
+    res.setHeader('Retry-After', String(rateLimited.retryAfter));
+    return res.status(429).json({ success: false, error: 'rate_limit_exceeded' });
+  }
+
+  // Attach auth context to request
+  req.apiKey = apiKey;
+  return handler(req, res);
 }
 
 // ── CORS helper ────────────────────────────────────────────

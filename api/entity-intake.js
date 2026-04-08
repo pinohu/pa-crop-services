@@ -6,6 +6,7 @@ import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { resolveEntityType } from './_compliance.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('entity-intake');
 
@@ -180,21 +181,25 @@ export default async function handler(req, res) {
   }
 
   // ── Step 4: Hot lead signal to n8n ──────────────────────────
-  try {
-    await fetch('https://n8n.audreysplace.place/webhook/crop-hot-lead-alert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: cleanEmail,
-        name: cleanEntityName,
-        source: 'entity-intake',
-        score: 100,
-        reason: 'New entity intake submitted',
-        neon_org_id: neonOrgId
-      })
-    });
-  } catch {
-    // Non-fatal
+  if (N8N_BASE) {
+    try {
+      await fetch(`${N8N_BASE}/crop-hot-lead-alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: cleanEntityName,
+          source: 'entity-intake',
+          score: 100,
+          reason: 'New entity intake submitted',
+          neon_org_id: neonOrgId
+        })
+      });
+    } catch {
+      // Non-fatal
+    }
+  } else {
+    log.warn('n8n_not_configured', { step: 'hot_lead_alert', reason: 'N8N_WEBHOOK_URL not set' });
   }
 
   return res.status(200).json({

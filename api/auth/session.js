@@ -1,5 +1,7 @@
 import { setCors, authenticateRequest, createSession } from '../services/auth.js';
 import { getClientById } from '../services/db.js';
+import { db } from '../_db.js';
+import { getClientIp } from '../_ratelimit.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -25,6 +27,7 @@ export default async function handler(req, res) {
           email: client.email
         });
         refreshedToken = newSession;
+        db.logEvent({ actor: session.email || session.clientId, eventType: 'auth.session_refreshed', targetType: 'session', targetId: session.clientId, orgId: session.orgId, metadata: { ip: getClientIp(req), minutesRemaining: Math.round(minutesRemaining) } }).catch(() => {});
       }
     }
 

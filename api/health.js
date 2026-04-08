@@ -2,6 +2,7 @@ import { setCors, isAdminRequest } from './services/auth.js';
 import { createLogger } from './_log.js';
 import { isConnected as isDbConnected } from './services/db.js';
 import { isUpstashConfigured } from './_ratelimit.js';
+import { N8N_HEALTH } from './_config.js';
 
 const log = createLogger('health');
 
@@ -75,10 +76,14 @@ export default async function handler(req, res) {
 
   // 4. n8n
   const n8n_start = Date.now();
-  try {
-    const r = await fetch('https://n8n.audreysplace.place/healthz');
-    checks.n8n = { status: r.ok ? 'healthy' : 'degraded', latency: (Date.now() - n8n_start) + 'ms' };
-  } catch (e) { checks.n8n = { status: 'down', error: e.message }; }
+  if (N8N_HEALTH) {
+    try {
+      const r = await fetch(N8N_HEALTH);
+      checks.n8n = { status: r.ok ? 'healthy' : 'degraded', latency: (Date.now() - n8n_start) + 'ms' };
+    } catch (e) { checks.n8n = { status: 'down', error: e.message }; }
+  } else {
+    checks.n8n = { status: 'not_configured' };
+  }
 
   // Overall
   const statuses = Object.values(checks).map(c => c.status);

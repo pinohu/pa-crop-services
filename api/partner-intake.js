@@ -1,6 +1,7 @@
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('partner-intake');
 
@@ -76,14 +77,18 @@ export default async function handler(req, res) {
     }
 
     // Fire n8n partner onboarding sequence
-    await fetch('https://n8n.audreysplace.place/webhook/crop-partner-onboarding', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firmName, firstName, lastName, email: cleanEmail, phone,
-        clientCount, pricingPreference, firmType, tags
-      })
-    }).catch(e => log.warn('external_call_failed', { error: e.message }));
+    if (N8N_BASE) {
+      await fetch(`${N8N_BASE}/crop-partner-onboarding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firmName, firstName, lastName, email: cleanEmail, phone,
+          clientCount, pricingPreference, firmType, tags
+        })
+      }).catch(e => log.warn('external_call_failed', { error: e.message }));
+    } else {
+      log.warn('n8n_not_configured', { step: 'partner_onboarding', reason: 'N8N_WEBHOOK_URL not set' });
+    }
 
     return res.status(200).json({
       success: true,

@@ -1,6 +1,7 @@
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { N8N_BASE } from './_config.js';
 
 const log = createLogger('entity-request');
 
@@ -62,11 +63,16 @@ export default async function handler(req, res) {
     }
 
     // Notify Ike via n8n (with email fallback)
-    const erRes = await fetch('https://n8n.audreysplace.place/webhook/crop-entity-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entityName, entityType, email: contactEmail, phone, notes })
-    }).catch(() => null);
+    let erRes = null;
+    if (N8N_BASE) {
+      erRes = await fetch(`${N8N_BASE}/crop-entity-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityName, entityType, email: contactEmail, phone, notes })
+      }).catch(() => null);
+    } else {
+      log.warn('n8n_not_configured', { step: 'entity_request', reason: 'N8N_WEBHOOK_URL not set' });
+    }
     if (!erRes || !erRes.ok) {
       await _notifyIke('New Entity Formation Request',
         '<h2>🏢 Entity Formation Request</h2>' +

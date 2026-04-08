@@ -2,9 +2,10 @@
 // POST /api/franchise-setup { partnerName, partnerEmail, domain, branding }
 // Generates complete white-label instance config using SuiteDash + 20i
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
+import * as db from './services/db.js';
 import { createLogger } from './_log.js';
+import { isValidEmail, isValidString } from './_validate.js';
 
 const log = createLogger('franchise-setup');
 
@@ -15,10 +16,13 @@ export default async function handler(req, res) {
   try {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'admin_required' });
 
   const { partnerName, partnerEmail, domain, branding, specialization } = req.body || {};
   if (!partnerName || !partnerEmail) return res.status(400).json({ success: false, error: 'partnerName and partnerEmail required' });
+  if (!isValidEmail(partnerEmail)) return res.status(400).json({ success: false, error: 'invalid_email' });
+  if (!isValidString(partnerName, { maxLength: 200 })) return res.status(400).json({ success: false, error: 'partnerName too long' });
+  if (domain && !isValidString(domain, { maxLength: 253 })) return res.status(400).json({ success: false, error: 'domain too long' });
 
   const slug = partnerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 20);
   const setup = {
@@ -71,6 +75,17 @@ export default async function handler(req, res) {
         html: `<pre>${JSON.stringify(setup, null, 2)}</pre>`
       })
     }).catch(e => log.warn('external_call_failed', { error: e.message }));
+  }
+
+  // Audit trail for franchise requests
+  if (db.isConnected()) {
+    db.writeAuditEvent({
+      actor_type: 'admin', actor_id: 'admin_key',
+      event_type: 'franchise.setup_requested',
+      target_type: 'partner', target_id: partnerEmail,
+      after_json: { partnerName, domain: setup.suitedash.config.domain, slug },
+      reason: 'franchise_setup'
+    }).catch(() => {});
   }
 
   return res.status(200).json({ success: true, ...setup });
