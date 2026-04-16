@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230C1220'/><path d='M12 4L4 8.5v7L12 20l8-4.5v-7L12 4z' fill='white'/></svg>">
+<title>For PA CPAs &amp; Attorneys: The Partnership Pitch | PA CROP Services</title>
+<meta name="description" content="Pennsylvania CPAs, bookkeepers, and business attorneys — your clients need a CROP. You probably don't want to be in the state filings business. Partner with us, earn recurring revenue per client, zero operational burden.">
+<link rel="canonical" href="https://www.pacropservices.com/cpa-partnership-offer">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="For PA CPAs &amp; Attorneys: The Partnership Pitch — PA CROP Services">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.pacropservices.com/cpa-partnership-offer">
+<meta property="og:description" content="Add PA CROP Services to your practice without adding work. $99-$699 per client per year, 20% referral fee or 15% recurring. Zero operational burden.">
+<meta property="og:image" content="https://www.pacropservices.com/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
+
+<style>
+/* Hero */
+.pitch-hero{background:var(--slate);color:var(--white);padding:72px 0 64px;position:relative;overflow:hidden}
+.pitch-hero::before{content:'';position:absolute;top:-30%;left:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(107,143,113,.12),transparent 65%);pointer-events:none}
+.pitch-hero .container{position:relative}
+.hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:56px;align-items:center}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;gap:40px}}
+.hero-badge{display:inline-flex;align-items:center;gap:10px;background:rgba(201,152,42,.18);color:var(--gold);border:1px solid rgba(201,152,42,.35);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
+.pitch-hero h1{font-family:var(--serif);font-size:clamp(30px,4.2vw,48px);color:var(--white);line-height:1.1;letter-spacing:-.01em;margin-bottom:20px}
+.pitch-hero h1 em{color:var(--gold);font-style:italic;font-weight:400}
+.hero-lead{font-size:17px;color:rgba(255,255,255,.78);max-width:540px;line-height:1.55;margin-bottom:32px}
+.hero-cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero-cta-primary{background:var(--gold);color:var(--slate)!important;padding:15px 30px;border-radius:var(--radius);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:all .25s var(--ease)}
+.hero-cta-primary:hover{background:#D4A843;transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,152,42,.35)}
+.hero-cta-secondary{color:rgba(255,255,255,.85)!important;padding:15px 22px;border-radius:var(--radius);font-weight:500;font-size:15px;border:1px solid rgba(255,255,255,.2);transition:all .2s}
+.hero-cta-secondary:hover{border-color:var(--gold);color:var(--gold)!important}
+
+/* Stats card */
+.stats-card{background:rgba(255,255,255,.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:32px 28px}
+.stats-card-title{font-family:var(--serif);font-size:13px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.12)}
+.stat-row{display:grid;grid-template-columns:1fr auto;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);align-items:baseline}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:13px;color:rgba(255,255,255,.7)}
+.stat-value{font-family:var(--serif);font-size:26px;color:var(--white);font-weight:400}
+.stat-value em{font-style:italic;color:var(--gold);font-size:18px}
+
+/* Scenario */
+.scenario-section{padding:80px 0;background:var(--cream2);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)}
+.scenario-inner{max-width:880px;margin:0 auto}
+.scenario-inner h2{font-family:var(--serif);font-size:clamp(28px,3.5vw,40px);color:var(--slate);line-height:1.15;margin-bottom:24px}
+.scenario-inner h2 em{color:var(--gold-muted);font-style:italic;font-weight:400}
+.scenario-body{font-size:17px;color:var(--ink2);line-height:1.7}
+.scenario-body p{margin-bottom:18px}
+.scenario-body strong{color:var(--slate);font-weight:600}
+
+/* Benefits grid (6 cards) */
+.benefits-section{padding:80px 0}
+.benefits-section .section-lead{font-family:var(--serif);font-size:clamp(28px,3.5vw,40px);color:var(--slate);max-width:740px;line-height:1.18;margin-bottom:20px}
+.benefits-section .section-lead em{color:var(--gold-muted);font-style:italic;font-weight:400}
+.benefits-section .section-sub{font-size:17px;color:var(--ink2);max-width:680px;line-height:1.55;margin-bottom:48px}
+.benefit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+@media(max-width:720px){.benefit-grid{grid-template-columns:1fr}}
+.benefit{background:var(--white);border:1px solid var(--cream3);border-radius:14px;padding:28px;display:grid;grid-template-columns:44px 1fr;gap:16px;transition:all .25s var(--ease)}
+.benefit:hover{transform:translateY(-3px);border-color:var(--gold-muted);box-shadow:0 16px 32px -16px rgba(12,18,32,.1)}
+.benefit-icon{width:44px;height:44px;background:var(--gold-light);border-radius:10px;display:grid;place-items:center;color:var(--gold-muted)}
+.benefit h3{font-family:var(--serif);font-size:19px;color:var(--slate);margin-bottom:6px;line-height:1.2}
+.benefit p{font-size:14px;color:var(--ink2);line-height:1.55}
+
+/* How it works */
+.how-section{padding:80px 0;background:var(--cream2);border-top:1px solid var(--cream3);border-bottom:1px solid var(--cream3)}
+.how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+@media(max-width:800px){.how-steps{grid-template-columns:1fr}}
+.how-step{background:var(--white);border:1px solid var(--cream3);border-top:3px solid var(--gold);border-radius:0 0 12px 12px;padding:32px 26px}
+.how-num{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--gold-muted);letter-spacing:.08em;margin-bottom:14px}
+.how-num strong{display:block;font-family:var(--serif);font-size:40px;font-style:normal;color:var(--slate);line-height:1;margin-top:2px;font-weight:400}
+.how-step h3{font-family:var(--serif);font-size:20px;color:var(--slate);margin-bottom:10px;line-height:1.2}
+.how-step p{font-size:14px;color:var(--ink2);line-height:1.55}
+
+/* Tier recap */
+.tier-recap-section{padding:80px 0}
+.tier-recap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+@media(max-width:900px){.tier-recap{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.tier-recap{grid-template-columns:1fr;max-width:340px;margin:40px auto 0}}
+.tier-mini{background:var(--white);border:1px solid var(--cream3);border-radius:12px;padding:24px 20px;text-align:center;transition:all .25s var(--ease)}
+.tier-mini:hover{transform:translateY(-3px);border-color:var(--gold-muted);box-shadow:0 12px 24px -12px rgba(12,18,32,.1)}
+.tier-mini.featured{background:var(--slate);color:var(--white)}
+.tier-mini-name{font-size:11px;font-weight:700;color:var(--gold-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.tier-mini.featured .tier-mini-name{color:var(--gold)}
+.tier-mini-price{font-family:var(--serif);font-size:36px;color:var(--slate);line-height:1;margin-bottom:2px}
+.tier-mini.featured .tier-mini-price{color:var(--white)}
+.tier-mini-price sup{font-size:13px;opacity:.55;font-weight:400}
+.tier-mini-desc{font-size:12px;color:var(--ink3);margin-top:12px;line-height:1.45;min-height:52px}
+.tier-mini.featured .tier-mini-desc{color:rgba(255,255,255,.65)}
+
+/* FAQ */
+.faq-section{padding:72px 0}
+.faq-section .section-lead{font-family:var(--serif);font-size:clamp(28px,3.5vw,40px);color:var(--slate);margin-bottom:8px}
+.faq-section .section-sub{font-size:17px;color:var(--ink2);margin-bottom:40px}
+.faq-list{max-width:840px}
+details.faq{border-bottom:1px solid var(--cream3);padding:20px 0}
+details.faq summary{font-family:var(--serif);font-size:19px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;color:var(--slate);line-height:1.25}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:'+';font-size:22px;color:var(--gold-muted);font-weight:300;transition:transform .2s;flex-shrink:0}
+details.faq[open] summary::after{transform:rotate(45deg)}
+details.faq p{margin-top:12px;color:var(--ink2);font-size:15px;line-height:1.6;max-width:720px}
+
+/* Final */
+.final-cta{padding:96px 0;text-align:center;background:var(--slate);color:var(--white)}
+.final-cta h2{font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:var(--white);margin-bottom:20px;line-height:1.15}
+.final-cta h2 em{color:var(--gold);font-style:italic;font-weight:400}
+.final-cta .lead{font-size:17px;color:rgba(255,255,255,.75);max-width:620px;margin:0 auto 36px;line-height:1.55}
+.final-cta-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+.final-phone{margin-top:32px;padding-top:28px;border-top:1px solid rgba(255,255,255,.15);display:inline-flex;align-items:center;gap:10px;font-family:var(--serif);font-style:italic;font-size:14px;color:rgba(255,255,255,.6)}
+.final-phone a{font-family:var(--font);font-style:normal;font-size:18px;color:var(--white)!important;font-weight:500}
+.section-tag-dark{color:var(--gold);display:inline-block;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px}
+</style>
+
+<script type="application/ld+json">{
+  "@context":"https://schema.org",
+  "@type":"WebPage",
+  "name":"For PA CPAs & Attorneys: The Partnership Pitch",
+  "description":"White-label registered office services for CPA firms and business attorneys in Pennsylvania. Refer clients to a licensed PA CROP and earn recurring revenue with zero operational burden.",
+  "url":"https://www.pacropservices.com/cpa-partnership-offer",
+  "provider":{
+    "@type":"Organization",
+    "name":"PA CROP Services",
+    "url":"https://www.pacropservices.com",
+    "telephone":"+1-814-228-2822",
+    "email":"hello@pacropservices.com",
+    "address":{"@type":"PostalAddress","streetAddress":"924 W 23rd St","addressLocality":"Erie","addressRegion":"PA","postalCode":"16502","addressCountry":"US"}
+  },
+  "breadcrumb":{
+    "@type":"BreadcrumbList",
+    "itemListElement":[
+      {"@type":"ListItem","position":1,"name":"PA CROP Services","item":"https://www.pacropservices.com/"},
+      {"@type":"ListItem","position":2,"name":"Partners","item":"https://www.pacropservices.com/partners"},
+      {"@type":"ListItem","position":3,"name":"The Partnership Pitch"}
+    ]
+  }
+}</script>
+
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
+  <a href="/" class="nav-brand"><div class="nav-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
+  <div class="nav-links">
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/partners" aria-current="page">Partners</a>
+    <a href="/portal">Client Login</a>
+    <a href="tel:8142282822" style="font-size:13px;color:var(--ink3);font-weight:500">814-228-2822</a>
+    <a href="/compliance-check" class="nav-cta">Check my entity</a>
+  </div>
+  <button class="nav-mobile" onclick="document.getElementById('mm').classList.toggle('open')" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mobile-menu" id="mm">
+  <a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a>
+  <a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a>
+  <a href="/partners" onclick="document.getElementById('mm').classList.remove('open')">Partners</a>
+  <a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a>
+  <a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a>
+  <a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a>
+</div>
+
+<div class="container" style="background:var(--cream)">
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">PA CROP Services</a></li>
+      <li><a href="/partners">Partners</a></li>
+      <li><span aria-current="page">The Partnership Pitch</span></li>
+    </ol>
+  </nav>
+</div>
+
+<main id="main-content">
+
+<section class="pitch-hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-badge">For PA CPAs, bookkeepers &amp; attorneys</div>
+        <h1>Your clients need a PA CROP. <em>You probably don't want to be in the state filings business.</em></h1>
+        <p class="hero-lead">Every Pennsylvania LLC, corporation, and registered entity needs a Commercial Registered Office Provider under 15 Pa. C.S. § 109. Most of your clients have no idea what that means — or that the 2027 annual report rule now triggers administrative dissolution. Partner with us. We handle the filings and the registered office. Your clients stay taken care of. You earn recurring revenue on the connection.</p>
+        <div class="hero-cta-row">
+          <a href="/partners#apply" class="hero-cta-primary">Apply to partner <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.3 8h9.4M8.5 3.8L12.7 8l-4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <a href="#how" class="hero-cta-secondary">See how it works</a>
+        </div>
+      </div>
+      <div class="stats-card reveal">
+        <div class="stats-card-title">Partnership by the numbers</div>
+        <div class="stat-row"><span class="stat-label">Revenue per client/year</span><span class="stat-value">$99+</span></div>
+        <div class="stat-row"><span class="stat-label">Your time per client</span><span class="stat-value"><em>zero</em></span></div>
+        <div class="stat-row"><span class="stat-label">White-label branding</span><span class="stat-value">100%</span></div>
+        <div class="stat-row"><span class="stat-label">Onboarding turnaround</span><span class="stat-value">3 days</span></div>
+        <div class="stat-row"><span class="stat-label">PA entities needing a CROP</span><span class="stat-value">3.8M+</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="scenario-section">
+  <div class="container">
+    <div class="scenario-inner">
+      <div class="section-tag">The scenario every PA accountant has lived through</div>
+      <h2>It's April. A client calls: <em>"The state is going to dissolve my LLC. Can you help?"</em></h2>
+      <div class="scenario-body">
+        <p>You're in the middle of tax season. Extensions, S-corp returns, IRS correspondence. Now a client you've been serving for four years — and whose PA filing history you had no formal responsibility for — is panicking about a Department of State notice.</p>
+        <p>You can either: <strong>(a)</strong> quote them a fee to handle it, which you don't really want to do because PA state filings aren't your core work and the margin doesn't justify the risk; or <strong>(b)</strong> tell them you don't do that, which makes you the wrong answer in a moment when they trusted you with the question.</p>
+        <p>The third option: <strong>refer them to someone who already handles this for dozens of PA businesses</strong>, who'll pick up within a business day, and who'll pay you recurring revenue for the connection. That's us. That's this partnership.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="benefits-section">
+  <div class="container">
+    <div class="section-tag">Why PA accountants partner with us</div>
+    <h2 class="section-lead">You already refer clients for things outside your practice. <em>Compliance filings should be one of them.</em></h2>
+    <p class="section-sub">We're not asking you to build anything, learn anything, or add a service line. We're asking you to have someone in your rolodex when clients need state filings — and get paid for the connection.</p>
+    <div class="benefit-grid">
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4"/></svg></div>
+        <div><h3>Zero ongoing work</h3><p>Once a client is referred, we onboard them, manage their registered office, track their deadlines, file their annual report, and forward service of process. You don't touch any of it.</p></div>
+      </div>
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <div><h3>White-label options</h3><p>We can operate visibly as PA CROP Services, or silently under your firm's brand. Client-facing portal, communications, and invoicing can be configured to match your practice.</p></div>
+      </div>
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div><h3>Recurring revenue</h3><p>Annual plans renew annually. Multi-year clients compound. Referral fees or revenue-share structures pay ongoing — not just once at signup.</p></div>
+      </div>
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
+        <div><h3>Erie-based, PA-licensed</h3><p>When you refer, you're not sending clients to a national aggregator. They get a real team at a real office in Erie. That reflects back on your practice.</p></div>
+      </div>
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div><h3>Client portal access</h3><p>On multi-client partnerships, we give you read-only portal access to every client you've referred. Filing history, documents, and deadlines visible when you need them at year-end.</p></div>
+      </div>
+      <div class="benefit reveal">
+        <div class="benefit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+        <div><h3>No exclusivity</h3><p>You're not locked in. Refer clients when it makes sense. If it doesn't work for your practice after three months, walk away. We'd rather have good partnerships than binding ones.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-tag">How partnership works</div>
+    <h2 class="section-lead" style="font-family:var(--serif);font-size:clamp(28px,3.5vw,40px);color:var(--slate);line-height:1.18;margin-bottom:8px">Three steps. No paperwork on your side except the first email.</h2>
+    <div class="how-steps">
+      <div class="how-step reveal">
+        <div class="how-num"><strong>01</strong> Introduce</div>
+        <h3>Tell us about your practice</h3>
+        <p>Apply through the partner form or email directly. We'll talk through your client base, volume, and what structure makes sense — referral fee, revenue share, or white-label. 20 minutes, no pitch, just mapping the fit.</p>
+      </div>
+      <div class="how-step reveal">
+        <div class="how-num"><strong>02</strong> Agreement</div>
+        <h3>Sign a simple partner agreement</h3>
+        <p>Two-page document covering referral fees, client ownership, and the ground rules. We send the first version; you redline if needed. Most partners sign within a week of the initial call.</p>
+      </div>
+      <div class="how-step reveal">
+        <div class="how-num"><strong>03</strong> Refer &amp; earn</div>
+        <h3>Send clients, earn recurring</h3>
+        <p>Use our intake form, forward an email, or connect us directly. Every client that signs generates recurring revenue to you for as long as they stay. Monthly or quarterly payout.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tier-recap-section">
+  <div class="container">
+    <div class="section-tag">What your clients actually pay</div>
+    <h2 class="section-lead" style="font-family:var(--serif);font-size:clamp(28px,3.5vw,40px);color:var(--slate);line-height:1.18;margin-bottom:20px">Same four plans, same public pricing. <em style="color:var(--gold-muted);font-style:italic;font-weight:400">No partner markup.</em></h2>
+    <p class="section-sub">Your clients see the same prices anyone else would. No hidden partner fees on their invoice. You earn on the connection, not their pocket.</p>
+    <div class="tier-recap">
+      <div class="tier-mini reveal">
+        <div class="tier-mini-name">Compliance</div>
+        <div class="tier-mini-price">$99<sup>/yr</sup></div>
+        <div class="tier-mini-desc">CROP address, monitoring, 5 reminders, dashboard.</div>
+      </div>
+      <div class="tier-mini reveal">
+        <div class="tier-mini-name">Starter</div>
+        <div class="tier-mini-price">$199<sup>/yr</sup></div>
+        <div class="tier-mini-desc">Compliance + domain, email, hosting, 1-page site.</div>
+      </div>
+      <div class="tier-mini featured reveal">
+        <div class="tier-mini-name">Pro</div>
+        <div class="tier-mini-price">$349<sup>/yr</sup></div>
+        <div class="tier-mini-desc">Annual report filed for you, 5-page site, direct phone line.</div>
+      </div>
+      <div class="tier-mini reveal">
+        <div class="tier-mini-name">Empire</div>
+        <div class="tier-mini-price">$699<sup>/yr</sup></div>
+        <div class="tier-mini-desc">Up to 10 entities, 3 websites, dedicated VPS, notarizations.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="container">
+    <div class="section-tag">Common partner questions</div>
+    <h2 class="section-lead">Straight answers.</h2>
+    <p class="section-sub">The ones that come up on almost every first call.</p>
+    <div class="faq-list">
+      <details class="faq">
+        <summary>How does the referral fee structure work?</summary>
+        <p>Two models. <strong>Model A:</strong> flat referral fee of 20% of first-year revenue, paid within 30 days of client signup. <strong>Model B:</strong> 15% recurring revenue share for the life of the client. Most CPAs choose Model B for the compounding effect. You pick when we set up the partnership.</p>
+      </details>
+      <details class="faq">
+        <summary>Do you handle both LLCs and corporations?</summary>
+        <p>Yes. All four plans cover any PA entity type — domestic and foreign LLCs, business corporations, nonprofits, limited partnerships, LLPs, and business trusts. Deadline tracking adjusts automatically (Corps: June 30, LLCs: Sep 30, LPs/LLPs/trusts: Dec 31).</p>
+      </details>
+      <details class="faq">
+        <summary>What happens to my client relationship if I stop referring?</summary>
+        <p>Nothing changes for clients you've already referred. They stay on their plans, we keep serving them, and your revenue share keeps paying as long as they're active (Model B) or you keep your flat fee from initial signup (Model A). We don't recruit your other clients.</p>
+      </details>
+      <details class="faq">
+        <summary>Can you white-label under my firm's name?</summary>
+        <p>Yes, with some constraints. The registered office listing on the PA DOS filing must show us as the CROP (that's a state requirement, not a partnership choice). But the client-facing portal, email communications, and invoicing can be branded to your firm. Ask us about Enterprise White-Label for firms with 10+ clients.</p>
+      </details>
+      <details class="faq">
+        <summary>What about clients who need legal advice?</summary>
+        <p>We don't give legal advice and we say so clearly to every client. If a referred client has a legal question — entity dispute, structural change, tax controversy — we refer them to you or to a PA-licensed attorney. We stay in the filing and compliance lane.</p>
+      </details>
+      <details class="faq">
+        <summary>Is there an exclusivity requirement?</summary>
+        <p>No. Refer clients when it fits. Don't when it doesn't. We'd rather earn the referral each time than lock you into a contract.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="container">
+    <div class="section-tag-dark">A 20-minute conversation</div>
+    <h2>No pitch deck. <em>Just a call to see if this fits your practice.</em></h2>
+    <p class="lead">Tell us about your client base, your geography, and what you're currently doing (or not doing) for state filings. We'll propose a partnership structure on the call. If it makes sense, we sign a simple agreement. If not, you've had a useful conversation with a PA colleague either way.</p>
+    <div class="final-cta-row">
+      <a href="/partners#apply" class="hero-cta-primary">Apply through the partner form</a>
+      <a href="mailto:hello@pacropservices.com?subject=Partnership%20inquiry%20from%20a%20PA%20professional" class="hero-cta-secondary">Or email Ike directly</a>
+    </div>
+    <div class="final-phone">
+      or call <a href="tel:8142282822">814-228-2822</a> · ask for Ike
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+      <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div>
+    </div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/partners">Partners</a>
+      <a href="/about">About</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove("open")});
+</script>
+</body>
+</html>
