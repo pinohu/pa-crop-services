@@ -5,6 +5,7 @@
 import * as db from '../services/db.js';
 import * as plans from '../services/plans.js';
 import { notifyOps as emailNotifyOps } from '../services/email.js';
+import * as secrets from '../services/secrets.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { createLogger } from '../_log.js';
 
@@ -514,7 +515,14 @@ export default async function handler(req, res) {
         const includesHosting = plan.includesHosting;
         const includesFiling = plan.includesFiling;
         const includesNotary = plan.includesNotary;
-        const hostingPassword = meta.hosting_password || '';
+        // hosting_password may be enc:v1: (Wave 10+) or legacy plaintext.
+        // secrets.decrypt() returns plaintext for both shapes; failures yield ''
+        // so a corrupt blob doesn't block the welcome resend.
+        let hostingPassword = '';
+        if (meta.hosting_password) {
+          try { hostingPassword = secrets.decrypt(meta.hosting_password); }
+          catch { log.warn('hosting_password_decrypt_failed', { client_id: client.id }); }
+        }
         const phoneExtension = meta.direct_line || '';
 
         const firstName = (client.owner_name || '').split(' ')[0] || 'there';

@@ -6,7 +6,7 @@
   "scripts": {
     "validate": "node scripts/validate-content.js",
     "precommit": "node scripts/validate-content.js",
-    "test": "node --test tests/compliance.test.js tests/validate.test.js tests/guardrails.test.js",
+    "test": "node --test tests/compliance.test.js tests/validate.test.js tests/guardrails.test.js tests/secrets.test.js",
     "lint": "npx eslint api/ scripts/ --ext .js",
     "check": "npm run lint && npm run validate"
   },

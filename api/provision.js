@@ -5,6 +5,7 @@
 import { isAdminRequest, setCors } from './services/auth.js';
 import * as twentyi from './services/twentyi.js';
 import * as plans from './services/plans.js';
+import * as secrets from './services/secrets.js';
 import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
@@ -145,7 +146,9 @@ export default async function handler(req, res) {
             access_code_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
             roles: ['client'],
             suitedash_uid: results.suitedashId || null,
-            stripe_session: body.sessionId || sessionId || ''
+            stripe_session: body.sessionId || sessionId || '',
+            // hosting_password stored only when actually provisioned, encrypted at rest.
+            ...(includesHosting && hostingPassword ? { hosting_password: secrets.encrypt(hostingPassword) } : {})
           }
         });
 
