@@ -296,38 +296,61 @@ export default async function handler(req, res) {
       // ── Provision 20i Hosting ─────────────────────────────────────────
       case 'provision_hosting': {
         const { email, tierName, accountSlug, hostingPassword, suggestedDomain } = payload;
-        
-        // Create hosting package
-        const pkg = await twentyiFetch('/reseller/' + process.env.TWENTY_I_RESELLER_ID + '/addWeb', {
-          method: 'POST',
-          body: JSON.stringify({
-            'domain_name': suggestedDomain || accountSlug + '.com',
-            type: 'standard',
-            packageBundle: {
-              name: `PA CROP — ${tierName}`,
-              username: accountSlug,
-              password: hostingPassword,
-              type: 'webspace'
-            }
-          })
+        const tw = await import('../services/twentyi.js');
+        const domain = suggestedDomain || `${accountSlug}.com`;
+
+        let packageId = null;
+        try {
+          // Use the documented schema (type: linux | windows | vps | iaas).
+          // The previous packageBundle shape was not part of the 20i public API.
+          const pkg = await tw.addWebPackage({
+            type: 'linux',
+            domain_name: domain,
+            extra_domain_names: [],
+            label: `PA CROP — ${tierName} — ${email}`
+          });
+          packageId = pkg.packageId;
+        } catch (e) {
+          log.error('admin_provision_hosting_failed', { email, error: e.message });
+          return res.status(502).json({ success: false, error: 'Hosting provisioning failed' });
+        }
+        if (!packageId) return res.status(502).json({ success: false, error: 'Provisioning returned no packageId' });
+
+        // Enable SSL — surfaces in the response so silent failures aren't hidden.
+        const sslResult = { ok: false };
+        try {
+          await tw.addSsl(packageId, domain);
+          sslResult.ok = true;
+        } catch (e) {
+          sslResult.error = e.message;
+          log.warn('ssl_provisioning_failed', { packageId, domain, error: e.message });
+        }
+
+        // Create StackCP user (client login for the hosting panel)
+        const userResult = { ok: false };
+        try {
+          await tw.addStackUser({
+            person_name: email.split('@')[0],
+            email,
+            password: hostingPassword,
+            send_welcome_email: false,
+            grant_all_packages: false,
+            package_ids: [packageId]
+          });
+          userResult.ok = true;
+        } catch (e) {
+          userResult.error = e.message;
+          log.warn('stackcp_user_creation_failed', { packageId, email, error: e.message });
+        }
+
+        return res.status(200).json({
+          success: true,
+          packageId,
+          accountSlug,
+          suggestedDomain: domain,
+          ssl: sslResult,
+          stackcp_user: userResult
         });
-
-        const packageId = pkg?.result?.id || pkg?.id;
-        if (!packageId) return res.status(500).json({ success: false, error: 'Provisioning failed', pkg });
-
-        // Enable SSL
-        await twentyiFetch(`/package/${packageId}/ssl`, {
-          method: 'POST',
-          body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(e => log.warn('silent_failure', { error: e.message }));
-
-        // Create StackCP user
-        await twentyiFetch('/reseller/user', {
-          method: 'POST',
-          body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(e => log.warn('silent_failure', { error: e.message }));
-
-        return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
 
       // ── Stripe Revenue ────────────────────────────────────────────────

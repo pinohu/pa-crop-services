@@ -3,6 +3,7 @@
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
 import { isAdminRequest, setCors } from './services/auth.js';
+import * as twentyi from './services/twentyi.js';
 import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
@@ -52,9 +53,6 @@ export default async function handler(req, res) {
   
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
-  const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
-  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID;
   const N8N = 'https://n8n.audreysplace.place/webhook';
 
   const results = { email, tier, steps: [], warnings: [] };
@@ -184,36 +182,32 @@ export default async function handler(req, res) {
   }
 
   // ── STEP 3: 20i Hosting provisioning (Starter, Pro, Empire) ──────────
-  if (includesHosting && BEARER) {
+  if (includesHosting && twentyi.isConfigured()) {
     try {
-      // Determine hosting type
+      // Determine hosting type — 'vps' for Empire VPS tier, 'linux' for shared.
       const hostingType = includesVPS ? 'vps' : 'linux';
       const tempDomain = suggestedDomain || `${accountSlug}.pacrophosting.com`;
-      
-      // Create hosting package
-      const pkgRes = await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addWeb`, {
-        method: 'POST',
-        headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+
+      // Create hosting package via canonical schema (services/twentyi.js).
+      let packageId = null;
+      try {
+        const pkg = await twentyi.addWebPackage({
           type: hostingType,
           domain_name: tempDomain,
           extra_domain_names: [],
-          label: `PA CROP — ${tier} — ${email}`
-        })
-      });
-      const pkgData = await pkgRes.json();
-      const packageId = pkgData?.result || pkgData?.id || pkgData;
-      results.packageId = packageId;
-      results.steps.push({ step: '20i_hosting', status: packageId ? 'done' : 'warning', packageId, type: hostingType });
+          label: twentyi.packageLabel({ tier, email })
+        });
+        packageId = pkg.packageId;
+        results.packageId = packageId;
+        results.steps.push({ step: '20i_hosting', status: packageId ? 'done' : 'warning', packageId, type: hostingType });
+      } catch (e) {
+        results.steps.push({ step: '20i_hosting', status: 'error', error: e.message });
+      }
 
       if (packageId) {
         // Enable SSL
         try {
-          await fetch(`https://api.20i.com/package/${packageId}/web/addSsl`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: tempDomain })
-          });
+          await twentyi.addSsl(packageId, tempDomain);
           results.steps.push({ step: '20i_ssl', status: 'done' });
         } catch (e) {
           results.steps.push({ step: '20i_ssl', status: 'warning', error: e.message });
@@ -221,15 +215,13 @@ export default async function handler(req, res) {
 
         // Create email mailboxes (tier-aware count)
         const mailboxCount = Math.min(emailCount || 1, 5); // Create up to 5 initially
+        const mailboxNames = ['info', 'hello', 'admin', 'support', 'billing'];
         for (let i = 0; i < mailboxCount; i++) {
-          const mbName = i === 0 ? 'info' : (i === 1 ? 'hello' : (i === 2 ? 'admin' : (i === 3 ? 'support' : 'billing')));
           try {
-            await fetch(`https://api.20i.com/package/${packageId}/email/${tempDomain}`, {
-              method: 'POST',
-              headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: { address: mbName, quota: 25000, password: hostingPassword }
-              })
+            await twentyi.addEmailMailbox(packageId, tempDomain, {
+              address: mailboxNames[i],
+              password: hostingPassword,
+              quota: 25000
             });
           } catch (e) { /* continue with remaining mailboxes */ }
         }
@@ -237,17 +229,13 @@ export default async function handler(req, res) {
 
         // Create StackCP user (client can manage their own hosting)
         try {
-          await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addStackUser`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              person_name: name || email.split('@')[0],
-              email: email,
-              password: hostingPassword,
-              send_welcome_email: true,
-              grant_all_packages: false,
-              package_ids: [packageId]
-            })
+          await twentyi.addStackUser({
+            person_name: name || email.split('@')[0],
+            email,
+            password: hostingPassword,
+            send_welcome_email: true,
+            grant_all_packages: false,
+            package_ids: [packageId]
           });
           results.steps.push({ step: '20i_stackcp_user', status: 'done' });
         } catch (e) {
@@ -257,18 +245,12 @@ export default async function handler(req, res) {
         // Install WordPress (for website creation)
         if (websitePages > 0) {
           try {
-            await fetch(`https://api.20i.com/package/${packageId}/web/oneclick`, {
-              method: 'POST',
-              headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                domain: tempDomain,
-                app: 'wordpress',
-                directory: '/',
-                admin_email: email,
-                admin_user: accountSlug,
-                admin_password: hostingPassword,
-                site_name: name || `${accountSlug}'s Business`
-              })
+            await twentyi.installWordPress(packageId, {
+              domain: tempDomain,
+              admin_email: email,
+              admin_user: accountSlug,
+              admin_password: hostingPassword,
+              site_name: name || `${accountSlug}'s Business`
             });
             results.steps.push({ step: '20i_wordpress_install', status: 'done', pages: websitePages });
           } catch (e) {
@@ -281,14 +263,10 @@ export default async function handler(req, res) {
       // Domain registration (if suggestedDomain provided and is a real domain)
       if (suggestedDomain && suggestedDomain.includes('.') && !suggestedDomain.includes('pacrophosting')) {
         try {
-          const domainRes = await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addDomain`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: suggestedDomain,
-              years: 1,
-              contact: { name: name || accountSlug, email, address: '924 W 23rd St', city: 'Erie', state: 'PA', zip: '16502', country: 'US' }
-            })
+          await twentyi.addDomain({
+            name: suggestedDomain,
+            years: 1,
+            contact: twentyi.defaultRegistrarContact({ name: name || accountSlug, email })
           });
           results.steps.push({ step: '20i_domain_registration', status: 'done', domain: suggestedDomain });
         } catch (e) {
@@ -302,7 +280,7 @@ export default async function handler(req, res) {
     } catch (e) {
       results.steps.push({ step: '20i_provisioning', status: 'error', error: e.message });
     }
-  } else if (includesHosting && !BEARER) {
+  } else if (includesHosting && !twentyi.isConfigured()) {
     results.steps.push({ step: '20i_provisioning', status: 'skipped', reason: '20i API key not configured' });
   }
 
