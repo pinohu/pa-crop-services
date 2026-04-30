@@ -65,13 +65,21 @@ async function _notifyIke(subject, body) {
   } catch (e) { logError('emailit_notify_failed', { subject }, e); }
 }
 
-// 4-tier pricing: $99 / $199 / $349 / $699
-const TIER_CONFIGS = {
-  business_empire:  { tier: 'empire',     planCode: 'business_empire',  includesHosting: true,  includesVPS: true,  emailCount: 99, domainCount: 10, websitePages: 3, includesFiling: true,  includesNotary: true  },
-  business_pro:     { tier: 'pro',        planCode: 'business_pro',     includesHosting: true,  includesVPS: false, emailCount: 99, domainCount: 3,  websitePages: 5, includesFiling: true,  includesNotary: false },
-  business_starter: { tier: 'starter',    planCode: 'business_starter', includesHosting: true,  includesVPS: false, emailCount: 5,  domainCount: 1,  websitePages: 1, includesFiling: false, includesNotary: false },
-  compliance_only:  { tier: 'compliance', planCode: 'compliance_only',  includesHosting: false, includesVPS: false, emailCount: 0,  domainCount: 0,  websitePages: 0, includesFiling: false, includesNotary: false }
-};
+// 4-tier pricing — values come from services/plans.js (single source of truth).
+// Re-exposed in this older shape so the existing detectTier() return type doesn't
+// need to change; new code should import services/plans.js directly.
+import { PLANS as _PLANS } from './services/plans.js';
+const TIER_CONFIGS = Object.fromEntries(Object.entries(_PLANS).map(([code, p]) => [code, {
+  tier: p.tier,
+  planCode: p.plan_code,
+  includesHosting: p.includesHosting,
+  includesVPS: p.includesVPS,
+  emailCount: p.emailCount,
+  domainCount: p.domainCount,
+  websitePages: p.websitePages,
+  includesFiling: p.includesFiling,
+  includesNotary: p.includesNotary
+}]));
 
 // Map Stripe product metadata or price amounts to tiers.
 // Primary: Stripe product metadata.plan_code or price nickname.

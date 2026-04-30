@@ -4,12 +4,13 @@
 
 import { setCors, isAdminRequest } from './services/auth.js';
 import * as db from './services/db.js';
+import * as plans from './services/plans.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('mrr-dashboard');
 
-const PRICES = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
-const LABELS = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+const PRICES = plans.priceMap();
+const LABELS = plans.labelMap();
 
 export default async function handler(req, res) {
   setCors(req, res);

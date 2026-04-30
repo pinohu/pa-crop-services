@@ -4,6 +4,7 @@
 
 import { isAdminRequest, setCors } from './services/auth.js';
 import * as twentyi from './services/twentyi.js';
+import * as plans from './services/plans.js';
 import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
@@ -134,7 +135,7 @@ export default async function handler(req, res) {
           owner_name: name || '',
           email,
           phone: body.phone || null,
-          plan_code: tier === 'compliance' ? 'compliance_only' : `business_${tier}`,
+          plan_code: plans.tierToPlanCode(tier),
           billing_status: 'active',
           onboarding_status: 'not_started',
           referral_code: refCode,
@@ -338,7 +339,8 @@ export default async function handler(req, res) {
       results.steps.push({ step: 'welcome_email', status: 'done', via: 'n8n' });
     } else if (emailitKey) {
       // Fallback: send welcome email directly
-      const tierLabel = { compliance: 'Compliance Only', starter: 'Business Starter', pro: 'Business Pro', empire: 'Business Empire' }[tier] || tier;
+      const planRecord = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
+      const tierLabel = planRecord.label;
       await fetch('https://api.emailit.com/v1/emails', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
@@ -379,8 +381,8 @@ export default async function handler(req, res) {
             ${includesNotary ? `<p style="font-size:14px;color:#4A4A4A"><strong>Notary services:</strong> Your plan includes 2 free notarizations per year. Request one anytime through your portal.</p>` : ''}
             <div style="background:linear-gradient(135deg,#0C1220,#1a2540);border-radius:12px;padding:20px;margin:20px 0;color:#fff">
               <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:4px">Your plan includes</div>
-              <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${{ compliance: '$2,240+', starter: '$4,817+', pro: '$9,452+', empire: '$21,582+' }[tier] || '$2,240+'} in services</div>
-              <div style="font-size:13px;opacity:.8">You pay ${{ compliance: '99', starter: '199', pro: '349', empire: '699' }[tier] || '99'}/year. That's a 96%+ savings over purchasing each service individually.</div>
+              <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${planRecord.servicesValueLabel} in services</div>
+              <div style="font-size:13px;opacity:.8">You pay ${planRecord.annualFeeUsd}/year. That's a 96%+ savings over purchasing each service individually.</div>
             </div>
             <p>Questions? Reply to this email or call <a href="tel:8142282822">814-228-2822</a>.</p>
             <div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">
@@ -550,7 +552,8 @@ export default async function handler(req, res) {
     const entityType = body.entityType || 'domestic_llc';
     const deadline = getEntityDeadline(entityType);
     const daysUntil = computeDaysUntil(entityType);
-    const tierLabels = { compliance: 'Compliance Only ($99/yr)', starter: 'Business Starter ($199/yr)', pro: 'Business Pro ($349/yr)', empire: 'Business Empire ($699/yr)' };
+    const planForLabel = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
+    const tierPlanLabel = `${planForLabel.label} ($${planForLabel.annualFeeUsd}/yr)`;
 
     const pkgRes = await fetch(`${baseUrl}/api/generate-compliance-package`, {
       method: 'POST',
@@ -558,7 +561,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         email, name: name || '', entityName: body.entityName || name || '',
         entityType, tier, dosNumber: body.dosNumber || '',
-        accessCode, planLabel: tierLabels[tier] || tier,
+        accessCode, planLabel: tierPlanLabel,
         deadline: deadline.label, daysUntilDeadline: daysUntil
       })
     });

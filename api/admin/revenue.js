@@ -1,5 +1,6 @@
 import { setCors, isAdminRequest } from '../services/auth.js';
 import * as db from '../services/db.js';
+import * as planRegistry from '../services/plans.js';
 import { createLogger } from '../_log.js';
 
 const log = createLogger('admin-revenue');
@@ -17,8 +18,9 @@ export default async function handler(req, res) {
     if (!dbConnected && sdConnected) {
       const { suitedash } = db;
       const clients = await suitedash.getAllClientsWithCompliance();
-      const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
-      const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+      const annual = planRegistry.priceMap();
+      const planPricing = Object.fromEntries(Object.entries(annual).map(([k, v]) => [k, v / 12]));
+      const planLabels = planRegistry.labelMap();
       const plans = {};
       for (const c of clients) { plans[c.plan_code] = (plans[c.plan_code] || 0) + 1; }
       let mrr = 0;
@@ -36,8 +38,9 @@ export default async function handler(req, res) {
     const sql = db.getSql();
 
     const clients = await sql.query("SELECT plan_code, billing_status, created_at FROM clients");
-    const planPricing = { compliance_only: 99/12, business_starter: 199/12, business_pro: 349/12, business_empire: 699/12 };
-    const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+    const annual = planRegistry.priceMap();
+    const planPricing = Object.fromEntries(Object.entries(annual).map(([k, v]) => [k, v / 12]));
+    const planLabels = planRegistry.labelMap();
     const plans = {};
     let active = 0, churned = 0;
     for (const c of clients) {

@@ -3,6 +3,7 @@
 // POST { action, payload, adminKey }
 
 import * as db from '../services/db.js';
+import * as plans from '../services/plans.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { createLogger } from '../_log.js';
 
@@ -141,14 +142,14 @@ export default async function handler(req, res) {
         } catch(e) { log.warn('admin_query_error', { error: e.message }); }
 
         if (neonClients && neonClients.length > 0) {
-          const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
-          const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+          const planPricing = plans.priceMap();
+          const planLabels = plans.labelMap();
           const planCounts = {};
           let mrr = 0, activeSubs = 0;
           neonClients.forEach(c => {
-            const plan = c.plan_code || 'compliance_only';
+            const plan = c.plan_code || plans.DEFAULT_PLAN_CODE;
             planCounts[plan] = (planCounts[plan] || 0) + 1;
-            if (c.billing_status === 'active') { activeSubs++; mrr += (planPricing[plan] || 99) / 12; }
+            if (c.billing_status === 'active') { activeSubs++; mrr += (planPricing[plan] || planPricing[plans.DEFAULT_PLAN_CODE]) / 12; }
           });
           // Get 20i hosting count
           let hostingCount = 0;
@@ -503,10 +504,11 @@ export default async function handler(req, res) {
         if (!client) return res.status(404).json({ success: false, error: 'client_not_found' });
 
         const meta = client.metadata || {};
-        const tier = (client.plan_code || 'compliance_only').replace(/^business_/, '').replace(/_only$/, '');
-        const tierLabel = { compliance: 'Compliance Only', starter: 'Business Starter', pro: 'Business Pro', empire: 'Business Empire' }[tier] || tier;
-        const planValue = { compliance: '$2,240+', starter: '$4,817+', pro: '$9,452+', empire: '$21,582+' }[tier] || '$2,240+';
-        const planPrice = { compliance: '99', starter: '199', pro: '349', empire: '699' }[tier] || '99';
+        const plan = plans.resolvePlan(client.plan_code);
+        const tier = plan.tier;
+        const tierLabel = plan.label;
+        const planValue = plan.servicesValueLabel;
+        const planPrice = String(plan.annualFeeUsd);
 
         // Recover or regenerate access code
         let accessCode = meta.access_code;
@@ -523,9 +525,9 @@ export default async function handler(req, res) {
           }
         }
 
-        const includesHosting = ['starter', 'pro', 'empire'].includes(tier);
-        const includesFiling = ['pro', 'empire'].includes(tier);
-        const includesNotary = tier === 'empire';
+        const includesHosting = plan.includesHosting;
+        const includesFiling = plan.includesFiling;
+        const includesNotary = plan.includesNotary;
         const hostingPassword = meta.hosting_password || '';
         const phoneExtension = meta.direct_line || '';
 
