@@ -1,8 +1,15 @@
-import { setCors } from './services/auth.js';
+import { setCors, verifyTwilioSignature } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('voice-recording');
+
+// HTML-escape helper for embedding caller-controlled values in admin-notification HTML.
+function escHtml(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 // ── Emailit Fallback Notifier ──
 async function _notifyIke(subject, body) {
@@ -27,6 +34,14 @@ export default async function handler(req, res) {
   // Rate limit: Voice recording — 20/min
   const blocked = await checkRateLimit(getClientIp(req), 'voice-recording', 20, '60s');
   if (blocked) { res.setHeader('Retry-After', String(blocked.retryAfter)); return res.status(429).json({ success: false, error: 'Too many requests' }); }
+
+  // Twilio webhook signature verification — without this, anyone can fire arbitrary
+  // RecordingUrl values into Ike's inbox and into SuiteDash custom fields.
+  if (!verifyTwilioSignature(req)) {
+    log.warn('twilio_signature_rejected', { path: '/api/voice-recording', ip: getClientIp(req) });
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
   const { RecordingUrl, TranscriptionText, From, CallSid } = req.body || {};
   
   // Try AI transcription if Twilio didn't provide one
@@ -77,11 +92,16 @@ export default async function handler(req, res) {
       body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription, timestamp: new Date().toISOString() })
     }).catch(() => null);
     if (!vmRes || !vmRes.ok) {
+      // Only allow Twilio-style media URLs in the embedded link to prevent
+      // open-mailer abuse if signature verification is ever bypassed in future.
+      const recIsSafe = typeof RecordingUrl === 'string'
+        && /^https:\/\/api\.twilio\.com\/2010-04-01\/Accounts\/[A-Z0-9]+\/Recordings\/[A-Z0-9]+/i.test(RecordingUrl);
+      const recHref = recIsSafe ? RecordingUrl : '#';
       await _notifyIke('New Voicemail',
         '<h2>📞 Voicemail Received</h2>' +
-        '<p><strong>From:</strong> ' + (From || 'unknown') + '</p>' +
-        '<p><strong>Recording:</strong> <a href="' + (RecordingUrl || '#') + '">Listen</a></p>' +
-        '<p><strong>Transcription:</strong> ' + (transcription || 'not available') + '</p>' +
+        '<p><strong>From:</strong> ' + escHtml(From || 'unknown') + '</p>' +
+        '<p><strong>Recording:</strong> <a href="' + escHtml(recHref) + '">Listen</a>' + (recIsSafe ? '' : ' <em>(URL not from Twilio — link suppressed)</em>') + '</p>' +
+        '<p><strong>Transcription:</strong> ' + escHtml(transcription || 'not available') + '</p>' +
         '<p><strong>Time:</strong> ' + new Date().toISOString() + '</p>'
       );
     }

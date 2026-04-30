@@ -213,6 +213,42 @@ export async function authenticateRequest(req) {
   return { valid: false };
 }
 
+// ── Twilio Webhook Signature Verification ────────────────
+// Twilio signs each webhook with HMAC-SHA1 over the URL + sorted concatenation
+// of POST params. Returns true if the X-Twilio-Signature header matches.
+// Pass req.body already-parsed (Vercel parses x-www-form-urlencoded into an object).
+export function verifyTwilioSignature(req) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) return false; // No token configured → reject (fail closed for webhook auth)
+  const sigHeader = req.headers['x-twilio-signature'];
+  if (!sigHeader || typeof sigHeader !== 'string') return false;
+
+  // Reconstruct the URL Twilio called. Vercel sets x-forwarded-proto and x-forwarded-host.
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  if (!host) return false;
+  const url = `${proto}://${host}${req.url || ''}`;
+
+  // Sort POST params and concatenate key+value (no separator).
+  const params = req.body && typeof req.body === 'object' ? req.body : {};
+  const sortedKeys = Object.keys(params).sort();
+  let signedString = url;
+  for (const key of sortedKeys) {
+    const v = params[key];
+    signedString += key + (v === null || v === undefined ? '' : String(v));
+  }
+
+  const expected = createHmac('sha1', authToken).update(signedString, 'utf8').digest('base64');
+  const expectedBuf = Buffer.from(expected, 'utf8');
+  const actualBuf = Buffer.from(sigHeader, 'utf8');
+  if (expectedBuf.length !== actualBuf.length) return false;
+  try {
+    return timingSafeEqual(expectedBuf, actualBuf);
+  } catch {
+    return false;
+  }
+}
+
 export function isAdminRequest(req) {
   // Only accept admin key from header, never from query params or body.
   // x-internal-key is the same secret used for internal service-to-service calls

@@ -577,10 +577,12 @@ export default async function handler(req, res) {
           });
         } catch (e) { log.warn('audit_write_failed', { error: e.message }); }
 
+        // Do not echo plaintext access code back to the browser — it ends up
+        // in history, logs, screenshots. The user receives it via the email.
         return res.status(200).json({
           success: true,
           message: 'Welcome email resent to ' + email,
-          accessCode,
+          accessCodeLast4: String(accessCode).slice(-4),
           tier,
           accessCodeRegenerated: !meta.access_code
         });

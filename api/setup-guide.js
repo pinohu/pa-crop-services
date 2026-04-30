@@ -58,7 +58,7 @@ const GUIDES = {
     title: 'Thoughtly — AI Voice Agent',
     priority: 'LOW — nice to have for hot lead calls',
     estimatedTime: '1 hour',
-    apiKey: '0dy3971e2bgvrk3y6j1cs9l',
+    apiKeyEnvVar: 'THOUGHTLY_API_KEY',
     steps: [
       { step: 1, action: 'Login to Thoughtly dashboard' },
       { step: 2, action: 'Create new agent: "PA CROP Hot Lead Caller"' },
@@ -70,7 +70,7 @@ const GUIDES = {
   callscaler: {
     title: 'CallScaler — Inbound Call Logging',
     priority: 'LOW — call tracking and CRM integration',
-    apiKey: '120|ZPLZosyaRbCmkwTs01wRtYxtfJt1m9SUUTcBzz7K',
+    apiKeyEnvVar: 'CALLSCALER_API_KEY',
     steps: [
       { step: 1, action: 'Login to CallScaler dashboard' },
       { step: 2, action: 'Set up tracking number forwarding to 814-228-2822' },
@@ -103,8 +103,7 @@ const GUIDES = {
   }
 };
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('setup-guide');

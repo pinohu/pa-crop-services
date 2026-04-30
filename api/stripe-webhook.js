@@ -1,9 +1,52 @@
 // PA CROP Services — Stripe Webhook Handler
 // POST /api/stripe-webhook
-// Detects tier from Stripe product, auto-provisions everything
+// Detects tier from Stripe product, auto-provisions everything.
+//
+// Body parsing is disabled so we can verify the Stripe signature against the
+// exact bytes Stripe signed. JSON-parsing the body before HMAC would change
+// whitespace / key order / Unicode escapes and break (or silently mis-verify)
+// the signature.
 
 import { log, logError, logWarn } from './_log.js';
 import { fetchWithTimeout } from './_fetch.js';
+import { Redis } from '@upstash/redis';
+
+export const config = { api: { bodyParser: false } };
+
+async function readRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+let _redis = null;
+function getRedis() {
+  if (_redis) return _redis;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    _redis = new Redis({ url, token });
+    return _redis;
+  }
+  return null;
+}
+
+// Returns true if this is the first time we've seen the event id; false if
+// a previous delivery already claimed it. TTL = 7 days (Stripe's replay window).
+async function claimEventId(eventId) {
+  if (!eventId) return true;
+  const redis = getRedis();
+  if (!redis) return true; // Redis unavailable → don't block delivery
+  try {
+    const result = await redis.set(`stripe:event:${eventId}`, '1', { nx: true, ex: 60 * 60 * 24 * 7 });
+    return result === 'OK';
+  } catch (e) {
+    logWarn('stripe_idempotency_redis_failed', { eventId, error: e.message });
+    return true; // Fail-open — better to occasionally double-process than to drop events
+  }
+}
 
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
@@ -80,17 +123,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Missing Stripe-Signature header' });
   }
 
-  // Verify signature — always required
+  // Read the raw body bytes — required for signature verification.
+  let rawBody;
+  try {
+    rawBody = await readRawBody(req);
+  } catch (err) {
+    logError('webhook_body_read_failed', {}, err);
+    return res.status(400).json({ success: false, error: 'Body read failed' });
+  }
+
+  // Verify signature against the raw bytes (not a re-stringified parse).
   {
     try {
-      const payload = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-      const timestamp = sig.split(',').find(s => s.startsWith('t=')).split('=')[1];
+      const timestamp = sig.split(',').find(s => s.startsWith('t='))?.split('=')[1];
       const signatures = sig.split(',').filter(s => s.startsWith('v1=')).map(s => s.split('=')[1]);
-      const age = Math.floor(Date.now() / 1000) - parseInt(timestamp);
-      if (age > 300) return res.status(400).json({ success: false, error: 'Webhook timestamp too old' });
+      if (!timestamp || signatures.length === 0) return res.status(400).json({ success: false, error: 'Malformed Stripe-Signature' });
+      const age = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
+      if (!Number.isFinite(age) || age > 300) return res.status(400).json({ success: false, error: 'Webhook timestamp too old' });
       const crypto = await import('crypto');
-      const expected = crypto.createHmac('sha256', whSecret).update(`${timestamp}.${payload}`).digest('hex');
-      const valid = signatures.some(s => crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected)));
+      const signedPayload = Buffer.concat([Buffer.from(`${timestamp}.`, 'utf8'), rawBody]);
+      const expected = crypto.createHmac('sha256', whSecret).update(signedPayload).digest('hex');
+      const expectedBuf = Buffer.from(expected, 'hex');
+      const valid = signatures.some(s => {
+        const sBuf = Buffer.from(s, 'hex');
+        return sBuf.length === expectedBuf.length && crypto.timingSafeEqual(sBuf, expectedBuf);
+      });
       if (!valid) return res.status(400).json({ success: false, error: 'Invalid signature' });
     } catch (err) {
       logError('webhook_signature_failed', {}, err);
@@ -98,8 +155,22 @@ export default async function handler(req, res) {
     }
   }
 
-  const event = req.body;
+  // Parse the now-verified payload.
+  let event;
+  try {
+    event = JSON.parse(rawBody.toString('utf8'));
+  } catch (err) {
+    logError('webhook_parse_failed', {}, err);
+    return res.status(400).json({ success: false, error: 'Invalid JSON payload' });
+  }
   const type = event?.type;
+
+  // Idempotency — short-circuit duplicates so retries don't double-provision.
+  const claimed = await claimEventId(event?.id);
+  if (!claimed) {
+    log('stripe_webhook_duplicate', { type, eventId: event?.id });
+    return res.status(200).json({ received: true, deduplicated: true });
+  }
   const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
 
   try {
@@ -109,7 +180,20 @@ export default async function handler(req, res) {
       const email = session.customer_details?.email || session.customer_email || '';
       const name = session.customer_details?.name || '';
       const tierConfig = detectTier(event);
-      
+
+      // Alert when tier detection fell through to amount-bracket fallback —
+      // the client may have ended up on the wrong plan in Neon.
+      const declaredPlan = (session?.line_items?.data?.[0]?.price?.product?.metadata?.plan_code)
+        || (session?.line_items?.data?.[0]?.price?.metadata?.plan_code)
+        || session?.metadata?.plan_code;
+      if (!declaredPlan) {
+        await _notifyIke(`Stripe price metadata missing for ${email || 'unknown'}`,
+          `<p>checkout.session.completed for <strong>${email}</strong> had no <code>price.metadata.plan_code</code>. Tier was inferred from amount as <strong>${tierConfig.planCode}</strong> at $${(session.amount_total||0)/100}.</p>
+           <p>Verify the Stripe price/Payment Link is configured with the correct plan_code metadata.</p>
+           <p>Stripe session: ${session.id}</p>`);
+        logWarn('stripe_plan_code_missing', { email, sessionId: session.id, inferredPlan: tierConfig.planCode });
+      }
+
       log('new_client_checkout', { email, tier: tierConfig.tier, amount: (session.amount_total||0)/100 });
 
       // Step 1: Call /api/provision directly (no n8n dependency)
@@ -156,16 +240,25 @@ export default async function handler(req, res) {
         body: JSON.stringify({ email, name, amount: session.amount_total || 0, tier: tierConfig.tier, stripeSessionId: session.id })
       }).catch(e => logWarn('external_call_failed', { service: 'n8n/invoice', error: e.message })); // Fire and forget
 
-      // Step 3: Notify Ike
-      await _notifyIke(`🎉 New ${tierConfig.tier.toUpperCase()} Client: ${name || email}`,
-        `<h2>New Client Signed Up!</h2>
+      // Step 3: Notify Ike — celebrate when clean, alert when not.
+      const provisionErrors = (provisionData?.steps || []).filter(s => s.status === 'error');
+      const provisionWarnings = (provisionData?.steps || []).filter(s => s.status === 'warning' || s.status === 'pending' || s.status === 'deferred');
+      const subjectPrefix = provisionErrors.length > 0
+        ? `⚠️ Provisioning ERRORS — ${tierConfig.tier.toUpperCase()} Client: `
+        : provisionWarnings.length > 0
+          ? `⚠️ Provisioning WARNINGS — ${tierConfig.tier.toUpperCase()} Client: `
+          : `🎉 New ${tierConfig.tier.toUpperCase()} Client: `;
+      await _notifyIke(`${subjectPrefix}${name || email}`,
+        `<h2>${provisionErrors.length ? 'Action required' : 'New Client Signed Up!'}</h2>
          <p><strong>Email:</strong> ${email}</p>
          <p><strong>Name:</strong> ${name || 'not provided'}</p>
          <p><strong>Plan:</strong> ${tierConfig.tier} ($${(session.amount_total||0)/100})</p>
          <p><strong>Stripe Session:</strong> ${session.id}</p>
+         ${provisionErrors.length ? `<p style="color:#b53333"><strong>${provisionErrors.length} error step(s)</strong> — manual remediation needed.</p>` : ''}
+         ${provisionWarnings.length ? `<p style="color:#92400e"><strong>${provisionWarnings.length} warning step(s)</strong> — review.</p>` : ''}
          <h3>Auto-Provisioning Results:</h3>
          <pre>${JSON.stringify(provisionData.steps || [], null, 2)}</pre>
-         ${tierConfig.includesHosting ? '<p>⚠️ <strong>Action needed:</strong> Client needs to provide their desired domain name. Check welcome page submission or contact them.</p>' : ''}
+         ${tierConfig.includesHosting ? '<p>📝 Client needs to provide their desired domain name. Check welcome page submission or contact them.</p>' : ''}
          ${tierConfig.includesFiling ? '<p>📝 Client gets annual report filing — add to filing tracker.</p>' : ''}`
       );
     }
@@ -199,6 +292,63 @@ export default async function handler(req, res) {
           '<p><strong>Amount:</strong> $' + amount + '</p>' +
           '<p>SMS alert sent. n8n dunning workflow ' + (pfRes ? 'responded' : 'unreachable') + '.</p>'
         );
+      }
+    }
+
+    // ── SUBSCRIPTION UPDATED / DELETED — keep clients.billing_status in sync ──
+    else if (type === 'customer.subscription.updated' || type === 'customer.subscription.deleted') {
+      const sub = event?.data?.object;
+      const stripeCustomerId = typeof sub?.customer === 'string' ? sub.customer : sub?.customer?.id;
+      let newStatus;
+      if (type === 'customer.subscription.deleted') {
+        newStatus = 'cancelled';
+      } else {
+        // map Stripe sub.status → our internal billing_status
+        newStatus = ({
+          active: 'active',
+          trialing: 'trialing',
+          past_due: 'past_due',
+          unpaid: 'past_due',
+          canceled: 'cancelled',
+          incomplete: 'incomplete',
+          incomplete_expired: 'cancelled',
+          paused: 'paused'
+        })[sub?.status] || sub?.status || 'unknown';
+      }
+
+      try {
+        const dbMod = await import('./services/db.js');
+        if (dbMod.isConnected() && stripeCustomerId) {
+          const sql = dbMod.getSql();
+          const rows = await sql`SELECT client_id FROM billing_accounts WHERE stripe_customer_id = ${stripeCustomerId} LIMIT 1`;
+          const clientId = rows?.[0]?.client_id;
+          if (clientId) {
+            await dbMod.updateClient(clientId, { billing_status: newStatus });
+            await dbMod.upsertBillingAccount({
+              client_id: clientId,
+              stripe_customer_id: stripeCustomerId,
+              billing_status: newStatus,
+              current_period_end: sub?.current_period_end ? new Date(sub.current_period_end * 1000) : null
+            });
+            await dbMod.writeAuditEvent({
+              actor_type: 'system', actor_id: 'stripe-webhook',
+              event_type: type === 'customer.subscription.deleted' ? 'subscription.cancelled' : 'subscription.updated',
+              target_type: 'client', target_id: clientId,
+              after_json: { billing_status: newStatus, stripe_status: sub?.status, sub_id: sub?.id },
+              reason: 'stripe_webhook'
+            });
+            log('subscription_status_updated', { clientId, newStatus, stripeSubId: sub?.id });
+          } else {
+            logWarn('subscription_event_no_client_match', { stripeCustomerId, type });
+          }
+        }
+      } catch (subErr) {
+        logError('subscription_sync_failed', { type, stripeCustomerId }, subErr);
+      }
+
+      if (type === 'customer.subscription.deleted') {
+        await _notifyIke(`Client cancelled: ${stripeCustomerId}`,
+          `<p>Subscription cancelled.</p><p>Stripe customer: <code>${stripeCustomerId}</code></p><p>Sub: <code>${sub?.id}</code></p>`);
       }
     }
 

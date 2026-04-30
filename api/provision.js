@@ -2,8 +2,7 @@
 // Full tier-aware auto-provisioning: SuiteDash + 20i hosting/email/SSL/domain + welcome email
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
-import { isAdminRequest, generateAccessCode as _genCode } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
 import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
@@ -24,6 +23,27 @@ export default async function handler(req, res) {
   } = body;
 
   if (!email) return res.status(400).json({ success: false, error: 'email required' });
+
+  // Idempotency: if a prior provisioning already recorded this Stripe session
+  // for this email in Neon, short-circuit. Defense-in-depth in case the
+  // stripe-webhook idempotency layer is bypassed or Redis is down.
+  if (sessionId) {
+    try {
+      const dbMod = await import('./services/db.js');
+      if (dbMod.isConnected()) {
+        const existing = await dbMod.getClientByEmail(email);
+        if (existing?.metadata?.stripe_session === sessionId) {
+          return res.status(200).json({
+            success: true,
+            deduplicated: true,
+            message: 'Provisioning already completed for this Stripe session',
+            email,
+            tier: (existing.plan_code || 'compliance_only').replace(/^business_/, '').replace(/_only$/, '')
+          });
+        }
+      }
+    } catch (e) { /* fall through and re-provision; outer flow is also idempotent enough */ }
+  }
 
   // Auto-generate missing params
   const accountSlug = rawSlug || email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);

@@ -64,7 +64,10 @@ export default async function handler(req, res) {
     );
     const provisioning = {
       has_access_code: !!client.metadata?.access_code,
-      access_code: client.metadata?.access_code || null,
+      // Plaintext access codes are sensitive — never return them in admin
+      // responses where they end up in browser history, screenshots, screenshare.
+      // Use the resend_welcome_email action to deliver a fresh code via Emailit.
+      access_code_last4: client.metadata?.access_code ? String(client.metadata.access_code).slice(-4) : null,
       provisioned_at: provisionEvent?.created_at || null,
       provision_reason: provisionEvent?.reason || null,
       stripe_session: client.metadata?.stripe_session || null,

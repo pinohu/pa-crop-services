@@ -1347,7 +1347,7 @@ async function loadClient360() {
             ${resentAt ? ` · Resent: ${resentAt}` : ''}
           </div>
           <div style="font-size:11px;color:var(--gray);margin-top:4px">
-            Access code: ${prov.access_code || '<em>none — will regenerate on resend</em>'} ·
+            Access code: ${prov.access_code_last4 ? '••••' + prov.access_code_last4 : '<em>none — will regenerate on resend</em>'} ·
             Provisioned: ${prov.provisioned_at ? new Date(prov.provisioned_at).toLocaleString() : 'not recorded'}
             ${prov.stripe_session ? ` · Stripe: ${prov.stripe_session.slice(0, 18)}…` : ''}
           </div>
@@ -1441,7 +1441,7 @@ async function resendWelcomeEmail(email) {
   try {
     const r = await callAPI('resend_welcome_email', { email });
     if (r?.success) {
-      toast('Welcome email sent to ' + email + (r.accessCodeRegenerated ? ' (new code: ' + r.accessCode + ')' : ''), 'success');
+      toast('Welcome email sent to ' + email + (r.accessCodeRegenerated ? ' (new code generated, ending ••••' + r.accessCodeLast4 + ' — sent via email)' : ''), 'success');
       loadClient360();
     } else {
       toast('Resend failed: ' + (r?.error || 'unknown'), 'error');
