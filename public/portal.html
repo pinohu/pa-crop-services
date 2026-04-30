@@ -692,6 +692,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--ink); line-
           <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
           Entities
         </button>
+        <button class="nav-item" data-tab="knowledge">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Knowledge
+        </button>
         <button class="nav-item" data-tab="settings">
           <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           Settings
@@ -893,6 +897,23 @@ body { font-family: var(--font); background: var(--bg); color: var(--ink); line-
         </div>
         <div id="entities-body" aria-live="polite">
           <div style="padding:48px;text-align:center"><span class="spinner" aria-label="Loading entities"></span></div>
+        </div>
+      </div>
+
+      <!-- ══════════ KNOWLEDGE ══════════ -->
+      <div id="tab-knowledge" class="tab-pane" role="region" aria-label="Knowledge base">
+        <div class="page-header fade-up">
+          <h1>Knowledge Base</h1>
+          <p>PA compliance answers, written by our team</p>
+        </div>
+        <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input type="search" id="kb-search" placeholder="Search articles, e.g. annual report" autocomplete="off"
+                 aria-label="Search knowledge base"
+                 style="flex:1;min-width:240px;padding:10px 14px;border:1.5px solid var(--border);border-radius:9999px;font-family:inherit;font-size:14px;min-height:44px">
+          <span id="kb-count" class="at-label" aria-live="polite"></span>
+        </div>
+        <div id="knowledge-body" aria-live="polite">
+          <div style="padding:48px;text-align:center"><span class="spinner" aria-label="Loading articles"></span></div>
         </div>
       </div>
 
@@ -1273,6 +1294,7 @@ const App = {
         case 'obligations': loadObligations(); break;
         case 'billing': loadBilling(); break;
         case 'entities': loadEntities(); break;
+        case 'knowledge': loadKnowledge(); break;
         case 'settings': renderSettings(); break;
       }
     }
@@ -1484,6 +1506,16 @@ function bindDocFilters() {
   const search = $('docs-search');
   search.addEventListener('input', () => { docSearch = search.value.toLowerCase(); renderDocs(); });
   $('docs-refresh').addEventListener('click', () => { State.loaded.documents = false; loadDocuments(); });
+
+  // Knowledge-base search input — debounced filter over the cached article list.
+  const kbSearch = document.getElementById('kb-search');
+  if (kbSearch) {
+    let kbTimer;
+    kbSearch.addEventListener('input', () => {
+      clearTimeout(kbTimer);
+      kbTimer = setTimeout(() => { _kbFilter = kbSearch.value; renderKnowledge(); }, 120);
+    });
+  }
 }
 
 async function loadDocuments() {
@@ -1764,6 +1796,65 @@ async function loadEntities() {
         <strong style="color:var(--ink2)">Registered Address:</strong><br>${escHtml(e.address)}
       </div>` : ''}
     </div>`).join('')}</div>`;
+}
+
+// ─── KNOWLEDGE BASE ───────────────────────────────────
+let _kbCache = null;
+let _kbFilter = '';
+
+async function loadKnowledge() {
+  const container = $('knowledge-body');
+  if (!_kbCache) {
+    try {
+      loadBar.show();
+      const res = await apiFetch('/api/portal/knowledge-base');
+      loadBar.done();
+      if (!res.ok) throw new Error(res.statusText);
+      const data = await res.json();
+      _kbCache = data.data?.articles || data.articles || [];
+    } catch (err) {
+      loadBar.done();
+      container.innerHTML = errorState('Could not load knowledge base.', () => { _kbCache = null; loadKnowledge(); });
+      return;
+    }
+  }
+  renderKnowledge();
+}
+
+function renderKnowledge() {
+  const container = $('knowledge-body');
+  const counter = $('kb-count');
+  const all = _kbCache || [];
+  const q = (_kbFilter || '').toLowerCase().trim();
+  const articles = q
+    ? all.filter(a => (a.title || '').toLowerCase().includes(q)
+                   || (a.summary || '').toLowerCase().includes(q)
+                   || (a.content || '').toLowerCase().includes(q)
+                   || (a.tags || []).some(t => String(t).toLowerCase().includes(q)))
+    : all;
+  if (counter) counter.textContent = q ? `${articles.length} of ${all.length} articles` : `${all.length} articles`;
+  if (!articles.length) {
+    container.innerHTML = `<div class="empty-state fade-up">
+      <div class="empty-state-icon">📚</div>
+      <h3>${q ? 'No matches' : 'No articles yet'}</h3>
+      <p>${q ? 'Try a different search term.' : 'Articles will appear here once published.'}</p>
+    </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="kb-list" style="display:flex;flex-direction:column;gap:12px">
+    ${articles.map((a, i) => `
+      <details class="kb-item" style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden">
+        <summary style="padding:16px 20px;cursor:pointer;list-style:none;font-weight:600;color:var(--slate);display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <span>${escHtml(a.title || a.q || ('Article ' + (i + 1)))}</span>
+          <span aria-hidden="true" style="font-size:14px;color:var(--ink3)">▾</span>
+        </summary>
+        <div style="padding:0 20px 20px;line-height:1.7;color:var(--ink2);font-size:14px;border-top:1px solid var(--cream2)">
+          ${a.summary ? `<p style="margin-top:16px;font-size:14px;color:var(--ink3)">${escHtml(a.summary)}</p>` : ''}
+          <div style="margin-top:12px;white-space:pre-wrap">${escHtml(a.content || a.a || '')}</div>
+          ${(a.tags && a.tags.length) ? `<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px">${a.tags.map(t => `<span style="font-size:11px;background:var(--cream);color:var(--ink3);padding:3px 10px;border-radius:9999px">${escHtml(t)}</span>`).join('')}</div>` : ''}
+        </div>
+      </details>`).join('')}
+  </div>`;
 }
 
 // ─── SETTINGS ─────────────────────────────────────────
