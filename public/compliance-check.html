@@ -527,7 +527,7 @@
 <footer class="site-footer" role="contentinfo">
   <div class="footer-inner">
     <div>
-      <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+      <div class="footer-left">&copy; <span class="footer-year">2026</span> PA CROP Services (PA Registered Office Services, LLC)</div>
       <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div>
     </div>
     <nav class="footer-links" aria-label="Footer navigation">
@@ -1049,5 +1049,5 @@
 }());
 </script>
 
-</body>
+<script>document.querySelectorAll(".footer-year").forEach(function(el){el.textContent=new Date().getFullYear();});</script></body>
 </html>
