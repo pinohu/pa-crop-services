@@ -1489,10 +1489,35 @@ async function loadFilingQueue() {
           </div>
           ${i.missing?.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">Missing: ${i.missing.join(', ')}</div>` : ''}
         </div>
-        <a href="${i.filing_url}" rel="noopener" class="btn btn-gold btn-sm" style="font-size:11px;flex-shrink:0">File at PA DOS →</a>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <a href="${i.filing_url}" rel="noopener" class="btn btn-gold btn-sm" style="font-size:11px">File at PA DOS →</a>
+          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px" onclick="markObligationFiled('${escHtml(i.id)}','${escHtml(i.entity_name||'')}')">Mark filed</button>
+        </div>
       </div>`;
     }).join('');
   } catch (e) { document.getElementById('filing-queue-list').innerHTML = '<div class="at-muted">Filing queue requires Neon Postgres</div>'; }
+}
+
+async function markObligationFiled(obligationId, entityLabel) {
+  if (!obligationId) return;
+  const filingRef = prompt('Optional: PA DOS confirmation number / filing reference for ' + (entityLabel || 'this obligation') + ' (leave blank to skip)');
+  if (filingRef === null) return; // user cancelled
+  try {
+    const r = await fetch(ORIGIN + '/api/obligations/' + encodeURIComponent(obligationId) + '/mark-filed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify(filingRef ? { filing_reference: filingRef.slice(0, 100) } : {})
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.success) {
+      toast('Marked filed: ' + (entityLabel || obligationId), 'success');
+      loadFilingQueue();
+    } else {
+      toast('Mark filed failed: ' + (d.error || ('HTTP ' + r.status)), 'error');
+    }
+  } catch (err) {
+    toast('Mark filed failed: ' + err.message, 'error');
+  }
 }
 
 // ── Notification Ops ───────────────────────────────────────────────────
