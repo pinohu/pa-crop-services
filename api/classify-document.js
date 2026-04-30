@@ -1,4 +1,4 @@
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('classify-document');
@@ -12,8 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
-  const internalKey = req.headers['x-internal-key'];
-  if (internalKey !== (process.env.ADMIN_SECRET_KEY)) {
+  if (!isAdminRequest(req)) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

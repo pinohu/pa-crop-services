@@ -589,7 +589,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--ink); line-
       </div>
       <div class="field">
         <label for="login-code">Access code</label>
-        <input type="text" id="login-code" name="code" placeholder="6-character code" autocomplete="off" maxlength="16" spellcheck="false" style="font-family:var(--mono);letter-spacing:2px;text-transform:uppercase" required>
+        <input type="text" id="login-code" name="code" placeholder="Code from your welcome email" autocomplete="off" maxlength="16" spellcheck="false" aria-required="true" aria-describedby="login-error" style="font-family:var(--mono);letter-spacing:2px;text-transform:uppercase" required>
       </div>
       <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
     </form>
@@ -1185,7 +1185,7 @@ function mountPortal(token, client) {
   portal.removeAttribute('aria-hidden');
 
   // Populate topbar
-  $('plan-badge-text').textContent = client.plan || 'Standard';
+  $('plan-badge-text').textContent = client.plan || 'Compliance Only';
   const initials = (client.firstName || client.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   $('user-avatar').textContent = initials;
   $('user-avatar').setAttribute('aria-label', client.name || client.email);
@@ -1365,7 +1365,7 @@ async function loadDashboardKpis() {
   $('kpi-score-val').textContent = score;
   $('kpi-score-sub').textContent = score >= 80 ? 'Excellent' : score >= 60 ? 'Needs attention' : 'Action required';
   setGauge(score);
-  $('kpi-plan-val').textContent = State.client.plan || 'Standard';
+  $('kpi-plan-val').textContent = State.client.plan || 'Compliance Only';
 }
 
 async function loadDeadlines() {
@@ -1394,7 +1394,9 @@ async function loadDeadlines() {
   $('kpi-deadline-sub').textContent = next.name;
 
   container.innerHTML = obs.map(o => {
-    const d = daysUntil(o.dueDate);
+    const due = o.due_date || o.dueDate;
+    const name = o.title || o.name;
+    const d = daysUntil(due);
     const dotColor = o.status === 'overdue' ? 'var(--red)' : d !== null && d <= 30 ? 'var(--gold)' : 'var(--sage)';
     const daysLabel = o.status === 'overdue' ? 'Overdue' : d !== null ? `${d}d` : '—';
     const daysColor = o.status === 'overdue' ? 'color:var(--red)' : d !== null && d <= 30 ? 'color:#92400e' : 'color:var(--ink3)';
@@ -1402,8 +1404,8 @@ async function loadDeadlines() {
       <div class="deadline-item">
         <div class="deadline-dot" style="background:${dotColor}" aria-hidden="true"></div>
         <div class="deadline-info">
-          <div class="deadline-name">${escHtml(o.name)}</div>
-          <div class="deadline-date">${formatDate(o.dueDate)}</div>
+          <div class="deadline-name">${escHtml(name)}</div>
+          <div class="deadline-date">${formatDate(due)}</div>
         </div>
         <div class="deadline-days" style="${daysColor}">${daysLabel}</div>
       </div>`;
@@ -1601,7 +1603,11 @@ function renderObs() {
   }
 
   container.innerHTML = obs.map(o => {
-    const d = new Date(o.dueDate);
+    const due = o.due_date || o.dueDate;
+    const name = o.title || o.name;
+    const detail = o.description || o.detail || '';
+    const isManaged = o.filing_method === 'managed' || o.managed;
+    const d = new Date(due);
     const month = d.toLocaleDateString('en-US', { month: 'short' });
     const day = d.getDate();
     return `
@@ -1611,10 +1617,10 @@ function renderObs() {
           <div class="obligation-day">${day}</div>
         </div>
         <div class="obligation-info">
-          <div class="obligation-name">${escHtml(o.name)}</div>
+          <div class="obligation-name">${escHtml(name)}</div>
           <div class="obligation-detail">
-            ${escHtml(o.detail || '')}
-            ${o.managed ? ' &mdash; <strong style="color:var(--sage)">We file for you</strong>' : ''}
+            ${escHtml(detail)}
+            ${isManaged ? ' &mdash; <strong style="color:var(--sage)">We file for you</strong>' : ''}
           </div>
         </div>
         <div class="obligation-status">${statusBadge(o.status)}</div>

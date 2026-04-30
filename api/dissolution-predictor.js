@@ -2,14 +2,12 @@
 // GET /api/dissolution-predictor?key=ADMIN
 // Predicts dissolution risk trends for PA entities
 
-import { authenticateRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { authenticateRequest, isAdminRequest, setCors } from './services/auth.js';
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
+  const isAdmin = isAdminRequest(req);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
   if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 

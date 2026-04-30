@@ -77,6 +77,19 @@ const SILENT_CATCH = /\.catch\(\s*\(\s*\)\s*=>\s*\{\s*\}\s*\)/g;
 // Pattern 7: Raw console.log in API code (should use structured logger)
 const RAW_CONSOLE_LOG = /\bconsole\.log\(/g;
 
+// Pattern 8: Wrong reinstatement fee — canonical is $35 online / $40 paper.
+// Catches phrasings like "$70 reinstatement", "reinstatement ... $70", "$70 plus delinquent".
+// Allows legitimate math totals like "$70 by paper" (which reflects $40 + 2×$15) by requiring
+// proximity to the word "reinstatement" or "plus delinquent". Bare "$70" is not flagged so
+// unrelated $70 fees (e.g., DSCB:15-108 change-of-registered-office) don't false-positive.
+const WRONG_REINSTATEMENT_FEE = /(?:\$70\s+reinstatement|reinstatement[^.<]{0,80}\$70\b|\$70\s+(?:plus|\+)\s+delinquent)/gi;
+
+// Pattern 9: Wrong delinquent annual report fee — canonical is $15 (late-filing fee
+// under 15 Pa.C.S. § 146). On-time annual report fee is $7, so we only flag the
+// "delinquent / each" contexts. We deliberately do NOT match a generic "late ... $7"
+// because correct text often says "no late-filing penalty — the standard $7 still applies".
+const WRONG_DELINQUENT_FEE = /\$7\s+each|\$7\s+per\s+delinquent|delinquent[^.<]{0,80}\$7\b/gi;
+
 // ── Scan each file ──
 
 for (const filePath of allFiles) {
@@ -115,6 +128,20 @@ for (const filePath of allFiles) {
     if (allEntMatches) {
       addViolation(filePath, lineNum, 'ALL_ENTITIES_SINGLE_DEADLINE',
         `"All entities" paired with single deadline. Should break down by entity type. Context: "${allEntMatches[0].substring(0, 80)}"`);
+    }
+
+    // Pattern 8: Wrong reinstatement fee
+    const wrongReinstateMatches = line.match(WRONG_REINSTATEMENT_FEE);
+    if (wrongReinstateMatches) {
+      addViolation(filePath, lineNum, 'WRONG_REINSTATEMENT_FEE',
+        `Reinstatement fee should be $35 online ($40 paper) per data/compliance-rules.json. Context: "${wrongReinstateMatches[0].substring(0, 80)}"`);
+    }
+
+    // Pattern 9: Wrong delinquent annual report fee
+    const wrongDelinquentMatches = line.match(WRONG_DELINQUENT_FEE);
+    if (wrongDelinquentMatches) {
+      addViolation(filePath, lineNum, 'WRONG_DELINQUENT_FEE',
+        `Delinquent annual report late-filing fee should be $15 each per data/compliance-rules.json. Context: "${wrongDelinquentMatches[0].substring(0, 80)}"`);
     }
 
     // Only check API JS files for code quality patterns

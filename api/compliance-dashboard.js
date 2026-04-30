@@ -8,18 +8,16 @@
 import { getRules, buildDeadlineSummary } from './_compliance.js';
 import { db } from './_db.js';
 import { createLogger } from './_log.js';
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 
 const logger = createLogger('compliance-dashboard');
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'GET only' });
 
-  const key = req.headers['x-admin-key'];
-  if (key !== ADMIN_KEY) return res.status(403).json({ success: false, error: 'Unauthorized' });
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'Unauthorized' });
 
   try {
     const rules = getRules();

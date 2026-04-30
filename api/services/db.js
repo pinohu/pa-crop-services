@@ -116,7 +116,8 @@ export async function updateOrganization(id, updates) {
       setClauses.push(`${key} = $${i++}`);
       values.push(val);
     } else if (['principal_address','registered_office_address','metadata'].includes(key)) {
-      setClauses.push(`${key} = $${i++}`);
+      // JSONB merge — partial updates must not destroy existing keys (e.g. metadata.suitedash_uid).
+      setClauses.push(`${key} = COALESCE(${key}, '{}'::jsonb) || $${i++}::jsonb`);
       values.push(JSON.stringify(val));
     }
   }
@@ -214,7 +215,10 @@ export async function updateClient(id, updates) {
       setClauses.push(`${key} = $${i++}`);
       values.push(val);
     } else if (['communication_prefs','metadata'].includes(key)) {
-      setClauses.push(`${key} = $${i++}`);
+      // Merge JSONB instead of overwrite — callers passing a partial metadata patch
+      // (e.g. provision.js Step 14 setting only phone_extension) must not destroy the
+      // access_code, suitedash_uid, stripe_session etc. set by earlier steps.
+      setClauses.push(`${key} = COALESCE(${key}, '{}'::jsonb) || $${i++}::jsonb`);
       values.push(JSON.stringify(val));
     }
   }
@@ -317,7 +321,8 @@ export async function updateObligation(id, updates) {
       setClauses.push(`${key} = $${i++}`);
       values.push(val);
     } else if (key === 'metadata') {
-      setClauses.push(`metadata = $${i++}`);
+      // JSONB merge — protect prefill_data and other fields from partial-update wipes.
+      setClauses.push(`metadata = COALESCE(metadata, '{}'::jsonb) || $${i++}::jsonb`);
       values.push(JSON.stringify(val));
     }
   }
@@ -373,7 +378,8 @@ export async function updateDocument(id, updates) {
       setClauses.push(`${key} = $${i++}`);
       values.push(val);
     } else if (['extracted_entities','metadata'].includes(key)) {
-      setClauses.push(`${key} = $${i++}`);
+      // JSONB merge.
+      setClauses.push(`${key} = COALESCE(${key}, '{}'::jsonb) || $${i++}::jsonb`);
       values.push(JSON.stringify(val));
     }
   }
@@ -414,7 +420,8 @@ export async function updateNotification(id, updates) {
       setClauses.push(`${key} = $${i++}`);
       values.push(val);
     } else if (key === 'metadata') {
-      setClauses.push(`metadata = $${i++}`);
+      // JSONB merge.
+      setClauses.push(`metadata = COALESCE(metadata, '{}'::jsonb) || $${i++}::jsonb`);
       values.push(JSON.stringify(val));
     }
   }

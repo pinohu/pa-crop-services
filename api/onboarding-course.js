@@ -1,4 +1,4 @@
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 
 // PA CROP Services — Client Onboarding Course Generator
 // GET /api/onboarding-course?key=ADMIN (generates 5-lesson course)
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
+  const isAdmin = isAdminRequest(req);
   const GROQ_KEY = process.env.GROQ_API_KEY;
 
   // Static course structure (always available)
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     // Generate expanded content for each lesson if admin
-    if (adminKey === (process.env.ADMIN_SECRET_KEY) && req.query?.expand === 'true' && GROQ_KEY) {
+    if (isAdmin && req.query?.expand === 'true' && GROQ_KEY) {
       for (const lesson of COURSE.lessons) {
         try {
           const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {

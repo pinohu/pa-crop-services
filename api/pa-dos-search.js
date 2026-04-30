@@ -3,8 +3,7 @@
 // Searches PA Department of State for real entity data
 // type: name_search | file_number | new_registrations
 
-import { authenticateRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { authenticateRequest, isAdminRequest, setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('pa-dos-search');
@@ -13,8 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  const adminKey = req.headers['x-admin-key'];
-  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
+  const isAdmin = isAdminRequest(req);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
   if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 

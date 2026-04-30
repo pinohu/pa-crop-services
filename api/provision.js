@@ -286,6 +286,46 @@ export default async function handler(req, res) {
     results.steps.push({ step: '20i_provisioning', status: 'skipped', reason: '20i API key not configured' });
   }
 
+  // ── Pre-Step 4 derived state (must precede the welcome email) ────────
+  // Phone extension (Pro/Empire) and notary credits (Empire) are referenced inside
+  // the welcome email template below; compute and persist them here so the email
+  // includes them rather than firing before Steps 14/15. Persistence uses the JSONB
+  // merge semantics of updateClient/updateOrganization.
+  if (['pro', 'empire'].includes(tier)) {
+    try {
+      const ext = 100 + Math.floor(Math.random() * 99) + 1;
+      const phoneExt = `814-228-2822 ext ${ext}`;
+      results.phoneExtension = phoneExt;
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: { phone_extension: ext, direct_line: phoneExt }
+        });
+      }
+      results.steps.push({ step: 'phone_extension', status: 'done', extension: ext, line: phoneExt });
+    } catch (e) {
+      results.steps.push({ step: 'phone_extension', status: 'warning', error: e.message });
+    }
+  }
+
+  if (includesNotary) {
+    try {
+      const currentYear = new Date().getFullYear();
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: { notary_credits: { total: 2, used: 0, year: currentYear }, includes_notary: true }
+        });
+      }
+      results.steps.push({ step: 'notary_credits', status: 'done', credits: 2, year: currentYear });
+    } catch (e) {
+      results.steps.push({ step: 'notary_credits', status: 'warning', error: e.message });
+    }
+  }
+
+  // Gate the welcome-email hosting block on actual 20i success (not just plan flag).
+  const hostingProvisioned = results.steps.some(s => s.step === '20i_hosting' && s.status === 'done');
+
   // ── STEP 4: Welcome email ────────────────────────────────────────────
   const emailitKey = process.env.EMAILIT_API_KEY;
   try {
@@ -319,14 +359,17 @@ export default async function handler(req, res) {
               <p style="margin:0 0 8px"><strong>Email:</strong> ${email}</p>
               <p style="margin:0"><strong>Access code:</strong> ${accessCode}</p>
             </div>
-            ${includesHosting ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
+            ${hostingProvisioned ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
               <h3 style="color:#0C1220;margin:0 0 8px">Your Business Website &amp; Hosting Is Live</h3>
               <p style="margin:0 0 8px"><strong>Hosting panel:</strong> <a href="https://my.20i.com">my.20i.com</a></p>
               <p style="margin:0 0 8px"><strong>Username:</strong> ${email}</p>
               <p style="margin:0 0 8px"><strong>Password:</strong> ${hostingPassword}</p>
-              <p style="margin:0 0 8px;font-size:13px;color:#4A4A4A">Your hosting, email mailboxes, WordPress site, and SSL are all active.</p>
+              <p style="margin:0 0 8px;font-size:13px;color:#4A4A4A">Your hosting, email mailboxes, WordPress site, and SSL are all active. Please change your hosting password on first login.</p>
               <p style="margin:0;font-size:13px"><a href="https://pacropservices.com/welcome" style="color:#2D6A2E;font-weight:600">Choose your custom domain name &rarr;</a></p>
-            </div>` : ''}
+            </div>` : (includesHosting ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
+              <h3 style="color:#0C1220;margin:0 0 8px">Your Hosting Is Being Set Up</h3>
+              <p style="margin:0;font-size:14px;color:#4A4A4A">Hosting provisioning is in progress. We'll email you the panel access details within 24 hours. If you don't hear from us by then, reply to this email.</p>
+            </div>` : '')}
             ${includesFiling ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
               <h3 style="color:#0C1220;margin:0 0 8px">Annual Report Filing — We Handle It</h3>
               <p style="margin:0;font-size:14px;color:#4A4A4A">Your annual report filing is included. We'll prepare the filing, confirm details with you, and submit to PA DOS before your deadline. You don't need to do anything.</p>
@@ -565,47 +608,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── STEP 14: Dedicated phone extension (Pro/Empire) ───────────────────
-  if (['pro', 'empire'].includes(tier)) {
-    try {
-      const ext = 100 + Math.floor(Math.random() * 99) + 1;
-      const phoneExt = `814-228-2822 ext ${ext}`;
-
-      if (results.neonClientId) {
-        const dbMod = await import('./services/db.js');
-        await dbMod.updateClient(results.neonClientId, {
-          metadata: {
-            phone_extension: ext,
-            direct_line: phoneExt
-          }
-        });
-      }
-
-      results.phoneExtension = phoneExt;
-      results.steps.push({ step: 'phone_extension', status: 'done', extension: ext, line: phoneExt });
-    } catch (e) {
-      results.steps.push({ step: 'phone_extension', status: 'warning', error: e.message });
-    }
-  }
-
-  // ── STEP 15: Notary credit tracking (Empire) ─────────────────────────
-  if (includesNotary) {
-    try {
-      const currentYear = new Date().getFullYear();
-      if (results.neonClientId) {
-        const dbMod = await import('./services/db.js');
-        await dbMod.updateClient(results.neonClientId, {
-          metadata: {
-            notary_credits: { total: 2, used: 0, year: currentYear },
-            includes_notary: true
-          }
-        });
-      }
-      results.steps.push({ step: 'notary_credits', status: 'done', credits: 2, year: currentYear });
-    } catch (e) {
-      results.steps.push({ step: 'notary_credits', status: 'warning', error: e.message });
-    }
-  }
+  // (Phone extension and notary credits are computed pre-Step 4 so they appear in
+  //  the welcome email; their persistence already ran above.)
 
   // ── Summary ──────────────────────────────────────────────────────────
   const errors = results.steps.filter(s => s.status === 'error');

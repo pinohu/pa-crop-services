@@ -2,8 +2,7 @@
 // GET /api/tax-export?key=ADMIN&quarter=Q1&year=2026
 // Exports revenue data in CSV format for tax preparation
 
-import { authenticateRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { authenticateRequest, isAdminRequest, setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('tax-export');
@@ -11,8 +10,7 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const adminKey = req.headers['x-admin-key'];
-  const isAdmin = adminKey === (process.env.ADMIN_SECRET_KEY);
+  const isAdmin = isAdminRequest(req);
   const session = !isAdmin ? await authenticateRequest(req) : { valid: true };
   if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
 

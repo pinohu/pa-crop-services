@@ -6,6 +6,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { timingSafeEqual, randomBytes, createHmac } from 'crypto';
 import { Redis } from '@upstash/redis';
 import * as db from './db.js';
+import { logWarn } from '../_log.js';
 
 // ── Redis for session blocklist ────────────────────────────
 let _redis = null;
@@ -213,8 +214,11 @@ export async function authenticateRequest(req) {
 }
 
 export function isAdminRequest(req) {
-  // Only accept admin key from header, never from query params or body
-  const key = req.headers['x-admin-key'];
+  // Only accept admin key from header, never from query params or body.
+  // x-internal-key is the same secret used for internal service-to-service calls
+  // (provision.js → invoice-generate, sms, etc.); accepting it here lets those
+  // endpoints share a single timing-safe path.
+  const key = req.headers['x-admin-key'] || req.headers['x-internal-key'];
   if (!key || !ADMIN_KEY_VALUE) return false;
   return safeCompare(key, ADMIN_KEY_VALUE);
 }
@@ -268,7 +272,8 @@ export async function authenticateApiKey(req) {
     if (key.expires_at && new Date(key.expires_at) < new Date()) return null;
 
     // Update last_used_at (fire-and-forget)
-    sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${key.id}`.catch(() => {});
+    sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${key.id}`
+      .catch(err => logWarn('api_key_last_used_update_failed', { key_id: key.id, error: err?.message }));
 
     return {
       valid: true,
