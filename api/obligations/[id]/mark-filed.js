@@ -1,6 +1,5 @@
-import { setCors, authenticateRequest } from '../../services/auth.js';
+import { setCors, authenticateRequest, isAdminRequest } from '../../services/auth.js';
 import { markFiled } from '../../services/obligations.js';
-import { writeAuditEvent } from '../../services/db.js';
 import { isValidUUID, isValidString } from '../../_validate.js';
 import { createLogger } from '../../_log.js';
 
@@ -11,8 +10,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
 
-  const session = await authenticateRequest(req);
-  if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
+  // Two paths:
+  //   - Admin (mailroom / Ike) marks a managed-filing obligation completed.
+  //   - Authenticated client marks their own self-filing obligation completed.
+  const isAdmin = isAdminRequest(req);
+  const session = !isAdmin ? await authenticateRequest(req) : null;
+  if (!isAdmin && (!session || !session.valid)) {
+    return res.status(401).json({ success: false, error: 'unauthenticated' });
+  }
 
   const obligationId = req.query.id;
   if (!obligationId || !isValidUUID(obligationId)) {
@@ -28,17 +33,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verify ownership: load obligation and check org match
     const { getObligation } = await import('../../services/db.js');
     const obl = await getObligation(obligationId);
     if (!obl) return res.status(404).json({ success: false, error: 'not_found' });
-    if (obl.organization_id !== session.orgId) {
-      return res.status(403).json({ success: false, error: 'access_denied' });
+
+    // Client path requires ownership. Admin path skips that check (admins
+    // operate across all orgs by design).
+    if (!isAdmin) {
+      if (obl.organization_id !== session.orgId) {
+        return res.status(403).json({ success: false, error: 'access_denied' });
+      }
     }
 
-    const result = await markFiled(obligationId,
+    const actor = isAdmin
+      ? { type: 'admin', id: 'dashboard' }
+      : { type: 'client', id: session.clientId };
+
+    await markFiled(obligationId,
       { proof_document_id, filing_reference },
-      { type: 'client', id: session.clientId });
+      actor);
     return res.status(200).json({ success: true, obligation: obl });
   } catch (err) {
     log.error('mark_filed_error', {}, err instanceof Error ? err : new Error(String(err)));

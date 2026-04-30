@@ -597,6 +597,38 @@ export async function updateWorkflowJob(id, updates) {
   return rows?.[0] || null;
 }
 
+// ── Partners ──────────────────────────────────────────────
+
+export async function getPartnerByEmail(email) {
+  const rows = await query(`SELECT * FROM partners WHERE email = $1`, [email.toLowerCase().trim()]);
+  return rows?.[0] || null;
+}
+
+export async function createPartner(p) {
+  // Idempotent on email — partner-intake retries shouldn't create duplicates.
+  const existing = await getPartnerByEmail(p.email);
+  if (existing) return existing;
+  const rows = await query(
+    `INSERT INTO partners (name, email, partner_type, commission_rate, is_active, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (email) DO UPDATE SET
+       name = EXCLUDED.name,
+       partner_type = EXCLUDED.partner_type,
+       metadata = COALESCE(partners.metadata, '{}'::jsonb) || EXCLUDED.metadata,
+       updated_at = now()
+     RETURNING *`,
+    [
+      p.name || '',
+      p.email.toLowerCase().trim(),
+      p.partner_type || 'cpa',
+      p.commission_rate || null,
+      p.is_active !== false,
+      JSON.stringify(p.metadata || {})
+    ]
+  );
+  return rows?.[0] || null;
+}
+
 // ── Partner Clients ───────────────────────────────────────
 
 export async function getPartnerClients(partnerId) {

@@ -594,10 +594,23 @@ body { font-family: var(--font); background: var(--bg); color: var(--ink); line-
       <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
     </form>
     <div class="login-footer">
-      <a href="mailto:info@pacropservices.com?subject=Access+Code+Request">Forgot your access code?</a>
+      <a href="#" id="forgot-code-btn">Forgot your access code?</a>
       &nbsp;&middot;&nbsp;
       <a href="#" id="demo-btn">Try demo &rarr;</a>
     </div>
+    <form id="reset-form" class="reset-card" hidden aria-labelledby="reset-form-title">
+      <div id="reset-form-title" style="font-weight:600;margin-bottom:8px">Send me a fresh access code</div>
+      <p style="font-size:13px;color:var(--ink3);margin:0 0 12px">Enter the email on your account. We'll email you a new code if it matches a client record.</p>
+      <div class="field">
+        <label for="reset-email">Email address</label>
+        <input type="email" id="reset-email" name="email" placeholder="you@business.com" autocomplete="email" required>
+      </div>
+      <div class="reset-error" role="alert" aria-live="polite" hidden></div>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-primary" id="reset-btn" style="flex:1">Send new code</button>
+        <button type="button" class="btn btn-secondary" id="reset-cancel-btn">Cancel</button>
+      </div>
+    </form>
     <div class="login-meta">
       <span aria-label="Encrypted connection">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="vertical-align:-1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -1919,6 +1932,51 @@ document.addEventListener('DOMContentLoaded', () => {
     $('login-email').value = 'demo@pacropservices.com';
     $('login-code').value = 'DEMO01';
     doLogin('demo@pacropservices.com', 'DEMO01');
+  });
+
+  $('forgot-code-btn').addEventListener('click', e => {
+    e.preventDefault();
+    const form = $('reset-form');
+    form.hidden = false;
+    const seedEmail = $('login-email').value.trim();
+    if (seedEmail) $('reset-email').value = seedEmail;
+    $('reset-email').focus();
+  });
+
+  $('reset-cancel-btn').addEventListener('click', () => {
+    $('reset-form').hidden = true;
+    const err = document.querySelector('.reset-error'); if (err) err.hidden = true;
+  });
+
+  $('reset-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('reset-email').value.trim();
+    const errEl = document.querySelector('.reset-error');
+    const btn = $('reset-btn');
+    if (!email) { errEl.textContent = 'Please enter your email.'; errEl.hidden = false; return; }
+    btn.disabled = true; btn.textContent = 'Sending…';
+    errEl.hidden = true;
+    try {
+      const res = await fetch('/api/auth/reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      // Always show the same confirmation message — the endpoint deliberately
+      // returns identical responses for found/not-found to prevent enumeration.
+      btn.textContent = 'Sent ✓';
+      $('reset-form').hidden = true;
+      const ok = document.createElement('div');
+      ok.style.cssText = 'background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.3);border-radius:8px;padding:12px;font-size:13px;color:var(--sage);margin-top:12px';
+      ok.textContent = 'If we have a client account with that email, a fresh access code is on its way. Check your inbox in the next few minutes.';
+      $('login-form').parentNode.insertBefore(ok, $('login-form').nextSibling);
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Send new code'; ok.remove(); }, 30000);
+    } catch (err) {
+      errEl.textContent = 'Something went wrong. Please try again or call 814-228-2822.';
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Send new code';
+    }
   });
 
   $('logout-btn').addEventListener('click', doLogout);

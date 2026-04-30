@@ -1,8 +1,26 @@
 import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import * as db from './services/db.js';
 
 const log = createLogger('partner-intake');
+
+async function notifyIke(subject, body) {
+  const key = process.env.EMAILIT_API_KEY;
+  if (!key) return;
+  try {
+    await fetch('https://api.emailit.com/v1/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'partners@pacropservices.com',
+        to: 'hello@pacropservices.com',
+        subject: '[PA CROP] ' + subject,
+        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+      })
+    });
+  } catch (e) { log.warn('partner_notify_failed', { error: e.message }); }
+}
 
 // PA CROP Services — /api/partner-intake
 // CPA/Attorney partner application intake
@@ -75,15 +93,50 @@ export default async function handler(req, res) {
       }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }
 
+    // Persist partner record in Neon so admin/partner-channel + /api/partners/me/*
+    // see the applicant immediately, not only after n8n runs. Idempotent on email.
+    let neonPartner = null;
+    try {
+      if (db.isConnected()) {
+        neonPartner = await db.createPartner({
+          name: firmName,
+          email: cleanEmail,
+          partner_type: firmType || 'cpa',
+          is_active: false, // Pending approval — flip to true after Ike reviews.
+          metadata: {
+            first_name: firstName || '',
+            last_name: lastName || '',
+            phone: phone || '',
+            estimated_client_count: clientCount || '',
+            pricing_preference: pricingPreference || '',
+            tags,
+            applied_at: new Date().toISOString(),
+            status: 'pending_review'
+          }
+        });
+      }
+    } catch (e) { log.warn('partner_neon_persist_failed', { email: cleanEmail, error: e.message }); }
+
     // Fire n8n partner onboarding sequence
     await fetch('https://n8n.audreysplace.place/webhook/crop-partner-onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         firmName, firstName, lastName, email: cleanEmail, phone,
-        clientCount, pricingPreference, firmType, tags
+        clientCount, pricingPreference, firmType, tags,
+        neonPartnerId: neonPartner?.id || null
       })
     }).catch(e => log.warn('external_call_failed', { error: e.message }));
+
+    // Direct admin notification — n8n may not run, but Ike still needs to know.
+    await notifyIke(`New partner application: ${firmName}`,
+      `<h2>New partner application</h2>
+       <p><strong>Firm:</strong> ${firmName} (${firmType || 'unspecified'})</p>
+       <p><strong>Contact:</strong> ${firstName || ''} ${lastName || ''} &lt;${cleanEmail}&gt; ${phone || ''}</p>
+       <p><strong>Estimated clients:</strong> ${clientCount || 'unspecified'}</p>
+       <p><strong>Pricing preference:</strong> ${pricingPreference || 'unspecified'}</p>
+       <p><strong>Neon partner id:</strong> ${neonPartner?.id || 'not persisted'}</p>
+       <p>Review and activate at <a href="https://www.pacropservices.com/admin">/admin</a> when ready.</p>`);
 
     return res.status(200).json({
       success: true,

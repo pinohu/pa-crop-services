@@ -258,10 +258,18 @@ async function submitPartnerForm(){
         pricingPreference:document.getElementById("p-pricing").value
       })
     });
+    var data = await res.json().catch(function(){return{};});
+    if(!res.ok || data.success===false){
+      throw new Error(data.error || ("Server returned " + res.status));
+    }
     document.getElementById("partner-success").style.display="block";
     document.getElementById("partner-submit-btn").style.display="none";
     if(window.plausible)plausible("Partner Application",{props:{firmType:document.getElementById("p-type").value}});
-  }catch(e){btn.textContent="Submit Partner Application →";btn.disabled=false;var pe=document.getElementById("partner-error");if(pe){pe.textContent="Could not submit the form — check your internet connection and try again. If the problem continues, email partners@pacropservices.com directly.";pe.style.display="block";};}
+  }catch(e){
+    btn.textContent="Submit Partner Application →";btn.disabled=false;
+    var pe=document.getElementById("partner-error");
+    if(pe){pe.textContent="Could not submit the form — " + (e.message ? e.message + ". " : "") + "Try again in a moment, or email partners@pacropservices.com directly.";pe.style.display="block";}
+  }
 }
 </script>
 <script src="/embed/chatbot.js" defer></script>
