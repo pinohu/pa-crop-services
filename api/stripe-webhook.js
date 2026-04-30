@@ -10,6 +10,7 @@
 import { log, logError, logWarn } from './_log.js';
 import { fetchWithTimeout } from './_fetch.js';
 import { Redis } from '@upstash/redis';
+import { notifyOps } from './services/email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -20,6 +21,9 @@ async function readRawBody(req) {
   }
   return Buffer.concat(chunks);
 }
+
+// Backwards-compat alias — existing call sites use _notifyIke.
+const _notifyIke = (subject, body) => notifyOps(subject, body);
 
 let _redis = null;
 function getRedis() {
@@ -48,22 +52,8 @@ async function claimEventId(eventId) {
   }
 }
 
-async function _notifyIke(subject, body) {
-  const key = process.env.EMAILIT_API_KEY;
-  if (!key) { logWarn('emailit_key_missing', { subject }); return; }
-  try {
-    await fetchWithTimeout('https://api.emailit.com/v1/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'alerts@pacropservices.com',
-        to: 'hello@pacropservices.com',
-        subject: '[PA CROP] ' + subject,
-        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
-      })
-    });
-  } catch (e) { logError('emailit_notify_failed', { subject }, e); }
-}
+// (notifyOps from services/email.js + the _notifyIke alias above replace the
+//  10-line duplicated helper that used to live here.)
 
 // 4-tier pricing — values come from services/plans.js (single source of truth).
 // Re-exposed in this older shape so the existing detectTier() return type doesn't

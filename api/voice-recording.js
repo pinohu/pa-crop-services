@@ -1,32 +1,16 @@
 import { setCors, verifyTwilioSignature } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
+import { notifyOps } from './services/email.js';
 
 const log = createLogger('voice-recording');
+const _notifyIke = (subject, body) => notifyOps(subject, body);
 
 // HTML-escape helper for embedding caller-controlled values in admin-notification HTML.
 function escHtml(s) {
   return String(s === null || s === undefined ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-// ── Emailit Fallback Notifier ──
-async function _notifyIke(subject, body) {
-  const key = process.env.EMAILIT_API_KEY;
-  if (!key) { log.warn('emailit_api_key_not_set_notification_skipped', { error: String(subject) }); return; }
-  try {
-    await fetch('https://api.emailit.com/v1/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'alerts@pacropservices.com',
-        to: 'hello@pacropservices.com',
-        subject: '[PA CROP] ' + subject,
-        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
-      })
-    });
-  } catch (e) { log.error('emailit_fallback_failed', {}, e instanceof Error ? e : new Error(String(e))); }
 }
 
 export default async function handler(req, res) {

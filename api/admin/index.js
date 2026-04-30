@@ -4,6 +4,7 @@
 
 import * as db from '../services/db.js';
 import * as plans from '../services/plans.js';
+import { notifyOps as emailNotifyOps } from '../services/email.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { createLogger } from '../_log.js';
 
@@ -77,23 +78,8 @@ async function stripeFetch(path) {
   }
 }
 
-// ── Emailit Fallback Notifier ──
-async function _notifyIke(subject, body) {
-  const key = process.env.EMAILIT_API_KEY;
-  if (!key) { log.warn('emailit_not_configured', { subject }); return; }
-  try {
-    await fetchWithTimeout('https://api.emailit.com/v1/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'alerts@pacropservices.com',
-        to: 'hello@pacropservices.com',
-        subject: '[PA CROP] ' + subject,
-        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
-      })
-    });
-  } catch (e) { log.error('emailit_fallback_failed', {}, e); }
-}
+// ── Emailit Fallback Notifier (delegates to services/email.notifyOps) ──
+const _notifyIke = (subject, body) => emailNotifyOps(subject, body);
 
 export default async function handler(req, res) {
   setCors(req, res);

@@ -2,25 +2,16 @@ import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import * as db from './services/db.js';
+import { sendEmail } from './services/email.js';
 
 const log = createLogger('partner-intake');
 
-async function notifyIke(subject, body) {
-  const key = process.env.EMAILIT_API_KEY;
-  if (!key) return;
-  try {
-    await fetch('https://api.emailit.com/v1/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'partners@pacropservices.com',
-        to: 'hello@pacropservices.com',
-        subject: '[PA CROP] ' + subject,
-        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
-      })
-    });
-  } catch (e) { log.warn('partner_notify_failed', { error: e.message }); }
-}
+const notifyIke = (subject, body) => sendEmail({
+  from: 'partners@pacropservices.com',
+  to: 'hello@pacropservices.com',
+  subject: '[PA CROP] ' + subject,
+  html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
+});
 
 // PA CROP Services — /api/partner-intake
 // CPA/Attorney partner application intake
