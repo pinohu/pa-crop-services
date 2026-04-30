@@ -33,7 +33,39 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is a CROP?","acceptedAnswer":{"@type":"Answer","text":"A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service under 15 Pa. C.S. § 109, providing a registered office address on behalf of your business entity."}},{"@type":"Question","name":"Is a CROP the same as a registered agent?","acceptedAnswer":{"@type":"Answer","text":"Functionally, yes. Pennsylvania uses 'Commercial Registered Office Provider' instead of 'registered agent.'"}},{"@type":"Question","name":"What is the PA annual report requirement?","acceptedAnswer":{"@type":"Answer","text":"Starting 2025, all PA entities must file annually. Deadlines vary by entity type: corporations by June 30, LLCs by September 30, all others by December 31. Starting with 2027 reports, failure to file leads to administrative dissolution six months after the deadline."}},{"@type":"Question","name":"How quickly do you forward documents?","acceptedAnswer":{"@type":"Answer","text":"Same-day scanning and portal upload with immediate email notification."}},{"@type":"Question","name":"Do you file my annual report?","acceptedAnswer":{"@type":"Answer","text":"Business Pro and Empire clients get filing included. All tiers get 5 deadline reminders."}}]}</script>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
-<script defer>function trackEvent(n,p){if(window.plausible)plausible(n,{props:p||{}});}</script>
+<script defer>function trackEvent(n,p){if(window.plausible)plausible(n,{props:p||{}});}
+// Pricing CTAs: prefer /api/billing/checkout (sets metadata.plan_code so the
+// Stripe webhook never has to fall back to amount-bracket inference). Falls
+// back to the buy.stripe.com href if the API is unavailable.
+document.addEventListener('click', function(e){
+  var link = e.target.closest && e.target.closest('a[data-checkout-plan]');
+  if (!link) return;
+  var planCode = link.getAttribute('data-checkout-plan');
+  if (!planCode) return;
+  e.preventDefault();
+  var oldText = link.textContent;
+  link.textContent = 'Opening checkout…';
+  fetch('/api/billing/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plan_code: planCode })
+  })
+  .then(function(r){ return r.json().catch(function(){return {};}); })
+  .then(function(d){
+    if (d && d.checkout_url) {
+      window.location.href = d.checkout_url;
+    } else {
+      // Fallback to the legacy Payment Link href
+      window.location.href = link.getAttribute('href');
+    }
+  })
+  .catch(function(){
+    window.location.href = link.getAttribute('href');
+  })
+  .finally(function(){
+    setTimeout(function(){ link.textContent = oldText; }, 5000);
+  });
+});</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
@@ -248,7 +280,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>AI compliance assistant (24/7)</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'compliance',price:'99'})">Protect my entity — $99/yr →</a>
+      <a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" data-checkout-plan="compliance_only" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'compliance',price:'99'})">Protect my entity — $99/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">No credit card hassle. Cancel anytime.</div>
     </div>
 
@@ -274,7 +306,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>Priority email support</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'starter',price:'199'})">Get started — $199/yr →</a>
+      <a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" data-checkout-plan="business_starter" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'starter',price:'199'})">Get started — $199/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">Most PA business owners choose this plan</div>
     </div>
 
@@ -299,7 +331,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>Direct phone line to our team</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'pro',price:'349'})">Go hands-free — $349/yr →</a>
+      <a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" data-checkout-plan="business_pro" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'pro',price:'349'})">Go hands-free — $349/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For business owners who want zero compliance work</div>
     </div>
 
@@ -324,7 +356,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>2 free notarizations per year <span style="color:var(--ink4);font-size:11px">— $100 value</span></li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'empire',price:'699'})">Manage my entities — $699/yr →</a>
+      <a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" data-checkout-plan="business_empire" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'empire',price:'699'})">Manage my entities — $699/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For multi-LLC and multi-entity operators</div>
     </div>
 
