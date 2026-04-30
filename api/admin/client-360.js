@@ -53,6 +53,30 @@ export default async function handler(req, res) {
     const health = computeEntityHealth(org, obligations, documents, notifications, client);
     const entitlements = getPlanEntitlements(client.plan_code);
 
+    // ── Provisioning diagnostics (welcome-email recovery) ──
+    const allEvents = [...auditEvents, ...orgEvents];
+    const provisionEvent = allEvents
+      .filter(e => e.event_type === 'client.provisioned')
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const welcomeResentEvent = allEvents.find(e => e.event_type === 'welcome_email.resent');
+    const welcomeNotifications = notifications.filter(n =>
+      /welcome|onboard/i.test(n.template_id || '') || n.notification_type === 'welcome'
+    );
+    const provisioning = {
+      has_access_code: !!client.metadata?.access_code,
+      access_code: client.metadata?.access_code || null,
+      provisioned_at: provisionEvent?.created_at || null,
+      provision_reason: provisionEvent?.reason || null,
+      stripe_session: client.metadata?.stripe_session || null,
+      welcome_email_sent: welcomeNotifications.some(n => n.delivery_status === 'sent' || n.sent_at),
+      welcome_email_failed: welcomeNotifications.some(n => n.delivery_status === 'failed'),
+      welcome_email_last_attempt: welcomeNotifications[0]?.sent_at || welcomeNotifications[0]?.scheduled_for || null,
+      welcome_email_resent_at: welcomeResentEvent?.created_at || null,
+      emailit_configured: !!process.env.EMAILIT_API_KEY,
+      suitedash_configured: !!(process.env.SUITEDASH_PUBLIC_ID && process.env.SUITEDASH_SECRET_KEY),
+      twentyi_configured: !!(process.env.TWENTY_I_GENERAL || process.env.TWENTY_I_TOKEN)
+    };
+
     // Churn risk indicators
     const churnSignals = [];
     if (obligations.some(o => ['overdue', 'escalated'].includes(o.obligation_status))) churnSignals.push('Has overdue obligations');
@@ -141,7 +165,8 @@ export default async function handler(req, res) {
       signals: {
         churn_risk: churnSignals,
         upsell_opportunities: upsellSignals
-      }
+      },
+      provisioning
     });
   } catch (err) {
     logError('client_360_error', {}, err);
