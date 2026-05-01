@@ -3,6 +3,28 @@
 This document explains the migration layout, the historical schema drift the
 audit surfaced, and how to apply changes to production Neon safely.
 
+> **⚠️ Important context (May 2026):** As of this writing, **PA CROP Services
+> is not yet using Neon in production.** The Vercel team's shared `neondb`
+> database does not contain PA CROP tables (`clients`, `organizations`,
+> `obligations`, etc.). Production has been running entirely on SuiteDash
+> as the system of record, with `services/db.js#isConnected()` short-
+> circuiting all Neon code paths.
+>
+> The migration files below are therefore **advisory** — they describe the
+> intended schema and are ready to run if/when you decide to bring Neon
+> online for PA CROP. Do not run `0002_reconcile_schema.sql` against the
+> shared `neondb` until you've decided on one of:
+>
+>  - **Option A:** Apply `schema/001_init.sql` first to create the PA CROP
+>    tables in the shared `neondb`. Risk: table-name collision with other
+>    apps sharing the database (notably `audit_events` already exists from
+>    another project — verify schemas match before proceeding).
+>  - **Option B (cleaner):** Create a new dedicated Neon project for PA
+>    CROP, point the Vercel `DATABASE_URL` at it, then apply
+>    `schema/001_init.sql` followed by `0002_reconcile_schema.sql`.
+>
+> Once one of those is in place, the rest of this document applies as written.
+
 ## Current files (canonical layout)
 
 ```
