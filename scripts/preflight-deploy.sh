@@ -9,6 +9,12 @@
 #   scripts/preflight-deploy.sh https://pa-crop-services-abc123.vercel.app
 #   scripts/preflight-deploy.sh https://www.pacropservices.com   # against prod
 #
+# Vercel-protected previews: pass a share URL via PREFLIGHT_BOOTSTRAP_URL.
+# The script will hit it once with a cookie jar so subsequent requests
+# carry the auth cookie:
+#   PREFLIGHT_BOOTSTRAP_URL='https://...?_vercel_share=TOKEN' \
+#     scripts/preflight-deploy.sh https://pa-crop-services-abc123.vercel.app
+#
 # Exit code: 0 = all critical checks pass; non-zero = at least one failure.
 # Warnings (non-blocking) are reported but do not affect exit code.
 #
@@ -22,6 +28,19 @@ if [ -z "$BASE" ]; then
 fi
 BASE="${BASE%/}"  # strip trailing slash
 
+# Optional cookie jar for Vercel-protected previews. If
+# PREFLIGHT_BOOTSTRAP_URL is set, hit it once to seed cookies, then reuse
+# the jar on every subsequent request.
+COOKIE_JAR=""
+if [ -n "${PREFLIGHT_BOOTSTRAP_URL:-}" ]; then
+  COOKIE_JAR="$(mktemp)"
+  echo "Bootstrapping cookie jar from ${PREFLIGHT_BOOTSTRAP_URL%%\?*}..." >&2
+  curl -sS -L -c "$COOKIE_JAR" -o /dev/null "$PREFLIGHT_BOOTSTRAP_URL" 2>/dev/null || true
+  trap 'rm -f "$COOKIE_JAR"' EXIT
+fi
+COOKIE_FLAGS=()
+[ -n "$COOKIE_JAR" ] && COOKIE_FLAGS=(-b "$COOKIE_JAR" -c "$COOKIE_JAR")
+
 # --- helpers ---------------------------------------------------------------
 PASS=0
 FAIL=0
@@ -33,7 +52,7 @@ fail()  { FAIL=$((FAIL+1)); echo "  ${RED}FAIL${RST}  $1"; [ -n "${2:-}" ] && ec
 warn()  { WARN=$((WARN+1)); echo "  ${YEL}WARN${RST}  $1"; [ -n "${2:-}" ] && echo "        $2"; }
 hdr()   { echo; echo "${BLU}── $1 ──${RST}"; }
 
-req()   { curl -sS -m 10 -o /tmp/preflight-body -w "%{http_code}" "$@" 2>/dev/null || echo "000"; }
+req()   { curl -sS -m 10 "${COOKIE_FLAGS[@]}" -o /tmp/preflight-body -w "%{http_code}" "$@" 2>/dev/null || echo "000"; }
 body()  { cat /tmp/preflight-body 2>/dev/null || true; }
 
 echo "${BLU}PA CROP Services — preflight against ${BASE}${RST}"
@@ -45,7 +64,7 @@ if [ "$status" = "200" ]; then pass "GET / -> 200"; else fail "GET / -> $status"
 
 # --- security headers (CSP, HSTS, X-Frame-Options, etc.) -------------------
 hdr "2. Security headers (vercel.json)"
-headers=$(curl -sSI -m 10 "$BASE/" 2>/dev/null)
+headers=$(curl -sSI -m 10 "${COOKIE_FLAGS[@]}" "$BASE/" 2>/dev/null)
 echo "$headers" | grep -qi "^x-frame-options: DENY"   && pass "X-Frame-Options: DENY"   || fail "X-Frame-Options: DENY missing"
 echo "$headers" | grep -qi "^x-content-type-options: nosniff" && pass "X-Content-Type-Options: nosniff" || fail "X-Content-Type-Options missing"
 echo "$headers" | grep -qi "^strict-transport-security: max-age" && pass "HSTS present" || fail "HSTS missing"
@@ -132,7 +151,7 @@ esac
 # --- Compliance pages — corrected fees should be live ---
 hdr "10. Compliance fee corrections (Wave 1)"
 for path in /reinstate-dissolved-pennsylvania-llc /pa-2027-dissolution-deadline /pennsylvania-foreign-entity-annual-report; do
-  page=$(curl -sS -m 10 "$BASE$path" 2>/dev/null || true)
+  page=$(curl -sS -m 10 "${COOKIE_FLAGS[@]}" "$BASE$path" 2>/dev/null || true)
   if echo "$page" | grep -qE "reinstatement application fee is \\\$35|\\\$35 online|\\\$35 \\(online\\)"; then
     pass "$path: \$35 reinstatement fee present"
   else
@@ -147,7 +166,7 @@ done
 
 # --- Pricing CTAs on home page have data-checkout-plan (Wave 11) ---
 hdr "11. Home page pricing CTAs (Wave 11)"
-home=$(curl -sS -m 10 "$BASE/" 2>/dev/null || true)
+home=$(curl -sS -m 10 "${COOKIE_FLAGS[@]}" "$BASE/" 2>/dev/null || true)
 for plan in compliance_only business_starter business_pro business_empire; do
   if echo "$home" | grep -q "data-checkout-plan=\"$plan\""; then
     pass "data-checkout-plan=$plan present"
@@ -174,7 +193,7 @@ fi
 
 # --- DESIGN.md token availability (Wave 15) ---
 hdr "14. DESIGN.md token layer (Wave 15)"
-css=$(curl -sS -m 10 "$BASE/site.css" 2>/dev/null || true)
+css=$(curl -sS -m 10 "${COOKIE_FLAGS[@]}" "$BASE/site.css" 2>/dev/null || true)
 echo "$css" | grep -q -- "--crop-green:" && pass "site.css exposes --crop-green token" || fail "site.css missing --crop-green token (Wave 15)"
 echo "$css" | grep -q -- "--crop-mono:"  && pass "site.css exposes --crop-mono token"  || fail "site.css missing --crop-mono token"
 echo "$home" | grep -q "Source+Code+Pro" && pass "Home loads Source Code Pro font" || warn "Home not loading Source Code Pro"
@@ -182,7 +201,7 @@ echo "$home" | grep -q "family=Inter\|family=Inter:" && pass "Home loads Inter f
 
 # --- Knowledge tab present in portal HTML (Wave 12) ---
 hdr "15. Portal Knowledge tab (Wave 12)"
-portal=$(curl -sS -m 10 "$BASE/portal" 2>/dev/null || true)
+portal=$(curl -sS -m 10 "${COOKIE_FLAGS[@]}" "$BASE/portal" 2>/dev/null || true)
 echo "$portal" | grep -q 'data-tab="knowledge"' && pass "Portal has Knowledge tab nav item" || fail "Portal missing data-tab=knowledge"
 echo "$portal" | grep -q 'id="tab-knowledge"'   && pass "Portal has tab-knowledge pane"     || fail "Portal missing tab-knowledge pane"
 
