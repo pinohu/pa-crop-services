@@ -344,7 +344,7 @@ export default async function handler(req, res) {
       // Fallback: send welcome email directly
       const planRecord = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
       const tierLabel = planRecord.label;
-      await fetch('https://api.emailit.com/v1/emails', {
+      const emailitRes = await fetch('https://api.emailit.com/v1/emails', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -394,12 +394,31 @@ export default async function handler(req, res) {
           </div>`
         })
       });
-      results.steps.push({ step: 'welcome_email', status: 'done', via: 'emailit_direct' });
+      // Critical: actually check the response. Emailit returns 422 with a JSON
+      // body like {"error":"Domain not verified"} when the sender domain hasn't
+      // been DNS-verified. Without this check, every send silently "succeeds"
+      // and the actual delivery failure goes unnoticed — which is how the
+      // original missing-confirmation-email incident went undetected for weeks.
+      if (emailitRes.ok) {
+        results.steps.push({ step: 'welcome_email', status: 'done', via: 'emailit_direct' });
+      } else {
+        const detail = await emailitRes.text().catch(() => 'unknown');
+        results.steps.push({
+          step: 'welcome_email',
+          status: 'error',
+          via: 'emailit_direct',
+          status_code: emailitRes.status,
+          error: detail.slice(0, 300)
+        });
+        results.warnings.push(`Welcome email delivery FAILED via Emailit (${emailitRes.status}): ${detail.slice(0, 200)}`);
+      }
     } else {
       results.steps.push({ step: 'welcome_email', status: 'skipped', reason: 'No email service available' });
+      results.warnings.push('Welcome email skipped — neither n8n nor EMAILIT_API_KEY is configured');
     }
   } catch (e) {
     results.steps.push({ step: 'welcome_email', status: 'error', error: e.message });
+    results.warnings.push(`Welcome email threw: ${e.message}`);
   }
 
   // ── STEP 5: Acumbamail ────────────────────────────────────────────────
