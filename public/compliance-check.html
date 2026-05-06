@@ -483,6 +483,14 @@
         <div class="cta-tag" id="cta-tag">Recommended for your situation</div>
         <h3 id="cta-heading">Let us handle your compliance</h3>
         <p id="cta-body">Never miss a deadline. We monitor, remind, and file for you — with a licensed PA CROP at a real Erie, PA address.</p>
+
+        <form id="capture-form" class="capture-form" aria-label="Get your full compliance report by email" style="background:#FAF9F6;border:1px solid #EBE8E2;border-radius:12px;padding:20px;margin:0 0 16px;display:grid;grid-template-columns:1fr auto;gap:8px">
+          <label for="capture-email" style="grid-column:1 / -1;font-size:14px;font-weight:600;margin-bottom:4px">Email me my full compliance report</label>
+          <input type="email" id="capture-email" name="email" placeholder="you@business.com" autocomplete="email" required style="padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:15px;font-family:inherit;min-height:44px">
+          <button type="submit" id="capture-btn" class="btn-primary" style="white-space:nowrap;min-height:44px">Send report</button>
+          <div id="capture-msg" role="status" aria-live="polite" style="grid-column:1 / -1;font-size:13px;color:#615D59;min-height:18px"></div>
+        </form>
+
         <div class="cta-actions">
           <a href="/#pricing" class="btn-primary" id="cta-btn">View Plans — From $99/year</a>
           <a href="tel:8142282822" class="btn-ghost">Call 814-228-2822</a>
@@ -519,7 +527,7 @@
 <footer class="site-footer" role="contentinfo">
   <div class="footer-inner">
     <div>
-      <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+      <div class="footer-left">&copy; <span class="footer-year">2026</span> PA CROP Services (PA Registered Office Services, LLC)</div>
       <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div>
     </div>
     <nav class="footer-links" aria-label="Footer navigation">
@@ -951,6 +959,57 @@
   }
 
   // ── Restart ────────────────────────────────────────────────────────────────
+  // ── Lead capture: email + entity context ──────────────────────────────────
+  document.getElementById('capture-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var emailEl = document.getElementById('capture-email');
+    var btn = document.getElementById('capture-btn');
+    var msg = document.getElementById('capture-msg');
+    var email = (emailEl.value || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.style.color = '#B53333';
+      msg.textContent = 'Please enter a valid email.';
+      emailEl.focus();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msg.style.color = '#615D59';
+    msg.textContent = '';
+
+    try {
+      var raw = computeScore();
+      var s = { score: raw.score, level: riskLevel(raw.score) };
+      // Lead capture via /api/subscribe (Acumbamail + n8n nurture).
+      var subRes = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          source: 'compliance-check-quiz',
+          tag: 'crop-quiz-lead-' + s.level
+        })
+      });
+      // Compute deadline data so the lead gets a meaningful follow-up.
+      var entityKey = ({ llc: 'domestic_llc', corporation: 'domestic_business_corp', lp_llp: 'domestic_lp', other: 'business_trust' })[answers.entityType] || 'domestic_llc';
+      fetch('/api/compliance-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity_type: entityKey })
+      }).catch(function () { /* non-critical */ });
+
+      msg.style.color = '#2D6A2E';
+      msg.textContent = 'Sent ✓ — check your inbox in the next minute. We will not share your address.';
+      btn.textContent = 'Sent';
+      if (window.plausible) window.plausible('Compliance Lead Captured', { props: { risk_level: s.level } });
+    } catch (err) {
+      msg.style.color = '#B53333';
+      msg.textContent = 'Could not send right now. Please try again or call 814-228-2822.';
+      btn.disabled = false;
+      btn.textContent = 'Send report';
+    }
+  });
+
   document.getElementById('restart-btn').addEventListener('click', function () {
     answers = {};
     document.querySelectorAll('.choice-btn').forEach(function (btn) {
@@ -990,5 +1049,5 @@
 }());
 </script>
 
-</body>
+<script>document.querySelectorAll(".footer-year").forEach(function(el){el.textContent=new Date().getFullYear();});</script></body>
 </html>

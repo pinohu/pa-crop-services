@@ -2,8 +2,7 @@
 // POST /api/webinar-scheduler { topic, date, duration } or GET for next webinar
 // Generates webinar content + books via Trafft OAuth
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('webinar-scheduler');
@@ -15,7 +14,12 @@ export default async function handler(req, res) {
   if (!isAdminRequest(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
-  const TRAFFT_CLIENT_ID = '380067799445b9b14ebbad232d7a8dbf';
+  // TRAFFT_CLIENT_ID was previously hardcoded as the leaked CLAUDE.md value;
+  // now read from env so rotations don't require a code deploy.
+  const TRAFFT_CLIENT_ID = process.env.TRAFFT_CLIENT_ID;
+  if (!TRAFFT_CLIENT_ID) {
+    return res.status(503).json({ success: false, error: 'TRAFFT_CLIENT_ID env var not configured' });
+  }
 
   if (req.method === 'GET') {
     // Generate next webinar topic

@@ -2,8 +2,8 @@
 // POST /api/mail-process { sender, recipientEntity, imageBase64, textContent, scanDate }
 // For physical mail: scan → OCR → classify → route → notify
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
+import { sendEmail, notifyOps } from './services/email.js';
 import { createLogger } from './_log.js';
 
 const log = createLogger('mail-process');
@@ -54,59 +54,101 @@ export default async function handler(req, res) {
       if (client) {
         result.clientFound = true;
         result.clientEmail = client.email;
+        // Track delivery so admin can see what got through and what didn't.
+        // For service_of_process / critical mail, ANY notification failure
+        // must escalate — a customer who gets sued and never sees the summons
+        // is a legal-liability incident.
+        result.delivery = { email: null, sms: null, escalated: false };
 
         const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
         const classification = result.classification || {};
         const notifyMethod = classification.notify_method || 'email_only';
+        const isUrgent = classification.urgency === 'critical' || classification.category === 'service_of_process';
 
-        // Email notification
+        // ── Email notification ──
         if (notifyMethod !== 'no_notification' && notifyMethod !== 'portal_only') {
-          const emailitKey = process.env.EMAILIT_API_KEY;
-          if (emailitKey) {
-            const isUrgent = classification.urgency === 'critical' || classification.category === 'service_of_process';
-            await fetch('https://api.emailit.com/v1/emails', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                from: isUrgent ? 'urgent@pacropservices.com' : 'documents@pacropservices.com',
-                to: client.email,
-                subject: `${isUrgent ? '🚨 URGENT: ' : '📬 '}Mail received for ${recipientEntity} — ${classification.category?.replace(/_/g,' ')}`,
-                html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
-                  <div style="border-bottom:3px solid ${isUrgent ? '#C44536' : '#C9982A'};padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">${isUrgent ? '🚨 URGENT' : '📬'} PA CROP Services</strong></div>
-                  <p>We received mail at your registered office:</p>
-                  <div style="background:${isUrgent ? '#FEE2E2' : '#FAF9F6'};border:1px solid ${isUrgent ? '#FCA5A5' : '#EBE8E2'};border-radius:12px;padding:20px;margin:16px 0">
-                    <p style="margin:0 0 8px"><strong>From:</strong> ${sender || 'unknown'}</p>
-                    <p style="margin:0 0 8px"><strong>Type:</strong> ${classification.category?.replace(/_/g,' ')}</p>
-                    <p style="margin:0 0 8px"><strong>Urgency:</strong> ${classification.urgency}</p>
-                    <p style="margin:0"><strong>Action:</strong> ${classification.action || 'Review in portal'}</p>
-                    ${classification.extracted_info?.deadline ? `<p style="margin:8px 0 0"><strong>⚠️ Deadline:</strong> ${classification.extracted_info.deadline}</p>` : ''}
-                  </div>
-                  <p>View in your portal: <a href="https://pacropservices.com/portal">pacropservices.com/portal</a></p>
-                </div>`
-              })
-            }).catch(e => log.warn('external_call_failed', { error: e.message }));
-          }
+          const emailResult = await sendEmail({
+            from: isUrgent ? 'urgent@pacropservices.com' : 'documents@pacropservices.com',
+            to: client.email,
+            subject: `${isUrgent ? '🚨 URGENT: ' : '📬 '}Mail received for ${recipientEntity} — ${classification.category?.replace(/_/g,' ')}`,
+            html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
+              <div style="border-bottom:3px solid ${isUrgent ? '#C44536' : '#C9982A'};padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#0C1220">${isUrgent ? '🚨 URGENT' : '📬'} PA CROP Services</strong></div>
+              <p>We received mail at your registered office:</p>
+              <div style="background:${isUrgent ? '#FEE2E2' : '#FAF9F6'};border:1px solid ${isUrgent ? '#FCA5A5' : '#EBE8E2'};border-radius:12px;padding:20px;margin:16px 0">
+                <p style="margin:0 0 8px"><strong>From:</strong> ${sender || 'unknown'}</p>
+                <p style="margin:0 0 8px"><strong>Type:</strong> ${classification.category?.replace(/_/g,' ')}</p>
+                <p style="margin:0 0 8px"><strong>Urgency:</strong> ${classification.urgency}</p>
+                <p style="margin:0"><strong>Action:</strong> ${classification.action || 'Review in portal'}</p>
+                ${classification.extracted_info?.deadline ? `<p style="margin:8px 0 0"><strong>⚠️ Deadline:</strong> ${classification.extracted_info.deadline}</p>` : ''}
+              </div>
+              <p>View in your portal: <a href="https://pacropservices.com/portal">pacropservices.com/portal</a></p>
+            </div>`
+          });
+          result.delivery.email = emailResult;
         }
 
-        // SMS for urgent
-        if (notifyMethod === 'sms_and_email' && (classification.urgency === 'critical' || classification.category === 'service_of_process')) {
+        // ── SMS for urgent ──
+        // For SoP / critical, force SMS regardless of notify_method preference
+        // — single-channel delivery is too risky for legal mail.
+        const shouldSendSms = (notifyMethod === 'sms_and_email' && isUrgent) || (isUrgent && result.delivery.email && !result.delivery.email.sent);
+        if (shouldSendSms) {
           const phone = client.phone || client.custom_fields?.phone;
           if (phone) {
-            await fetch(`${baseUrl}/api/sms`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-              body: JSON.stringify({ to: phone, message: `🚨 PA CROP: URGENT mail received for ${recipientEntity} from ${sender || 'unknown'}. Category: ${classification.category?.replace(/_/g,' ')}. Check portal NOW: pacropservices.com/portal` })
-            }).catch(e => log.warn('external_call_failed', { error: e.message }));
+            try {
+              const smsRes = await fetch(`${baseUrl}/api/sms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+                body: JSON.stringify({ to: phone, type: 'entity_alert', data: { entity: recipientEntity, status: `URGENT mail from ${sender || 'unknown'} — ${classification.category?.replace(/_/g,' ')}` } })
+              });
+              const smsBody = await smsRes.json().catch(() => ({}));
+              result.delivery.sms = { sent: smsRes.ok && smsBody?.success !== false, status: smsRes.status, via: smsBody?.via, error: smsBody?.error };
+            } catch (e) {
+              log.error('mail_process_sms_threw', { recipientEntity }, e instanceof Error ? e : new Error(String(e)));
+              result.delivery.sms = { sent: false, error: e.message };
+            }
+          } else {
+            result.delivery.sms = { sent: false, reason: 'no_phone_on_file' };
           }
         }
 
-        // Update SuiteDash
-        const docCount = parseInt(client.custom_fields?.document_count || '0') + 1;
-        await fetch(`https://app.suitedash.com/secure-api/contacts/${client.id}`, {
-          method: 'PUT',
-          headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ custom_fields: { document_count: String(docCount), last_mail_date: new Date().toISOString(), last_mail_type: classification.category || 'unknown' } })
-        }).catch(e => log.warn('external_call_failed', { error: e.message }));
+        // ── Escalate to ops if urgent + nothing was actually delivered ──
+        const emailDelivered = result.delivery.email?.sent === true;
+        const smsDelivered = result.delivery.sms?.sent === true;
+        if (isUrgent && !emailDelivered && !smsDelivered) {
+          await notifyOps(
+            `URGENT mail FAILED to notify client (${recipientEntity})`,
+            `<h2>Urgent mail received but client was NOT notified</h2>
+             <p><strong>Recipient entity:</strong> ${recipientEntity}</p>
+             <p><strong>Client:</strong> ${client.email}</p>
+             <p><strong>From:</strong> ${sender || 'unknown'}</p>
+             <p><strong>Category:</strong> ${classification.category}</p>
+             <p><strong>Urgency:</strong> ${classification.urgency}</p>
+             <p><strong>Action:</strong> ${classification.action || ''}</p>
+             <h3>Delivery attempts</h3>
+             <pre>${JSON.stringify(result.delivery, null, 2)}</pre>
+             <p>Manually call/email this client immediately. Service of process or critical legal mail may be involved.</p>`
+          );
+          result.delivery.escalated = true;
+        }
+
+        // ── Update SuiteDash — only flip last_mail_date if AT LEAST ONE channel
+        //    confirmed delivery (or it wasn't urgent). Otherwise the next mail
+        //    arriving for this client overwrites the marker before we've actually
+        //    reached them, hiding the silent failure.
+        const safeToUpdateMarker = !isUrgent || emailDelivered || smsDelivered;
+        if (safeToUpdateMarker) {
+          const docCount = parseInt(client.custom_fields?.document_count || '0') + 1;
+          const sdUpdate = await fetch(`https://app.suitedash.com/secure-api/contacts/${client.id}`, {
+            method: 'PUT',
+            headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ custom_fields: { document_count: String(docCount), last_mail_date: new Date().toISOString(), last_mail_type: classification.category || 'unknown' } })
+          }).catch(e => { log.warn('mail_process_suitedash_update_failed', { error: e.message }); return null; });
+          if (sdUpdate && !sdUpdate.ok) {
+            log.warn('mail_process_suitedash_non_ok', { status: sdUpdate.status });
+          }
+        } else {
+          log.warn('mail_process_skipped_marker_update', { reason: 'urgent_mail_undelivered', clientEmail: client.email });
+        }
       }
     } catch(e) { result.clientError = e.message; }
   }

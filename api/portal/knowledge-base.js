@@ -248,9 +248,14 @@ export default async function handler(req, res) {
     });
   }
 
+  // Full article objects (including content) are returned so the portal can
+  // render them inline per CLAUDE.md ("rendered inline on the portal — no
+  // external links or popups"). 25 articles is small enough to ship in one
+  // response; revisit if the catalog grows past ~50.
   return res.status(200).json({
     success: true,
-    articles: results.map(a => ({ id: a.id, category: a.category, title: a.title, summary: a.summary, tags: a.tags })),
+    data: { articles: results, categories: CATEGORIES },
+    articles: results,
     categories: CATEGORIES,
     total: results.length
   });

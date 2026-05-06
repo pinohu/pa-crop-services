@@ -2,8 +2,10 @@
 // Full tier-aware auto-provisioning: SuiteDash + 20i hosting/email/SSL/domain + welcome email
 // Called by stripe-webhook.js on checkout.session.completed OR admin dashboard
 
-import { isAdminRequest, generateAccessCode as _genCode } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
+import * as twentyi from './services/twentyi.js';
+import * as plans from './services/plans.js';
+import * as secrets from './services/secrets.js';
 import { randomBytes } from 'crypto';
 
 export default async function handler(req, res) {
@@ -25,6 +27,27 @@ export default async function handler(req, res) {
 
   if (!email) return res.status(400).json({ success: false, error: 'email required' });
 
+  // Idempotency: if a prior provisioning already recorded this Stripe session
+  // for this email in Neon, short-circuit. Defense-in-depth in case the
+  // stripe-webhook idempotency layer is bypassed or Redis is down.
+  if (sessionId) {
+    try {
+      const dbMod = await import('./services/db.js');
+      if (dbMod.isConnected()) {
+        const existing = await dbMod.getClientByEmail(email);
+        if (existing?.metadata?.stripe_session === sessionId) {
+          return res.status(200).json({
+            success: true,
+            deduplicated: true,
+            message: 'Provisioning already completed for this Stripe session',
+            email,
+            tier: (existing.plan_code || 'compliance_only').replace(/^business_/, '').replace(/_only$/, '')
+          });
+        }
+      }
+    } catch (e) { /* fall through and re-provision; outer flow is also idempotent enough */ }
+  }
+
   // Auto-generate missing params
   const accountSlug = rawSlug || email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);
   const { randomBytes: rb } = await import('crypto');
@@ -32,9 +55,6 @@ export default async function handler(req, res) {
   
   const SD_PUBLIC = process.env.SUITEDASH_PUBLIC_ID;
   const SD_SECRET = process.env.SUITEDASH_SECRET_KEY;
-  const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
-  const BEARER = TWENTY_GENERAL ? `Bearer ${Buffer.from(TWENTY_GENERAL).toString('base64')}` : null;
-  const TWENTY_RESELLER_ID = process.env.TWENTY_I_RESELLER_ID;
   const N8N = 'https://n8n.audreysplace.place/webhook';
 
   const results = { email, tier, steps: [], warnings: [] };
@@ -116,7 +136,7 @@ export default async function handler(req, res) {
           owner_name: name || '',
           email,
           phone: body.phone || null,
-          plan_code: tier === 'compliance' ? 'compliance_only' : `business_${tier}`,
+          plan_code: plans.tierToPlanCode(tier),
           billing_status: 'active',
           onboarding_status: 'not_started',
           referral_code: refCode,
@@ -126,7 +146,9 @@ export default async function handler(req, res) {
             access_code_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
             roles: ['client'],
             suitedash_uid: results.suitedashId || null,
-            stripe_session: body.sessionId || sessionId || ''
+            stripe_session: body.sessionId || sessionId || '',
+            // hosting_password stored only when actually provisioned, encrypted at rest.
+            ...(includesHosting && hostingPassword ? { hosting_password: secrets.encrypt(hostingPassword) } : {})
           }
         });
 
@@ -164,36 +186,32 @@ export default async function handler(req, res) {
   }
 
   // ── STEP 3: 20i Hosting provisioning (Starter, Pro, Empire) ──────────
-  if (includesHosting && BEARER) {
+  if (includesHosting && twentyi.isConfigured()) {
     try {
-      // Determine hosting type
+      // Determine hosting type — 'vps' for Empire VPS tier, 'linux' for shared.
       const hostingType = includesVPS ? 'vps' : 'linux';
       const tempDomain = suggestedDomain || `${accountSlug}.pacrophosting.com`;
-      
-      // Create hosting package
-      const pkgRes = await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addWeb`, {
-        method: 'POST',
-        headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+
+      // Create hosting package via canonical schema (services/twentyi.js).
+      let packageId = null;
+      try {
+        const pkg = await twentyi.addWebPackage({
           type: hostingType,
           domain_name: tempDomain,
           extra_domain_names: [],
-          label: `PA CROP — ${tier} — ${email}`
-        })
-      });
-      const pkgData = await pkgRes.json();
-      const packageId = pkgData?.result || pkgData?.id || pkgData;
-      results.packageId = packageId;
-      results.steps.push({ step: '20i_hosting', status: packageId ? 'done' : 'warning', packageId, type: hostingType });
+          label: twentyi.packageLabel({ tier, email })
+        });
+        packageId = pkg.packageId;
+        results.packageId = packageId;
+        results.steps.push({ step: '20i_hosting', status: packageId ? 'done' : 'warning', packageId, type: hostingType });
+      } catch (e) {
+        results.steps.push({ step: '20i_hosting', status: 'error', error: e.message });
+      }
 
       if (packageId) {
         // Enable SSL
         try {
-          await fetch(`https://api.20i.com/package/${packageId}/web/addSsl`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: tempDomain })
-          });
+          await twentyi.addSsl(packageId, tempDomain);
           results.steps.push({ step: '20i_ssl', status: 'done' });
         } catch (e) {
           results.steps.push({ step: '20i_ssl', status: 'warning', error: e.message });
@@ -201,15 +219,13 @@ export default async function handler(req, res) {
 
         // Create email mailboxes (tier-aware count)
         const mailboxCount = Math.min(emailCount || 1, 5); // Create up to 5 initially
+        const mailboxNames = ['info', 'hello', 'admin', 'support', 'billing'];
         for (let i = 0; i < mailboxCount; i++) {
-          const mbName = i === 0 ? 'info' : (i === 1 ? 'hello' : (i === 2 ? 'admin' : (i === 3 ? 'support' : 'billing')));
           try {
-            await fetch(`https://api.20i.com/package/${packageId}/email/${tempDomain}`, {
-              method: 'POST',
-              headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: { address: mbName, quota: 25000, password: hostingPassword }
-              })
+            await twentyi.addEmailMailbox(packageId, tempDomain, {
+              address: mailboxNames[i],
+              password: hostingPassword,
+              quota: 25000
             });
           } catch (e) { /* continue with remaining mailboxes */ }
         }
@@ -217,17 +233,13 @@ export default async function handler(req, res) {
 
         // Create StackCP user (client can manage their own hosting)
         try {
-          await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addStackUser`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              person_name: name || email.split('@')[0],
-              email: email,
-              password: hostingPassword,
-              send_welcome_email: true,
-              grant_all_packages: false,
-              package_ids: [packageId]
-            })
+          await twentyi.addStackUser({
+            person_name: name || email.split('@')[0],
+            email,
+            password: hostingPassword,
+            send_welcome_email: true,
+            grant_all_packages: false,
+            package_ids: [packageId]
           });
           results.steps.push({ step: '20i_stackcp_user', status: 'done' });
         } catch (e) {
@@ -237,18 +249,12 @@ export default async function handler(req, res) {
         // Install WordPress (for website creation)
         if (websitePages > 0) {
           try {
-            await fetch(`https://api.20i.com/package/${packageId}/web/oneclick`, {
-              method: 'POST',
-              headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                domain: tempDomain,
-                app: 'wordpress',
-                directory: '/',
-                admin_email: email,
-                admin_user: accountSlug,
-                admin_password: hostingPassword,
-                site_name: name || `${accountSlug}'s Business`
-              })
+            await twentyi.installWordPress(packageId, {
+              domain: tempDomain,
+              admin_email: email,
+              admin_user: accountSlug,
+              admin_password: hostingPassword,
+              site_name: name || `${accountSlug}'s Business`
             });
             results.steps.push({ step: '20i_wordpress_install', status: 'done', pages: websitePages });
           } catch (e) {
@@ -261,14 +267,10 @@ export default async function handler(req, res) {
       // Domain registration (if suggestedDomain provided and is a real domain)
       if (suggestedDomain && suggestedDomain.includes('.') && !suggestedDomain.includes('pacrophosting')) {
         try {
-          const domainRes = await fetch(`https://api.20i.com/reseller/${TWENTY_RESELLER_ID}/addDomain`, {
-            method: 'POST',
-            headers: { 'Authorization': BEARER, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: suggestedDomain,
-              years: 1,
-              contact: { name: name || accountSlug, email, address: '924 W 23rd St', city: 'Erie', state: 'PA', zip: '16502', country: 'US' }
-            })
+          await twentyi.addDomain({
+            name: suggestedDomain,
+            years: 1,
+            contact: twentyi.defaultRegistrarContact({ name: name || accountSlug, email })
           });
           results.steps.push({ step: '20i_domain_registration', status: 'done', domain: suggestedDomain });
         } catch (e) {
@@ -282,9 +284,49 @@ export default async function handler(req, res) {
     } catch (e) {
       results.steps.push({ step: '20i_provisioning', status: 'error', error: e.message });
     }
-  } else if (includesHosting && !BEARER) {
+  } else if (includesHosting && !twentyi.isConfigured()) {
     results.steps.push({ step: '20i_provisioning', status: 'skipped', reason: '20i API key not configured' });
   }
+
+  // ── Pre-Step 4 derived state (must precede the welcome email) ────────
+  // Phone extension (Pro/Empire) and notary credits (Empire) are referenced inside
+  // the welcome email template below; compute and persist them here so the email
+  // includes them rather than firing before Steps 14/15. Persistence uses the JSONB
+  // merge semantics of updateClient/updateOrganization.
+  if (['pro', 'empire'].includes(tier)) {
+    try {
+      const ext = 100 + Math.floor(Math.random() * 99) + 1;
+      const phoneExt = `814-228-2822 ext ${ext}`;
+      results.phoneExtension = phoneExt;
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: { phone_extension: ext, direct_line: phoneExt }
+        });
+      }
+      results.steps.push({ step: 'phone_extension', status: 'done', extension: ext, line: phoneExt });
+    } catch (e) {
+      results.steps.push({ step: 'phone_extension', status: 'warning', error: e.message });
+    }
+  }
+
+  if (includesNotary) {
+    try {
+      const currentYear = new Date().getFullYear();
+      if (results.neonClientId) {
+        const dbMod = await import('./services/db.js');
+        await dbMod.updateClient(results.neonClientId, {
+          metadata: { notary_credits: { total: 2, used: 0, year: currentYear }, includes_notary: true }
+        });
+      }
+      results.steps.push({ step: 'notary_credits', status: 'done', credits: 2, year: currentYear });
+    } catch (e) {
+      results.steps.push({ step: 'notary_credits', status: 'warning', error: e.message });
+    }
+  }
+
+  // Gate the welcome-email hosting block on actual 20i success (not just plan flag).
+  const hostingProvisioned = results.steps.some(s => s.step === '20i_hosting' && s.status === 'done');
 
   // ── STEP 4: Welcome email ────────────────────────────────────────────
   const emailitKey = process.env.EMAILIT_API_KEY;
@@ -294,14 +336,15 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name, accessCode, tier, refCode, includesHosting, hostingPassword: includesHosting ? hostingPassword : undefined })
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller checks (n8nRes && n8nRes.ok) on next line and falls back to Emailit if null
 
     if (n8nRes && n8nRes.ok) {
       results.steps.push({ step: 'welcome_email', status: 'done', via: 'n8n' });
     } else if (emailitKey) {
       // Fallback: send welcome email directly
-      const tierLabel = { compliance: 'Compliance Only', starter: 'Business Starter', pro: 'Business Pro', empire: 'Business Empire' }[tier] || tier;
-      await fetch('https://api.emailit.com/v1/emails', {
+      const planRecord = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
+      const tierLabel = planRecord.label;
+      const emailitRes = await fetch('https://api.emailit.com/v1/emails', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -319,14 +362,17 @@ export default async function handler(req, res) {
               <p style="margin:0 0 8px"><strong>Email:</strong> ${email}</p>
               <p style="margin:0"><strong>Access code:</strong> ${accessCode}</p>
             </div>
-            ${includesHosting ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
+            ${hostingProvisioned ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
               <h3 style="color:#0C1220;margin:0 0 8px">Your Business Website &amp; Hosting Is Live</h3>
               <p style="margin:0 0 8px"><strong>Hosting panel:</strong> <a href="https://my.20i.com">my.20i.com</a></p>
               <p style="margin:0 0 8px"><strong>Username:</strong> ${email}</p>
               <p style="margin:0 0 8px"><strong>Password:</strong> ${hostingPassword}</p>
-              <p style="margin:0 0 8px;font-size:13px;color:#4A4A4A">Your hosting, email mailboxes, WordPress site, and SSL are all active.</p>
+              <p style="margin:0 0 8px;font-size:13px;color:#4A4A4A">Your hosting, email mailboxes, WordPress site, and SSL are all active. Please change your hosting password on first login.</p>
               <p style="margin:0;font-size:13px"><a href="https://pacropservices.com/welcome" style="color:#2D6A2E;font-weight:600">Choose your custom domain name &rarr;</a></p>
-            </div>` : ''}
+            </div>` : (includesHosting ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
+              <h3 style="color:#0C1220;margin:0 0 8px">Your Hosting Is Being Set Up</h3>
+              <p style="margin:0;font-size:14px;color:#4A4A4A">Hosting provisioning is in progress. We'll email you the panel access details within 24 hours. If you don't hear from us by then, reply to this email.</p>
+            </div>` : '')}
             ${includesFiling ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
               <h3 style="color:#0C1220;margin:0 0 8px">Annual Report Filing — We Handle It</h3>
               <p style="margin:0;font-size:14px;color:#4A4A4A">Your annual report filing is included. We'll prepare the filing, confirm details with you, and submit to PA DOS before your deadline. You don't need to do anything.</p>
@@ -338,8 +384,8 @@ export default async function handler(req, res) {
             ${includesNotary ? `<p style="font-size:14px;color:#4A4A4A"><strong>Notary services:</strong> Your plan includes 2 free notarizations per year. Request one anytime through your portal.</p>` : ''}
             <div style="background:linear-gradient(135deg,#0C1220,#1a2540);border-radius:12px;padding:20px;margin:20px 0;color:#fff">
               <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:4px">Your plan includes</div>
-              <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${{ compliance: '$2,240+', starter: '$4,817+', pro: '$9,452+', empire: '$21,582+' }[tier] || '$2,240+'} in services</div>
-              <div style="font-size:13px;opacity:.8">You pay ${{ compliance: '99', starter: '199', pro: '349', empire: '699' }[tier] || '99'}/year. That's a 96%+ savings over purchasing each service individually.</div>
+              <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${planRecord.servicesValueLabel} in services</div>
+              <div style="font-size:13px;opacity:.8">You pay ${planRecord.annualFeeUsd}/year. That's a 96%+ savings over purchasing each service individually.</div>
             </div>
             <p>Questions? Reply to this email or call <a href="tel:8142282822">814-228-2822</a>.</p>
             <div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">
@@ -348,12 +394,31 @@ export default async function handler(req, res) {
           </div>`
         })
       });
-      results.steps.push({ step: 'welcome_email', status: 'done', via: 'emailit_direct' });
+      // Critical: actually check the response. Emailit returns 422 with a JSON
+      // body like {"error":"Domain not verified"} when the sender domain hasn't
+      // been DNS-verified. Without this check, every send silently "succeeds"
+      // and the actual delivery failure goes unnoticed — which is how the
+      // original missing-confirmation-email incident went undetected for weeks.
+      if (emailitRes.ok) {
+        results.steps.push({ step: 'welcome_email', status: 'done', via: 'emailit_direct' });
+      } else {
+        const detail = await emailitRes.text().catch(() => 'unknown');
+        results.steps.push({
+          step: 'welcome_email',
+          status: 'error',
+          via: 'emailit_direct',
+          status_code: emailitRes.status,
+          error: detail.slice(0, 300)
+        });
+        results.warnings.push(`Welcome email delivery FAILED via Emailit (${emailitRes.status}): ${detail.slice(0, 200)}`);
+      }
     } else {
       results.steps.push({ step: 'welcome_email', status: 'skipped', reason: 'No email service available' });
+      results.warnings.push('Welcome email skipped — neither n8n nor EMAILIT_API_KEY is configured');
     }
   } catch (e) {
     results.steps.push({ step: 'welcome_email', status: 'error', error: e.message });
+    results.warnings.push(`Welcome email threw: ${e.message}`);
   }
 
   // ── STEP 5: Acumbamail ────────────────────────────────────────────────
@@ -390,15 +455,41 @@ export default async function handler(req, res) {
   // ── STEP 7: Service Agreement Generation ────────────────────────────
   try {
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+    // Default entityName to name|email when missing — the underlying endpoint
+    // 400s on empty entityName, which provision.js then reads as a generic
+    // 'warning' with no actionable detail.
+    const agreementEntityName = body.entityName || name || email.split('@')[0];
     const agreeRes = await fetch(`${baseUrl}/api/generate-agreement`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
-      body: JSON.stringify({ email, name, entityName: body.entityName || '', entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
+      body: JSON.stringify({ email, name, entityName: agreementEntityName, entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
     });
-    const agreeData = await agreeRes.json().catch(() => ({}));
-    results.steps.push({ step: 'service_agreement', status: agreeData.success ? 'done' : 'warning', pdf_url: agreeData.pdf_url || null });
+    if (agreeRes.ok) {
+      const agreeData = await agreeRes.json().catch(() => ({}));
+      const hasPdf = !!agreeData.pdf_url;
+      results.steps.push({
+        step: 'service_agreement',
+        status: agreeData.success === false ? 'error' : (hasPdf ? 'done' : 'done_html_only'),
+        pdf_url: agreeData.pdf_url || null,
+        error: agreeData.success === false ? (agreeData.error || 'unknown') : undefined
+      });
+      if (!hasPdf && agreeData.success !== false) {
+        results.warnings.push('Service agreement returned HTML only — set DOCUMENTERO_API_KEY and create the crop-service-agreement template to get PDFs.');
+      }
+    } else {
+      const detail = await agreeRes.text().catch(() => 'unknown');
+      results.steps.push({
+        step: 'service_agreement',
+        status: 'error',
+        status_code: agreeRes.status,
+        pdf_url: null,
+        error: detail.slice(0, 200)
+      });
+      results.warnings.push(`Service agreement endpoint returned ${agreeRes.status}: ${detail.slice(0, 120)}`);
+    }
   } catch (e) {
-    results.steps.push({ step: 'service_agreement', status: 'warning', error: e.message });
+    results.steps.push({ step: 'service_agreement', status: 'error', error: e.message });
+    results.warnings.push(`Service agreement step threw: ${e.message}`);
   }
 
   // ── STEP 8: Entity Verification (if entity info provided) ──────────
@@ -509,15 +600,20 @@ export default async function handler(req, res) {
     const entityType = body.entityType || 'domestic_llc';
     const deadline = getEntityDeadline(entityType);
     const daysUntil = computeDaysUntil(entityType);
-    const tierLabels = { compliance: 'Compliance Only ($99/yr)', starter: 'Business Starter ($199/yr)', pro: 'Business Pro ($349/yr)', empire: 'Business Empire ($699/yr)' };
+    const planForLabel = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
+    const tierPlanLabel = `${planForLabel.label} ($${planForLabel.annualFeeUsd}/yr)`;
 
+    // Default entityName when missing so the endpoint doesn't 400 on empty
+    // string — provision.js shouldn't fail end-to-end just because Stripe
+    // checkout didn't capture an entity name.
+    const pkgEntityName = body.entityName || name || email.split('@')[0];
     const pkgRes = await fetch(`${baseUrl}/api/generate-compliance-package`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
       body: JSON.stringify({
-        email, name: name || '', entityName: body.entityName || name || '',
+        email, name: name || '', entityName: pkgEntityName,
         entityType, tier, dosNumber: body.dosNumber || '',
-        accessCode, planLabel: tierLabels[tier] || tier,
+        accessCode, planLabel: tierPlanLabel,
         deadline: deadline.label, daysUntilDeadline: daysUntil
       })
     });
@@ -526,10 +622,23 @@ export default async function handler(req, res) {
       results.steps.push({ step: 'compliance_package_pdf', status: 'done' });
       results.compliancePackageGenerated = true;
     } else {
-      results.steps.push({ step: 'compliance_package_pdf', status: 'warning', reason: 'PDF generation returned non-OK' });
+      // Capture the actual error body so admin notifications surface what's wrong.
+      // Most common failure modes: 400 (missing field), 401 (admin key mismatch
+      // due to VERCEL_URL pointing at a deployment with a different admin key),
+      // 500 (pdf-lib exception, usually missing entityType in compliance-rules).
+      const detail = await pkgRes.text().catch(() => 'unknown');
+      results.steps.push({
+        step: 'compliance_package_pdf',
+        status: 'error',
+        status_code: pkgRes.status,
+        reason: `PDF generation returned ${pkgRes.status}`,
+        detail: detail.slice(0, 200)
+      });
+      results.warnings.push(`Compliance package PDF endpoint returned ${pkgRes.status}: ${detail.slice(0, 120)}`);
     }
   } catch (e) {
-    results.steps.push({ step: 'compliance_package_pdf', status: 'warning', error: e.message });
+    results.steps.push({ step: 'compliance_package_pdf', status: 'error', error: e.message });
+    results.warnings.push(`Compliance package PDF step threw: ${e.message}`);
   }
 
   // ── STEP 13: Annual Report Pre-Fill Package (Pro/Empire — filing included) ──
@@ -565,47 +674,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── STEP 14: Dedicated phone extension (Pro/Empire) ───────────────────
-  if (['pro', 'empire'].includes(tier)) {
-    try {
-      const ext = 100 + Math.floor(Math.random() * 99) + 1;
-      const phoneExt = `814-228-2822 ext ${ext}`;
-
-      if (results.neonClientId) {
-        const dbMod = await import('./services/db.js');
-        await dbMod.updateClient(results.neonClientId, {
-          metadata: {
-            phone_extension: ext,
-            direct_line: phoneExt
-          }
-        });
-      }
-
-      results.phoneExtension = phoneExt;
-      results.steps.push({ step: 'phone_extension', status: 'done', extension: ext, line: phoneExt });
-    } catch (e) {
-      results.steps.push({ step: 'phone_extension', status: 'warning', error: e.message });
-    }
-  }
-
-  // ── STEP 15: Notary credit tracking (Empire) ─────────────────────────
-  if (includesNotary) {
-    try {
-      const currentYear = new Date().getFullYear();
-      if (results.neonClientId) {
-        const dbMod = await import('./services/db.js');
-        await dbMod.updateClient(results.neonClientId, {
-          metadata: {
-            notary_credits: { total: 2, used: 0, year: currentYear },
-            includes_notary: true
-          }
-        });
-      }
-      results.steps.push({ step: 'notary_credits', status: 'done', credits: 2, year: currentYear });
-    } catch (e) {
-      results.steps.push({ step: 'notary_credits', status: 'warning', error: e.message });
-    }
-  }
+  // (Phone extension and notary credits are computed pre-Step 4 so they appear in
+  //  the welcome email; their persistence already ran above.)
 
   // ── Summary ──────────────────────────────────────────────────────────
   const errors = results.steps.filter(s => s.status === 'error');

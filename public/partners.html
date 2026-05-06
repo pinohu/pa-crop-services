@@ -228,7 +228,7 @@ section h2{font-size:32px;margin-bottom:32px;color:var(--dark)}
 <!-- H10: Footer with full contact info -->
 <footer class="site-footer" role="contentinfo"><div class="footer-inner">
   <div>
-    <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
+    <div class="footer-left">&copy; <span class="footer-year">2026</span> PA CROP Services (PA Registered Office Services, LLC)</div>
     <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:partners@pacropservices.com" style="color:rgba(255,255,255,.7)">partners@pacropservices.com</a></div>
   </div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
@@ -258,14 +258,22 @@ async function submitPartnerForm(){
         pricingPreference:document.getElementById("p-pricing").value
       })
     });
+    var data = await res.json().catch(function(){return{};});
+    if(!res.ok || data.success===false){
+      throw new Error(data.error || ("Server returned " + res.status));
+    }
     document.getElementById("partner-success").style.display="block";
     document.getElementById("partner-submit-btn").style.display="none";
     if(window.plausible)plausible("Partner Application",{props:{firmType:document.getElementById("p-type").value}});
-  }catch(e){btn.textContent="Submit Partner Application →";btn.disabled=false;var pe=document.getElementById("partner-error");if(pe){pe.textContent="Could not submit the form — check your internet connection and try again. If the problem continues, email partners@pacropservices.com directly.";pe.style.display="block";};}
+  }catch(e){
+    btn.textContent="Submit Partner Application →";btn.disabled=false;
+    var pe=document.getElementById("partner-error");
+    if(pe){pe.textContent="Could not submit the form — " + (e.message ? e.message + ". " : "") + "Try again in a moment, or email partners@pacropservices.com directly.";pe.style.display="block";}
+  }
 }
 </script>
 <script src="/embed/chatbot.js" defer></script>
 <script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
 <script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove("open")});</script>
-</body>
+<script>document.querySelectorAll(".footer-year").forEach(function(el){el.textContent=new Date().getFullYear();});</script></body>
 </html>

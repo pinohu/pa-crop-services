@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://plausible.io">
 <link rel="preconnect" href="https://www.clarity.ms">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vzhtq2nted");</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1332,7 +1332,34 @@ async function loadClient360() {
     const h = comp.health || {};
     const gc = { A:'#15803d', B:'#3b82f6', C:'#f59e0b', D:'#ea580c', F:'#dc2626' };
 
+    const prov = d.provisioning || {};
+    const provColor = prov.welcome_email_sent ? '#15803d' : (prov.welcome_email_failed ? '#dc2626' : '#f59e0b');
+    const provStatus = prov.welcome_email_sent ? 'Sent' : (prov.welcome_email_failed ? 'Failed' : 'Not recorded');
+    const lastAttempt = prov.welcome_email_last_attempt ? new Date(prov.welcome_email_last_attempt).toLocaleString() : '—';
+    const resentAt = prov.welcome_email_resent_at ? new Date(prov.welcome_email_resent_at).toLocaleString() : null;
+
     el.innerHTML = `
+      <div style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid ${provColor};padding:14px 16px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Provisioning &amp; Welcome Email</div>
+          <div style="font-size:13px;color:#0C1220">
+            Welcome email: <strong style="color:${provColor}">${provStatus}</strong> · Last attempt: ${lastAttempt}
+            ${resentAt ? ` · Resent: ${resentAt}` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--gray);margin-top:4px">
+            Access code: ${prov.access_code_last4 ? '••••' + prov.access_code_last4 : '<em>none — will regenerate on resend</em>'} ·
+            Provisioned: ${prov.provisioned_at ? new Date(prov.provisioned_at).toLocaleString() : 'not recorded'}
+            ${prov.stripe_session ? ` · Stripe: ${prov.stripe_session.slice(0, 18)}…` : ''}
+          </div>
+          <div style="font-size:10px;color:var(--gray);margin-top:4px">
+            Emailit: ${prov.emailit_configured ? '✓' : '✗'} · SuiteDash: ${prov.suitedash_configured ? '✓' : '✗'} · 20i: ${prov.twentyi_configured ? '✓' : '✗'}
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="resendWelcomeEmail('${escHtml(c.email)}')" ${!prov.emailit_configured ? 'disabled title="EMAILIT_API_KEY not configured"' : ''}>
+          Resend welcome email
+        </button>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
         <div style="background:#f8fafc;padding:16px;border-radius:8px">
           <div style="font-size:11px;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Client</div>
@@ -1408,6 +1435,22 @@ async function loadClient360() {
   } catch (e) { el.innerHTML = '<div style="padding:20px;color:#dc2626">Error: ' + escHtml(e.message) + '</div>'; }
 }
 
+async function resendWelcomeEmail(email) {
+  if (!email) { toast('No client email', 'error'); return; }
+  if (!confirm('Resend welcome email to ' + email + '?\n\nThis will send a fresh welcome email with portal access code. If no access code exists, a new one will be generated.')) return;
+  try {
+    const r = await callAPI('resend_welcome_email', { email });
+    if (r?.success) {
+      toast('Welcome email sent to ' + email + (r.accessCodeRegenerated ? ' (new code generated, ending ••••' + r.accessCodeLast4 + ' — sent via email)' : ''), 'success');
+      loadClient360();
+    } else {
+      toast('Resend failed: ' + (r?.error || 'unknown'), 'error');
+    }
+  } catch (e) {
+    toast('Resend failed: ' + e.message, 'error');
+  }
+}
+
 // ── Filing Queue ───────────────────────────────────────────────────────
 async function loadFilingQueue() {
   try {
@@ -1446,10 +1489,35 @@ async function loadFilingQueue() {
           </div>
           ${i.missing?.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">Missing: ${i.missing.join(', ')}</div>` : ''}
         </div>
-        <a href="${i.filing_url}" rel="noopener" class="btn btn-gold btn-sm" style="font-size:11px;flex-shrink:0">File at PA DOS →</a>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <a href="${i.filing_url}" rel="noopener" class="btn btn-gold btn-sm" style="font-size:11px">File at PA DOS →</a>
+          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px" onclick="markObligationFiled('${escHtml(i.id)}','${escHtml(i.entity_name||'')}')">Mark filed</button>
+        </div>
       </div>`;
     }).join('');
   } catch (e) { document.getElementById('filing-queue-list').innerHTML = '<div class="at-muted">Filing queue requires Neon Postgres</div>'; }
+}
+
+async function markObligationFiled(obligationId, entityLabel) {
+  if (!obligationId) return;
+  const filingRef = prompt('Optional: PA DOS confirmation number / filing reference for ' + (entityLabel || 'this obligation') + ' (leave blank to skip)');
+  if (filingRef === null) return; // user cancelled
+  try {
+    const r = await fetch(ORIGIN + '/api/obligations/' + encodeURIComponent(obligationId) + '/mark-filed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+      body: JSON.stringify(filingRef ? { filing_reference: filingRef.slice(0, 100) } : {})
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.success) {
+      toast('Marked filed: ' + (entityLabel || obligationId), 'success');
+      loadFilingQueue();
+    } else {
+      toast('Mark filed failed: ' + (d.error || ('HTTP ' + r.status)), 'error');
+    }
+  } catch (err) {
+    toast('Mark filed failed: ' + err.message, 'error');
+  }
 }
 
 // ── Notification Ops ───────────────────────────────────────────────────

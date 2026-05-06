@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ['**']           # every branch gets checked
   pull_request:
     branches: [main]
+
+# Run only one CI per ref at a time; cancel in-flight runs when a new push lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -22,33 +27,74 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npx eslint api/ scripts/ --ext .js || true
+      - name: Lint (errors fail; warnings allowed)
+        run: npx eslint api/ scripts/ --ext .js --max-warnings=999
 
       - name: Validate compliance content
-        run: node scripts/validate-content.js
+        run: npm run validate
 
       - name: Unit tests
-        run: node --test tests/compliance.test.js tests/validate.test.js tests/guardrails.test.js
+        env:
+          # secrets.test.js needs a master key to test round-trip; it generates
+          # its own at the top of the file, but we set one here too in case
+          # other tests rely on encryption being available.
+          SECRETS_MASTER_KEY: ${{ secrets.CI_SECRETS_MASTER_KEY || 'eW91ci0zMi1ieXRlLWJhc2U2NC1tYXN0ZXIta2V5LWZvci10ZXN0cw==' }}
+        run: npm test
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Check for hardcoded secrets
+      - name: Check for hardcoded secrets in HEAD
+        # Tracks the specific tokens that were leaked in CLAUDE.md before Wave 1
+        # stripped them. If any of these reappear, fail fast.
         run: |
-          if grep -rn "ghp_\|CROP-ADMIN-2026\|4d5ff31e033888d1" --include="*.js" --include="*.json" --include="*.py" --include="*.md" .; then
-            echo "ERROR: Hardcoded secrets found in source code!"
+          set -eu
+          # Scoped to source files so the SECURITY-ROTATION-CHECKLIST.md (which
+          # mentions the leaked-key prefixes for documentation) doesn't trip the
+          # scan on its own.
+          PATHS=(api/ scripts/ public/ marketing/ infrastructure/ migrations/ schema/ CLAUDE.md README.md DESIGN.md)
+          PATTERNS='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|CROP-ADMIN-2026-IKE|in-8sy7gCOBIkfcftX7SJ|120\|ZPLZosyaRbCmkwTs01wRtYxtfJt1m9SUUTcBzz7K|SMSIT_a1a5c935d1626fb1ad8d95de9455857d3225730e1b992f62c355c83158a4a7dc|c2387393b8125d868|c0471cadcfe5a7837|380067799445b9b14ebbad232d7a8dbf'
+          if grep -rnE "$PATTERNS" "${PATHS[@]}" 2>/dev/null; then
+            echo "ERROR: Hardcoded leaked secret found in source. Rotate (already required) AND remove from this commit."
             exit 1
           fi
-          echo "No hardcoded secrets found."
+          echo "No hardcoded leaked secrets found."
+
+      - name: Check for ad-hoc admin-key comparisons
+        # Wave 1 replaced 12 endpoints. New code must use isAdminRequest() —
+        # never compare the env var directly.
+        run: |
+          set -eu
+          if grep -rnE '===\s*\(?process\.env\.ADMIN_SECRET_KEY|!==\s*\(?process\.env\.ADMIN_SECRET_KEY|===\s*ADMIN_KEY[^_]' api/ 2>/dev/null; then
+            echo "ERROR: Non-timing-safe admin-key compare detected. Use isAdminRequest(req) from services/auth.js."
+            exit 1
+          fi
+          echo "All admin-key checks go through isAdminRequest()."
 
       - name: Check for Math.random in security contexts
         run: |
+          set -eu
           if grep -rn "Math\.random" --include="*.js" api/ scripts/ | grep -i "password\|token\|secret\|code\|key"; then
-            echo "WARNING: Math.random() used in security context"
+            echo "ERROR: Math.random() used in security-sensitive context. Use crypto.randomBytes()."
             exit 1
           fi
           echo "No insecure random usage found."
+
+      - name: Check for re-introduction of plan-pricing magic strings
+        # services/plans.js is the single source of truth (Wave 8). Prevent
+        # the duplicated literal { compliance_only: 99, business_starter: 199, ... }
+        # from being re-introduced in non-plans.js files.
+        run: |
+          set -eu
+          MATCHES=$(grep -rnE "compliance_only:\s*99,\s*business_starter:\s*199" api/ public/ 2>/dev/null | grep -v 'services/plans.js' || true)
+          if [ -n "$MATCHES" ]; then
+            echo "$MATCHES"
+            echo "ERROR: Duplicated plan-pricing literal found. Import from services/plans.js (priceMap/labelMap) instead."
+            exit 1
+          fi
+          echo "No duplicated plan-pricing literals."

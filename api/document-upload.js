@@ -1,4 +1,4 @@
-import { setCors } from './services/auth.js';
+import { setCors, authenticateRequest, isAdminRequest } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { isValidEmail } from './_validate.js';
@@ -7,12 +7,28 @@ const log = createLogger('document-upload');
 
 // PA CROP Services — Document Upload + Auto-Classification
 // POST /api/document-upload { email, fileName, fileType, fileContent (base64), notes }
-// Classifies document via Groq, stores metadata in SuiteDash, sends alerts for urgent docs
+// Authenticated endpoint — must be called by an admin (mailroom intake) or a
+// signed-in client uploading their own documents. Without auth, this endpoint
+// would be an open mailer (anyone could trigger urgent-doc emails to any
+// address branded as PA CROP).
+
+function escHtml(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
+
+  // Auth: admin (mailroom) or authenticated client.
+  const isAdmin = isAdminRequest(req);
+  const session = !isAdmin ? await authenticateRequest(req) : { valid: true, email: null };
+  if (!isAdmin && !session.valid) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  // IP rate limit applies to admin and client paths alike (defence in depth).
   const rlResult = await checkRateLimit(getClientIp(req), 'document-upload', 5, '60s');
   if (rlResult) {
     res.setHeader('Retry-After', String(rlResult.retryAfter));
@@ -22,6 +38,11 @@ export default async function handler(req, res) {
   const { email, fileName, fileType, fileContent, notes } = req.body || {};
   if (!email || !fileName) return res.status(400).json({ success: false, error: 'email and fileName required' });
   if (!isValidEmail(email)) return res.status(400).json({ success: false, error: 'invalid email' });
+
+  // A non-admin client may only upload for their own email (prevent cross-account spoof).
+  if (!isAdmin && session.email && email.toLowerCase() !== session.email.toLowerCase()) {
+    return res.status(403).json({ success: false, error: 'Email mismatch with session' });
+  }
 
   // File validation: allowed types and size limit
   const ALLOWED_EXTENSIONS = /\.(pdf|doc|docx|xls|xlsx|jpg|jpeg|png|tif|tiff|txt|csv)$/i;
@@ -93,20 +114,27 @@ export default async function handler(req, res) {
   if (result.classification?.urgency === 'critical' || result.classification?.category === 'service_of_process') {
     const emailitKey = process.env.EMAILIT_API_KEY;
     if (emailitKey) {
+      // Allowlist the classification category to a known set; LLM output cannot
+      // be trusted as HTML.
+      const ALLOWED_CATEGORIES = ['service_of_process','tax_notice','annual_report','government_notice','general_correspondence','invoice','unknown'];
+      const safeCategory = ALLOWED_CATEGORIES.includes(result.classification.category) ? result.classification.category : 'unknown';
+      const safeCategoryLabel = safeCategory.replace(/_/g, ' ');
+      const safeAction = escHtml((result.classification.action_needed || 'Review immediately').slice(0, 280));
+
       // Alert client
       await fetch('https://api.emailit.com/v1/emails', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'urgent@pacropservices.com', to: email,
-          subject: `🚨 URGENT: ${result.classification.category === 'service_of_process' ? 'Legal Document' : 'Critical Document'} Received — ${fileName}`,
+          subject: `🚨 URGENT: ${safeCategory === 'service_of_process' ? 'Legal Document' : 'Critical Document'} Received — ${safeFileName}`,
           html: `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
             <div style="border-bottom:3px solid #C44536;padding-bottom:12px;margin-bottom:20px"><strong style="font-size:18px;color:#C44536">URGENT — PA CROP Services</strong></div>
-            <p>We received a document classified as <strong>${result.classification.category.replace(/_/g,' ')}</strong> for your entity.</p>
+            <p>We received a document classified as <strong>${escHtml(safeCategoryLabel)}</strong> for your entity.</p>
             <div style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:12px;padding:20px;margin:16px 0">
-              <p style="margin:0 0 8px"><strong>Document:</strong> ${fileName}</p>
-              <p style="margin:0 0 8px"><strong>Classification:</strong> ${result.classification.category.replace(/_/g,' ')}</p>
-              <p style="margin:0"><strong>Action:</strong> ${result.classification.action_needed || 'Review immediately'}</p>
+              <p style="margin:0 0 8px"><strong>Document:</strong> ${escHtml(safeFileName)}</p>
+              <p style="margin:0 0 8px"><strong>Classification:</strong> ${escHtml(safeCategoryLabel)}</p>
+              <p style="margin:0"><strong>Action:</strong> ${safeAction}</p>
             </div>
             <p>Log in to your portal immediately: <a href="https://pacropservices.com/portal">pacropservices.com/portal</a></p>
             <p>Or call us: <a href="tel:8142282822">814-228-2822</a></p>
@@ -128,8 +156,8 @@ export default async function handler(req, res) {
         headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'urgent@pacropservices.com', to: 'hello@pacropservices.com',
-          subject: `🚨 URGENT DOC: ${result.classification.category} for ${email}`,
-          html: `<p><strong>Client:</strong> ${email}<br><strong>File:</strong> ${fileName}<br><strong>Type:</strong> ${result.classification.category}<br><strong>Action:</strong> ${result.classification.action_needed}</p>`
+          subject: `🚨 URGENT DOC: ${safeCategory} for ${email}`,
+          html: `<p><strong>Client:</strong> ${escHtml(email)}<br><strong>File:</strong> ${escHtml(safeFileName)}<br><strong>Type:</strong> ${escHtml(safeCategoryLabel)}<br><strong>Action:</strong> ${safeAction}</p>`
         })
       }).catch(e => log.warn('external_call_failed', { error: e.message }));
     }

@@ -3,6 +3,9 @@
 // POST { action, payload, adminKey }
 
 import * as db from '../services/db.js';
+import * as plans from '../services/plans.js';
+import { notifyOps as emailNotifyOps } from '../services/email.js';
+import * as secrets from '../services/secrets.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { createLogger } from '../_log.js';
 
@@ -76,23 +79,8 @@ async function stripeFetch(path) {
   }
 }
 
-// ── Emailit Fallback Notifier ──
-async function _notifyIke(subject, body) {
-  const key = process.env.EMAILIT_API_KEY;
-  if (!key) { log.warn('emailit_not_configured', { subject }); return; }
-  try {
-    await fetchWithTimeout('https://api.emailit.com/v1/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'alerts@pacropservices.com',
-        to: 'hello@pacropservices.com',
-        subject: '[PA CROP] ' + subject,
-        html: '<div style="font-family:sans-serif;max-width:600px">' + body + '</div>'
-      })
-    });
-  } catch (e) { log.error('emailit_fallback_failed', {}, e); }
-}
+// ── Emailit Fallback Notifier (delegates to services/email.notifyOps) ──
+const _notifyIke = (subject, body) => emailNotifyOps(subject, body);
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -141,14 +129,14 @@ export default async function handler(req, res) {
         } catch(e) { log.warn('admin_query_error', { error: e.message }); }
 
         if (neonClients && neonClients.length > 0) {
-          const planPricing = { compliance_only: 99, business_starter: 199, business_pro: 349, business_empire: 699 };
-          const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
+          const planPricing = plans.priceMap();
+          const planLabels = plans.labelMap();
           const planCounts = {};
           let mrr = 0, activeSubs = 0;
           neonClients.forEach(c => {
-            const plan = c.plan_code || 'compliance_only';
+            const plan = c.plan_code || plans.DEFAULT_PLAN_CODE;
             planCounts[plan] = (planCounts[plan] || 0) + 1;
-            if (c.billing_status === 'active') { activeSubs++; mrr += (planPricing[plan] || 99) / 12; }
+            if (c.billing_status === 'active') { activeSubs++; mrr += (planPricing[plan] || planPricing[plans.DEFAULT_PLAN_CODE]) / 12; }
           });
           // Get 20i hosting count
           let hostingCount = 0;
@@ -296,38 +284,61 @@ export default async function handler(req, res) {
       // ── Provision 20i Hosting ─────────────────────────────────────────
       case 'provision_hosting': {
         const { email, tierName, accountSlug, hostingPassword, suggestedDomain } = payload;
-        
-        // Create hosting package
-        const pkg = await twentyiFetch('/reseller/' + process.env.TWENTY_I_RESELLER_ID + '/addWeb', {
-          method: 'POST',
-          body: JSON.stringify({
-            'domain_name': suggestedDomain || accountSlug + '.com',
-            type: 'standard',
-            packageBundle: {
-              name: `PA CROP — ${tierName}`,
-              username: accountSlug,
-              password: hostingPassword,
-              type: 'webspace'
-            }
-          })
+        const tw = await import('../services/twentyi.js');
+        const domain = suggestedDomain || `${accountSlug}.com`;
+
+        let packageId = null;
+        try {
+          // Use the documented schema (type: linux | windows | vps | iaas).
+          // The previous packageBundle shape was not part of the 20i public API.
+          const pkg = await tw.addWebPackage({
+            type: 'linux',
+            domain_name: domain,
+            extra_domain_names: [],
+            label: `PA CROP — ${tierName} — ${email}`
+          });
+          packageId = pkg.packageId;
+        } catch (e) {
+          log.error('admin_provision_hosting_failed', { email, error: e.message });
+          return res.status(502).json({ success: false, error: 'Hosting provisioning failed' });
+        }
+        if (!packageId) return res.status(502).json({ success: false, error: 'Provisioning returned no packageId' });
+
+        // Enable SSL — surfaces in the response so silent failures aren't hidden.
+        const sslResult = { ok: false };
+        try {
+          await tw.addSsl(packageId, domain);
+          sslResult.ok = true;
+        } catch (e) {
+          sslResult.error = e.message;
+          log.warn('ssl_provisioning_failed', { packageId, domain, error: e.message });
+        }
+
+        // Create StackCP user (client login for the hosting panel)
+        const userResult = { ok: false };
+        try {
+          await tw.addStackUser({
+            person_name: email.split('@')[0],
+            email,
+            password: hostingPassword,
+            send_welcome_email: false,
+            grant_all_packages: false,
+            package_ids: [packageId]
+          });
+          userResult.ok = true;
+        } catch (e) {
+          userResult.error = e.message;
+          log.warn('stackcp_user_creation_failed', { packageId, email, error: e.message });
+        }
+
+        return res.status(200).json({
+          success: true,
+          packageId,
+          accountSlug,
+          suggestedDomain: domain,
+          ssl: sslResult,
+          stackcp_user: userResult
         });
-
-        const packageId = pkg?.result?.id || pkg?.id;
-        if (!packageId) return res.status(500).json({ success: false, error: 'Provisioning failed', pkg });
-
-        // Enable SSL
-        await twentyiFetch(`/package/${packageId}/ssl`, {
-          method: 'POST',
-          body: JSON.stringify({ domain: suggestedDomain, type: 'letsencrypt' })
-        }).catch(e => log.warn('silent_failure', { error: e.message }));
-
-        // Create StackCP user
-        await twentyiFetch('/reseller/user', {
-          method: 'POST',
-          body: JSON.stringify({ username: email, password: hostingPassword, email })
-        }).catch(e => log.warn('silent_failure', { error: e.message }));
-
-        return res.status(200).json({ success: true, packageId, accountSlug, suggestedDomain });
       }
 
       // ── Stripe Revenue ────────────────────────────────────────────────
@@ -468,6 +479,131 @@ export default async function handler(req, res) {
           message: 'Automated entity check unavailable. Check manually at https://www.dos.pa.gov/BusinessCharities/Business/Pages/default.aspx',
           entityName, entityNumber,
           instructions: 'Search for the entity name or DOS file number on the PA DOS website.'
+        });
+      }
+
+      // ── Resend Welcome Email (recover missed confirmation) ─────────
+      case 'resend_welcome_email': {
+        const { email } = payload;
+        if (!email) return res.status(400).json({ success: false, error: 'email required' });
+
+        const client = await db.getClientByEmail(email);
+        if (!client) return res.status(404).json({ success: false, error: 'client_not_found' });
+
+        const meta = client.metadata || {};
+        const plan = plans.resolvePlan(client.plan_code);
+        const tier = plan.tier;
+        const tierLabel = plan.label;
+        const planValue = plan.servicesValueLabel;
+        const planPrice = String(plan.annualFeeUsd);
+
+        // Recover or regenerate access code
+        let accessCode = meta.access_code;
+        if (!accessCode) {
+          const { randomBytes } = await import('crypto');
+          const local = email.split('@')[0].replace(/[^a-z0-9]/gi, '').toUpperCase();
+          accessCode = 'CROP' + local.slice(-4) + randomBytes(2).readUInt16BE(0).toString().padStart(5, '0').slice(0, 5);
+          if (db.isConnected() && client.id) {
+            try {
+              await db.updateClient(client.id, {
+                metadata: { ...meta, access_code: accessCode, access_code_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() }
+              });
+            } catch (e) { log.warn('access_code_persist_failed', { error: e.message }); }
+          }
+        }
+
+        const includesHosting = plan.includesHosting;
+        const includesFiling = plan.includesFiling;
+        const includesNotary = plan.includesNotary;
+        // hosting_password may be enc:v1: (Wave 10+) or legacy plaintext.
+        // secrets.decrypt() returns plaintext for both shapes; failures yield ''
+        // so a corrupt blob doesn't block the welcome resend.
+        let hostingPassword = '';
+        if (meta.hosting_password) {
+          try { hostingPassword = secrets.decrypt(meta.hosting_password); }
+          catch { log.warn('hosting_password_decrypt_failed', { client_id: client.id }); }
+        }
+        const phoneExtension = meta.direct_line || '';
+
+        const firstName = (client.owner_name || '').split(' ')[0] || 'there';
+        const html = `<div style="font-family:Outfit,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <div style="border-bottom:3px solid #C9982A;padding-bottom:16px;margin-bottom:24px">
+            <strong style="font-size:18px;color:#0C1220">PA CROP Services</strong>
+          </div>
+          <h2 style="color:#0C1220">Welcome, ${firstName}!</h2>
+          <p>Your <strong>${tierLabel}</strong> plan is now active. Here's how to get started:</p>
+          <div style="background:#FAF9F6;border:1px solid #EBE8E2;border-radius:12px;padding:20px;margin:20px 0">
+            <p style="margin:0 0 8px"><strong>Portal login:</strong> <a href="https://pacropservices.com/portal">pacropservices.com/portal</a></p>
+            <p style="margin:0 0 8px"><strong>Email:</strong> ${email}</p>
+            <p style="margin:0"><strong>Access code:</strong> ${accessCode}</p>
+          </div>
+          ${includesHosting && hostingPassword ? `<div style="background:#E8F0E9;border:1px solid #6B8F71;border-radius:12px;padding:20px;margin:20px 0">
+            <h3 style="color:#0C1220;margin:0 0 8px">Your Business Website &amp; Hosting Is Live</h3>
+            <p style="margin:0 0 8px"><strong>Hosting panel:</strong> <a href="https://my.20i.com">my.20i.com</a></p>
+            <p style="margin:0 0 8px"><strong>Username:</strong> ${email}</p>
+            <p style="margin:0 0 8px"><strong>Password:</strong> ${hostingPassword}</p>
+            <p style="margin:0;font-size:13px"><a href="https://pacropservices.com/welcome" style="color:#2D6A2E;font-weight:600">Choose your custom domain name &rarr;</a></p>
+          </div>` : ''}
+          ${includesFiling ? `<div style="background:#FFF8E8;border:1px solid #C9982A40;border-radius:12px;padding:20px;margin:20px 0">
+            <h3 style="color:#0C1220;margin:0 0 8px">Annual Report Filing — We Handle It</h3>
+            <p style="margin:0;font-size:14px;color:#4A4A4A">Your annual report filing is included. We'll prepare the filing, confirm details with you, and submit to PA DOS before your deadline.</p>
+          </div>` : ''}
+          ${phoneExtension ? `<div style="background:#FAF9F6;border:1px solid #EBE8E2;border-radius:12px;padding:16px 20px;margin:20px 0">
+            <p style="margin:0;font-size:14px"><strong>Your direct line:</strong> ${phoneExtension}</p>
+          </div>` : ''}
+          ${includesNotary ? `<p style="font-size:14px;color:#4A4A4A"><strong>Notary services:</strong> Your plan includes 2 free notarizations per year.</p>` : ''}
+          <div style="background:linear-gradient(135deg,#0C1220,#1a2540);border-radius:12px;padding:20px;margin:20px 0;color:#fff">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:4px">Your plan includes</div>
+            <div style="font-size:24px;font-weight:700;color:#C9982A;margin-bottom:8px">${planValue} in services</div>
+            <div style="font-size:13px;opacity:.8">You pay ${planPrice}/year. That's a 96%+ savings over purchasing each service individually.</div>
+          </div>
+          <p>Questions? Reply to this email or call <a href="tel:8142282822">814-228-2822</a>.</p>
+          <div style="margin-top:32px;padding-top:16px;border-top:1px solid #EBE8E2;font-size:12px;color:#7A7A7A">
+            PA Registered Office Services, LLC · 924 W 23rd St, Erie, PA 16502
+          </div>
+        </div>`;
+
+        const emailitKey = process.env.EMAILIT_API_KEY;
+        if (!emailitKey) {
+          return res.status(503).json({ success: false, error: 'emailit_not_configured', accessCode });
+        }
+
+        const emailRes = await fetchWithTimeout('https://api.emailit.com/v1/emails', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + emailitKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'hello@pacropservices.com',
+            to: email,
+            subject: `Welcome to PA CROP Services — ${tierLabel}`,
+            html
+          })
+        });
+
+        if (!emailRes.ok) {
+          const errText = await emailRes.text().catch(() => 'unknown');
+          log.error('welcome_resend_failed', { email, status: emailRes.status });
+          return res.status(502).json({ success: false, error: 'emailit_delivery_failed', detail: errText });
+        }
+
+        // Audit
+        try {
+          await db.writeAuditEvent({
+            actor_type: 'admin', actor_id: 'dashboard',
+            event_type: 'welcome_email.resent',
+            target_type: 'client', target_id: client.id,
+            after_json: { email, tier, access_code_regenerated: !meta.access_code },
+            reason: 'manual_resend_via_admin'
+          });
+        } catch (e) { log.warn('audit_write_failed', { error: e.message }); }
+
+        // Do not echo plaintext access code back to the browser — it ends up
+        // in history, logs, screenshots. The user receives it via the email.
+        return res.status(200).json({
+          success: true,
+          message: 'Welcome email resent to ' + email,
+          accessCodeLast4: String(accessCode).slice(-4),
+          tier,
+          accessCodeRegenerated: !meta.access_code
         });
       }
 

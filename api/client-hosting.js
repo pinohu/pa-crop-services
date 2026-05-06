@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     // Get detailed package info
     const detailRes = await fetch(`https://api.20i.com/package/${matchedId}`, {
       headers: { 'Authorization': BEARER }
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller defends with `detailRes ? ... : {}` on next line; portal renders gracefully without the detail block
     const detail = detailRes ? await detailRes.json().catch(() => ({})) : {};
 
     return res.status(200).json({

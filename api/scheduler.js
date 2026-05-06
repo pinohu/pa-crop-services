@@ -10,21 +10,19 @@ import { getRules } from './_compliance.js';
 import { obligations } from './_obligations.js';
 import { db } from './_db.js';
 import { createLogger } from './_log.js';
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 
 const logger = createLogger('scheduler');
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST only' });
 
-  // Admin key required — header only, never from request body
-  const key = req.headers['x-admin-key'];
-  if (!key || !ADMIN_KEY || key.length !== ADMIN_KEY.length) return res.status(403).json({ success: false, error: 'Unauthorized' });
-  const { timingSafeEqual } = await import('crypto');
-  if (!timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY))) return res.status(403).json({ success: false, error: 'Unauthorized' });
+  // Admin key required — header only, never from request body. isAdminRequest
+  // does HMAC-then-timingSafeEqual so the prior length-pre-check (which leaked
+  // length) is no longer needed.
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'Unauthorized' });
 
   const { action, entityIds, year, deadlineGroup } = req.body || {};
   if (!action) return res.status(400).json({ success: false, error: 'action required' });

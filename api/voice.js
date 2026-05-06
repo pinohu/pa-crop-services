@@ -1,4 +1,4 @@
-import { setCors } from './services/auth.js';
+import { setCors, verifyTwilioSignature } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 
@@ -19,6 +19,13 @@ export default async function handler(req, res) {
   if (blocked) {
     res.setHeader('Retry-After', String(blocked.retryAfter));
     return res.status(429).json({ success: false, error: 'Too many requests' });
+  }
+
+  // Twilio webhook signature verification — reject anything not signed by Twilio.
+  if (!verifyTwilioSignature(req)) {
+    log.warn('twilio_signature_rejected', { path: '/api/voice', ip: getClientIp(req) });
+    res.setHeader('Content-Type', 'text/xml');
+    return res.status(403).send('<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>');
   }
 
   const { SpeechResult, To } = req.body || {};

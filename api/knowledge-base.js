@@ -1,4 +1,4 @@
-import { setCors } from './services/auth.js';
+import { setCors, isAdminRequest } from './services/auth.js';
 
 // PA CROP Services — Auto-Generated Knowledge Base
 // GET /api/knowledge-base (public — returns all KB articles)
@@ -10,7 +10,6 @@ export default async function handler(req, res) {
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   const generate = req.query?.generate === 'true';
-  const adminKey = req.headers['x-admin-key'];
 
   // Static knowledge base (always available)
   const KB = [
@@ -23,7 +22,7 @@ export default async function handler(req, res) {
   ];
 
   // Generate additional entries via Groq if requested
-  if (generate && GROQ_KEY && adminKey === (process.env.ADMIN_SECRET_KEY)) {
+  if (generate && GROQ_KEY && isAdminRequest(req)) {
     try {
       const genRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',

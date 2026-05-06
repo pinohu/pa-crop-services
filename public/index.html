@@ -28,12 +28,44 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://plausible.io">
 <link rel="preconnect" href="https://www.clarity.ms">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":["LegalService","LocalBusiness"],"name":"PA CROP Services","legalName":"PA Registered Office Services, LLC","description":"Licensed Pennsylvania Commercial Registered Office Provider (CROP) under 15 Pa. C.S. § 109.","url":"https://www.pacropservices.com","telephone":"+18142282822","email":"hello@pacropservices.com","address":{"@type":"PostalAddress","streetAddress":"924 W 23rd St","addressLocality":"Erie","addressRegion":"PA","postalCode":"16502","addressCountry":"US"},"areaServed":{"@type":"State","name":"Pennsylvania"},"priceRange":"$99-$699/year","openingHours":"Mo-Fr 09:00-17:00","hasOfferCatalog":{"@type":"OfferCatalog","name":"CROP Service Plans","itemListElement":[{"@type":"Offer","name":"Compliance Only","price":"99","priceCurrency":"USD"},{"@type":"Offer","name":"Business Starter","price":"199","priceCurrency":"USD"},{"@type":"Offer","name":"Business Pro","price":"349","priceCurrency":"USD"},{"@type":"Offer","name":"Business Empire","price":"699","priceCurrency":"USD"}]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is a CROP?","acceptedAnswer":{"@type":"Answer","text":"A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service under 15 Pa. C.S. § 109, providing a registered office address on behalf of your business entity."}},{"@type":"Question","name":"Is a CROP the same as a registered agent?","acceptedAnswer":{"@type":"Answer","text":"Functionally, yes. Pennsylvania uses 'Commercial Registered Office Provider' instead of 'registered agent.'"}},{"@type":"Question","name":"What is the PA annual report requirement?","acceptedAnswer":{"@type":"Answer","text":"Starting 2025, all PA entities must file annually. Deadlines vary by entity type: corporations by June 30, LLCs by September 30, all others by December 31. Starting with 2027 reports, failure to file leads to administrative dissolution six months after the deadline."}},{"@type":"Question","name":"How quickly do you forward documents?","acceptedAnswer":{"@type":"Answer","text":"Same-day scanning and portal upload with immediate email notification."}},{"@type":"Question","name":"Do you file my annual report?","acceptedAnswer":{"@type":"Answer","text":"Business Pro and Empire clients get filing included. All tiers get 5 deadline reminders."}}]}</script>
 <script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
 <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
-<script defer>function trackEvent(n,p){if(window.plausible)plausible(n,{props:p||{}});}</script>
+<script defer>function trackEvent(n,p){if(window.plausible)plausible(n,{props:p||{}});}
+// Pricing CTAs: prefer /api/billing/checkout (sets metadata.plan_code so the
+// Stripe webhook never has to fall back to amount-bracket inference). Falls
+// back to the buy.stripe.com href if the API is unavailable.
+document.addEventListener('click', function(e){
+  var link = e.target.closest && e.target.closest('a[data-checkout-plan]');
+  if (!link) return;
+  var planCode = link.getAttribute('data-checkout-plan');
+  if (!planCode) return;
+  e.preventDefault();
+  var oldText = link.textContent;
+  link.textContent = 'Opening checkout…';
+  fetch('/api/billing/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plan_code: planCode })
+  })
+  .then(function(r){ return r.json().catch(function(){return {};}); })
+  .then(function(d){
+    if (d && d.checkout_url) {
+      window.location.href = d.checkout_url;
+    } else {
+      // Fallback to the legacy Payment Link href
+      window.location.href = link.getAttribute('href');
+    }
+  })
+  .catch(function(){
+    window.location.href = link.getAttribute('href');
+  })
+  .finally(function(){
+    setTimeout(function(){ link.textContent = oldText; }, 5000);
+  });
+});</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
@@ -48,7 +80,7 @@
 @media(max-width:768px){.sticky-cta{flex-direction:column;gap:8px;padding:14px 20px}.sticky-cta p{font-size:13px;text-align:center}}
 
 /* BACK TO TOP */
-.back-top{position:fixed;bottom:80px;right:24px;z-index:89;width:40px;height:40px;border-radius:50%;background:var(--white);border:1.5px solid var(--cream3);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:all .25s var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.08)}.back-top.show{opacity:1;pointer-events:auto}.back-top:hover{background:var(--cream);color:var(--slate);transform:translateY(-2px)}
+.back-top{position:fixed;bottom:80px;right:24px;z-index:89;width:44px;height:44px;border-radius:50%;background:var(--white);border:1.5px solid var(--cream3);color:var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:all .25s var(--ease);box-shadow:0 2px 8px rgba(0,0,0,.08)}.back-top.show{opacity:1;pointer-events:auto}.back-top:hover{background:var(--cream);color:var(--slate);transform:translateY(-2px)}.back-top:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 /* PRICING COMPARISON TABLE */
 .compare-table{max-width:900px;margin:48px auto 0;border:1.5px solid var(--cream3);border-radius:16px;overflow:hidden;background:var(--white)}.compare-table table{width:100%;border-collapse:collapse;font-size:13px}.compare-table th{background:var(--cream);font-weight:600;color:var(--slate);padding:14px 12px;text-align:center;border-bottom:1px solid var(--cream3);font-size:12px;text-transform:uppercase;letter-spacing:.5px}.compare-table th:first-child{text-align:left;padding-left:20px;width:40%}.compare-table th.featured-col{background:var(--gold-light);color:var(--gold-muted)}.compare-table td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--cream2);color:var(--ink2)}.compare-table td:first-child{text-align:left;padding-left:20px;font-weight:500;color:var(--slate)}.compare-table td.featured-col{background:rgba(245,237,218,.25)}.compare-table .check{color:var(--sage);font-weight:700}.compare-table .dash{color:var(--ink4)}
@@ -61,9 +93,9 @@
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 
 /* FAQ KEYBOARD */
-.faq-item:focus-within{background:var(--white)}.faq-q[role="button"]{outline:none}.faq-q[role="button"]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;border-radius:4px}
+.faq-item:focus-within{background:var(--white)}.faq-q{background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;color:inherit}.faq-q:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
 /* WCAG 2.1: fallback for browsers without :focus-visible support */
-@supports not selector(:focus-visible){.faq-q[role="button"]:focus{outline:2px solid var(--gold);outline-offset:-2px;border-radius:4px}}
+@supports not selector(:focus-visible){.faq-q:focus{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}}
 
 :root{--slate:#0C1220;--slate2:#1A2332;--gold:#C9982A;--gold-light:#F5EDDA;--gold-muted:#A68A3E;--sage:#6B8F71;--sage-light:#E8F0E9;--cream:#FAF9F6;--cream2:#F3F1EC;--cream3:#EBE8E2;--ink:#1C1C1C;--ink2:#4A4A4A;--ink3:#7A7A7A;--ink4:#A8A8A8;--white:#fff;--red:#FF6B5B;--radius:10px;--font:'Outfit',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--ease:cubic-bezier(.22,.61,.36,1)}
 html{scroll-behavior:smooth}body{font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -129,7 +161,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
   <div class="nav-links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="/about">About</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
   <button class="nav-mobile" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
 </div></nav>
-<div class="mobile-menu" id="mobile-menu" role="region" aria-label="Mobile navigation"><a href="#features" onclick="closeMobileMenu()">Features</a><a href="#pricing" onclick="closeMobileMenu()">Pricing</a><a href="#partners" onclick="closeMobileMenu()">Partners</a><a href="#faq" onclick="closeMobileMenu()">FAQ</a><a href="/about" onclick="closeMobileMenu()">About</a><a href="/portal" onclick="closeMobileMenu()">Client Login</a><a href="tel:8142282822" onclick="closeMobileMenu()">Call 814-228-2822</a><a href="/compliance-check" onclick="closeMobileMenu()">Check my entity →</a></div>
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation" tabindex="-1"><a href="#features" onclick="closeMobileMenu()">Features</a><a href="#pricing" onclick="closeMobileMenu()">Pricing</a><a href="#partners" onclick="closeMobileMenu()">Partners</a><a href="#faq" onclick="closeMobileMenu()">FAQ</a><a href="/about" onclick="closeMobileMenu()">About</a><a href="/portal" onclick="closeMobileMenu()">Client Login</a><a href="tel:8142282822" onclick="closeMobileMenu()">Call 814-228-2822</a><a href="/compliance-check" onclick="closeMobileMenu()">Check my entity →</a></div>
 
 <main id="main-content">
 <section class="hero" aria-label="Introduction"><div class="container"><div class="hero-inner">
@@ -248,7 +280,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>AI compliance assistant (24/7)</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'compliance',price:'99'})">Protect my entity — $99/yr →</a>
+      <a href="https://buy.stripe.com/6oU9AUcheaD173I2Ys6sw0c" class="price-cta outline" data-checkout-plan="compliance_only" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'compliance',price:'99'})">Protect my entity — $99/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">No credit card hassle. Cancel anytime.</div>
     </div>
 
@@ -274,7 +306,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>Priority email support</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'starter',price:'199'})">Get started — $199/yr →</a>
+      <a href="https://buy.stripe.com/28E7sM80YdPdewa42w6sw09" class="price-cta primary" data-checkout-plan="business_starter" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'starter',price:'199'})">Get started — $199/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">Most PA business owners choose this plan</div>
     </div>
 
@@ -299,7 +331,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>Direct phone line to our team</li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'pro',price:'349'})">Go hands-free — $349/yr →</a>
+      <a href="https://buy.stripe.com/7sY4gAepm12rbjYaqU6sw0a" class="price-cta outline" data-checkout-plan="business_pro" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'pro',price:'349'})">Go hands-free — $349/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For business owners who want zero compliance work</div>
     </div>
 
@@ -324,7 +356,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
         <li>2 free notarizations per year <span style="color:var(--ink4);font-size:11px">— $100 value</span></li>
         <li style="color:var(--sage);font-weight:500">✦ 30-day money-back guarantee</li>
       </ul>
-      <a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'empire',price:'699'})">Manage my entities — $699/yr →</a>
+      <a href="https://buy.stripe.com/cNi4gAgxueTh9bQaqU6sw0b" class="price-cta outline" data-checkout-plan="business_empire" target="_blank" rel="noopener noreferrer" onclick="trackEvent('CTA Click',{plan:'empire',price:'699'})">Manage my entities — $699/yr →</a>
       <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink4)">For multi-LLC and multi-entity operators</div>
     </div>
 
@@ -439,13 +471,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 <section class="faq" id="faq" aria-label="Frequently asked questions"><div class="container">
   <div class="faq-header reveal"><div class="section-tag">Common Questions</div><h2>Questions we hear a lot</h2></div>
   <div class="faq-grid" role="list">
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-1" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-1" role="region" aria-label="What is a CROP answer">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-2" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Is a CROP the same as a registered agent?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-2" role="region" aria-label="Is a CROP the same as a registered agent answer">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-3" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What happens if I don't have a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-3" role="region" aria-label="What happens if I don't have a CROP answer">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-4" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">What is the PA annual report requirement?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-4" role="region" aria-label="What is the PA annual report requirement answer">Starting 2025, all PA entities must file annually. The fee is $7. Deadlines depend on entity type: corporations by June 30, LLCs by September 30, and all others (LPs, LLPs, business trusts) by December 31. Starting with 2027 reports, failure to file results in administrative dissolution, termination, or cancellation six months after the applicable deadline.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-5" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">How quickly do you forward documents?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-5" role="region" aria-label="How quickly do you forward documents answer">Same-day scanning and portal upload with immediate email notification.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-6" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Can I switch from another CROP?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-6" role="region" aria-label="Can I switch from another CROP answer">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
-    <div class="faq-item" role="listitem"><div class="faq-q" role="button" tabindex="0" aria-expanded="false" aria-controls="faq-a-7" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}">Do you file my annual report?<span class="faq-arrow" aria-hidden="true">▾</span></div><div class="faq-a" id="faq-a-7" role="region" aria-label="Do you file my annual report answer">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-1" onclick="toggleFaq(this)">What is a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-1" role="region" aria-label="What is a CROP answer">A Commercial Registered Office Provider (CROP) is a Pennsylvania-specific service. Every PA business entity must have a registered office address on file with the Department of State. A CROP provides that address on your behalf under 15 Pa. C.S. § 109.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-2" onclick="toggleFaq(this)">Is a CROP the same as a registered agent?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-2" role="region" aria-label="Is a CROP the same as a registered agent answer">Functionally, yes. Most states use "registered agent." Pennsylvania uses "registered office" and "Commercial Registered Office Provider." The service is the same.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-3" onclick="toggleFaq(this)">What happens if I don't have a CROP?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-3" role="region" aria-label="What happens if I don't have a CROP answer">You risk missing service of process, government notices, and — starting in 2027 — annual report reminders that could save your business from dissolution.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-4" onclick="toggleFaq(this)">What is the PA annual report requirement?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-4" role="region" aria-label="What is the PA annual report requirement answer">Starting 2025, all PA entities must file annually. The fee is $7. Deadlines depend on entity type: corporations by June 30, LLCs by September 30, and all others (LPs, LLPs, business trusts) by December 31. Starting with 2027 reports, failure to file results in administrative dissolution, termination, or cancellation six months after the applicable deadline.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-5" onclick="toggleFaq(this)">How quickly do you forward documents?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-5" role="region" aria-label="How quickly do you forward documents answer">Same-day scanning and portal upload with immediate email notification.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-6" onclick="toggleFaq(this)">Can I switch from another CROP?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-6" role="region" aria-label="Can I switch from another CROP answer">Yes. File a Change of Registered Office at file.dos.pa.gov ($5). We provide pre-populated forms and step-by-step instructions.</div></div>
+    <div class="faq-item" role="listitem"><button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-7" onclick="toggleFaq(this)">Do you file my annual report?<span class="faq-arrow" aria-hidden="true">▾</span></button><div class="faq-a" id="faq-a-7" role="region" aria-label="Do you file my annual report answer">Business Pro and Empire clients get filing included. All tiers get automated reminders at 90, 60, 30, 14, and 7 days.</div></div>
   </div>
 </div></section>
 
@@ -473,9 +505,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 </main>
 
 <footer class="footer" role="contentinfo"><div class="container"><div class="footer-inner">
-  <div><div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div><div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div></div>
+  <div>
+    <div class="footer-left">&copy; <span class="footer-year">2026</span> PA CROP Services (PA Registered Office Services, LLC)</div>
+    <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · 814-228-2822</div>
+    <div class="footer-legal" style="margin-top:8px;max-width:520px;line-height:1.5">PA CROP Services is not a law firm and does not provide legal advice. Information on this site and through our compliance tools is for informational purposes only — for legal questions, consult a Pennsylvania-licensed attorney. For tax questions, consult a CPA.</div>
+  </div>
   <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
 </div></div></footer>
+<script>document.querySelectorAll('.footer-year').forEach(function(el){el.textContent=new Date().getFullYear();});</script>
 
 <!-- STICKY CTA BAR -->
 <div class="sticky-cta" id="sticky-cta" role="complementary" aria-label="Quick action">
@@ -496,21 +533,47 @@ window.addEventListener('scroll',()=>{
   document.getElementById('back-top').classList.toggle('show',window.scrollY>1200);
 });
 
-// MOBILE MENU
+// MOBILE MENU — with focus trap when open and focus restore on close.
+let _mobileMenuPriorFocus = null;
+function _focusableInMenu(menu) {
+  return menu.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+}
 function toggleMobileMenu(){
   var menu = document.getElementById('mobile-menu');
   var btn = document.getElementById('hamburger-btn');
   var isOpen = menu.classList.toggle('open');
   if(btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  if (isOpen) {
+    _mobileMenuPriorFocus = document.activeElement;
+    var first = _focusableInMenu(menu)[0];
+    if (first) first.focus();
+  }
 }
 function closeMobileMenu(){
   var menu = document.getElementById('mobile-menu');
   var btn = document.getElementById('hamburger-btn');
+  var wasOpen = menu.classList.contains('open');
   menu.classList.remove('open');
   if(btn) btn.setAttribute('aria-expanded','false');
+  if (wasOpen) {
+    var target = (_mobileMenuPriorFocus && document.contains(_mobileMenuPriorFocus)) ? _mobileMenuPriorFocus : btn;
+    if (target && typeof target.focus === 'function') target.focus();
+    _mobileMenuPriorFocus = null;
+  }
 }
-document.addEventListener('click',e=>{var m=document.getElementById('mobile-menu'),b=document.getElementById('hamburger-btn');if(m&&b&&!m.contains(e.target)&&!b.contains(e.target))m.classList.remove('open');});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMobileMenu();}});
+document.addEventListener('click',e=>{var m=document.getElementById('mobile-menu'),b=document.getElementById('hamburger-btn');if(m&&b&&!m.contains(e.target)&&!b.contains(e.target)&&m.classList.contains('open'))closeMobileMenu();});
+document.addEventListener('keydown',e=>{
+  var menu = document.getElementById('mobile-menu');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeMobileMenu(); return; }
+  if (e.key === 'Tab') {
+    var items = Array.from(_focusableInMenu(menu));
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
 
 // REVEAL ON SCROLL
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});
@@ -521,7 +584,7 @@ function toggleFaq(el){
   var item=el.closest('.faq-item');
   var isOpen=item.classList.contains('open');
   item.classList.toggle('open');
-  el.setAttribute('aria-expanded',!isOpen);
+  el.setAttribute('aria-expanded', String(!isOpen));
 }
 
 // NEWSLETTER with validation

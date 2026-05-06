@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
   const checkoutUrl = STRIPE_LINKS[targetTier];
   const priceDiff = (targetPrice - currentPrice) / 100;
-  const tierLabels = { compliance: 'Compliance Only', starter: 'Business Starter', pro: 'Business Pro', empire: 'Business Empire' };
+  const tierLabels = Object.fromEntries(Object.values((await import('./services/plans.js')).PLANS).map(p => [p.tier, p.label]));
 
   // Notify admin of upgrade intent
   const emailitKey = process.env.EMAILIT_API_KEY;

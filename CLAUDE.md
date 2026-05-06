@@ -3,16 +3,22 @@
 This file configures Claude Code's behavior for the PA CROP Services project.
 Read this file completely before writing any code.
 
+> **Secrets policy:** This file MUST NOT contain live API keys, tokens, admin
+> secrets, GitHub PATs, or other credentials. All secrets live in environment
+> variables (Vercel project + local `.env`; see `.env.example` for the canonical
+> list of names). Anything previously recorded here in plaintext is presumed
+> compromised — rotate it in the relevant provider console.
+
 ---
 
 ## Project Overview
 
 **PA CROP Services** is a Pennsylvania government compliance services platform with 146 API endpoints, a dual-surface design (light marketing + dark portal), and a full comms stack.
 
-- **Stack**: Next.js (Vercel), Neon Postgres, 20i hosting (pkg 3630589), JWT auth
+- **Stack**: Next.js (Vercel), Neon Postgres, 20i hosting, JWT auth
 - **Repo**: `pinohu/pa-crop-services`
-- **Vercel**: `prj_MrCHRfSE1tdtaLy7Niwr7D4DlJ8c`, team `team_fuTLGjBMk3NAD32Bm5hA7wkr`
-- **Admin key**: `CROP-ADMIN-2026-IKE`
+- **Vercel project / team**: see Vercel dashboard (IDs not stored in repo)
+- **Admin key**: `process.env.ADMIN_SECRET_KEY` — never write the literal value here or anywhere else in the repo
 - **Domain**: www.pacropservices.com
 
 ---
@@ -80,34 +86,29 @@ Every interactive component must have:
 
 ### API Conventions (146 endpoints)
 - REST pattern: `/api/v1/[resource]/[action]`
-- Auth: JWT Bearer token (`CROP-ADMIN-2026-IKE` for admin routes)
+- Admin auth: `isAdminRequest(req)` from `api/services/auth.js` (timing-safe HMAC over `process.env.ADMIN_SECRET_KEY`); accepts `X-Admin-Key` or `X-Internal-Key` header. Never compare admin keys with `===`.
+- Client auth: JWT Bearer token issued by `/api/auth/login`; verify with `authenticateRequest(req)`.
 - All responses: `{ success: boolean; data?: T; error?: string; message?: string }`
 - Rate limiting on all public endpoints
 
 ### Database (Neon Postgres)
-- Connection: `ep-small-pond-ajxunei4-pooler.c-3.us-east-2.aws.neon.tech`
-- Use connection pooling — never direct connections from edge functions
-- Transaction on all multi-table writes (client record + filing record + notification)
+- Connection string lives in `process.env.DATABASE_URL` — must be the Neon pooler endpoint.
+- Use connection pooling — never direct connections from edge functions.
+- Transaction on all multi-table writes (client record + filing record + notification).
+- All `update*` helpers in `services/db.js` merge JSONB columns (`metadata = COALESCE(metadata,'{}') || $::jsonb`); callers may pass partial patches without wiping prior keys.
 
 ### 20i Hosting
-- Package: `3630589`
-- API keys (March 2026): general `c2387393b8125d868`, oauth `c0471cadcfe5a7837`
-- Bearer = base64-encode general key
-- ResellerId: `10455`
+- Package id, reseller id, API keys: env vars only (`TWENTY_I_GENERAL`, `TWENTY_I_RESELLER_ID`, `TWENTY_I_PACKAGE_ID`).
+- Bearer = base64-encode the general key (see `services/twentyi.js` once consolidated).
 
 ### Comms Stack (Do Not Modify Without Instruction)
-- **Insighto**: Voice agent — API key `in-8sy7gCOBIkfcftX7SJ-0tNSeVHI1GKoR3u9LwGDvyLA`
-- **CallScaler**: `120|ZPLZosyaRbCmkwTs01wRtYxtfJt1m9SUUTcBzz7K`, number: (814) 228-2822
-- **SMS-iT**: `SMSIT_a1a5c935d1626fb1ad8d95de9455857d3225730e1b992f62c355c83158a4a7dc`
-- **Trafft**: Client ID `380067799445b9b14ebbad232d7a8dbf`
+- All comms credentials live in env vars: `INSIGHTO_API_KEY`, `CALLSCALER_API_KEY`, `SMSIT_API_KEY`, `TRAFFT_CLIENT_ID`, etc. See `.env.example`.
+- The live stack is in production — coordinate any change with Ike before touching.
 
 ### n8n Workflows (Active — Do Not Break)
-- Lead Nurture: `ndDWaSmPO4290CgK`
-- Hot Lead Alert: `RSibNfwSM9aw3vUW`
-- Portal Reset: `l2495RxXLxkYzqcU`
-- Partner Onboarding: `9j4pW3PmmYufMG8T`
-- New Client Onboarding: `OkjdJx2bRqlgl1s7`
-- Annual Report Reminders: `il9DOXSAK9hUo2Ru`
+- Workflow IDs are referenced in code via env vars (`N8N_BASE_URL`, plus per-workflow webhook paths).
+- Active workflows: lead nurture, hot lead alert, portal reset, partner onboarding, new client onboarding, annual report reminders.
+- Do not modify workflow IDs without coordinating with Ike — they're active in production.
 
 ---
 
@@ -131,7 +132,9 @@ git config user.name "pinohu"
 
 **Always set these before committing to this repo.**
 
-Token: `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`
+GitHub authentication uses a personal access token kept outside the repo
+(GitHub CLI keychain or `~/.git-credentials`). Never paste tokens into this
+file or any committed file.
 
 ---
 

@@ -636,7 +636,7 @@ export default async function handler(req, res) {
   const {
     email,
     name,
-    entityName,
+    entityName: rawEntityName,
     entityType,
     tier,
     dosNumber,
@@ -646,9 +646,14 @@ export default async function handler(req, res) {
     daysUntilDeadline,
   } = req.body || {};
 
-  if (!email || !entityName) {
-    return res.status(400).json({ success: false, error: 'email and entityName are required' });
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'email is required' });
   }
+
+  // Default entityName to name|email so provision.js doesn't fail end-to-end
+  // when the upstream Stripe checkout didn't capture an entity name yet.
+  // The PDF will still render with a placeholder — better than a hard 400.
+  const entityName = rawEntityName || name || email.split('@')[0];
 
   const enrolledDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',

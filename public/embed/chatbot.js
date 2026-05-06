@@ -107,11 +107,12 @@ fab.onclick = function() {
   fab.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   if (isOpen) { input.focus(); }
   if (isOpen && body.children.length === 0) {
-    // First open: show greeting with typing effect
+    // First open: show greeting with typing effect, then UPL disclaimer.
     showTyping();
     setTimeout(function() {
       removeTyping();
       typeMessage(pageContext.greeting, 'bot');
+      typeMessage("Heads-up: I'm a compliance-information assistant, not an attorney or CPA. For legal or tax advice, consult a Pennsylvania-licensed professional.", 'bot');
       showSuggestions(pageContext.suggestions);
     }, 800);
     input.focus();
