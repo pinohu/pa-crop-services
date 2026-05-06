@@ -336,7 +336,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name, accessCode, tier, refCode, includesHosting, hostingPassword: includesHosting ? hostingPassword : undefined })
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller checks (n8nRes && n8nRes.ok) on next line and falls back to Emailit if null
 
     if (n8nRes && n8nRes.ok) {
       results.steps.push({ step: 'welcome_email', status: 'done', via: 'n8n' });

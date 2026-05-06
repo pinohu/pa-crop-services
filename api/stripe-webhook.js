@@ -281,7 +281,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(event)
-      }).catch(() => null);
+      }).catch(() => null); // eslint-skip:silent-catch — caller checks (!pfRes || !pfRes.ok) below and falls back to notifyOps
       
       if (!pfRes || !pfRes.ok) {
         await _notifyIke('Payment Failed — Action Required',

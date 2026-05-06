@@ -44,14 +44,14 @@ export default async function handler(req, res) {
     const groqStart = Date.now();
     const groqRes = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` }
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — health-check; null becomes status: 'down' which is the desired observable signal
     services.groq = { status: groqRes?.ok ? 'healthy' : 'down', latency: Date.now() - groqStart };
 
     // SuiteDash
     const sdStart = Date.now();
     const sdRes2 = await fetch('https://app.suitedash.com/secure-api/contacts?limit=1', {
       headers: { 'X-Public-ID': SD_PUBLIC, 'X-Secret-Key': SD_SECRET }
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — health-check; null becomes status: 'down'
     services.suitedash = { status: sdRes2?.ok ? 'healthy' : 'down', latency: Date.now() - sdStart };
 
     // 20i
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     const TWENTY_GENERAL = process.env.TWENTY_I_GENERAL || (process.env.TWENTY_I_TOKEN || '').split('+')[0];
     const twentyRes = await fetch('https://api.20i.com/reseller/' + (process.env.TWENTY_I_RESELLER_ID), {
       headers: { 'Authorization': `Bearer ${TWENTY_GENERAL ? Buffer.from(TWENTY_GENERAL).toString('base64') : ''}` }
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — health-check; null becomes status: 'degraded'
     services['20i'] = { status: twentyRes?.ok ? 'healthy' : 'degraded', latency: Date.now() - twentyStart };
 
     digest.sections.system_health = services;

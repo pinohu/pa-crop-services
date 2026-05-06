@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ searchType: type === 'file_number' ? 'EntityNumber' : 'EntityName', searchTerm: query })
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller checks searchRes?.ok on next line; PA DOS site occasionally times out, fail-soft is correct here
 
     let results = [];
     if (searchRes?.ok) {

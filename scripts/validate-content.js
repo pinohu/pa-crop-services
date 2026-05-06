@@ -71,8 +71,26 @@ const ALL_ENTITIES_SINGLE = /(?:all|every)\s+(?:PA\s+)?(?:entities|businesses|en
 // Pattern 5: Wildcard CORS (security)
 const WILDCARD_CORS = /Access-Control-Allow-Origin['":\s]+\*/g;
 
-// Pattern 6: Silent catch swallowing errors
-const SILENT_CATCH = /\.catch\(\s*\(\s*\)\s*=>\s*\{\s*\}\s*\)/g;
+// Pattern 6: Silent catch swallowing errors.
+//
+// The dangerous pattern is `.catch(() => ...)` chained directly on a fetch()
+// call — it swallows network/HTTP errors and lets the caller treat the
+// nullish/empty return as success. This is what caused the Wave-9 Emailit-422
+// incident (caller marked welcome_email 'done' even though the request 422'd).
+//
+// Defensive `.json().catch(() => ({}))` AFTER an explicit `.ok` check is a
+// different (correct) pattern — the response is known good, we're just
+// guarding against a malformed body. We don't flag those.
+//
+// To silence on a specific line, use a trailing comment: `// eslint-skip:silent-catch`
+const SILENT_CATCH_BLOCK = /\.catch\(\s*\(\s*[a-zA-Z_]?\w*\s*\)\s*=>\s*\{\s*\}\s*\)/g;
+// SILENT_CATCH_ARROW: only flag when the line contains a fetch( call — that's
+// the dangerous shape (silent network/HTTP failure). Defensive .json()/.text()
+// catches don't match because the line that has the catch on json() doesn't
+// contain `fetch(`.
+const SILENT_CATCH_ARROW = /\.catch\(\s*(?:\(\s*\)|\(\s*[a-zA-Z_]\w*\s*\)|[a-zA-Z_]\w*)\s*=>\s*(?:\(\s*\{\s*\}\s*\)|null|undefined)\s*\)/g;
+const FETCH_CALL = /\bfetch(?:WithTimeout)?\s*\(/;
+const SILENT_CATCH_SKIP_MARKER = /\/\/\s*eslint-skip:silent-catch/;
 
 // Pattern 7: Raw console.log in API code (should use structured logger)
 const RAW_CONSOLE_LOG = /\bconsole\.log\(/g;
@@ -155,11 +173,43 @@ for (const filePath of allFiles) {
             `Wildcard CORS detected. Must restrict to pacropservices.com origins.`);
         }
 
-        // Pattern 6: Silent catch
-        if (SILENT_CATCH.test(line)) {
-          SILENT_CATCH.lastIndex = 0;
-          addViolation(filePath, lineNum, 'SILENT_CATCH',
-            `Silent .catch(() => {}) swallows errors. Use structured logging.`);
+        // Pattern 6: Silent catch — block form `.catch(() => {})`
+        if (SILENT_CATCH_BLOCK.test(line)) {
+          SILENT_CATCH_BLOCK.lastIndex = 0;
+          if (!SILENT_CATCH_SKIP_MARKER.test(line)) {
+            addViolation(filePath, lineNum, 'SILENT_CATCH',
+              `Silent .catch(() => {}) swallows errors. Use structured logging or rethrow. (Add // eslint-skip:silent-catch on the line to bypass.)`);
+          }
+        }
+
+        // Pattern 6b: Silent catch chained on a fetch() — `.catch(() => null)`,
+        // `.catch(() => ({}))`, `.catch(() => undefined)`. These hide network +
+        // HTTP errors from external APIs and were the root cause of the
+        // Emailit-422 missing-confirmation-email incident. Two shapes match:
+        //   (a) same-line: `await fetch(url).catch(() => null)`
+        //   (b) multi-line trailer: `}).catch(() => null)` — the closing of a
+        //       multi-line fetch options object, which the previous N lines
+        //       (within ~12-line lookback) contained a fetch( call.
+        const isFetchSameLine = SILENT_CATCH_ARROW.test(line) && FETCH_CALL.test(line);
+        SILENT_CATCH_ARROW.lastIndex = 0;
+        const isFetchTrailer = /^\s*\}\)\.catch\(\s*(?:\(\s*\)|\(\s*[a-zA-Z_]\w*\s*\)|[a-zA-Z_]\w*)\s*=>\s*(?:\(\s*\{\s*\}\s*\)|null|undefined)\s*\)/.test(line);
+        if (isFetchTrailer) {
+          // Look back up to 12 lines for a fetch( call to confirm this is a
+          // fetch trailer (vs e.g. a Promise.all closer with the same shape).
+          let foundFetch = false;
+          for (let lookback = idx - 1; lookback >= Math.max(0, idx - 12); lookback--) {
+            if (FETCH_CALL.test(lines[lookback])) { foundFetch = true; break; }
+          }
+          if (!foundFetch) {
+            // No fetch in lookback — probably a different Promise. Don't flag.
+            // (Set isFetchTrailer false to prevent the report below.)
+          } else if (!SILENT_CATCH_SKIP_MARKER.test(line)) {
+            addViolation(filePath, lineNum, 'SILENT_CATCH_FETCH',
+              `Silent .catch(() => null/{}) on multi-line fetch() hides errors. Capture response, check res.ok, read body on non-OK, surface to caller. (Add // eslint-skip:silent-catch to bypass.)`);
+          }
+        } else if (isFetchSameLine && !SILENT_CATCH_SKIP_MARKER.test(line)) {
+          addViolation(filePath, lineNum, 'SILENT_CATCH_FETCH',
+            `Silent .catch(() => null/{}) on fetch() hides errors. Capture response, check res.ok, read body on non-OK, surface to caller. (Add // eslint-skip:silent-catch to bypass.)`);
         }
 
         // Pattern 7: Raw console.log (not in logger)

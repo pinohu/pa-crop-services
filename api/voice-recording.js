@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: From, callSid: CallSid, recordingUrl: RecordingUrl, transcription, timestamp: new Date().toISOString() })
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller checks (!vmRes || !vmRes.ok) and falls back to notifyOps
     if (!vmRes || !vmRes.ok) {
       // Only allow Twilio-style media URLs in the embedded link to prevent
       // open-mailer abuse if signature verification is ever bypassed in future.

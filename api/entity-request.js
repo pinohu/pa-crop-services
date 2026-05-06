@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entityName, entityType, email: contactEmail, phone, notes })
-    }).catch(() => null);
+    }).catch(() => null); // eslint-skip:silent-catch — caller checks (!erRes || !erRes.ok) on next line and falls back to ops notification
     if (!erRes || !erRes.ok) {
       await _notifyIke('New Entity Formation Request',
         '<h2>🏢 Entity Formation Request</h2>' +
