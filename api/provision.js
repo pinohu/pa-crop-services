@@ -455,15 +455,41 @@ export default async function handler(req, res) {
   // ── STEP 7: Service Agreement Generation ────────────────────────────
   try {
     const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://pacropservices.com';
+    // Default entityName to name|email when missing — the underlying endpoint
+    // 400s on empty entityName, which provision.js then reads as a generic
+    // 'warning' with no actionable detail.
+    const agreementEntityName = body.entityName || name || email.split('@')[0];
     const agreeRes = await fetch(`${baseUrl}/api/generate-agreement`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
-      body: JSON.stringify({ email, name, entityName: body.entityName || '', entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
+      body: JSON.stringify({ email, name, entityName: agreementEntityName, entityType: body.entityType || '', tier, dosNumber: body.dosNumber || '' })
     });
-    const agreeData = await agreeRes.json().catch(() => ({}));
-    results.steps.push({ step: 'service_agreement', status: agreeData.success ? 'done' : 'warning', pdf_url: agreeData.pdf_url || null });
+    if (agreeRes.ok) {
+      const agreeData = await agreeRes.json().catch(() => ({}));
+      const hasPdf = !!agreeData.pdf_url;
+      results.steps.push({
+        step: 'service_agreement',
+        status: agreeData.success === false ? 'error' : (hasPdf ? 'done' : 'done_html_only'),
+        pdf_url: agreeData.pdf_url || null,
+        error: agreeData.success === false ? (agreeData.error || 'unknown') : undefined
+      });
+      if (!hasPdf && agreeData.success !== false) {
+        results.warnings.push('Service agreement returned HTML only — set DOCUMENTERO_API_KEY and create the crop-service-agreement template to get PDFs.');
+      }
+    } else {
+      const detail = await agreeRes.text().catch(() => 'unknown');
+      results.steps.push({
+        step: 'service_agreement',
+        status: 'error',
+        status_code: agreeRes.status,
+        pdf_url: null,
+        error: detail.slice(0, 200)
+      });
+      results.warnings.push(`Service agreement endpoint returned ${agreeRes.status}: ${detail.slice(0, 120)}`);
+    }
   } catch (e) {
-    results.steps.push({ step: 'service_agreement', status: 'warning', error: e.message });
+    results.steps.push({ step: 'service_agreement', status: 'error', error: e.message });
+    results.warnings.push(`Service agreement step threw: ${e.message}`);
   }
 
   // ── STEP 8: Entity Verification (if entity info provided) ──────────
@@ -577,11 +603,15 @@ export default async function handler(req, res) {
     const planForLabel = plans.getPlanByTier(tier) || plans.PLANS[plans.DEFAULT_PLAN_CODE];
     const tierPlanLabel = `${planForLabel.label} ($${planForLabel.annualFeeUsd}/yr)`;
 
+    // Default entityName when missing so the endpoint doesn't 400 on empty
+    // string — provision.js shouldn't fail end-to-end just because Stripe
+    // checkout didn't capture an entity name.
+    const pkgEntityName = body.entityName || name || email.split('@')[0];
     const pkgRes = await fetch(`${baseUrl}/api/generate-compliance-package`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': process.env.ADMIN_SECRET_KEY },
       body: JSON.stringify({
-        email, name: name || '', entityName: body.entityName || name || '',
+        email, name: name || '', entityName: pkgEntityName,
         entityType, tier, dosNumber: body.dosNumber || '',
         accessCode, planLabel: tierPlanLabel,
         deadline: deadline.label, daysUntilDeadline: daysUntil
@@ -592,10 +622,23 @@ export default async function handler(req, res) {
       results.steps.push({ step: 'compliance_package_pdf', status: 'done' });
       results.compliancePackageGenerated = true;
     } else {
-      results.steps.push({ step: 'compliance_package_pdf', status: 'warning', reason: 'PDF generation returned non-OK' });
+      // Capture the actual error body so admin notifications surface what's wrong.
+      // Most common failure modes: 400 (missing field), 401 (admin key mismatch
+      // due to VERCEL_URL pointing at a deployment with a different admin key),
+      // 500 (pdf-lib exception, usually missing entityType in compliance-rules).
+      const detail = await pkgRes.text().catch(() => 'unknown');
+      results.steps.push({
+        step: 'compliance_package_pdf',
+        status: 'error',
+        status_code: pkgRes.status,
+        reason: `PDF generation returned ${pkgRes.status}`,
+        detail: detail.slice(0, 200)
+      });
+      results.warnings.push(`Compliance package PDF endpoint returned ${pkgRes.status}: ${detail.slice(0, 120)}`);
     }
   } catch (e) {
-    results.steps.push({ step: 'compliance_package_pdf', status: 'warning', error: e.message });
+    results.steps.push({ step: 'compliance_package_pdf', status: 'error', error: e.message });
+    results.warnings.push(`Compliance package PDF step threw: ${e.message}`);
   }
 
   // ── STEP 13: Annual Report Pre-Fill Package (Pro/Empire — filing included) ──
