@@ -2,8 +2,7 @@
 // POST /api/sms { to, message, type }
 // Types: welcome, reminder_90, reminder_30, reminder_7, renewal, custom
 
-import { isAdminRequest } from './services/auth.js';
-import { setCors } from './services/auth.js';
+import { isAdminRequest, setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 
@@ -38,6 +37,34 @@ export default async function handler(req, res) {
   const smsBody = message || (TEMPLATES[type] ? TEMPLATES[type](data) : null);
   if (!smsBody) return res.status(400).json({ success: false, error: 'message or valid type required' });
 
+  // Twilio config is read here so both the SMS-iT fallback path AND a primary
+  // delivery failure can route to the same fallback block.
+  const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
+  const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+  const TWILIO_FROM = process.env.TWILIO_PHONE || '+18142282822';
+
+  async function tryTwilio(reasonForFallback) {
+    if (!TWILIO_SID || !TWILIO_TOKEN) return null;
+    try {
+      const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Basic ' + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ To: to, From: TWILIO_FROM, Body: smsBody })
+      });
+      if (twilioRes.ok) {
+        const twilioData = await twilioRes.json().catch(() => ({}));
+        log.info('sms_twilio_fallback_ok', { reasonForFallback, to, type: type || 'custom' });
+        return { ok: true, sms_id: twilioData?.sid };
+      }
+      const detail = await twilioRes.text().catch(() => 'unknown');
+      log.error('twilio_fallback_non_ok', { reasonForFallback, status: twilioRes.status, detail: detail.slice(0, 200) });
+      return { ok: false, status: twilioRes.status, detail: detail.slice(0, 200) };
+    } catch (te) {
+      log.error('twilio_fallback_threw', { reasonForFallback }, te instanceof Error ? te : new Error(String(te)));
+      return { ok: false, error: te.message };
+    }
+  }
+
   try {
     const smsRes = await fetch('https://aicpanel.smsit.ai/api/v2/sms/send', {
       method: 'POST',
@@ -48,28 +75,45 @@ export default async function handler(req, res) {
         sender_id: 'PACROP'
       })
     });
-    const result = await smsRes.json().catch(() => ({}));
-    return res.status(200).json({ success: true, sms_id: result?.data?.id, to, type: type || 'custom', via: 'smsit' });
-  } catch (e) {
-    // Twilio fallback
-    const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
-    const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-    const TWILIO_FROM = process.env.TWILIO_PHONE || '+18142282822';
-    if (TWILIO_SID && TWILIO_TOKEN) {
-      try {
-        const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Basic ' + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: to, From: TWILIO_FROM, Body: smsBody })
-        });
-        const twilioData = await twilioRes.json();
-        return res.status(200).json({ success: true, sms_id: twilioData?.sid, to, type: type || 'custom', via: 'twilio_fallback' });
-      } catch (te) {
-        log.error('twilio_fallback_also_failed', {}, te instanceof Error ? te : new Error(String(te)));
-        return res.status(502).json({ success: false, error: 'Both SMS-iT and Twilio failed', detail: te.message });
-      }
+
+    // CRITICAL: same shape as the Wave-9 Emailit silent-failure fix. SMS-iT
+    // returns 4xx for invalid phone, suspended account, exhausted credits,
+    // banned content — none of those throw, they just yield a non-OK response.
+    // Without this check, every failed SMS would silently report success: true
+    // and the caller would mark e.g. welcome_sms 'done' with no delivery.
+    if (smsRes.ok) {
+      const result = await smsRes.json().catch(() => ({}));
+      return res.status(200).json({ success: true, sms_id: result?.data?.id, to, type: type || 'custom', via: 'smsit' });
     }
-    log.error('sms_it_failed_and_no_twilio_configured', {}, e instanceof Error ? e : new Error(String(e)));
-    return res.status(502).json({ success: false, error: 'SMS delivery failed', detail: e.message });
+
+    const detail = await smsRes.text().catch(() => 'unknown');
+    log.error('sms_it_non_ok', { status: smsRes.status, detail: detail.slice(0, 200), to: to.slice(-4), type });
+
+    // Try Twilio as a recovery path before reporting failure.
+    const twilio = await tryTwilio(`smsit_${smsRes.status}`);
+    if (twilio?.ok) {
+      return res.status(200).json({ success: true, sms_id: twilio.sms_id, to, type: type || 'custom', via: 'twilio_fallback', primary_failed: { provider: 'smsit', status: smsRes.status, detail: detail.slice(0, 200) } });
+    }
+
+    return res.status(502).json({
+      success: false,
+      error: 'SMS delivery failed',
+      provider: 'smsit',
+      status: smsRes.status,
+      detail: detail.slice(0, 200),
+      twilio_attempted: twilio !== null,
+      twilio_error: twilio?.detail || twilio?.error || null
+    });
+  } catch (e) {
+    // Network-level error (DNS, timeout) on SMS-iT → try Twilio.
+    log.error('sms_it_threw', {}, e instanceof Error ? e : new Error(String(e)));
+    const twilio = await tryTwilio(`smsit_threw:${e.message?.slice(0, 60)}`);
+    if (twilio?.ok) {
+      return res.status(200).json({ success: true, sms_id: twilio.sms_id, to, type: type || 'custom', via: 'twilio_fallback', primary_failed: { provider: 'smsit', error: e.message } });
+    }
+    if (twilio === null) {
+      return res.status(502).json({ success: false, error: 'SMS delivery failed', detail: e.message, twilio_configured: false });
+    }
+    return res.status(502).json({ success: false, error: 'Both SMS-iT and Twilio failed', smsit_error: e.message, twilio_error: twilio.detail || twilio.error || null });
   }
 }
