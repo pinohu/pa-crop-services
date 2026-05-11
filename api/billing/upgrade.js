@@ -1,6 +1,4 @@
-import { setCors, authenticateRequest } from '../services/auth.js';
-import { getBillingAccount, writeAuditEvent } from '../services/db.js';
-import { isServicePaused, sendPausedResponse } from '../_pause.js';
+import { isServicePaused, sendPausedResponse, setPauseCors } from '../_pause.js';
 
 const PLAN_STRIPE_PRICES = {
   compliance_only: null,
@@ -22,11 +20,13 @@ function normalizePlan(code) {
 }
 
 export default async function handler(req, res) {
-  setCors(req, res);
+  setPauseCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
   if (isServicePaused()) return sendPausedResponse(res);
 
+  const { authenticateRequest } = await import('../services/auth.js');
+  const { getBillingAccount, writeAuditEvent } = await import('../services/db.js');
   const session = await authenticateRequest(req);
   if (!session.valid) return res.status(401).json({ success: false, error: 'unauthenticated' });
 

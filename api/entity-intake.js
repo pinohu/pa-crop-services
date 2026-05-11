@@ -2,16 +2,15 @@
 // POST /api/entity-intake { email, entityName, entityType, dosFileNumber, foreignState? }
 // Saves entity data to Neon DB (if connected), updates SuiteDash, and notifies admin.
 
-import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { resolveEntityType } from './_compliance.js';
-import { isServicePaused, sendPausedResponse } from './_pause.js';
+import { isServicePaused, sendPausedResponse, setPauseCors } from './_pause.js';
 
 const log = createLogger('entity-intake');
 
 export default async function handler(req, res) {
-  setCors(req, res);
+  setPauseCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
