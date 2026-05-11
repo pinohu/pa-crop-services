@@ -1,392 +1,59 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230C1220'/><path d='M12 4L4 8.5v7L12 20l8-4.5v-7L12 4z' fill='white'/></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Welcome — let's get you set up</title>
-<meta name="robots" content="noindex">
-<!-- H8: Single font import (removed duplicate), removed duplicate CSS reset/body/nav/container overrides -->
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<title>PA CROP Services Temporarily Paused</title>
+<meta name="description" content="PA CROP Services is temporarily paused while payment confirmation and account setup are reviewed.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.pacropservices.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f8f7f4;--bg2:#fff;--ink:#1a1a1a;--ink2:#4a4a4a;--ink3:#8a8a8a;--accent:#A68A3E;--green:#15803d;--green-bg:#f0fdf4;--border:#e5e4e0;--mono:'JetBrains Mono',monospace}
-.hero{padding:60px 0 40px;text-align:center}
-.check-circle{width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
-.check-circle svg{width:32px;height:32px;color:var(--green)}
-.hero h1{font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px}
-.hero p{font-size:16px;color:var(--ink3)}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
-.card-header{padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px}
-.card-body{padding:20px}
-.step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
-.step:last-child{margin-bottom:0}
-.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
-.step-num.done{background:var(--green)}
-.step-text{font-size:14px;color:var(--ink2)}
-.step-text strong{display:block;color:var(--ink);margin-bottom:2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;width:100%}
-.btn-primary{background:var(--ink);color:#fff}
-.btn-primary:hover{background:#333}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-accent{background:var(--accent);color:#fff}
-.success-msg{display:none;text-align:center;padding:20px;color:var(--green);font-weight:600}
-.access-code{font-family:var(--mono);font-size:18px;letter-spacing:3px;background:var(--bg);padding:12px 20px;border-radius:8px;border:1px solid var(--border);text-align:center;margin:12px 0}
-.welcome-footer{text-align:center;padding:40px 0;font-size:13px;color:var(--ink3)}
+:root{--slate:#0C1220;--gold:#C9982A;--gold-light:#F5EDDA;--cream:#FAF9F6;--cream2:#F3F1EC;--cream3:#EBE8E2;--ink:#1C1C1C;--ink2:#4A4A4A;--ink3:#7A7A7A;--white:#fff;--font:'Outfit',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.6;-webkit-font-smoothing:antialiased}
+.shell{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
+.top{height:72px;display:flex;align-items:center;justify-content:space-between;max-width:1120px;width:100%;margin:0 auto;padding:0 28px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--slate);letter-spacing:0}
+.mark{width:34px;height:34px;border-radius:8px;background:var(--slate);display:grid;place-items:center;color:var(--white);font-weight:800}
+.phone{color:var(--ink2);font-size:14px;font-weight:600;text-decoration:none}
+main{display:grid;place-items:center;padding:48px 28px}
+.panel{width:min(760px,100%);background:var(--white);border:1px solid var(--cream3);border-radius:8px;padding:44px;box-shadow:0 18px 60px rgba(12,18,32,.08)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--gold)}
+h1{font-family:var(--serif);font-size:clamp(38px,7vw,64px);line-height:1;margin:0 0 18px;color:var(--slate);letter-spacing:0;font-weight:400}
+p{font-size:17px;color:var(--ink2);margin:0 0 18px}
+.notice{margin:28px 0;padding:18px 20px;border-left:4px solid var(--gold);background:var(--gold-light);color:var(--slate);font-weight:500}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px}
+.primary{background:var(--slate);color:var(--white)}
+.secondary{background:var(--cream2);color:var(--slate);border:1px solid var(--cream3)}
+footer{max-width:1120px;width:100%;margin:0 auto;padding:0 28px 28px;color:var(--ink3);font-size:13px}
+@media(max-width:640px){.top{height:auto;align-items:flex-start;gap:14px;flex-direction:column;padding-top:22px}.panel{padding:32px 24px}.actions{flex-direction:column}.btn{width:100%}}
 </style>
-<script defer data-domain="pacropservices.com" src="https://plausible.io/js/script.js"></script>
-<link rel="stylesheet" href="/site.css">
-<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vzhtq2nted");</script>
-<meta name="description" content="Welcome to PA CROP Services. Complete your entity setup and access your compliance portal.">
-<meta property="og:title" content="Welcome — PA CROP Services">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://www.pacropservices.com/og-image.jpg">
-<link rel="canonical" href="https://www.pacropservices.com/welcome">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Welcome — PA CROP Services","provider":{"@type":"Organization","name":"PA CROP Services"}}</script>
 </head>
 <body>
-<a href="#main-content" class="skip-link">Skip to main content</a>
-<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="nav-inner">
-  <a href="/" class="nav-brand"><div class="nav-mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff"/></svg></div>PA CROP<em>Services</em></a>
-  <div class="nav-links"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/portal">Client Login</a><a href="tel:8142282822" style="font-size:13px;color:var(--ink3,#7A7A7A);font-weight:500">814-228-2822</a><a href="/compliance-check" class="nav-cta">Check my entity</a></div>
-  <button class="nav-mobile" id="wl-hamburger" onclick="(function(){var m=document.getElementById('mm'),b=document.getElementById('wl-hamburger'),o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false');})()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mm"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
-</div></nav>
-<div class="mobile-menu" id="mm" role="region" aria-label="Mobile navigation"><a href="/#features" onclick="document.getElementById('mm').classList.remove('open')">Features</a><a href="/#pricing" onclick="document.getElementById('mm').classList.remove('open')">Pricing</a><a href="/about" onclick="document.getElementById('mm').classList.remove('open')">About</a><a href="/portal" onclick="document.getElementById('mm').classList.remove('open')">Client Login</a><a href="tel:8142282822" onclick="document.getElementById('mm').classList.remove('open')">Call 814-228-2822</a><a href="/compliance-check" onclick="document.getElementById('mm').classList.remove('open')">Check my entity →</a></div>
-
-<section id="main-content" class="hero">
-<div class="container">
-<div class="check-circle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div>
-<h1>Welcome — you made a great decision</h1>
-<p>One quick step: tell us about your entity so we can set everything up.</p>
-</div>
-</section>
-
-<div class="container">
-
-<!-- Entity Intake Form -->
-<div class="card" id="intake-card">
-  <div class="card-header">Your entity details</div>
-  <div class="card-body">
-    <div class="field">
-      <label for="ei-name">Entity name (as registered with PA DOS) <span aria-hidden="true" style="color:#dc2626">*</span></label>
-      <!-- H7: Autofocus on primary input when page loads -->
-      <input type="text" id="ei-name" placeholder="Acme Consulting LLC" autocomplete="organization" maxlength="200" required aria-required="true" autofocus>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="ei-type">Entity type</label>
-        <select id="ei-type" aria-label="Entity type">
-          <option value="LLC">LLC</option>
-          <option value="Corporation">Corporation</option>
-          <option value="LP">Limited Partnership</option>
-          <option value="LLP">LLP</option>
-          <option value="Foreign LLC">Foreign LLC</option>
-          <option value="Foreign Corp">Foreign Corporation</option>
-          <option value="Nonprofit">Nonprofit</option>
-        </select>
+<div class="shell">
+  <header class="top">
+    <div class="brand"><div class="mark">PA</div><span>PA CROP Services</span></div>
+    <a class="phone" href="tel:8142282822">814-228-2822</a>
+  </header>
+  <main>
+    <section class="panel" aria-labelledby="pause-title">
+      <div class="eyebrow"><span class="dot" aria-hidden="true"></span> Temporary service pause</div>
+      <h1 id="pause-title">New website activity is paused.</h1>
+      <p>PA CROP Services is temporarily pausing new purchases, upgrades, and onboarding submissions while we review payment confirmation and account setup workflows.</p>
+      <div class="notice">Existing clients: your account is not being cancelled by this notice. Please contact us directly if you need payment confirmation, portal access, documents, or account setup help.</div>
+      <p>No new checkout or automated account setup will be started from the website until this review is complete.</p>
+      <div class="actions">
+        <a class="btn primary" href="mailto:hello@pacropservices.com">Email support</a>
+        <a class="btn secondary" href="tel:8142282822">Call 814-228-2822</a>
       </div>
-      <div class="field">
-        <label for="ei-number">PA DOS file number (optional)</label>
-        <input type="text" id="ei-number" placeholder="e.g. 7654321" maxlength="20" aria-label="PA DOS file number">
-      </div>
-    </div>
-    <div class="field">
-      <label for="ei-email">Your email (used for checkout) <span aria-hidden="true" style="color:#dc2626">*</span></label>
-      <input type="email" id="ei-email" placeholder="you@business.com" autocomplete="email" maxlength="254" required aria-required="true">
-    </div>
-    <div id="welcome-error" role="alert" aria-live="polite" style="color:#dc2626;font-size:13px;margin-top:8px;display:none"></div>
-    <button class="btn btn-primary" onclick="submitEntityIntake()" id="ei-btn">Save and continue</button>
-    <div class="success-msg" id="ei-success">
-      <p style="font-size:18px;margin-bottom:8px">Entity details saved</p>
-      <p style="font-size:14px;color:var(--ink2);font-weight:400">We are verifying your entity with the PA Department of State. Check your email for your portal access code.</p>
-    </div>
-  </div>
+    </section>
+  </main>
+  <footer>PA Registered Office Services, LLC. Website activity paused May 11, 2026.</footer>
 </div>
-
-<!-- What happens next -->
-<div class="card">
-  <div class="card-header">What happens next</div>
-  <div class="card-body">
-    <div class="step"><div class="step-num done">&#10003;</div><div class="step-text"><strong>Payment received</strong>Your plan is now active.</div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Check your email</strong>Your portal access code is on its way. It looks like: <code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:13px">KR4N7P</code></div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Within 1 business day</strong>We verify your entity with PA DOS and set up your compliance calendar.</div></div>
-    <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Ongoing</strong>We monitor deadlines, scan documents same-day, and send reminders before every filing.</div></div>
-  </div>
-</div>
-
-
-
-<a href="/portal" class="btn btn-accent" style="margin-bottom:20px">Go to your portal &rarr;</a>
-
-<!-- Domain Collection (for Starter/Pro/Empire tiers) -->
-<div style="background:#fff;border:1.5px solid #EBE8E2;border-radius:12px;padding:24px;margin-bottom:24px" id="domain-section">
-<h2 style="font-size:18px;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> Choose your domain name</h2>
-<p style="font-size:14px;color:var(--gray);margin-bottom:16px">If your plan includes hosting, tell us your preferred domain and we'll register and set it up for you.</p>
-<div style="display:flex;flex-direction:column;gap:12px">
-<div style="display:flex;gap:8px">
-  <input type="text" id="dom-name" placeholder="yourbusiness" aria-label="Domain name" maxlength="63" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-  <select id="dom-ext" aria-label="Domain extension" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff;width:100px">
-    <option value=".com">.com</option>
-    <option value=".net">.net</option>
-    <option value=".org">.org</option>
-    <option value=".us">.us</option>
-  </select>
-</div>
-<input type="email" id="dom-email" placeholder="Your email (same as checkout)" aria-label="Email for domain registration" autocomplete="email" maxlength="254" required aria-required="true" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-<button onclick="submitDomain()" aria-label="Request domain registration" style="background:#0C1220;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Request this domain →</button>
-<p id="dom-msg" style="font-size:13px;display:none"></p>
-<p style="font-size:12px;color:var(--gray)">We'll check availability and register it within 1 business day. Domain registration is included in your plan at no extra cost.</p>
-</div>
-</div>
-
-<!-- Business Info Collection (for website creation) -->
-<div style="background:#fff;border:1.5px solid #EBE8E2;border-radius:12px;padding:24px;margin-bottom:24px" id="website-info-section">
-<h2 style="font-size:18px;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Tell us about your business</h2>
-<p style="font-size:14px;color:var(--gray);margin-bottom:16px">We'll use this to create your professional website. The more detail you provide, the better your site will look.</p>
-<div style="display:flex;flex-direction:column;gap:12px">
-  <div>
-    <label for="biz-name" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business name <span aria-hidden="true" style="color:#dc2626">*</span></label>
-    <input type="text" id="biz-name" placeholder="e.g., ABC Consulting LLC" maxlength="200" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-  </div>
-  <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Tagline / Slogan</label>
-    <input type="text" id="biz-tagline" placeholder="e.g., Professional consulting for PA businesses" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business tagline">
-  </div>
-  <div>
-    <label for="biz-description" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">What does your business do? <span aria-hidden="true" style="color:#dc2626">*</span></label>
-    <textarea id="biz-description" rows="3" placeholder="Describe your business in 2-3 sentences. What services do you offer? Who are your customers?" maxlength="1000" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical"></textarea>
-  </div>
-  <div>
-    <label for="biz-services" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Services offered (comma-separated) <span aria-hidden="true" style="color:#dc2626">*</span></label>
-    <input type="text" id="biz-services" placeholder="e.g., Tax Advisory, Bookkeeping, Business Formation, Compliance" maxlength="500" required aria-required="true" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div>
-      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business phone</label>
-      <input type="tel" id="biz-phone" placeholder="814-555-1234" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business phone">
-    </div>
-    <div>
-      <label for="biz-email" style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business email</label>
-      <input type="email" id="biz-email" placeholder="info@yourbusiness.com" autocomplete="email" maxlength="254" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px">
-    </div>
-  </div>
-  <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business address</label>
-    <input type="text" id="biz-address" placeholder="123 Main St, Erie, PA 16502" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business address">
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div>
-      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Business hours</label>
-      <input type="text" id="biz-hours" placeholder="Mon-Fri 9am-5pm" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px" aria-label="Business hours">
-    </div>
-    <div>
-      <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Industry</label>
-      <select id="biz-industry" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#fff" aria-label="Industry">
-        <option value="">Select...</option>
-        <option value="consulting">Consulting</option>
-        <option value="legal">Legal Services</option>
-        <option value="accounting">Accounting / Tax</option>
-        <option value="real-estate">Real Estate</option>
-        <option value="construction">Construction / Trades</option>
-        <option value="healthcare">Healthcare</option>
-        <option value="technology">Technology</option>
-        <option value="retail">Retail / E-commerce</option>
-        <option value="food">Food & Beverage</option>
-        <option value="creative">Creative / Design</option>
-        <option value="education">Education / Training</option>
-        <option value="nonprofit">Nonprofit</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-  </div>
-  <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Brand colors (optional)</label>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="color" id="biz-color1" value="#0C1220" style="width:40px;height:36px;border:1px solid #ddd;border-radius:6px;cursor:pointer" aria-label="Primary color">
-      <input type="color" id="biz-color2" value="#C9982A" style="width:40px;height:36px;border:1px solid #ddd;border-radius:6px;cursor:pointer" aria-label="Secondary color">
-      <span style="font-size:12px;color:var(--gray)">Pick your primary and accent colors</span>
-    </div>
-  </div>
-  <div>
-    <label style="font-size:13px;font-weight:600;color:var(--dark);display:block;margin-bottom:4px">Anything else we should know?</label>
-    <textarea id="biz-notes" rows="2" placeholder="Special requests, preferred style, key selling points, etc." style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;resize:vertical" aria-label="Additional notes"></textarea>
-  </div>
-  <div id="biz-error" role="alert" aria-live="polite" style="color:#dc2626;font-size:13px;display:none"></div>
-  <button onclick="submitBusinessInfo()" id="biz-submit-btn" aria-label="Submit business info to build website" style="background:#0C1220;color:#fff;border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Build my website &rarr;</button>
-  <div id="biz-success" style="display:none;background:#E8F0E9;border:1px solid #6B8F71;border-radius:8px;padding:16px;text-align:center">
-    <p style="font-size:16px;font-weight:600;color:#2D6A2E;margin:0 0 4px">Website build started!</p>
-    <p style="font-size:13px;color:var(--gray);margin:0">We're creating your professional website now. You'll receive an email when it's ready to preview (typically within 1 hour).</p>
-  </div>
-  <p style="font-size:12px;color:var(--gray)">We'll build your professional website using this information. You can always update it later through your portal or by contacting us.</p>
-</div>
-</div>
-
-<script>
-async function submitDomain() {
-  var name = document.getElementById('dom-name').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
-  var ext = document.getElementById('dom-ext').value;
-  var email = document.getElementById('dom-email').value.trim();
-  var msg = document.getElementById('dom-msg');
-  var btn = document.querySelector('#domain-section button[onclick="submitDomain()"]');
-  if (!name || !email) {
-    msg.textContent = 'Please enter a domain name and your email.';
-    msg.style.display = 'block'; msg.style.color = '#dc2626'; return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.textContent = 'Please enter a valid email address.';
-    msg.style.display = 'block'; msg.style.color = '#dc2626'; return;
-  }
-  var domain = name + ext;
-  if (btn) { btn.textContent = 'Requesting...'; btn.disabled = true; btn.setAttribute('aria-busy','true'); }
-  msg.style.display = 'none';
-  try {
-    var res = await fetch('/api/entity-intake', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email: email, entityName: domain, entityType: 'domain-request', notes: 'Domain registration request: ' + domain })
-    });
-    if (!res.ok) throw new Error("Server error");
-    msg.textContent = 'Domain request submitted! We will register ' + domain + ' and email you when it is ready.';
-    msg.style.display = 'block'; msg.style.color = '#059669';
-    if (btn) { btn.style.display = 'none'; }
-  } catch(e) {
-    msg.textContent = 'Error. Please email hello@pacropservices.com with your preferred domain.';
-    msg.style.display = 'block'; msg.style.color = '#dc2626';
-    if (btn) { btn.textContent = 'Request this domain →'; btn.disabled = false; btn.setAttribute('aria-busy','false'); }
-  }
-}
-
-async function submitBusinessInfo() {
-  var btn = document.getElementById('biz-submit-btn');
-  var err = document.getElementById('biz-error');
-  var bizName = document.getElementById('biz-name').value.trim();
-  var desc = document.getElementById('biz-description').value.trim();
-  var services = document.getElementById('biz-services').value.trim();
-  var domEmail = document.getElementById('dom-email')?.value?.trim() || '';
-
-  if (!bizName || !desc || !services) {
-    err.textContent = 'Please fill in your business name, description, and services.';
-    err.style.display = 'block';
-    return;
-  }
-  err.style.display = 'none';
-  btn.textContent = 'Building your website...';
-  btn.disabled = true;
-
-  var businessInfo = {
-    businessName: bizName,
-    tagline: document.getElementById('biz-tagline').value.trim(),
-    description: desc,
-    services: services.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
-    phone: document.getElementById('biz-phone').value.trim(),
-    email: document.getElementById('biz-email').value.trim() || domEmail,
-    address: document.getElementById('biz-address').value.trim(),
-    hours: document.getElementById('biz-hours').value.trim(),
-    industry: document.getElementById('biz-industry').value,
-    primaryColor: document.getElementById('biz-color1').value,
-    accentColor: document.getElementById('biz-color2').value,
-    notes: document.getElementById('biz-notes').value.trim()
-  };
-
-  try {
-    var res = await fetch('/api/entity-intake', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        email: domEmail || businessInfo.email,
-        entityName: bizName,
-        entityType: 'website-build-request',
-        notes: JSON.stringify(businessInfo)
-      })
-    });
-    if (!res.ok) throw new Error("Server error");
-    document.getElementById('biz-success').style.display = 'block';
-    btn.style.display = 'none';
-  } catch(e) {
-    err.textContent = 'Something went wrong. Please email hello@pacropservices.com with your business details.';
-    err.style.display = 'block';
-    btn.textContent = 'Build my website';
-    btn.disabled = false;
-  }
-}
-
-// Show/hide hosting sections based on tier
-(function() {
-  var params = new URLSearchParams(window.location.search);
-  var plan = params.get('plan') || '';
-  var hasHosting = plan.includes('starter') || plan.includes('pro') || plan.includes('empire');
-  if (!hasHosting) {
-    var ds = document.getElementById('domain-section');
-    var ws = document.getElementById('website-info-section');
-    if (ds) ds.style.display = 'none';
-    if (ws) ws.style.display = 'none';
-  }
-})();
-</script>
-
-<!-- H10: Standard footer with terms, privacy, and contact info -->
-<footer class="site-footer" role="contentinfo"><div class="footer-inner">
-  <div>
-    <div class="footer-left">&copy; 2026 PA CROP Services (PA Registered Office Services, LLC)</div>
-    <div class="footer-legal">Licensed Pennsylvania CROP · 924 W 23rd St, Erie, PA 16502 · <a href="tel:+18142282822" style="color:rgba(255,255,255,.7)">814-228-2822</a> · <a href="mailto:hello@pacropservices.com" style="color:rgba(255,255,255,.7)">hello@pacropservices.com</a></div>
-  </div>
-  <div class="footer-links"><a href="/">Home</a><a href="/#pricing">Pricing</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/portal">Client Login</a></div>
-</div></footer>
-
-</div>
-
-<script>
-// Pre-fill email from URL params (Stripe can pass via success_url)
-const params = new URLSearchParams(window.location.search);
-const emailParam = params.get('email') || params.get('customer_email') || '';
-if (emailParam) document.getElementById('ei-email').value = emailParam;
-
-async function submitEntityIntake() {
-  const name = document.getElementById('ei-name').value.trim();
-  const type = document.getElementById('ei-type').value;
-  const number = document.getElementById('ei-number').value.trim();
-  const email = document.getElementById('ei-email').value.trim();
-  
-  // H9: Specific error — say what is wrong and focus the problem field
-  if (!name || !email) { var we=document.getElementById('welcome-error');if(we){we.textContent=(!name&&!email)?'Entity name and email are both required.':((!name)?'Entity name is required — enter the name as registered with PA DOS.':'Email is required so we can send your portal access code.');we.style.display='block';}document.getElementById(!name?'ei-name':'ei-email').focus();return; }
-  
-  const btn = document.getElementById('ei-btn');
-  btn.textContent = 'Saving...'; btn.disabled = true;
-  
-  try {
-    const res = await fetch('/api/entity-intake', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, entityName: name, entityType: type, entityNumber: number })
-    });
-    if (!res.ok) throw new Error("Server error " + res.status);
-    const data = await res.json();
-    
-    // Show success
-    btn.style.display = 'none';
-    document.querySelectorAll('.field, .field-row').forEach(f => f.style.display = 'none');
-    document.getElementById('ei-success').style.display = 'block';
-  } catch(e) {
-    btn.textContent = 'Save and continue'; btn.disabled = false;
-    // H9: Specific recovery suggestion on network failure
-    var we=document.getElementById('welcome-error');if(we){we.textContent='Could not save your details — check your internet connection and try again. If this continues, email hello@pacropservices.com or call 814-228-2822.';we.style.display='block';};
-  }
-}
-</script>
-<script>
-const params2 = new URLSearchParams(window.location.search);
-const plan = params2.get('plan') || '';
-const planLabels = { compliance_only: 'Compliance Only', business_starter: 'Business Starter', business_pro: 'Business Pro', business_empire: 'Business Empire' };
-const planPrices = { compliance_only: '$99/yr', business_starter: '$199/yr', business_pro: '$349/yr', business_empire: '$699/yr' };
-if (plan && planLabels[plan]) {
-  const h1 = document.querySelector('h1');
-  if (h1) h1.textContent = 'Welcome to ' + planLabels[plan] + '!';
-  const badge = document.createElement('div');
-  badge.style.cssText = 'display:inline-block;background:#ECFDF5;color:#059669;font-size:14px;font-weight:600;padding:6px 16px;border-radius:20px;margin-bottom:16px';
-  badge.textContent = planLabels[plan] + ' \u2014 ' + planPrices[plan];
-  h1.after(badge);
-}
-</script>
-<script src="/embed/chatbot.js" defer></script>
-<script>const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));</script>
-<script>document.addEventListener("click",function(e){var m=document.getElementById("mm"),b=document.querySelector(".nav-mobile");if(m&&b&&!m.contains(e.target)&&!b.contains(e.target)){m.classList.remove("open");if(b)b.setAttribute("aria-expanded","false");}});document.addEventListener("keydown",function(e){if(e.key==="Escape"){var m=document.getElementById("mm"),b=document.getElementById("wl-hamburger");if(m){m.classList.remove("open");if(b)b.setAttribute("aria-expanded","false");}}});</script>
 </body>
 </html>
