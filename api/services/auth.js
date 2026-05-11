@@ -6,6 +6,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { timingSafeEqual, randomBytes, createHmac } from 'crypto';
 import { Redis } from '@upstash/redis';
 import * as db from './db.js';
+import { logWarn } from '../_log.js';
 
 // ── Redis for session blocklist ────────────────────────────
 let _redis = null;
@@ -268,7 +269,8 @@ export async function authenticateApiKey(req) {
     if (key.expires_at && new Date(key.expires_at) < new Date()) return null;
 
     // Update last_used_at (fire-and-forget)
-    sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${key.id}`.catch(() => {});
+    sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${key.id}`
+      .catch(err => logWarn('api_key_last_used_update_failed', { keyId: key.id, error: err.message }));
 
     return {
       valid: true,

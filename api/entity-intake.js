@@ -6,6 +6,7 @@ import { setCors } from './services/auth.js';
 import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { resolveEntityType } from './_compliance.js';
+import { isServicePaused, sendPausedResponse } from './_pause.js';
 
 const log = createLogger('entity-intake');
 
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+  if (isServicePaused()) return sendPausedResponse(res);
 
   // Rate limit: 10/min per IP
   const blocked = await checkRateLimit(getClientIp(req), 'entity-intake', 10, '60s');

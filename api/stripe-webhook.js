@@ -4,6 +4,7 @@
 
 import { log, logError, logWarn } from './_log.js';
 import { fetchWithTimeout } from './_fetch.js';
+import { isServicePaused } from './_pause.js';
 
 async function _notifyIke(subject, body) {
   const key = process.env.EMAILIT_API_KEY;
@@ -109,6 +110,19 @@ export default async function handler(req, res) {
       const email = session.customer_details?.email || session.customer_email || '';
       const name = session.customer_details?.name || '';
       const tierConfig = detectTier(event);
+
+      if (isServicePaused()) {
+        logWarn('checkout_provisioning_paused', { email, tier: tierConfig.tier, eventId: event?.id, sessionId: session.id });
+        await _notifyIke('Checkout received while website is paused',
+          `<h2>Checkout received during pause</h2>
+           <p><strong>Email:</strong> ${email || 'not provided'}</p>
+           <p><strong>Name:</strong> ${name || 'not provided'}</p>
+           <p><strong>Plan:</strong> ${tierConfig.tier} ($${(session.amount_total || 0) / 100})</p>
+           <p><strong>Stripe Session:</strong> ${session.id}</p>
+           <p>Automatic provisioning was not started. Review this payment manually before creating or updating the client account.</p>`
+        );
+        return res.status(200).json({ received: true, paused: true });
+      }
       
       log('new_client_checkout', { email, tier: tierConfig.tier, amount: (session.amount_total||0)/100 });
 

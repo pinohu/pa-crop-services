@@ -9,6 +9,12 @@
       "permanent": true
     }
   ],
+  "rewrites": [
+    {
+      "source": "/:path((?!api/|maintenance.html|site.css|og-image.jpg|robots.txt|sitemap.xml).*)",
+      "destination": "/maintenance.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

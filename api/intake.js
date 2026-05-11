@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from './_ratelimit.js';
 import { createLogger } from './_log.js';
 import { isValidEmail, isValidString, sanitize } from './_validate.js';
 import { fetchWithTimeout } from './_fetch.js';
+import { isServicePaused, sendPausedResponse } from './_pause.js';
 
 const log = createLogger('intake');
 
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (isServicePaused()) return sendPausedResponse(res);
 
   // Rate limit: Lead capture — 10/min
   const blocked = await checkRateLimit(getClientIp(req), 'intake', 10, '60s');

@@ -3,6 +3,7 @@ import { isValidEmail, isValidPlanCode } from '../_validate.js';
 import { logError } from '../_log.js';
 import { fetchWithTimeout } from '../_fetch.js';
 import { checkRateLimit, getClientIp } from '../_ratelimit.js';
+import { isServicePaused, sendPausedResponse } from '../_pause.js';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const PLAN_PRICES = {
@@ -16,6 +17,7 @@ export default async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'method_not_allowed' });
+  if (isServicePaused()) return sendPausedResponse(res);
 
   // Rate limit: checkout — 10 per 10 minutes per IP to prevent session flood
   const rlResult = await checkRateLimit(getClientIp(req), 'billing-checkout', 10, '10m');
